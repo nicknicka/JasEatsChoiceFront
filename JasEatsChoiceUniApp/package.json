@@ -1,0 +1,9 @@
+{
+  "name": "jas-eats-choice-uni-app",
+  "version": "1.0.0",
+  "description": "佳食宜选小程序端",
+  "private": true,
+  "dependencies": {
+    "vue": "^3"
+  }
+}

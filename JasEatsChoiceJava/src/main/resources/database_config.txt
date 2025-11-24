@@ -1,0 +1,10 @@
+数据库和表创建完成！如果需要配置应用程序连接数据库，请在application.properties中添加以下配置：
+
+spring.datasource.url=jdbc:mysql://localhost:3306/jaseatschoice
+spring.datasource.username=root
+spring.datasource.password=123456
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+# 可选：自动更新表结构，生产环境不推荐
+# spring.jpa.hibernate.ddl-auto=update
