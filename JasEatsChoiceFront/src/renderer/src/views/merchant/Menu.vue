@@ -1,16 +1,573 @@
+<script setup>
+import { ref, onMounted } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+
+// 菜单状态映射
+const menuStatusMap = {
+  online: { text: '上架中', icon: '🟢', type: 'success' },
+  draft: { text: '草稿', icon: '🟡', type: 'warning' },
+  offline: { text: '下架中', icon: '🔴', type: 'danger' }
+};
+
+// 模拟菜单数据
+const menuList = ref([
+  {
+    id: 1,
+    name: '午餐菜单',
+    dishes: 12,
+    status: 'online',
+    updateTime: '2024-11-21 10:00',
+    autoOnline: '2024-11-22 11:00',
+    autoOffline: '2024-11-22 14:00'
+  },
+  {
+    id: 2,
+    name: '晚餐菜单',
+    dishes: 8,
+    status: 'offline',
+    updateTime: '2024-11-21 14:00',
+    autoOnline: '',
+    autoOffline: ''
+  },
+  {
+    id: 3,
+    name: '夜宵菜单',
+    dishes: 5,
+    status: 'draft',
+    updateTime: '2024-11-20 22:00',
+    autoOnline: '',
+    autoOffline: ''
+  }
+]);
+
+const loading = ref(false);
+const searchKeyword = ref('');
+const activeStatusFilter = ref('all');
+
+// 页面加载时初始化
+onMounted(() => {
+  loading.value = true;
+  // 模拟异步加载
+  setTimeout(() => {
+    loading.value = false;
+  }, 500);
+});
+
+// 筛选菜单
+const filteredMenus = ref([]);
+filteredMenus.value = [...menuList.value];
+
+// 更新筛选
+const updateFilter = () => {
+  filteredMenus.value = menuList.value.filter(menu => {
+    // 状态筛选
+    if (activeStatusFilter.value !== 'all' && menu.status !== activeStatusFilter.value) {
+      return false;
+    }
+
+    // 搜索筛选
+    if (searchKeyword.value && !menu.name.includes(searchKeyword.value)) {
+      return false;
+    }
+
+    return true;
+  });
+};
+
+// 切换状态
+const toggleMenuStatus = (menu) => {
+  let newStatus = '';
+
+  if (menu.status === 'online') {
+    newStatus = 'offline';
+  } else if (menu.status === 'offline' || menu.status === 'draft') {
+    newStatus = 'online';
+  }
+
+  menu.status = newStatus;
+  updateFilter();
+  ElMessage.success(`菜单已${menuStatusMap[newStatus].text}`);
+};
+
+// 编辑菜单
+const editMenu = (menu) => {
+  console.log('编辑菜单:', menu);
+  ElMessage.info('编辑菜单功能开发中');
+};
+
+// 删除菜单
+const deleteMenu = (menu) => {
+  ElMessageBox.confirm('确定要删除该菜单吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+  .then(() => {
+    const index = menuList.value.findIndex(item => item.id === menu.id);
+    if (index !== -1) {
+      menuList.value.splice(index, 1);
+      updateFilter();
+      ElMessage.success('菜单已删除');
+    }
+  })
+  .catch(() => {
+    ElMessage.info('已取消删除');
+  });
+};
+
+// 批量操作
+const selectedMenus = ref([]);
+
+const batchOperation = (operation) => {
+  if (selectedMenus.value.length === 0) {
+    ElMessage.warning('请先选择菜单');
+    return;
+  }
+
+  switch (operation) {
+    case 'online':
+      selectedMenus.value.forEach(menu => {
+        menu.status = 'online';
+      });
+      ElMessage.success('批量上架成功');
+      break;
+    case 'offline':
+      selectedMenus.value.forEach(menu => {
+        menu.status = 'offline';
+      });
+      ElMessage.success('批量下架成功');
+      break;
+    case 'delete':
+      ElMessageBox.confirm('确定要删除所选菜单吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      .then(() => {
+        menuList.value = menuList.value.filter(menu => !selectedMenus.value.includes(menu));
+        selectedMenus.value = [];
+        updateFilter();
+        ElMessage.success('批量删除成功');
+      })
+      .catch(() => {});
+      return;
+  }
+
+  updateFilter();
+  selectedMenus.value = [];
+};
+
+// 导出菜单
+const exportMenu = (menu) => {
+  console.log('导出菜单:', menu);
+  ElMessage.info('导出菜单功能开发中');
+};
+
+// 选择/取消选择单个菜单
+const toggleMenuSelection = (menu) => {
+  const index = selectedMenus.value.findIndex(item => item.id === menu.id);
+
+  if (index === -1) {
+    selectedMenus.value.push(menu);
+  } else {
+    selectedMenus.value.splice(index, 1);
+  }
+};
+
+// 新增菜单对话框
+const addMenuDialogVisible = ref(false);
+
+// 新菜单表单数据
+const newMenu = ref({
+  name: '',
+  category: 'lunch',
+  autoOnline: '',
+  autoOffline: '',
+  status: 'online'
+});
+
+// 打开添加菜单对话框
+const openAddMenuDialog = () => {
+  addMenuDialogVisible.value = true;
+
+  // 重置表单数据
+  newMenu.value = {
+    name: '',
+    category: 'lunch',
+    autoOnline: '',
+    autoOffline: '',
+    status: 'online'
+  };
+};
+
+// 保存新菜单
+const saveNewMenu = () => {
+  // 简单的表单验证
+  if (!newMenu.value.name.trim()) {
+    ElMessage.warning('请填写菜单名称');
+    return;
+  }
+
+  // 创建新菜单对象
+  const newMenuObj = {
+    id: Date.now(),
+    name: newMenu.value.name,
+    dishes: 0,
+    status: newMenu.value.status,
+    updateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    autoOnline: newMenu.value.autoOnline ? newMenu.value.autoOnline.toISOString().slice(0, 19).replace('T', ' ') : '',
+    autoOffline: newMenu.value.autoOffline ? newMenu.value.autoOffline.toISOString().slice(0, 19).replace('T', ' ') : ''
+  };
+
+  // 添加到菜单列表
+  menuList.value.push(newMenuObj);
+  updateFilter();
+  addMenuDialogVisible.value = false;
+  ElMessage.success('菜单已添加');
+};
+
+// 全选/取消全选
+const toggleSelectAll = () => {
+  if (selectedMenus.value.length === filteredMenus.value.length) {
+    selectedMenus.value = [];
+  } else {
+    selectedMenus.value = [...filteredMenus.value];
+  }
+};
+</script>
+
 <template>
-  <div class="page-container">
-    <h1>Merchant ${page}</h1>
-    <p>This is the merchant ${page} page.</p>
+  <div class="menu-management-container">
+    <div class="menu-header">
+      <div class="header-left">
+        <h3 class="page-title">【菜单管理】</h3>
+        <el-button type="text" class="back-btn">↩ 返回</el-button>
+      </div>
+      <div class="header-right">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="输入菜单名称..."
+          style="width: 300px; margin-right: 10px;"
+          @input="updateFilter"
+        />
+        <el-button type="primary" @click="openAddMenuDialog">
+          <span>➕</span>
+          新增菜单
+        </el-button>
+      </div>
+    </div>
+
+    <div class="menu-filters">
+      <div class="filter-section">
+        <span class="filter-label">📋 状态筛选：</span>
+        <el-tag
+          v-for="status in ['all', 'online', 'draft', 'offline']"
+          :key="status"
+          :type="activeStatusFilter === status ? 'primary' : 'info'"
+          effect="plain"
+          @click="activeStatusFilter = status; updateFilter()"
+          class="status-filter"
+        >
+          {{ status === 'all' ? '全部菜单' :
+             status === 'online' ? `${menuStatusMap[status].icon} ${menuStatusMap[status].text}` :
+             status === 'draft' ? `${menuStatusMap[status].icon} ${menuStatusMap[status].text}` :
+             `${menuStatusMap[status].icon} ${menuStatusMap[status].text}` }}
+        </el-tag>
+      </div>
+    </div>
+
+    <div class="menu-list">
+      <div class="menu-item" v-for="menu in filteredMenus" :key="menu.id">
+        <div class="menu-selection">
+          <el-checkbox
+            :checked="selectedMenus.includes(menu)"
+            @change="toggleMenuSelection(menu)"
+          />
+        </div>
+
+        <div class="menu-content">
+          <div class="menu-info">
+            <div class="menu-name">
+              <span class="name">{{ menu.name }}</span>
+              <el-tag :type="menuStatusMap[menu.status].type">
+                {{ menuStatusMap[menu.status].icon }} {{ menuStatusMap[menu.status].text }}
+              </el-tag>
+            </div>
+
+            <div class="menu-stats">
+              <span class="dishes-count">🍴 {{ menu.dishes }} 菜品</span>
+              <span class="update-time">⏰ 更新时间：{{ menu.updateTime }}</span>
+            </div>
+
+            <div class="auto-times">
+              <span v-if="menu.autoOnline" class="auto-online">
+                ⏰ 自动上架：{{ menu.autoOnline }}
+              </span>
+              <span v-if="menu.autoOffline" class="auto-offline">
+                ⏰ 自动下架：{{ menu.autoOffline }}
+              </span>
+            </div>
+          </div>
+
+          <div class="menu-actions">
+            <el-button
+              type="primary"
+              size="small"
+              @click="toggleMenuStatus(menu)"
+            >
+              {{ menu.status === 'online' ? '🔴 下架菜单' : '🟢 上架菜单' }}
+            </el-button>
+
+            <el-button
+              type="warning"
+              size="small"
+              @click="editMenu(menu)"
+            >
+              ✏️ 编辑
+            </el-button>
+
+            <el-button
+              type="danger"
+              size="small"
+              @click="deleteMenu(menu)"
+            >
+              🗑️ 删除
+            </el-button>
+
+            <el-button
+              type="info"
+              size="small"
+              @click="exportMenu(menu)"
+            >
+              📤 导出菜单
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="batch-actions" v-if="filteredMenus.length > 0">
+      <span class="select-all">
+        <el-checkbox
+          :checked="selectedMenus.length === filteredMenus.length"
+          @change="toggleSelectAll"
+        />
+        全选
+      </span>
+
+      <el-button
+        type="success"
+        size="small"
+        @click="batchOperation('online')"
+        :disabled="selectedMenus.length === 0"
+      >
+        🟢 批量上架
+      </el-button>
+
+      <el-button
+        type="warning"
+        size="small"
+        @click="batchOperation('offline')"
+        :disabled="selectedMenus.length === 0"
+      >
+        🔴 批量下架
+      </el-button>
+
+      <el-button
+        type="danger"
+        size="small"
+        @click="batchOperation('delete')"
+        :disabled="selectedMenus.length === 0"
+      >
+        🗑️ 批量删除
+      </el-button>
+    </div>
+
+    <!-- 空数据提示 -->
+    <el-empty v-if="filteredMenus.length === 0" description="暂无菜单"></el-empty>
+
+    <!-- 添加菜单对话框 -->
+    <el-dialog
+      v-model="addMenuDialogVisible"
+      title="添加新菜单"
+      width="600px"
+      top="10%"
+    >
+      <el-form :model="newMenu" label-width="100px" status-icon>
+        <el-form-item label="名称" prop="name" required>
+          <el-input v-model="newMenu.name" placeholder="请输入菜单名称" />
+        </el-form-item>
+
+        <el-form-item label="分类" prop="category" required>
+          <el-select v-model="newMenu.category" style="width: 100%;">
+            <el-option label="早餐" value="breakfast" />
+            <el-option label="午餐" value="lunch" />
+            <el-option label="晚餐" value="dinner" />
+            <el-option label="夜宵" value="late-night" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="自动上架时间">
+          <el-time-picker
+            v-model="newMenu.autoOnline"
+            type="datetime"
+            placeholder="选择自动上架时间"
+            style="width: 100%;"
+          />
+        </el-form-item>
+
+        <el-form-item label="自动下架时间">
+          <el-time-picker
+            v-model="newMenu.autoOffline"
+            type="datetime"
+            placeholder="选择自动下架时间"
+            style="width: 100%;"
+          />
+        </el-form-item>
+
+        <el-form-item label="状态">
+          <el-select v-model="newMenu.status" style="width: 100%;">
+            <el-option label="上架中" value="online" />
+            <el-option label="草稿" value="draft" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="addMenuDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveNewMenu">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
-<script setup>
-// Add merchant ${page} specific functionality here
-</script>
+<style scoped lang="less">
+.menu-management-container {
+  padding: 0 20px 20px 20px;
 
-<style scoped>
-.page-container {
-  padding: 20px;
+  .menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+  }
+
+  .menu-filters {
+    margin-bottom: 24px;
+
+    .filter-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .filter-label {
+        font-weight: 500;
+      }
+
+      .status-filter {
+        cursor: pointer;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+  }
+
+  .menu-list {
+    margin-bottom: 20px;
+
+    .menu-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 16px;
+      border: 1px solid #e4e7ed;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      background-color: #fff;
+      transition: box-shadow 0.3s;
+
+      &:hover {
+        box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      .menu-selection {
+        margin-top: 4px;
+        margin-right: 16px;
+      }
+
+      .menu-content {
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+
+        .menu-info {
+          .menu-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+
+            .name {
+              font-size: 16px;
+              font-weight: 600;
+            }
+          }
+
+          .menu-stats, .auto-times {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 8px;
+            font-size: 14px;
+
+            .dishes-count {
+              color: #606266;
+            }
+          }
+
+          .auto-times {
+            font-size: 13px;
+            color: #909399;
+          }
+        }
+
+        .menu-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          justify-content: flex-start;
+
+          button {
+            width: 100px;
+          }
+        }
+      }
+    }
+  }
+
+  .batch-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .select-all {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+  }
+
+  .dialog-footer {
+    text-align: right;
+  }
 }
 </style>

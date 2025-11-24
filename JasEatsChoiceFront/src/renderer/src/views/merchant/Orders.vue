@@ -1,165 +1,255 @@
 <script setup>
-import { ref } from 'vue';
-
-// 商家订单数据
-const orders = ref([
-  {
-    id: 1,
-    orderNo: 'JD20231123001',
-    status: 'delivered',
-    user: '张三',
-    total: 28.8,
-    time: '2023-11-23 12:30',
-    items: ['健康轻食套餐', '矿泉水'],
-    address: '北京市朝阳区建国路88号'
-  },
-  {
-    id: 2,
-    orderNo: 'JD20231123002',
-    status: 'pending',
-    user: '李四',
-    total: 15.5,
-    time: '2023-11-23 10:15',
-    items: ['营养早餐组合'],
-    address: '北京市海淀区中关村大街1号'
-  },
-  {
-    id: 3,
-    orderNo: 'JD20231122001',
-    status: 'processing',
-    user: '王五',
-    total: 42.0,
-    time: '2023-11-22 18:45',
-    items: ['宫保鸡丁', '麻婆豆腐', '米饭'],
-    address: '北京市东城区王府井大街100号'
-  },
-  {
-    id: 4,
-    orderNo: 'JD20231121001',
-    status: 'completed',
-    user: '赵六',
-    total: 35.0,
-    time: '2023-11-21 19:30',
-    items: ['健身餐套餐'],
-    address: '北京市西城区西单北大街180号'
-  }
-]);
+import { ref, computed } from 'vue';
+import { ElMessage } from 'element-plus';
 
 // 订单状态映射
 const orderStatusMap = {
-  'pending': '待接单',
-  'processing': '处理中',
-  'delivered': '已送达',
-  'completed': '已完成',
-  'cancelled': '已取消'
+  'pending': { text: '待处理', icon: '🔴', type: 'danger' },
+  'preparing': { text: '准备中', icon: '🟡', type: 'warning' },
+  'completed': { text: '已完成', icon: '✅', type: 'success' }
 };
 
-// 处理订单
-const processOrder = (order, newStatus) => {
-  // 实际应用中实现订单状态变更功能
-  console.log('处理订单:', order, newStatus);
-  order.status = newStatus;
+// 模拟今日订单数据
+const orders = ref([
+  {
+    id: 1,
+    orderNo: 'JD20241121001',
+    status: 'pending',
+    user: '小明',
+    phone: '138XXXX8888',
+    address: '公司地址',
+    total: 78.00,
+    time: '2024-11-21 10:30',
+    unread: true
+  },
+  {
+    id: 2,
+    orderNo: 'JD20241121002',
+    status: 'preparing',
+    user: '小红',
+    phone: '139XXXX9999',
+    address: '家庭地址',
+    total: 45.00,
+    time: '2024-11-21 10:35',
+    unread: false
+  },
+  {
+    id: 3,
+    orderNo: 'JD20241121003',
+    status: 'completed',
+    user: '小刚',
+    phone: '137XXXX7777',
+    address: '学校地址',
+    total: 62.00,
+    time: '2024-11-21 10:40',
+    unread: false
+  },
+  {
+    id: 4,
+    orderNo: 'JD20241121004',
+    status: 'pending',
+    user: '小李',
+    phone: '136XXXX6666',
+    address: '酒店地址',
+    total: 128.00,
+    time: '2024-11-21 11:00',
+    unread: true
+  }
+]);
+
+// 当前选中的状态筛选
+const activeStatusFilter = ref('all');
+
+// 搜索关键词
+const searchKeyword = ref('');
+
+// 筛选后的订单
+const filteredOrders = ref([]);
+filteredOrders.value = [...orders.value];
+
+// 订单概览统计
+const orderOverview = computed(() => {
+  const total = filteredOrders.value.length;
+  const totalAmount = filteredOrders.value.reduce((sum, order) => sum + order.total, 0);
+  const pendingCount = filteredOrders.value.filter(order => order.status === 'pending').length;
+  const preparingCount = filteredOrders.value.filter(order => order.status === 'preparing').length;
+  const completedCount = filteredOrders.value.filter(order => order.status === 'completed').length;
+
+  return {
+    total,
+    totalAmount,
+    pendingCount,
+    preparingCount,
+    completedCount
+  };
+});
+
+// 更新筛选
+const updateFilter = () => {
+  filteredOrders.value = orders.value.filter(order => {
+    // 状态筛选
+    const statusMatch = activeStatusFilter.value === 'all' || order.status === activeStatusFilter.value;
+
+    // 搜索筛选
+    const searchMatch = !searchKeyword.value ||
+      order.orderNo.includes(searchKeyword.value) ||
+      order.user.includes(searchKeyword.value);
+
+    return statusMatch && searchMatch;
+  });
 };
 
 // 查看订单详情
 const viewOrderDetails = (order) => {
   // 实际应用中可以导航到订单详情页
   console.log('查看订单详情:', order);
+
+  // 标记为已读
+  if (order.unread) {
+    order.unread = false;
+    updateFilter();
+    ElMessage.success('订单已标记为已读');
+  }
 };
+
+// 更新订单状态
+const updateOrderStatus = (order, newStatus) => {
+  order.status = newStatus;
+  updateFilter();
+  ElMessage.success(`订单状态已更新为${orderStatusMap[newStatus].text}`);
+};
+
+// 页面加载时初始化筛选
+updateFilter();
 </script>
 
 <template>
   <div class="merchant-orders-container">
-    <h2>商家订单管理</h2>
-
-    <!-- 订单列表 -->
-    <div class="order-list">
-      <el-card
-        v-for="order in orders"
-        :key="order.id"
-        class="order-card"
-      >
-        <div class="order-header">
-          <div class="order-info">
-            <div class="order-no">订单号: {{ order.orderNo }}</div>
-            <div class="order-user">用户: {{ order.user }}</div>
-            <div class="order-time">时间: {{ order.time }}</div>
-            <div class="order-address">地址: {{ order.address }}</div>
-          </div>
-          <div class="order-status">
-            <el-tag
-              :type="order.status === 'pending' ? 'warning' : order.status === 'processing' ? 'info' : order.status === 'delivered' ? 'success' : 'danger'"
-            >
-              {{ orderStatusMap[order.status] }}
-            </el-tag>
-          </div>
-        </div>
-
-        <div class="order-items">
-          <div class="item-title">商品:</div>
-          <div class="item-list">
-            <el-tag v-for="item in order.items" :key="item" type="info" size="small">{{ item }}</el-tag>
-          </div>
-        </div>
-
-        <div class="order-total">
-          <div class="total-text">总金额:</div>
-          <div class="total-amount">¥{{ order.total.toFixed(2) }}</div>
-        </div>
-
-        <div class="order-actions">
-          <el-button
-            type="primary"
-            size="small"
-            @click="viewOrderDetails(order)"
-          >
-            查看详情
-          </el-button>
-
-          <el-button
-            v-if="order.status === 'pending'"
-            type="success"
-            size="small"
-            @click="processOrder(order, 'processing')"
-          >
-            接单
-          </el-button>
-
-          <el-button
-            v-if="order.status === 'processing'"
-            type="success"
-            size="small"
-            @click="processOrder(order, 'delivered')"
-          >
-            已送达
-          </el-button>
-
-          <el-button
-            v-if="order.status === 'delivered'"
-            type="success"
-            size="small"
-            @click="processOrder(order, 'completed')"
-          >
-            完成订单
-          </el-button>
-
-          <el-button
-            v-if="order.status === 'pending' || order.status === 'processing'"
-            type="danger"
-            size="small"
-            @click="processOrder(order, 'cancelled')"
-          >
-            取消订单
-          </el-button>
-        </div>
-      </el-card>
+    <div class="orders-header">
+      <div class="header-left">
+        <h3 class="page-title">【今日订单】</h3>
+        <el-button type="text" class="back-btn">↩ 返回</el-button>
+      </div>
     </div>
 
-    <!-- 空数据提示 -->
-    <el-empty
-      v-if="orders.length === 0"
-      description="暂无订单"
-    ></el-empty>
+    <!-- 今日订单概览 -->
+    <div class="overview-section">
+      <div class="overview-info">
+        <div class="overview-item">
+          <span class="label">📊 今日订单概览：</span>
+        </div>
+        <div class="overview-stats">
+          <span class="stat-item">🍽️ 总订单数：{{ orderOverview.total }}</span>
+          <span class="stat-item">💰 总金额：¥{{ orderOverview.totalAmount.toFixed(2) }}</span>
+        </div>
+        <div class="status-stats">
+          <span class="stat-item">🔴 待处理：{{ orderOverview.pendingCount }}</span>
+          <span class="stat-item">🟡 准备中：{{ orderOverview.preparingCount }}</span>
+          <span class="stat-item">✅ 已完成：{{ orderOverview.completedCount }}</span>
+        </div>
+      </div>
+
+      <div class="search-section">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="输入订单号/用户名称..."
+          style="width: 300px;"
+          @input="updateFilter"
+        />
+      </div>
+    </div>
+
+    <!-- 订单列表 -->
+    <div class="orders-list-section">
+      <div class="orders-filter">
+        <span class="filter-label">📋 订单列表 (状态筛选：</span>
+        <el-tag
+          v-for="status in ['all', 'pending', 'preparing', 'completed']"
+          :key="status"
+          :type="activeStatusFilter === status ? 'primary' : 'info'"
+          effect="plain"
+          @click="activeStatusFilter = status; updateFilter()"
+          class="status-tag"
+        >
+          {{ status === 'all' ? '全部' : orderStatusMap[status].text }}
+        </el-tag>
+        <span>)</span>
+      </div>
+
+      <div class="orders-list">
+        <div
+          v-for="order in filteredOrders"
+          :key="order.id"
+          class="order-item"
+        >
+          <div class="order-left">
+            <div class="order-basic-info">
+              <div class="order-no">订单号：{{ order.orderNo }}</div>
+              <div class="order-amount">💰 ¥{{ order.total.toFixed(2) }}</div>
+              <div class="order-time">⏰ {{ order.time }}</div>
+            </div>
+
+            <div class="order-user-info">
+              <div class="user-name">👤 用户：{{ order.user }}</div>
+              <div class="user-phone">📞 {{ order.phone }}</div>
+              <div class="user-address">📍 {{ order.address }}</div>
+            </div>
+          </div>
+
+          <div class="order-right">
+            <div class="order-status">
+              <el-tag :type="orderStatusMap[order.status].type">
+                {{ orderStatusMap[order.status].icon }} {{ orderStatusMap[order.status].text }}
+              </el-tag>
+              <el-badge v-if="order.unread" :value="''" type="danger" class="unread-badge" />
+            </div>
+
+            <div class="order-actions">
+              <el-button
+                type="primary"
+                size="small"
+                @click="viewOrderDetails(order)"
+              >
+                📝 查看详情
+              </el-button>
+
+              <!-- 状态转换按钮 -->
+              <el-button
+                v-if="order.status === 'pending'"
+                type="success"
+                size="small"
+                @click="updateOrderStatus(order, 'preparing')"
+              >
+                🟡 标记为准备中
+              </el-button>
+
+              <el-button
+                v-if="order.status === 'preparing'"
+                type="success"
+                size="small"
+                @click="updateOrderStatus(order, 'completed')"
+              >
+                ✅ 标记为已完成
+              </el-button>
+
+              <el-button
+                v-if="order.status !== 'completed'"
+                type="danger"
+                size="small"
+                @click="updateOrderStatus(order, 'completed')"
+              >
+                🗑️ 取消订单
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 空数据提示 -->
+      <div v-if="filteredOrders.length === 0" class="empty-orders">
+        <el-empty description="暂无今日订单"></el-empty>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -167,84 +257,118 @@ const viewOrderDetails = (order) => {
 .merchant-orders-container {
   padding: 0 20px 20px 20px;
 
-  h2 {
-    font-size: 24px;
-    margin: 0 0 20px 0;
-  }
+  .orders-header {
+    margin-bottom: 20px;
 
-  .order-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .order-card {
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 15px;
-
-      .order-info {
-        .order-no {
-          font-weight: bold;
-          margin-bottom: 5px;
-        }
-        .order-user,
-        .order-time,
-        .order-address {
-          font-size: 14px;
-          color: #606266;
-          margin-bottom: 3px;
-        }
-
-        .order-address {
-          max-width: 400px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
     }
+  }
 
-    .order-items {
-      margin-bottom: 15px;
+  .overview-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 16px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 20px;
 
-      .item-title {
-        font-weight: bold;
-        margin-bottom: 10px;
+    .overview-info {
+      .overview-item {
+        font-weight: 600;
+        margin-bottom: 8px;
       }
 
-      .item-list {
+      .overview-stats, .status-stats {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 24px;
+        font-size: 14px;
+        margin-bottom: 8px;
       }
     }
+  }
 
-    .order-total {
+  .orders-list-section {
+    .orders-filter {
       display: flex;
-      justify-content: flex-end;
       align-items: center;
-      margin-bottom: 15px;
+      gap: 8px;
+      margin-bottom: 24px;
+      font-size: 14px;
 
-      .total-text {
-        margin-right: 10px;
-        color: #606266;
-      }
-
-      .total-amount {
-        font-size: 18px;
-        font-weight: bold;
-        color: #ff6b6b;
+      .status-tag {
+        cursor: pointer;
+        &:hover {
+          opacity: 0.8;
+        }
       }
     }
 
-    .order-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
+    .orders-list {
+      .order-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 16px;
+        border: 1px solid #e4e7ed;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        background-color: #fff;
+        transition: box-shadow 0.3s;
+
+        &:hover {
+          box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .order-left {
+          flex: 1;
+          margin-right: 20px;
+
+          .order-basic-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 12px;
+            font-size: 14px;
+          }
+
+          .order-user-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            font-size: 14px;
+            color: #606266;
+          }
+        }
+
+        .order-right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 12px;
+
+          .order-status {
+            position: relative;
+
+            .unread-badge {
+              position: absolute;
+              top: -5px;
+              right: -5px;
+            }
+          }
+        }
+      }
+    }
+
+    .empty-orders {
+      text-align: center;
+      margin-top: 50px;
     }
   }
 }

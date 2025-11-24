@@ -4,37 +4,24 @@
     "type": "split",
     "children": [
       {
-        "id": "5f508728bfe74286",
+        "id": "9d3d1d3c7022a92d",
         "type": "tabs",
         "children": [
           {
-            "id": "d07a35e3cfa0f70e",
+            "id": "53a1d78481fca81d",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "后端API文档.md",
+                "file": "商家端页面/商家中心页面设计.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "后端API文档"
-            }
-          },
-          {
-            "id": "86ac7a7dc1dc8bb3",
-            "type": "leaf",
-            "state": {
-              "type": "release-notes",
-              "state": {
-                "currentVersion": "1.10.3"
-              },
-              "icon": "lucide-book-up",
-              "title": "版本说明 1.10.3"
+              "title": "商家中心页面设计"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -91,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 335.5
+    "width": 200
   },
   "right": {
     "id": "fbc9d1dff4fba656",
@@ -182,19 +169,23 @@
       "bases:创建新数据库": false
     }
   },
-  "active": "ea45ba47f275e696",
+  "active": "53a1d78481fca81d",
   "lastOpenFiles": [
-    "JasEatsChoiceFront/out/renderer/assets/index-993cddb2.js",
-    "JasEatsChoiceFront/out/renderer/assets/HomeContent-07941a0e.js",
-    "JasEatsChoiceFront/out/renderer/assets/TodayRecipe-a04c6b72.js",
-    "JasEatsChoiceFront/out/renderer/assets/Settings-f7220814.js",
-    "JasEatsChoiceFront/out/renderer/assets/Menu-2d990228.js",
-    "JasEatsChoiceFront/out/renderer/assets/AI-4a087e82.js",
-    "JasEatsChoiceFront/out/renderer/assets/Address-5a31ff67.js",
-    "JasEatsChoiceFront/out/renderer/assets/Calorie-020158c9.js",
-    "JasEatsChoiceFront/out/renderer/assets/Contact-49a34681.js",
-    "JasEatsChoiceFront/out/renderer/assets/Messages-ce73e577.js",
-    "JasEatsChoiceFront/out/renderer/assets/ConsumeHistory-79c5b3c4.js",
+    "JasEatsChoiceFront/src/renderer/src/views/merchant/Chat.vue",
+    "JasEatsChoiceFront/out/renderer/assets/index-bb0886ad.js",
+    "JasEatsChoiceFront/out/renderer/assets/TodayRecipe-6a2b5692.js",
+    "JasEatsChoiceFront/out/renderer/assets/Menu-3ff7fcb2.js",
+    "JasEatsChoiceFront/out/renderer/assets/DishManagement-4740f319.js",
+    "JasEatsChoiceFront/out/renderer/assets/Address-5df1882c.js",
+    "JasEatsChoiceFront/out/renderer/assets/MyCollection-6beedf03.js",
+    "JasEatsChoiceFront/out/renderer/assets/MerchantDetail-d1194971.js",
+    "JasEatsChoiceFront/out/renderer/assets/Settings-0527146d.js",
+    "JasEatsChoiceFront/out/renderer/assets/HomeContent-7f2af9e4.js",
+    "JasEatsChoiceFront/out/renderer/assets/DishEdit-bec01d31.js",
+    "商家端页面/我的店铺页面设计.md",
+    "商家端页面/菜品编辑页面设计.md",
+    "商家端页面/菜单管理页面设计.md",
+    "商家端页面/菜单编辑页面设计.md",
     "JasEatsChoiceFront/node_modules/element-plus/README.md",
     "JasEatsChoiceFront/node_modules/app-builder-bin/readme.md",
     "JasEatsChoiceFront/node_modules/typescript/README.md",
@@ -225,10 +216,6 @@
     "JasEatsChoiceFront/node_modules/conf/node_modules/ajv/README.md",
     "JasEatsChoiceFront/node_modules/ajv-formats/node_modules/ajv/README.md",
     "JasEatsChoiceFront/node_modules/prettier/THIRD-PARTY-NOTICES.md",
-    "JasEatsChoiceFront/node_modules/prettier/README.md",
-    "JasEatsChoiceFront/node_modules/vite/README.md",
-    "JasEatsChoiceFront/node_modules/vite/LICENSE.md",
-    "JasEatsChoiceFront/node_modules/async/README.md",
-    "JasEatsChoiceFront/node_modules/async/CHANGELOG.md"
+    "JasEatsChoiceFront/node_modules/prettier/README.md"
   ]
 }
