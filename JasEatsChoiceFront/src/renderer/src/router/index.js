@@ -28,6 +28,12 @@ const MerchantHome = () => import('../views/merchant/Home.vue') // 商家首页
 const MerchantOrders = () => import('../views/merchant/Orders.vue') // 商家订单管理
 const MerchantMenu = () => import('../views/merchant/Menu.vue') // 商家菜单管理
 const MerchantMessages = () => import('../views/merchant/Messages.vue') // 商家消息管理
+const MerchantMyShop = () => import('../views/merchant/MyShop.vue') // 我的店铺
+const MerchantMenuEdit = () => import('../views/merchant/MenuEdit.vue') // 菜单编辑
+const MerchantDishManagement = () => import('../views/merchant/DishManagement.vue') // 菜品管理
+const MerchantDishEdit = () => import('../views/merchant/DishEdit.vue') // 菜品编辑
+const MerchantChat = () => import('../views/merchant/Chat.vue') // 商家聊天
+const MerchantStatistics = () => import('../views/merchant/Statistics.vue') // 经营统计
 
 // 创建路由实例
 const router = createRouter({
@@ -218,30 +224,75 @@ const router = createRouter({
     //   meta: { title: '佳食宜选-设置' }
     // },
 
-    // 商家模块路由
+    // 商家模块路由 - 嵌套结构
     {
       path: '/merchant/home',
       name: 'merchant-home',
-      component: MerchantHome,
-      meta: { title: '佳食宜选-商家首页' }
-    },
-    {
-      path: '/merchant/orders',
-      name: 'merchant-orders',
-      component: MerchantOrders,
-      meta: { title: '佳食宜选-商家订单管理' }
-    },
-    {
-      path: '/merchant/menu',
-      name: 'merchant-menu',
-      component: MerchantMenu,
-      meta: { title: '佳食宜选-商家菜单管理' }
-    },
-    {
-      path: '/merchant/messages',
-      name: 'merchant-messages',
-      component: MerchantMessages,
-      meta: { title: '佳食宜选-商家消息管理' }
+      component: UserHome, // 使用用户端的Home.vue作为基础容器，它包含CommonHome
+      meta: { title: '佳食宜选-商家首页' },
+      children: [
+        // 默认显示商家首页内容
+        {
+          path: '',
+          name: 'merchant-home-content',
+          component: MerchantHome,
+          meta: { title: '佳食宜选-商家首页' }
+        },
+        {
+          path: 'orders', // 相对路径，继承自 /merchant/home
+          name: 'merchant-orders',
+          component: MerchantOrders,
+          meta: { title: '佳食宜选-商家订单管理' }
+        },
+        {
+          path: 'menu', // 相对路径，继承自 /merchant/home
+          name: 'merchant-menu',
+          component: MerchantMenu,
+          meta: { title: '佳食宜选-商家菜单管理' }
+        },
+        {
+          path: 'messages', // 相对路径，继承自 /merchant/home
+          name: 'merchant-messages',
+          component: MerchantMessages,
+          meta: { title: '佳食宜选-商家消息管理' }
+        },
+        {
+          path: 'my-shop', // 相对路径，继承自 /merchant/home
+          name: 'merchant-my-shop',
+          component: MerchantMyShop,
+          meta: { title: '佳食宜选-我的店铺' }
+        },
+        {
+          path: 'menu-edit', // 相对路径，继承自 /merchant/home
+          name: 'merchant-menu-edit',
+          component: MerchantMenuEdit,
+          meta: { title: '佳食宜选-菜单编辑' }
+        },
+        {
+          path: 'dish-management', // 相对路径，继承自 /merchant/home
+          name: 'merchant-dish-management',
+          component: MerchantDishManagement,
+          meta: { title: '佳食宜选-菜品管理' }
+        },
+        {
+          path: 'dish-edit', // 相对路径，继承自 /merchant/home
+          name: 'merchant-dish-edit',
+          component: MerchantDishEdit,
+          meta: { title: '佳食宜选-菜品编辑' }
+        },
+        {
+          path: 'chat', // 相对路径，继承自 /merchant/home
+          name: 'merchant-chat',
+          component: MerchantChat,
+          meta: { title: '佳食宜选-商家聊天' }
+        },
+        {
+          path: 'statistics', // 相对路径，继承自 /merchant/home
+          name: 'merchant-statistics',
+          component: MerchantStatistics,
+          meta: { title: '佳食宜选-经营统计' }
+        }
+      ]
     }
   ]
 })

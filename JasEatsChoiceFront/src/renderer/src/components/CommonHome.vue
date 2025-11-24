@@ -37,9 +37,13 @@ const menuData = {
   // 商家端菜单
   merchant: [
     { index: '1', name: '商家首页', icon: HomeFilled, path: '/merchant/home' },
-    { index: '2', name: '订单管理', icon: List, path: '/merchant/orders' },
-    { index: '3', name: '菜单管理', icon: Shop, path: '/merchant/menu' },
-    { index: '4', name: '消息管理', icon: Message, path: '/merchant/messages' }
+    { index: '2', name: '订单管理', icon: List, path: '/merchant/home/orders' }, // 修改为正确的路由路径
+    { index: '3', name: '菜单管理', icon: Shop, path: '/merchant/home/menu' }, // 修改为正确的路由路径
+    { index: '4', name: '菜品管理', icon: Document, path: '/merchant/home/dish-management' },
+    { index: '5', name: '我的店铺', icon: Shop, path: '/merchant/home/my-shop' },
+    { index: '6', name: '商家聊天', icon: ChatDotRound, path: '/merchant/home/chat' },
+    { index: '8', name: '经营统计', icon: DataAnalysis, path: '/merchant/home/statistics' },
+    { index: '9', name: '消息管理', icon: Message, path: '/merchant/home/messages' } // 修改为正确的路由路径
   ]
 };
 
@@ -55,6 +59,17 @@ const handleMenuSelect = (index) => {
   const menuItem = currentMenu.value.find(item => item.index === index);
   if (menuItem) {
     navigateTo(menuItem.path);
+  }
+};
+
+// 头像点击事件处理
+const handleAvatarClick = () => {
+  if (userRole.value === 'merchant') {
+    // 商家端点击头像跳转到商家首页
+    navigateTo('/merchant/home');
+  } else {
+    // 用户端点击头像跳转到用户中心
+    navigateTo('/user/home/profile');
   }
 };
 
@@ -155,8 +170,8 @@ const handleSearch = (value) => {
     <div class="main-content">
       <!-- 左侧菜单栏 -->
       <el-aside width="168px" class="sidebar-menu">
-        <div class="avatar-section" @click="navigateTo('/user/home/profile')">
-          <el-avatar :size="80" class="user-avatar" style="cursor: pointer;">👤</el-avatar>
+        <div class="avatar-section" @click="handleAvatarClick">
+          <el-avatar :size="80" class="user-avatar" style="cursor: pointer;">{{ userRole.value === 'merchant' ? '🏪' : '👤' }}</el-avatar>
         </div>
 
         <el-menu
