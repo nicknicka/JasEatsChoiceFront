@@ -76,6 +76,14 @@ const viewMerchantDetails = (merchant) => {
   router.push('/user/home/merchant-detail');
 };
 
+// 立即下单功能
+const orderNow = (merchant) => {
+  // 将商家信息存储到会话存储
+  sessionStorage.setItem('selectedMerchant', JSON.stringify(merchant));
+  // 跳转到商家详情页面的立即下单流程
+  router.push('/user/home/merchant-detail');
+};
+
 // 计算属性：过滤和排序后的商家列表
 const filteredMerchants = computed(() => {
   let result = [...merchants.value];
@@ -202,7 +210,7 @@ const filteredMerchants = computed(() => {
 
         <div class="card-actions">
           <el-button type="primary" size="small" @click="viewMerchantDetails(merchant)">查看详情</el-button>
-          <el-button type="success" size="small">立即下单</el-button>
+          <el-button type="success" size="small" @click="orderNow(merchant)">立即下单</el-button>
         </div>
       </el-card>
     </div>

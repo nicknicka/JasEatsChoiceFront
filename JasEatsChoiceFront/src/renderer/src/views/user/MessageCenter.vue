@@ -1,5 +1,6 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { ElMessageBox } from 'element-plus';
 
 // 消息中心数据
 const messages = ref([
@@ -40,11 +41,23 @@ const messages = ref([
 // 切换消息分类
 const activeTab = ref('all');
 
+// 筛选消息
+const filteredMessages = computed(() => {
+  if (activeTab.value === 'all') {
+    return messages.value;
+  }
+  return messages.value.filter(msg => msg.type === activeTab.value);
+});
+
+// 消息详情模态框
+const messageDetail = ref(null);
+const showDetailModal = ref(false);
+
 // 查看消息详情
 const viewMessage = (message) => {
   message.read = true;
-  // 实际应用中可以导航到消息详情页
-  console.log('查看消息:', message);
+  messageDetail.value = message;
+  showDetailModal.value = true;
 };
 
 // 批量删除消息
@@ -69,7 +82,7 @@ const deleteSelected = () => {
     <!-- 消息列表 -->
     <div class="message-list">
       <el-card
-        v-for="message in messages"
+        v-for="message in filteredMessages"
         :key="message.id"
         class="message-card"
         :class="{ 'unread': !message.read }"
@@ -108,9 +121,31 @@ const deleteSelected = () => {
 
     <!-- 空数据提示 -->
     <el-empty
-      v-if="messages.length === 0"
+      v-if="filteredMessages.length === 0"
       description="暂无消息"
     ></el-empty>
+
+    <!-- 消息详情模态框 -->
+    <el-dialog
+      v-model="showDetailModal"
+      :title="messageDetail ? messageDetail.title : ''"
+      width="600px"
+      top="20%"
+    >
+      <div v-if="messageDetail" class="message-detail-content">
+        <div class="detail-header">
+          <el-tag
+            :type="messageDetail.type === 'order' ? 'primary' : messageDetail.type === 'system' ? 'warning' : 'success'"
+          >
+            {{ messageDetail.type === 'order' ? '订单消息' : messageDetail.type === 'system' ? '系统通知' : '优惠活动' }}
+          </el-tag>
+          <span class="detail-time">{{ messageDetail.time }}</span>
+        </div>
+        <div class="detail-content">
+          {{ messageDetail.content }}
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -179,4 +214,24 @@ const deleteSelected = () => {
     }
   }
 }
+  /* 消息详情模态框样式 */
+  .message-detail-content {
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+
+      .detail-time {
+        font-size: 14px;
+        color: #909399;
+      }
+    }
+
+    .detail-content {
+      font-size: 16px;
+      color: #303133;
+      line-height: 1.6;
+    }
+  }
 </style>

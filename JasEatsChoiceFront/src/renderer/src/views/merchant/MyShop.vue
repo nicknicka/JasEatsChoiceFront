@@ -6,7 +6,7 @@ import { Plus } from '@element-plus/icons-vue';
 // 店铺基本信息
 const shopInfo = ref({
   name: 'XX餐厅',
-  avatar: 'https://picsum.photos/id/1012/100/100', // 默认店铺头像
+  avatar: '🏪', // 默认店铺头像
   rating: '4.8/5.0',
   address: '北京市朝阳区XX路123号',
   phone: '138XXXX8888',
@@ -39,6 +39,9 @@ const shopAlbum = ref({
   environment: 3,
   dishes: 12
 });
+
+// 头像放大弹窗
+const showLargeAvatar = ref(false);
 
 // 编辑对话框
 const editDialogVisible = ref(false);
@@ -140,7 +143,7 @@ const handleUpload = (file) => {
       <div class="shop-info-card">
         <h4 class="card-title">🏪 店铺基本信息</h4>
         <div class="shop-avatar-section">
-          <el-avatar :size="100" :src="shopInfo.avatar" class="shop-avatar"></el-avatar>
+          <el-avatar :size="100" :src="shopInfo.avatar" class="shop-avatar" @click="showLargeAvatar = true"></el-avatar>
         </div>
         <div class="info-row">
           <span class="info-label">店铺名称：</span>
@@ -245,6 +248,18 @@ const handleUpload = (file) => {
         <span class="dialog-footer">
           <el-button @click="editDialogVisible = false">取消</el-button>
           <el-button type="primary" @click="saveShopInfo">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 头像放大对话框 -->
+    <el-dialog v-model="showLargeAvatar" title="店铺头像" width="350px" top="20%">
+      <div style="text-align: center; padding: 20px 0;">
+        <el-avatar :size="250" :src="shopInfo.avatar"></el-avatar>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="showLargeAvatar = false">关闭</el-button>
         </span>
       </template>
     </el-dialog>

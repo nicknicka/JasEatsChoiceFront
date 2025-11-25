@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -56,6 +56,14 @@ const orderStatusMap = {
   'cancelled': '已取消'
 };
 
+// 筛选后的订单
+const filteredOrders = computed(() => {
+  if (activeStatus.value === 'all') {
+    return orders.value;
+  }
+  return orders.value.filter(order => order.status === activeStatus.value);
+});
+
 // 查看订单详情
 const viewOrderDetails = (order) => {
   // 实际应用中可以导航到订单详情页
@@ -91,7 +99,7 @@ const cancelOrder = (order) => {
     <!-- 订单列表 -->
     <div class="order-list">
       <el-card
-        v-for="order in orders"
+        v-for="order in filteredOrders"
         :key="order.id"
         class="order-card"
       >

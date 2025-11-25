@@ -10,7 +10,7 @@ const conversations = ref([
     id: 1,
     type: 'private',
     name: '小明',
-    avatar: 'https://picsum.photos/id/1/40/40',
+    avatar: '👤', // 用 emoji 替代外部图片
     lastMessage: '这个麻辣香锅饭太好吃了！',
     time: '2024-11-21 14:30',
     unreadCount: 1,
@@ -20,7 +20,7 @@ const conversations = ref([
     id: 2,
     type: 'private',
     name: '小红',
-    avatar: 'https://picsum.photos/id/2/40/40',
+    avatar: '👤', // 用 emoji 替代外部图片
     lastMessage: '我想取消订单',
     time: '2024-11-21 14:15',
     unreadCount: 0,
@@ -31,7 +31,7 @@ const conversations = ref([
     id: 3,
     type: 'group',
     name: '商家交流群',
-    avatar: 'https://picsum.photos/id/100/40/40',
+    avatar: '👥', // 用 emoji 替代外部图片
     lastMessage: '大家最近生意怎么样？',
     time: '2024-11-21 14:30',
     unreadCount: 2,
@@ -41,7 +41,7 @@ const conversations = ref([
     id: 4,
     type: 'group',
     name: '新品推广群',
-    avatar: 'https://picsum.photos/id/101/40/40',
+    avatar: '👥', // 用 emoji 替代外部图片
     lastMessage: '新品上线，欢迎大家体验！',
     time: '2024-11-21 14:15',
     unreadCount: 0,
@@ -136,13 +136,20 @@ const sendMessage = () => {
           @click="selectConversation(conversation)"
         >
           <div class="conversation-avatar">
-            <img :src="conversation.avatar" :alt="conversation.name" />
+            <div v-if="conversation.avatar.match(/^https?:/)">
+              <img :src="conversation.avatar" alt="" />
+            </div>
+            <div v-else class="emoji-avatar">
+              {{ conversation.avatar }}
+            </div>
+            <div v-if="conversation.unreadCount > 0" class="unread-count">
+              {{ conversation.unreadCount }}
+            </div>
           </div>
           <div class="conversation-info">
             <div class="name-time">
               <span class="name">
                 {{ conversation.name }}
-                <span v-if="conversation.type === 'group'" class="member-count"> ({{ conversation.memberCount }}人)</span>
               </span>
               <span class="time">{{ conversation.time }}</span>
             </div>
@@ -150,9 +157,7 @@ const sendMessage = () => {
               {{ conversation.lastMessage }}
             </div>
           </div>
-          <div v-if="conversation.unreadCount > 0" class="unread-count">
-            {{ conversation.unreadCount }}
-          </div>
+          
         </div>
       </div>
 
@@ -161,9 +166,6 @@ const sendMessage = () => {
         <!-- 右侧上方：会话名称 -->
         <div class="chat-area-header">
           <div class="conversation-info">
-            <div class="conversation-avatar">
-              <img :src="selectedConversation.avatar" :alt="selectedConversation.name" />
-            </div>
             <div class="name-info">
               <span class="name">{{ selectedConversation.name }}</span>
               <span v-if="selectedConversation.type === 'group'" class="member-count"> ({{ selectedConversation.memberCount }}人)</span>
@@ -229,18 +231,21 @@ const sendMessage = () => {
     height: calc(100vh - 120px);
 
     .conversation-list {
-      width: 300px;
+      width: 37%; /* 固定宽度 */
       border: 1px solid #e4e7ed;
       border-radius: 4px;
-      overflow-y: auto;
+      overflow : hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
 
       .conversation-item {
         display: flex;
         align-items: center;
-        padding: 12px;
+        padding: 16px; /* 调整内边距 */
         cursor: pointer;
         border-bottom: 1px solid #e4e7ed;
         transition: background-color 0.3s;
+        position: relative; /* 为未读消息红点定位提供参考 */
 
         &:hover {
           background-color: #f5f7fa;
@@ -251,41 +256,63 @@ const sendMessage = () => {
         }
 
         .conversation-avatar {
-          margin-right: 12px;
+          margin-right: 11px; /* 调整头像右侧间距 */
+          position: relative; /* 为未读消息红点定位提供参考 */
+
           img {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            object-fit: cover;
+            width: 35px; /* 调整头像大小 */
+            height: 35px; /* 调整头像大小 */
+            border-radius: 7px;
+            object-fit: contain;
+            aspect-ratio: 1 / 1; /* 确保长宽比为1:1 */
+          }
+
+          .emoji-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 7px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px; /* 调整emoji大小 */
+            text-align: center;
           }
         }
 
         .conversation-info {
           flex: 1;
+          min-width: 0; /* 确保flex元素能正确收缩，让省略号生效 */
 
           .name-time {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 4px;
+            font-size: 14px;
 
             .name {
               font-weight: 500;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              flex: 1; /* 让名称占据剩余空间 */
+              margin-right: 8px; /* 与时间保持一定距离 */
 
               .member-count {
-                font-size: 12px;
+                font-size: 8px;
                 color: #909399;
               }
             }
 
             .time {
-              font-size: 12px;
+              font-size: 8px;
               color: #909399;
             }
           }
 
           .last-message {
-            font-size: 14px;
+            font-size: 10px;
             color: #606266;
             white-space: nowrap;
             overflow: hidden;
@@ -295,10 +322,21 @@ const sendMessage = () => {
 
         .unread-count {
           background-color: #f56c6c;
+          // height: auto;
+          width: 10px ;
+          height: 10px;
           color: #fff;
-          border-radius: 10px;
-          padding: 0 6px;
-          font-size: 12px;
+          border-radius: 50%;
+          padding: 2px; /* 减小内边距，使红点更紧凑 */
+          font-size: 7px; /* 减小字体大小 */
+          position: absolute; /* 绝对定位 */
+          top: 0; /* 根据头像大小精确计算位置 */
+          right: 0; /* 根据头像大小精确计算位置 */
+          transform: translate(50%, -50%); /* 使红点中心对齐到头像右上角 */
+          z-index: 1; /* 确保红点在最上层 */
+          min-height: 7px; /* 设置最小高度，确保单个数字也能显示为圆形 */
+          min-width: 7px; /* 设置最小宽度，确保单个数字也能显示为圆形 */
+          text-align: center; /* 文字居中 */
         }
       }
     }
@@ -322,14 +360,18 @@ const sendMessage = () => {
             img {
               width: 32px;
               height: 32px;
-              border-radius: 50%;
-              object-fit: cover;
+              border-radius: 7px;
+              object-fit: contain;
+              aspect-ratio: 1 / 1; /* 确保长宽比为1:1 */
             }
           }
 
           .name-info {
             .name {
               font-weight: 500;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
 
               .member-count {
                 font-size: 12px;
@@ -342,8 +384,11 @@ const sendMessage = () => {
 
       .messages-container {
         flex: 1;
-        padding: 16px;
+        padding: 11px;
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        
 
         .message-item {
           margin-bottom: 16px;
@@ -359,11 +404,12 @@ const sendMessage = () => {
 
           .message-content {
             border-radius: 10px;
-            padding: 10px;
+            padding: 7px;
+            font-size: 12px;
 
             .message-time {
               text-align: right;
-              font-size: 12px;
+              font-size: 10px;
               margin-top: 4px;
             }
           }

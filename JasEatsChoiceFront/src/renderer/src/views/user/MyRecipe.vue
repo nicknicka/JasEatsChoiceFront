@@ -42,13 +42,25 @@ const myRecipes = ref([
 // 食谱筛选
 const recipeFilter = ref('all');
 
-// 计算属性：过滤后的食谱列表
+// 计算属性：过滤后的食谱列表，收藏的食谱排在前面
 const filteredRecipes = computed(() => {
+  let filtered = [];
+
   if (recipeFilter.value === 'all') {
-    return myRecipes.value;
+    filtered = [...myRecipes.value];
   } else {
-    return myRecipes.value.filter(recipe => recipe.type === recipeFilter.value);
+    filtered = myRecipes.value.filter(recipe => recipe.type === recipeFilter.value);
   }
+
+  // 排序：收藏的食谱在前
+  return filtered.sort((a, b) => {
+    // 如果a收藏而b未收藏，a排在前面
+    if (a.favorite && !b.favorite) return -1;
+    // 如果b收藏而a未收藏，b排在前面
+    if (!a.favorite && b.favorite) return 1;
+    // 否则保持原顺序
+    return 0;
+  });
 });
 
 // 切换收藏状态
@@ -231,41 +243,87 @@ const deleteRecipe = (id) => {
   <el-dialog
     v-model="detailDialogVisible"
     :title="selectedRecipe ? selectedRecipe.name : '食谱详情'"
-    width="500px"
+    width="600px"
     top="10%"
+    class="recipe-detail-dialog"
   >
     <div v-if="selectedRecipe" class="recipe-detail-container">
-      <div class="detail-item">
-        <div class="detail-label">名称:</div>
-        <div class="detail-value">{{ selectedRecipe.name }}</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">类型:</div>
-        <div class="detail-value">
+      <!-- 头部信息 -->
+      <div class="detail-header">
+        <div class="header-left">
+          <h3 class="recipe-title">{{ selectedRecipe.name }}</h3>
           <el-tag
             :type="selectedRecipe.type === '早餐' ? 'warning' : selectedRecipe.type === '午餐' ? 'success' : selectedRecipe.type === '晚餐' ? 'primary' : 'info'"
+            size="large"
           >
             {{ selectedRecipe.type }}
           </el-tag>
         </div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">卡路里:</div>
-        <div class="detail-value">{{ selectedRecipe.calories }} kcal</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">准备时间:</div>
-        <div class="detail-value">{{ selectedRecipe.time }}</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">收藏:</div>
-        <div class="detail-value">
-          <span :style="{ color: selectedRecipe.favorite ? '#FFD700' : '#C0C4CC', fontSize: '24px' }">
+        <div class="header-right">
+          <span
+            :style="{ color: selectedRecipe.favorite ? '#FFD700' : '#C0C4CC', fontSize: '32px', cursor: 'pointer' }"
+            @click="toggleFavorite(selectedRecipe)"
+            title="点击切换收藏状态"
+          >
             {{ selectedRecipe.favorite ? '⭐' : '☆' }}
           </span>
         </div>
       </div>
+
+      <!-- 核心信息卡片 -->
+      <div class="detail-cards">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-value">{{ selectedRecipe.calories }} kcal</div>
+            <div class="stat-label">卡路里</div>
+          </div>
+        </el-card>
+
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-value">{{ selectedRecipe.time }}</div>
+            <div class="stat-label">准备时间</div>
+          </div>
+        </el-card>
+      </div>
+
+      <!-- 食谱详情 -->
+      <div class="detail-section">
+        <h4 class="section-title">食谱详情</h4>
+        <div class="detail-content">
+          <p>这是一个健康美味的{{ selectedRecipe.type }}食谱</p>
+          <p>热量适中，营养均衡，适合日常食用</p>
+        </div>
+      </div>
+
+      <!-- 食材列表 -->
+      <div class="detail-section">
+        <h4 class="section-title">主要食材</h4>
+        <el-space direction="vertical" size="medium" class="ingredient-list">
+          <el-tag v-for="ingredient in ['鸡蛋', '牛奶', '燕麦', '水果']" :key="ingredient" type="info">
+            {{ ingredient }}
+          </el-tag>
+        </el-space>
+      </div>
+
+      <!-- 烹饪步骤 -->
+      <div class="detail-section">
+        <h4 class="section-title">烹饪步骤</h4>
+        <ol class="cooking-steps">
+          <li>准备好所需食材</li>
+          <li>按照说明进行烹饪</li>
+          <li>享受美味的{{ selectedRecipe.name }}</li>
+        </ol>
+      </div>
     </div>
+
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="detailDialogVisible = false">关闭</el-button>
+      </span>
+    </template>
   </el-dialog>
 
   <!-- 添加食谱对话框 -->
@@ -393,6 +451,103 @@ const deleteRecipe = (id) => {
 
     .el-form-item {
       margin-bottom: 20px;
+    }
+  }
+
+  /* 食谱详情对话框样式 */
+  .recipe-detail-dialog {
+    .recipe-detail-container {
+      padding: 20px 0;
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #eee;
+
+      .recipe-title {
+        font-size: 24px;
+        margin: 0 0 10px 0;
+        color: #303133;
+      }
+
+      .header-right {
+        padding-top: 10px;
+      }
+    }
+
+    .detail-cards {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+
+      .stat-card {
+        flex: 1;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.3s;
+
+        &:hover {
+          transform: translateY(-5px);
+        }
+
+        .stat-content {
+          .stat-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+          }
+
+          .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #303133;
+            margin-bottom: 5px;
+          }
+
+          .stat-label {
+            font-size: 14px;
+            color: #909399;
+          }
+        }
+      }
+    }
+
+    .detail-section {
+      margin-bottom: 30px;
+
+      .section-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #303133;
+        margin-bottom: 15px;
+      }
+
+      .detail-content {
+        color: #606266;
+        line-height: 1.8;
+      }
+
+      .ingredient-list {
+        margin-left: 0;
+
+        .el-tag {
+          padding: 8px 16px;
+          font-size: 14px;
+        }
+      }
+
+      .cooking-steps {
+        padding-left: 20px;
+        color: #606266;
+        line-height: 2;
+
+        li {
+          margin-bottom: 10px;
+        }
+      }
     }
   }
 }

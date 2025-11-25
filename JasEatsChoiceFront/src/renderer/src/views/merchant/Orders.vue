@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 // 订单状态映射
 const orderStatusMap = {
@@ -100,16 +100,19 @@ const updateFilter = () => {
 };
 
 // 查看订单详情
-const viewOrderDetails = (order) => {
-  // 实际应用中可以导航到订单详情页
-  console.log('查看订单详情:', order);
+import { useRouter } from 'vue-router';
+const router = useRouter();
 
+const viewOrderDetails = (order) => {
   // 标记为已读
   if (order.unread) {
     order.unread = false;
     updateFilter();
     ElMessage.success('订单已标记为已读');
   }
+
+  // 导航到订单详情页
+  router.push(`/merchant/home/order-detail/${order.id}`);
 };
 
 // 更新订单状态
@@ -117,6 +120,44 @@ const updateOrderStatus = (order, newStatus) => {
   order.status = newStatus;
   updateFilter();
   ElMessage.success(`订单状态已更新为${orderStatusMap[newStatus].text}`);
+};
+
+// 取消订单前添加确认
+const cancelOrder = (order) => {
+  ElMessageBox.confirm('确定要取消此订单吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+  .then(() => {
+    // 假设取消订单后状态变为'cancelled'，如果需要其他状态请修改
+    updateOrderStatus(order, 'completed'); // 当前代码中取消订单也设置为已完成，保持一致
+    ElMessage.success('订单已取消');
+  })
+  .catch(() => {
+    ElMessage.info('已取消订单取消操作');
+  });
+};
+
+// 删除订单前添加确认
+const deleteOrder = (order) => {
+  ElMessageBox.confirm('确定要删除此订单吗?', '删除确认', {
+    confirmButtonText: '确定删除',
+    cancelButtonText: '取消',
+    type: 'error',
+  })
+  .then(() => {
+    // 从订单列表中删除
+    const index = orders.value.findIndex(item => item.id === order.id);
+    if (index !== -1) {
+      orders.value.splice(index, 1);
+      updateFilter();
+      ElMessage.success('订单已删除');
+    }
+  })
+  .catch(() => {
+    ElMessage.info('已取消订单删除操作');
+  });
 };
 
 // 页面加载时初始化筛选
@@ -236,9 +277,16 @@ updateFilter();
                 v-if="order.status !== 'completed'"
                 type="danger"
                 size="small"
-                @click="updateOrderStatus(order, 'completed')"
+                @click="cancelOrder(order)"
               >
                 🗑️ 取消订单
+              </el-button>
+              <el-button
+                type="danger"
+                size="small"
+                @click="deleteOrder(order)"
+              >
+                🗑️ 删除订单
               </el-button>
             </div>
           </div>

@@ -18,22 +18,13 @@ const nutritionData = ref({
   fat: 55
 });
 
-// 切换食谱类型
-const activeMealType = ref('all');
-
 // 筛选条件
 const filters = ref({
-  mealType: 'all',
-  calorieRange: 'all' // 'all', 'low' (<=1500), 'medium' (1501-2000), 'high' (>2000)
+  mealType: 'all'
 });
 
-// 卡路里范围筛选
-const calorieRanges = [
-  { value: 'all', label: '全部' },
-  { value: 'low', label: '低卡 (<=1500)' },
-  { value: 'medium', label: '中卡 (1501-2000)' },
-  { value: 'high', label: '高卡 (>2000)' }
-];
+// 布局设置
+const layoutType = ref('two-column'); // 'one-column' 或 'two-column'
 
 // 获取标签类型
 const getTagType = (type) => {
@@ -44,6 +35,33 @@ const getTagType = (type) => {
       return 'success';
     case 'dinner':
       return 'primary';
+    case 'afternoon_tea':
+    case 'tea':
+      return 'purple';
+    case 'night_snack':
+    case 'snack':
+      return 'blue';
+    case 'morning_snack':
+    case 'brunch':
+      return 'orange';
+    case 'supper':
+    case 'midnight_snack':
+      return 'cyan';
+    case 'health_snack':
+    case 'fitness_meal':
+      return 'green';
+    case 'dessert':
+    case 'sweet':
+      return 'pink';
+    case 'soup':
+    case 'porridge':
+      return 'teal';
+    case 'salad':
+    case 'vegetable':
+      return 'success';
+    case 'meat':
+    case 'protein':
+      return 'brown';
     default:
       return 'info';
   }
@@ -52,10 +70,18 @@ const getTagType = (type) => {
 // 模态框状态
 const detailDialogVisible = ref(false);
 const replaceDialogVisible = ref(false);
+const addDishVisible = ref(false);
 
 // 当前选中的食谱和菜品
 const selectedRecipe = ref(null);
 const selectedDish = ref(null);
+
+// 自定义菜品
+const showCustomDishInput = ref(false);
+const customDishName = ref('');
+
+// 新菜品输入
+const newDishName = ref('');
 
 // 替换菜品列表
 const replacementDishes = ref([
@@ -66,6 +92,14 @@ const replacementDishes = ref([
   { id: 5, name: '清蒸鱼', type: 'dinner', nutrition: '105kcal/100g' },
   { id: 6, name: '炒青菜', type: 'dinner', nutrition: '15kcal/100g' }
 ]);
+
+// 添加菜单
+const addMenuVisible = ref(false);
+const newMenu = ref({
+  name: '',
+  type: '',
+  items: []
+});
 
 // 查看详情
 const viewRecipeDetails = (recipe) => {
@@ -96,6 +130,59 @@ const confirmReplaceDish = (newDish) => {
   }
 };
 
+// 添加菜品
+const addDish = (recipe) => {
+  selectedRecipe.value = recipe;
+  addDishVisible.value = true;
+};
+
+// 确认添加菜品
+const confirmAddDish = () => {
+  if (selectedRecipe.value && newDishName.value.trim()) {
+    selectedRecipe.value.items.push(newDishName.value.trim());
+    ElMessage.success('菜品已添加');
+    addDishVisible.value = false;
+    newDishName.value = '';
+    selectedRecipe.value = null;
+  }
+};
+
+// 删除菜品
+const deleteDish = (recipe, dish) => {
+  if (recipe && dish) {
+    const index = recipe.items.indexOf(dish);
+    if (index !== -1) {
+      recipe.items.splice(index, 1);
+      ElMessage.success('菜品已删除');
+    }
+  }
+};
+
+// 添加新菜单
+const addNewMenu = () => {
+  if (newMenu.value.name.trim() && newMenu.value.type.trim()) {
+    const menu = {
+      id: Date.now(), // 使用时间戳作为唯一ID
+      name: newMenu.value.name.trim(),
+      type: newMenu.value.type.trim().toLowerCase(),
+      items: ['待添加菜品'] // 初始默认菜品
+    };
+
+    todayRecipes.value.push(menu);
+    ElMessage.success('菜单已添加');
+
+    // 重置表单
+    newMenu.value = {
+      name: '',
+      type: '',
+      items: []
+    };
+
+    // 关闭模态框
+    addMenuVisible.value = false;
+  }
+};
+
 // 筛选后的食谱列表
 const filteredRecipes = computed(() => {
   let filtered = [...todayRecipes.value];
@@ -103,20 +190,6 @@ const filteredRecipes = computed(() => {
   // 餐型筛选
   if (filters.value.mealType !== 'all') {
     filtered = filtered.filter(recipe => recipe.type === filters.value.mealType);
-  }
-
-  // 卡路里范围筛选
-  switch (filters.value.calorieRange) {
-    case 'low':
-      filtered = filtered.filter(recipe => nutritionData.value.calories <= 1500);
-      break;
-    case 'medium':
-      filtered = filtered.filter(recipe => nutritionData.value.calories > 1500 && nutritionData.value.calories <= 2000);
-      break;
-    case 'high':
-      filtered = filtered.filter(recipe => nutritionData.value.calories > 2000);
-      break;
-    // 'all' 不筛选
   }
 
   return filtered;
@@ -163,22 +236,39 @@ const filteredRecipes = computed(() => {
             晚餐
           </el-button>
         </div>
-
-        <!-- 卡路里范围筛选 -->
-        <el-select
-          v-model="filters.calorieRange"
-          placeholder="卡路里筛选"
-          size="small"
-          style="width: 160px; margin-left: 20px;"
-        >
-          <el-option
-            v-for="range in calorieRanges"
-            :key="range.value"
-            :label="range.label"
-            :value="range.value"
-          />
-        </el-select>
       </div>
+    </div>
+
+    <!-- 添加菜单按钮和布局切换 -->
+    <div class="add-menu-section">
+      <el-button
+        type="primary"
+        size="small"
+        @click="addMenuVisible = true"
+        style="margin-right: 20px;"
+      >
+        ➕ 添加菜单
+      </el-button>
+
+      <!-- 布局切换按钮 -->
+      <el-button-group>
+        <el-button
+          type="primary"
+          :plain="layoutType !== 'one-column'"
+          @click="layoutType = 'one-column'"
+          size="small"
+        >
+          一列布局
+        </el-button>
+        <el-button
+          type="primary"
+          :plain="layoutType !== 'two-column'"
+          @click="layoutType = 'two-column'"
+          size="small"
+        >
+          两列布局
+        </el-button>
+      </el-button-group>
     </div>
 
     <!-- 营养摄入统计 -->
@@ -207,7 +297,7 @@ const filteredRecipes = computed(() => {
     </el-card>
 
     <!-- 食谱列表 -->
-    <div class="recipe-list">
+    <div :class="['recipe-list', layoutType]">
       <el-card
         v-for="recipe in filteredRecipes"
         :key="recipe.id"
@@ -219,7 +309,20 @@ const filteredRecipes = computed(() => {
             <span
               :class="`meal-icon ${recipe.type}`"
             >
-              {{ recipe.type === 'breakfast' ? '🥣' : recipe.type === 'lunch' ? '🍚' : '🍱' }}
+              {{
+                recipe.type === 'breakfast' ? '🥣' :
+                recipe.type === 'lunch' ? '🍚' :
+                recipe.type === 'dinner' ? '🍱' :
+                recipe.type === 'afternoon_tea' || recipe.type === 'tea' ? '🍵' :
+                recipe.type === 'night_snack' || recipe.type === 'snack' ? '🍪' :
+                recipe.type === 'morning_snack' || recipe.type === 'brunch' ? '🥐' :
+                recipe.type === 'supper' || recipe.type === 'midnight_snack' ? '🌙' :
+                recipe.type === 'health_snack' || recipe.type === 'fitness_meal' ? '💪' :
+                recipe.type === 'dessert' || recipe.type === 'sweet' ? '🍰' :
+                recipe.type === 'soup' || recipe.type === 'porridge' ? '🍲' :
+                recipe.type === 'salad' || recipe.type === 'vegetable' ? '🥗' :
+                recipe.type === 'meat' || recipe.type === 'protein' ? '🥩' : '🍴'
+              }}
             </span>
             {{ recipe.name }}
           </div>
@@ -235,6 +338,7 @@ const filteredRecipes = computed(() => {
         </div>
         <div class="recipe-actions">
           <el-button type="text" size="small" @click="viewRecipeDetails(recipe)">查看详情</el-button>
+          <el-button type="text" size="small" @click="addDish(recipe)">添加菜品</el-button>
           <el-dropdown trigger="click">
             <el-button type="text" size="small">
               替换菜品 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
@@ -245,6 +349,22 @@ const filteredRecipes = computed(() => {
                   v-for="dish in recipe.items"
                   :key="dish"
                   @click="replaceDish(recipe, dish)"
+                >
+                  {{ dish }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-dropdown trigger="click">
+            <el-button type="text" size="small">
+              删除菜品 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="dish in recipe.items"
+                  :key="dish"
+                  @click="deleteDish(recipe, dish)"
                 >
                   {{ dish }}
                 </el-dropdown-item>
@@ -317,6 +437,7 @@ const filteredRecipes = computed(() => {
         <span class="detail-label">当前菜品:</span>
         <span class="detail-value">{{ selectedDish }}</span>
       </div>
+
       <div class="available-dishes">
         <span class="detail-label">可选菜品:</span>
         <div class="dish-list">
@@ -332,7 +453,106 @@ const filteredRecipes = computed(() => {
           </el-card>
         </div>
       </div>
+
+      <el-divider />
+
+      <div class="custom-dish-section">
+        <el-button
+          type="text"
+          @click="showCustomDishInput = !showCustomDishInput"
+        >
+          {{ showCustomDishInput ? '使用预设菜品' : '自定义菜品' }}
+        </el-button>
+
+        <div v-if="showCustomDishInput" class="custom-dish-input">
+          <el-input
+            v-model="customDishName"
+            placeholder="请输入自定义菜品名称"
+            clearable
+            style="margin-bottom: 10px;"
+          />
+          <el-button
+            type="primary"
+            size="small"
+            @click="
+              confirmReplaceDish({
+                name: customDishName.trim(),
+                type: selectedRecipe.type
+              });
+              customDishName = '';
+            "
+            :disabled="!customDishName.trim()"
+          >
+            确认替换为自定义菜品
+          </el-button>
+        </div>
+      </div>
     </div>
+  </el-dialog>
+
+  <!-- 添加菜品对话框 -->
+  <el-dialog
+    v-model="addDishVisible"
+    :title="selectedRecipe ? `为${selectedRecipe.name}添加菜品` : '添加菜品'"
+    width="400px"
+    top="20%"
+  >
+    <div v-if="selectedRecipe" class="add-dish-form">
+      <el-form class="form-container">
+        <el-form-item label="菜品名称" prop="name" required>
+          <el-input
+            v-model="newDishName"
+            placeholder="请输入新菜品名称"
+          />
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <template #footer>
+      <el-button @click="addDishVisible = false">取消</el-button>
+      <el-button
+        type="primary"
+        @click="confirmAddDish"
+        :disabled="!newDishName.trim()"
+      >
+        确定
+      </el-button>
+    </template>
+  </el-dialog>
+
+  <!-- 添加菜单对话框 -->
+  <el-dialog
+    v-model="addMenuVisible"
+    title="添加新菜单"
+    width="400px"
+    top="20%"
+  >
+    <el-form :model="newMenu" class="add-menu-form">
+      <el-form-item label="菜单名称" prop="name" required>
+        <el-input
+          v-model="newMenu.name"
+          placeholder="请输入菜单名称（如：下午茶、夜宵）"
+        />
+      </el-form-item>
+
+      <el-form-item label="类型标识" prop="type" required>
+        <el-input
+          v-model="newMenu.type"
+          placeholder="请输入类型标识（如：afternoon_tea、night_snack）"
+        />
+      </el-form-item>
+    </el-form>
+
+    <template #footer>
+      <el-button @click="addMenuVisible = false">取消</el-button>
+      <el-button
+        type="primary"
+        @click="addNewMenu"
+        :disabled="!newMenu.name.trim() || !newMenu.type.trim()"
+      >
+        确定
+      </el-button>
+    </template>
   </el-dialog>
 </template>
 
@@ -388,9 +608,54 @@ const filteredRecipes = computed(() => {
   }
 
   .recipe-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 20px;
+
+    &.one-column {
+      flex-direction: column;
+
+      .recipe-card {
+        flex: 1 1 100%; /* 单列时宽度100% */
+        max-width: 100%; /* 确保宽度充满容器 */
+        min-width: 280px; /* 最小宽度 */
+        width: 100%; /* 明确设置宽度为100% */
+        box-sizing: border-box; /* 确保padding和border不会增加总宽度 */
+        margin: 0; /* 去除外边距 */
+      }
+    }
+
+    &.two-column {
+      flex-direction: row;
+
+      .recipe-card {
+        flex: 1 1 calc(50% - 10px); /* 精确计算两列宽度，减去间距 */
+        max-width: calc(50% - 10px); /* 确保两列总和为100% */
+        min-width: 280px; /* 最小宽度 */
+      }
+    }
+
+    /* 响应式处理 - 增加断点 */
+    @media (max-width: 768px) { /* 在平板设备上自动转为单列 */
+      .recipe-card {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 992px) { /* 在中大屏设备上两列 */
+      .recipe-card {
+        flex: 1 1 45% !important;
+        max-width: 45% !important;
+      }
+    }
+
+    @media (min-width: 993px) { /* 在大屏设备上可以考虑更宽 */
+      .recipe-card {
+        flex: 1 1 42% !important;
+        max-width: 42% !important;
+      }
+    }
   }
 
   .recipe-card {
@@ -439,6 +704,116 @@ const filteredRecipes = computed(() => {
 
       .meal-icon.dinner {
         color: #2196F3;
+      }
+    }
+
+    // 自定义菜单类型样式
+    &.afternoon_tea,
+    &.tea {
+      border-left: 4px solid #9C27B0;
+
+      .meal-icon.afternoon_tea,
+      .meal-icon.tea {
+        color: #9C27B0;
+        font-size: 24px;
+      }
+    }
+
+    &.night_snack,
+    &.snack {
+      border-left: 4px solid #1E88E5;
+
+      .meal-icon.night_snack,
+      .meal-icon.snack {
+        color: #1E88E5;
+        font-size: 24px;
+      }
+    }
+
+    &.morning_snack,
+    &.brunch {
+      border-left: 4px solid #FF9800;
+
+      .meal-icon.morning_snack,
+      .meal-icon.brunch {
+        color: #FF9800;
+        font-size: 24px;
+      }
+    }
+
+    &.supper,
+    &.midnight_snack {
+      border-left: 4px solid #00BCD4;
+
+      .meal-icon.supper,
+      .meal-icon.midnight_snack {
+        color: #00BCD4;
+        font-size: 24px;
+      }
+    }
+
+    &.health_snack,
+    &.fitness_meal {
+      border-left: 4px solid #4CAF50;
+
+      .meal-icon.health_snack,
+      .meal-icon.fitness_meal {
+        color: #4CAF50;
+        font-size: 24px;
+      }
+    }
+
+    &.dessert,
+    &.sweet {
+      border-left: 4px solid #E91E63;
+
+      .meal-icon.dessert,
+      .meal-icon.sweet {
+        color: #E91E63;
+        font-size: 24px;
+      }
+    }
+
+    &.soup,
+    &.porridge {
+      border-left: 4px solid #009688;
+
+      .meal-icon.soup,
+      .meal-icon.porridge {
+        color: #009688;
+        font-size: 24px;
+      }
+    }
+
+    &.salad,
+    &.vegetable {
+      border-left: 4px solid #8BC34A;
+
+      .meal-icon.salad,
+      .meal-icon.vegetable {
+        color: #8BC34A;
+        font-size: 24px;
+      }
+    }
+
+    &.meat,
+    &.protein {
+      border-left: 4px solid #795548;
+
+      .meal-icon.meat,
+      .meal-icon.protein {
+        color: #795548;
+        font-size: 24px;
+      }
+    }
+
+    // 默认样式
+    &.info {
+      border-left: 4px solid #00BCD4;
+
+      .meal-icon.info {
+        color: #00BCD4;
+        font-size: 24px;
       }
     }
   }

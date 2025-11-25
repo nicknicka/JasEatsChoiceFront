@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import { useRouter } from 'vue-router';
+const router = useRouter();
 
 // 消息分类映射
 const messageCategories = {
@@ -89,6 +91,17 @@ onMounted(() => {
 
 // 查看消息详情
 const viewMessageDetail = (message) => {
+  // 检查是否是订单消息，如果是则导航到订单详情页
+  if (message.type === 'order') {
+    // 从消息标题或内容中提取订单号
+    const orderIdMatch = message.title.match(/订单号(?:JD)?(\\d+)/);
+    if (orderIdMatch) {
+      const orderId = orderIdMatch[1];
+      router.push(`/merchant/home/order-detail/${orderId}`);
+      return;
+    }
+  }
+  // 普通消息则显示详情
   selectedMessage.value = message;
   // 自动标记为已读
   if (!message.isRead) {
@@ -125,7 +138,6 @@ const markAllAsRead = () => {
     <div class="messages-header">
       <div class="header-left">
         <h3 class="page-title">【消息中心】</h3>
-        <el-button type="text" class="back-btn" v-if="!selectedMessage">↩ 返回</el-button>
       </div>
       <div class="header-right" v-if="!selectedMessage">
         <el-button type="success" @click="markAllAsRead">

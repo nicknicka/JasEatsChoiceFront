@@ -1,5 +1,8 @@
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 // 我的推荐数据
 const recommendations = ref([
@@ -96,7 +99,7 @@ const recommendations = ref([
               show-text
             />
           </div>
-          <el-button type="primary" size="small">立即查看</el-button>
+          <el-button type="primary" size="small" @click="router.push('/user/home/merchants')">立即查看</el-button>
         </div>
       </el-card>
     </div>

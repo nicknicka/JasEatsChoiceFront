@@ -24,15 +24,17 @@ const userRole = ref('user'); // 'user' 或 'merchant'
 const menuData = {
   // 用户端菜单
   user: [
-    { index: '1', name: '我的推荐', icon: Menu, path: '/user/home/recommend' },
-    { index: '2', name: '商家查找', icon: Shop, path: '/user/home/merchants' },
-    { index: '3', name: '今日食谱', icon: Calendar, path: '/user/home/today-recipe' },
-    { index: '4', name: '卡路里统计', icon: DataAnalysis, path: '/user/home/calorie' },
-    { index: '5', name: '我的食谱', icon: Document, path: '/user/home/my-recipe' },
-    { index: '6', name: '查看订单', icon: List, path: '/user/home/orders' },
-    { index: '7', name: '消息中心', icon: Message, path: '/user/home/message-center' },
-    { index: '8', name: 'AI饮食助手', icon: ChatDotRound, path: '/user/home/ai' },
-    { index: '9', name: '设置', icon: Setting, path: '/user/home/settings', isSetting: true }
+    { index: '1', name: '用户首页', icon: HomeFilled, path: '/user/home' },
+    { index: '2', name: '我的推荐', icon: Menu, path: '/user/home/recommend' },
+    { index: '3', name: '商家查找', icon: Shop, path: '/user/home/merchants' },
+    { index: '4', name: '今日食谱', icon: Calendar, path: '/user/home/today-recipe' },
+    { index: '5', name: '卡路里统计', icon: DataAnalysis, path: '/user/home/calorie' },
+    { index: '6', name: '我的食谱', icon: Document, path: '/user/home/my-recipe' },
+    { index: '7', name: '查看订单', icon: List, path: '/user/home/orders' },
+    { index: '8', name: '消息中心', icon: Message, path: '/user/home/message-center' },
+    { index: '9', name: 'AI饮食助手', icon: ChatDotRound, path: '/user/home/ai' },
+    { index: '10', name: '用户聊天', icon: ChatDotRound, path: '/user/home/chat' },
+    { index: '11', name: '设置', icon: Setting, path: '/user/home/settings', isSetting: true }
   ],
   // 商家端菜单
   merchant: [
@@ -52,7 +54,6 @@ const currentMenu = computed(() => {
   return menuData[userRole.value] ? menuData[userRole.value] : menuData.user || [];
 });
 
-// 搜索功能
 
 // 菜单点击事件处理
 const handleMenuSelect = (index) => {
@@ -62,15 +63,13 @@ const handleMenuSelect = (index) => {
   }
 };
 
+// 头像放大弹窗
+const showLargeAvatar = ref(false);
+
 // 头像点击事件处理
 const handleAvatarClick = () => {
-  if (userRole.value === 'merchant') {
-    // 商家端点击头像跳转到商家首页
-    navigateTo('/merchant/home');
-  } else {
-    // 用户端点击头像跳转到用户中心
-    navigateTo('/user/home/profile');
-  }
+  // 无论用户端还是商家端，点击头像都放大显示
+  showLargeAvatar.value = true;
 };
 
 // 角色切换功能
@@ -171,7 +170,7 @@ const handleSearch = (value) => {
       <!-- 左侧菜单栏 -->
       <el-aside width="168px" class="sidebar-menu">
         <div class="avatar-section" @click="handleAvatarClick">
-          <el-avatar :size="80" class="user-avatar" style="cursor: pointer;">{{ userRole.value === 'merchant' ? '🏪' : '👤' }}</el-avatar>
+          <el-avatar :size="80" class="user-avatar" style="cursor: pointer;">{{ userRole === 'merchant' ? '🏪' : '👤' }}</el-avatar>
         </div>
 
         <el-menu
@@ -198,6 +197,20 @@ const handleSearch = (value) => {
         <router-view />
       </el-main>
     </div>
+
+    <!-- 头像放大对话框 -->
+    <el-dialog v-model="showLargeAvatar" title="个人头像" width="300px" top="20%">
+      <div style="text-align: center; padding: 20px 0;">
+        <el-avatar :size="200" class="user-avatar">
+          {{ userRole === 'merchant' ? '🏪' : '👤' }}
+        </el-avatar>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="showLargeAvatar = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 

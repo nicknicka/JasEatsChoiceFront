@@ -192,7 +192,7 @@ onMounted(() => {
               <span>夏日低卡饮食指南</span>
             </el-card>
           </div>
-          <el-link type="primary" class="more-link">查看更多教程</el-link>
+          <el-link type="primary" class="more-link" @click="navigateTo('/user/home/tutorials')">查看更多教程</el-link>
         </div>
 </template>
 

@@ -53,7 +53,14 @@
       "Bash(git commit:*)",
       "Bash(npm run build:main:*)",
       "Bash(npm run electron:start:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git restore:*)",
+      "Bash(tmp)",
+      "Bash(__NEW_LINE__ git status)",
+      "Bash(npx kill-port:*)",
+      "Bash(kill:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []

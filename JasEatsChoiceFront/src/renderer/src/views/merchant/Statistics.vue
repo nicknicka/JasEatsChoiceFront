@@ -1,50 +1,212 @@
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { ElMessage } from 'element-plus';
+import { use } from 'echarts/core';
+import { LineChart } from 'echarts/charts';
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  DataZoomComponent,
+  LegendComponent
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+import VChart from 'vue-echarts';
+
+// 注册所需组件
+use([
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  DataZoomComponent,
+  LegendComponent,
+  LineChart,
+  CanvasRenderer
+]);
 
 // 统计时间范围选项
 const timeRangeOptions = ['today', 'yesterday', 'week', 'month'];
 const activeTimeRange = ref('today');
 
-// 基本统计数据
-const basicStats = ref({
-  orders: 125,
-  totalAmount: 1895.50,
-  avgAmount: 15.17,
-  newCustomers: 30
+// 模拟销售额数据
+const salesData = ref({
+  today: [
+    { time: '00:00', value: 120 },
+    { time: '01:00', value: 100 },
+    { time: '02:00', value: 80 },
+    { time: '03:00', value: 150 },
+    { time: '04:00', value: 200 },
+    { time: '05:00', value: 180 },
+    { time: '06:00', value: 250 },
+    { time: '07:00', value: 300 },
+    { time: '08:00', value: 400 },
+    { time: '09:00', value: 350 }
+  ],
+  yesterday: [
+    { time: '00:00', value: 100 },
+    { time: '01:00', value: 90 },
+    { time: '02:00', value: 70 },
+    { time: '03:00', value: 130 },
+    { time: '04:00', value: 180 },
+    { time: '05:00', value: 160 },
+    { time: '06:00', value: 230 },
+    { time: '07:00', value: 280 },
+    { time: '08:00', value: 380 },
+    { time: '09:00', value: 330 }
+  ],
+  week: [
+    { time: '周一', value: 2000 },
+    { time: '周二', value: 2200 },
+    { time: '周三', value: 1800 },
+    { time: '周四', value: 2500 },
+    { time: '周五', value: 3000 },
+    { time: '周六', value: 3500 },
+    { time: '周日', value: 2800 }
+  ],
+  month: [
+    { time: '1日', value: 8000 },
+    { time: '2日', value: 7500 },
+    { time: '3日', value: 9000 },
+    { time: '4日', value: 8500 },
+    { time: '5日', value: 10000 }
+  ]
 });
 
-// 订单趋势数据
-const orderTrend = ref([
-  { time: '00:00', orders: 5 },
-  { time: '04:00', orders: 0 },
-  { time: '08:00', orders: 20 },
-  { time: '12:00', orders: 50 },
-  { time: '16:00', orders: 30 },
-  { time: '20:00', orders: 20 }
+// 模拟菜品销售数据
+const dishSalesData = ref([
+  { name: '宫保鸡丁', sales: 120, revenue: 3360 },
+  { name: '麻婆豆腐', sales: 150, revenue: 2700 },
+  { name: '鱼香肉丝', sales: 180, revenue: 5040 },
+  { name: '糖醋排骨', sales: 90, revenue: 3780 },
+  { name: '回锅肉', sales: 110, revenue: 3960 }
 ]);
 
-// 菜品销量排行
-const dishSalesRank = ref([
-  { name: '麻辣香锅饭', sales: 35, revenue: 630 },
-  { name: '鱼香肉丝面', sales: 28, revenue: 448 },
-  { name: '宫保鸡丁饭', sales: 22, revenue: 396 },
-  { name: '酸辣汤', sales: 45, revenue: 360 },
-  { name: '可乐', sales: 60, revenue: 180 }
-]);
+// 当前显示的销售额数据
+const currentSalesData = ref([]);
 
-// 页面加载
-onMounted(() => {
-  // 模拟数据加载
-});
+// 更新当前显示的销售额数据
+const updateSalesData = () => {
+  currentSalesData.value = salesData.value[activeTimeRange.value];
+};
 
-// 切换时间范围
+// 时间范围变化时调用的方法
 const changeTimeRange = (range) => {
   activeTimeRange.value = range;
-  // 模拟更新统计数据
-  ElMessage.info(`切换到${range === 'today' ? '今日' : range === 'yesterday' ? '昨日' : range === 'week' ? '本周' : '本月'}统计`);
 };
+
+// 监听时间范围变化更新数据
+watch(() => activeTimeRange.value, updateSalesData);
+
+// 页面加载时初始化数据
+onMounted(() => {
+  updateSalesData();
+});
+
+// 配置图表
+const chartOptions = ref({
+  title: {
+    text: '销售额趋势',
+    textStyle: {
+      fontSize: 16
+    }
+  },
+  tooltip: {
+    trigger: 'axis',
+    formatter: '{b}: ¥{c}'
+  },
+  xAxis: {
+    type: 'category',
+    data: []
+  },
+  yAxis: {
+    type: 'value',
+    axisLabel: {
+      formatter: '¥{value}'
+    }
+  },
+  series: [
+    {
+      name: '销售额',
+      data: [],
+      type: 'line',
+      smooth: true,
+      lineStyle: {
+        color: '#67c23a'
+      },
+      itemStyle: {
+        color: '#67c23a'
+      }
+    }
+  ]
+});
+
+// 模拟基础统计数据
+const basicStats = ref({
+  orders: 156,
+  totalAmount: 8900.00,
+  avgAmount: 57.05,
+  newCustomers: 35
+});
+
+// 模拟订单趋势数据
+const orderTrend = ref([
+  { time: '00:00', orders: 12 },
+  { time: '03:00', orders: 8 },
+  { time: '06:00', orders: 25 },
+  { time: '09:00', orders: 40 },
+  { time: '12:00', orders: 55 },
+  { time: '15:00', orders: 60 }
+]);
+
+// 模拟菜品销量排行数据
+const dishSalesRank = ref([
+  { name: '宫保鸡丁', sales: 120, revenue: 3360 },
+  { name: '麻婆豆腐', sales: 150, revenue: 2700 },
+  { name: '鱼香肉丝', sales: 180, revenue: 5040 },
+  { name: '糖醋排骨', sales: 90, revenue: 3780 },
+  { name: '回锅肉', sales: 110, revenue: 3960 }
+]);
+
+// 配置订单趋势图表
+const orderChartOptions = ref({
+  title: {
+    text: '订单趋势',
+    textStyle: {
+      fontSize: 14
+    }
+  },
+  tooltip: {
+    trigger: 'axis',
+    formatter: '{b}: {c} 单'
+  },
+  xAxis: {
+    type: 'category',
+    data: orderTrend.value.map(item => item.time)
+  },
+  yAxis: {
+    type: 'value',
+    axisLabel: {
+      formatter: '{value} 单'
+    }
+  },
+  series: [
+    {
+      name: '订单数',
+      data: orderTrend.value.map(item => item.orders),
+      type: 'line',
+      smooth: true,
+      lineStyle: {
+        color: '#67c23a'
+      },
+      itemStyle: {
+        color: '#67c23a'
+      }
+    }
+  ]
+});
+
+// 监听数据变化并更新图表
 </script>
 
 <template>
@@ -101,19 +263,8 @@ const changeTimeRange = (range) => {
       <!-- 订单趋势图表 -->
       <div class="order-trend-section">
         <h4 class="section-title">📈 订单趋势</h4>
-        <div class="chart-placeholder">
-          <div class="chart-line-container">
-            <div
-              v-for="item in orderTrend"
-              :key="item.time"
-              class="chart-item"
-              :style="{ left: `${orderTrend.indexOf(item) * 16.66}%`, height: `${(item.orders / 50) * 100}%` }"
-            >
-              <div class="chart-point"></div>
-              <div class="chart-value">{{ item.orders }}</div>
-              <div class="chart-time">{{ item.time }}</div>
-            </div>
-          </div>
+        <div class="chart-container">
+          <v-chart :options="orderChartOptions" style="height: 250px; width: 100%" />
         </div>
       </div>
 
@@ -243,23 +394,30 @@ const changeTimeRange = (range) => {
             flex-direction: column;
             justify-content: flex-end;
             align-items: center;
+            
+            /* 使用负边距来补偿点的大小，防止超出界限 */
+            margin-bottom: -4px;
+            margin-top: -4px;
 
             .chart-point {
               width: 8px;
               height: 8px;
               background-color: #67c23a;
               border-radius: 50%;
+              z-index: 2;
             }
 
             .chart-value {
               margin: 8px 0;
               font-size: 12px;
               color: #606266;
+              z-index: 1;
             }
 
             .chart-time {
               font-size: 12px;
               color: #909399;
+              z-index: 1;
             }
           }
         }

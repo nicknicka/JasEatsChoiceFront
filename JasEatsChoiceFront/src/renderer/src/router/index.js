@@ -5,6 +5,7 @@ const Login = () => import('../views/auth/Login.vue')
 
 // Import user views
 const UserHome = () => import('../views/user/Home.vue') // 用户首页
+const UserHomeContent = () => import('../views/user/HomeContent.vue') // 用户首页内容
 const UserRecommend = () => import('../views/user/Recommend.vue') // 我的推荐
 const UserMerchantList = () => import('../views/user/MerchantList.vue') // 商家查找
 const UserMerchantDetail = () => import('../views/user/MerchantDetail.vue') // 商家详情
@@ -25,6 +26,7 @@ const UserContact = () => import('../views/user/Contact.vue') // 联系客服
 
 // Import merchant views
 const MerchantHome = () => import('../views/merchant/Home.vue') // 商家首页
+const MerchantHomeContent = () => import('../views/merchant/HomeContent.vue') // 商家首页内容
 const MerchantOrders = () => import('../views/merchant/Orders.vue') // 商家订单管理
 const MerchantMenu = () => import('../views/merchant/Menu.vue') // 商家菜单管理
 const MerchantMessages = () => import('../views/merchant/Messages.vue') // 商家消息管理
@@ -34,6 +36,7 @@ const MerchantDishManagement = () => import('../views/merchant/DishManagement.vu
 const MerchantDishEdit = () => import('../views/merchant/DishEdit.vue') // 菜品编辑
 const MerchantChat = () => import('../views/merchant/Chat.vue') // 商家聊天
 const MerchantStatistics = () => import('../views/merchant/Statistics.vue') // 经营统计
+const MerchantOrderDetail = () => import('../views/merchant/OrderDetail.vue') // 订单详情
 
 // 创建路由实例
 const router = createRouter({
@@ -73,7 +76,7 @@ const router = createRouter({
         {
           path: '',
           name: 'user-home-content',
-          component: () => import('../views/user/HomeContent.vue'),
+          component: UserHomeContent,
           meta: { title: '佳食宜选-用户首页' }
         },
         {
@@ -183,59 +186,27 @@ const router = createRouter({
           name: 'user-my-collection',
           component: () => import('../views/user/MyCollection.vue'),
           meta: { title: '佳食宜选-我的收藏' }
+        },
+        {
+          path: 'tutorials',
+          name: 'user-tutorials',
+          component: () => import('../views/user/Tutorials.vue'),
+          meta: { title: '佳食宜选-制作教程与指南' }
         }
       ]
     },
-    // 以下路由已移至/user/home的嵌套路由中
-    // {
-    //   path: '/user/message-center',
-    //   name: 'user-message-center',
-    //   component: UserMessageCenter,
-    //   meta: { title: '佳食宜选-消息中心' }
-    // },
-    // {
-    //   path: '/user/system-notification',
-    //   name: 'user-system-notification',
-    //   component: UserSystemNotification,
-    //   meta: { title: '佳食宜选-系统通知' }
-    // },
-    // {
-    //   path: '/user/chat',
-    //   name: 'user-chat',
-    //   component: UserChat,
-    //   meta: { title: '佳食宜选-单聊' }
-    // },
-    // {
-    //   path: '/user/group-chat',
-    //   name: 'user-group-chat',
-    //   component: UserGroupChat,
-    //   meta: { title: '佳食宜选-群聊' }
-    // },
-    // {
-    //   path: '/user/ai',
-    //   name: 'user-ai',
-    //   component: UserAI,
-    //   meta: { title: '佳食宜选-AI饮食助手' }
-    // },
-    // {
-    //   path: '/user/settings',
-    //   name: 'user-settings',
-    //   component: UserSettings,
-    //   meta: { title: '佳食宜选-设置' }
-    // },
-
     // 商家模块路由 - 嵌套结构
     {
       path: '/merchant/home',
       name: 'merchant-home',
-      component: UserHome, // 使用用户端的Home.vue作为基础容器，它包含CommonHome
+      component: MerchantHome, // 使用用户端的Home.vue作为基础容器，它包含CommonHome
       meta: { title: '佳食宜选-商家首页' },
       children: [
         // 默认显示商家首页内容
         {
           path: '',
           name: 'merchant-home-content',
-          component: MerchantHome,
+          component: MerchantHomeContent,
           meta: { title: '佳食宜选-商家首页' }
         },
         {
@@ -291,6 +262,12 @@ const router = createRouter({
           name: 'merchant-statistics',
           component: MerchantStatistics,
           meta: { title: '佳食宜选-经营统计' }
+        },
+        {
+          path: 'order-detail/:id', // 订单详情路由
+          name: 'merchant-order-detail',
+          component: MerchantOrderDetail,
+          meta: { title: '佳食宜选-订单详情' }
         }
       ]
     }
@@ -300,7 +277,7 @@ const router = createRouter({
 // 路由导航守卫 - 用于设置页面标题和登录状态检查
 router.beforeEach((to, from, next) => {
   // 设置当前页面标题
-  if (to.meta.title) {
+  if (to?.meta?.title) {
     document.title = to.meta.title
   }
 
