@@ -241,7 +241,6 @@ const toggleSelectAll = () => {
     <div class="menu-header">
       <div class="header-left">
         <h3 class="page-title">【菜单管理】</h3>
-        <el-button type="text" class="back-btn">↩ 返回</el-button>
       </div>
       <div class="header-right">
         <el-input

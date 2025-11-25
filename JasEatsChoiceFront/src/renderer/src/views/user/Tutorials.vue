@@ -25,7 +25,6 @@ const tutorials = ref([
   <div class="tutorials-container">
     <div class="page-header">
       <el-button type="primary" icon="ArrowLeft" size="small" @click="goBackToHome">
-        <el-icon><ArrowLeft /></el-icon>
         返回首页
       </el-button>
       <h2>制作教程与指南</h2>

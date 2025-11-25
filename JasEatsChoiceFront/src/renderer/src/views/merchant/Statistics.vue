@@ -1,6 +1,6 @@
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { use } from 'echarts/core';
 import { LineChart } from 'echarts/charts';
@@ -28,6 +28,12 @@ use([
 // 统计时间范围选项
 const timeRangeOptions = ['today', 'yesterday', 'week', 'month'];
 const activeTimeRange = ref('today');
+
+// 图表容器宽度
+const chartContainerWidth = ref(0);
+
+// 图表引用
+const chartRef = ref(null);
 
 // 模拟销售额数据
 const salesData = ref({
@@ -88,6 +94,11 @@ const currentSalesData = ref([]);
 // 更新当前显示的销售额数据
 const updateSalesData = () => {
   currentSalesData.value = salesData.value[activeTimeRange.value];
+  currentBasicStats.value = basicStats.value[activeTimeRange.value];
+  currentOrderTrend.value = orderTrend.value[activeTimeRange.value];
+
+  // 更新图表数据
+  updateChartData();
 };
 
 // 时间范围变化时调用的方法
@@ -101,63 +112,100 @@ watch(() => activeTimeRange.value, updateSalesData);
 // 页面加载时初始化数据
 onMounted(() => {
   updateSalesData();
+  // 初始化图表容器宽度
+  nextTick(() => {
+    updateChartContainerWidth();
+  });
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', updateChartContainerWidth);
 });
 
-// 配置图表
-const chartOptions = ref({
-  title: {
-    text: '销售额趋势',
-    textStyle: {
-      fontSize: 16
+// 在组件卸载时移除事件监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', updateChartContainerWidth);
+});
+
+// 更新图表容器宽度
+const updateChartContainerWidth = () => {
+  nextTick(() => {
+    if (chartRef.value && chartRef.value.$el) {
+      chartContainerWidth.value = chartRef.value.$el.clientWidth;
+    } else if (chartRef.value && chartRef.value.$el === undefined) {
+      // 如果 $el 不存在，尝试使用元素本身
+      chartContainerWidth.value = chartRef.value.clientWidth || 0;
     }
+  });
+};
+
+// 模拟基础统计数据 - 按时间范围
+const basicStats = ref({
+  today: {
+    orders: 156,
+    totalAmount: 8900.00,
+    avgAmount: 57.05,
+    newCustomers: 35
   },
-  tooltip: {
-    trigger: 'axis',
-    formatter: '{b}: ¥{c}'
+  yesterday: {
+    orders: 142,
+    totalAmount: 8200.50,
+    avgAmount: 57.75,
+    newCustomers: 28
   },
-  xAxis: {
-    type: 'category',
-    data: []
+  week: {
+    orders: 890,
+    totalAmount: 51200.00,
+    avgAmount: 57.53,
+    newCustomers: 165
   },
-  yAxis: {
-    type: 'value',
-    axisLabel: {
-      formatter: '¥{value}'
-    }
-  },
-  series: [
-    {
-      name: '销售额',
-      data: [],
-      type: 'line',
-      smooth: true,
-      lineStyle: {
-        color: '#67c23a'
-      },
-      itemStyle: {
-        color: '#67c23a'
-      }
-    }
+  month: {
+    orders: 3560,
+    totalAmount: 204300.75,
+    avgAmount: 57.40,
+    newCustomers: 680
+  }
+});
+
+// 当前显示的基础统计数据
+const currentBasicStats = ref({ ...basicStats.value.today });
+
+// 模拟订单趋势数据 - 按时间范围
+const orderTrend = ref({
+  today: [
+    { time: '00:00', orders: 12 },
+    { time: '03:00', orders: 8 },
+    { time: '06:00', orders: 25 },
+    { time: '09:00', orders: 40 },
+    { time: '12:00', orders: 55 },
+    { time: '15:00', orders: 60 }
+  ],
+  yesterday: [
+    { time: '00:00', orders: 10 },
+    { time: '03:00', orders: 7 },
+    { time: '06:00', orders: 22 },
+    { time: '09:00', orders: 38 },
+    { time: '12:00', orders: 52 },
+    { time: '15:00', orders: 58 }
+  ],
+  week: [
+    { time: '周一', orders: 125 },
+    { time: '周二', orders: 130 },
+    { time: '周三', orders: 145 },
+    { time: '周四', orders: 160 },
+    { time: '周五', orders: 180 },
+    { time: '周六', orders: 210 },
+    { time: '周日', orders: 195 }
+  ],
+  month: [
+    { time: '第一周', orders: 680 },
+    { time: '第二周', orders: 850 },
+    { time: '第三周', orders: 1020 },
+    { time: '第四周', orders: 1210 }
   ]
 });
 
-// 模拟基础统计数据
-const basicStats = ref({
-  orders: 156,
-  totalAmount: 8900.00,
-  avgAmount: 57.05,
-  newCustomers: 35
-});
-
-// 模拟订单趋势数据
-const orderTrend = ref([
-  { time: '00:00', orders: 12 },
-  { time: '03:00', orders: 8 },
-  { time: '06:00', orders: 25 },
-  { time: '09:00', orders: 40 },
-  { time: '12:00', orders: 55 },
-  { time: '15:00', orders: 60 }
-]);
+// 当前显示的订单趋势数据
+const currentOrderTrend = ref([...orderTrend.value.today]);
 
 // 模拟菜品销量排行数据
 const dishSalesRank = ref([
@@ -182,7 +230,7 @@ const orderChartOptions = ref({
   },
   xAxis: {
     type: 'category',
-    data: orderTrend.value.map(item => item.time)
+    data: orderTrend.value.today.map(item => item.time)
   },
   yAxis: {
     type: 'value',
@@ -193,7 +241,7 @@ const orderChartOptions = ref({
   series: [
     {
       name: '订单数',
-      data: orderTrend.value.map(item => item.orders),
+      data: orderTrend.value.today.map(item => item.orders),
       type: 'line',
       smooth: true,
       lineStyle: {
@@ -205,6 +253,12 @@ const orderChartOptions = ref({
     }
   ]
 });
+
+// 更新图表数据
+const updateChartData = () => {
+  orderChartOptions.value.xAxis.data = currentOrderTrend.value.map(item => item.time);
+  orderChartOptions.value.series[0].data = currentOrderTrend.value.map(item => item.orders);
+};
 
 // 监听数据变化并更新图表
 </script>
@@ -234,28 +288,28 @@ const orderChartOptions = ref({
           <div class="stat-icon orders-icon">🍽️</div>
           <div class="stat-info">
             <div class="stat-label">总订单数</div>
-            <div class="stat-value">{{ basicStats.orders }}</div>
+            <div class="stat-value">{{ currentBasicStats.orders }}</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon revenue-icon">💰</div>
           <div class="stat-info">
             <div class="stat-label">总销售额</div>
-            <div class="stat-value">¥{{ basicStats.totalAmount.toFixed(2) }}</div>
+            <div class="stat-value">¥{{ currentBasicStats.totalAmount.toFixed(2) }}</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon avg-icon">📊</div>
           <div class="stat-info">
             <div class="stat-label">客单价</div>
-            <div class="stat-value">¥{{ basicStats.avgAmount.toFixed(2) }}</div>
+            <div class="stat-value">¥{{ currentBasicStats.avgAmount.toFixed(2) }}</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon new-customers-icon">👤</div>
           <div class="stat-info">
             <div class="stat-label">新客户数</div>
-            <div class="stat-value">{{ basicStats.newCustomers }}</div>
+            <div class="stat-value">{{ currentBasicStats.newCustomers }}</div>
           </div>
         </div>
       </div>
@@ -263,8 +317,13 @@ const orderChartOptions = ref({
       <!-- 订单趋势图表 -->
       <div class="order-trend-section">
         <h4 class="section-title">📈 订单趋势</h4>
-        <div class="chart-container">
-          <v-chart :options="orderChartOptions" style="height: 250px; width: 100%" />
+        <div class="chart-container" v-show="true">
+          <v-chart
+            :options="orderChartOptions"
+            style="height: 250px; width: 100%"
+            :autoresize="true"
+            ref="chartRef"
+          />
         </div>
       </div>
 
@@ -369,58 +428,12 @@ const orderChartOptions = ref({
         margin-bottom: 20px;
       }
 
-      .chart-placeholder {
-        height: 250px;
-        background-color: #f5f7fa;
-        border-radius: 4px;
-        padding: 20px;
-        position: relative;
-
-        .chart-line-container {
-          position: absolute;
-          bottom: 40px;
-          left: 20px;
-          right: 20px;
-          top: 20px;
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-
-          .chart-item {
-            position: relative;
-            width: 10%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            
-            /* 使用负边距来补偿点的大小，防止超出界限 */
-            margin-bottom: -4px;
-            margin-top: -4px;
-
-            .chart-point {
-              width: 8px;
-              height: 8px;
-              background-color: #67c23a;
-              border-radius: 50%;
-              z-index: 2;
-            }
-
-            .chart-value {
-              margin: 8px 0;
-              font-size: 12px;
-              color: #606266;
-              z-index: 1;
-            }
-
-            .chart-time {
-              font-size: 12px;
-              color: #909399;
-              z-index: 1;
-            }
-          }
-        }
+      .chart-container {
+        min-height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
       }
     }
 

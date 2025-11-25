@@ -75,6 +75,15 @@ const newMessage = ref('');
 
 // 页面加载
 onMounted(() => {
+  // 将会话按最后消息时间排序（从最新到最旧）
+  conversations.value.sort((a, b) => {
+    // 将时间字符串转换为Date对象进行比较
+    const dateA = new Date(a.time);
+    const dateB = new Date(b.time);
+    // 返回倒序，最新的在前面
+    return dateB - dateA;
+  });
+
   // 默认选中第一个会话
   if (conversations.value.length > 0) {
     selectedConversation.value = conversations.value[0];
@@ -113,6 +122,13 @@ const sendMessage = () => {
   // 更新会话列表的最后一条消息
   selectedConversation.value.lastMessage = message.content;
   selectedConversation.value.time = message.time;
+
+  // 将当前会话移到最前面
+  const index = conversations.value.indexOf(selectedConversation.value);
+  if (index > -1) {
+    conversations.value.splice(index, 1);
+    conversations.value.unshift(selectedConversation.value);
+  }
 
   // 清空输入框
   newMessage.value = '';

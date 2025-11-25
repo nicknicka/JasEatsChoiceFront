@@ -400,4 +400,3 @@ onMounted(() => {
     }
   }
 }
-</style>

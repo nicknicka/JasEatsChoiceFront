@@ -10,12 +10,49 @@ const navigateToOrders = () => {
   router.push('/merchant/orders');
 };
 
-const navigateToMenu = () => {
-  router.push('/merchant/menu');
+// 筛选功能
+const activeFilter = ref('today');
+
+// 所有订单数据
+const allOrders = ref([
+  { orderId: 'JD20241121001', items: 3, amount: 78.00, time: '2024-11-21 12:30', status: '制作中' },
+  { orderId: 'JD20241121002', items: 2, amount: 45.00, time: '2024-11-21 12:45', status: '待配送' },
+  { orderId: 'JD20241120005', items: 1, amount: 28.00, time: '2024-11-20 20:15', status: '已完成' },
+  { orderId: 'JD20241119003', items: 4, amount: 98.00, time: '2024-11-19 18:30', status: '已完成' },
+  { orderId: 'JD20241115010', items: 2, amount: 55.00, time: '2024-11-15 13:20', status: '已完成' }
+]);
+
+// 筛选后的订单
+const filteredOrders = ref([...allOrders.value]);
+
+// 筛选订单
+const filterOrders = (filterType) => {
+  activeFilter.value = filterType;
+
+  // 简单的筛选逻辑，根据实际时间处理
+  switch (filterType) {
+    case 'today':
+      filteredOrders.value = allOrders.value.filter(order => order.time.startsWith('2024-11-21'));
+      break;
+    case 'week':
+      filteredOrders.value = allOrders.value.filter(order =>
+        order.time.startsWith('2024-11-18') || // 模拟本周
+        order.time.startsWith('2024-11-19') ||
+        order.time.startsWith('2024-11-20') ||
+        order.time.startsWith('2024-11-21')
+      );
+      break;
+    case 'month':
+      filteredOrders.value = allOrders.value.filter(order => order.time.startsWith('2024-11'));
+      break;
+    case 'all':
+      filteredOrders.value = [...allOrders.value];
+      break;
+  }
 };
 
-const navigateToMessages = () => {
-  router.push('/merchant/messages');
+const navigateToMenu = () => {
+  router.push('/merchant/menu');
 };
 
 // 商家信息
@@ -35,11 +72,6 @@ const businessOverview = ref({
   unreadMessages: 3
 });
 
-// 今日订单
-const todayOrders = ref([
-  { orderId: 'JD20241121001', items: 3, amount: 78.00, time: '2024-11-21 12:30', status: '制作中' },
-  { orderId: 'JD20241121002', items: 2, amount: 45.00, time: '2024-11-21 12:45', status: '待配送' }
-]);
 
 // // 页面加载
 // onMounted(() => {
@@ -49,7 +81,7 @@ const todayOrders = ref([
 // onUnmounted(() => {
 //   ElMessage.success('欢迎下次再来');
 // });
-// </script>
+</script>
 
 <template>
   <div class="merchant-home-container" v-if="$route.path === '/merchant/home'">
@@ -101,15 +133,39 @@ const todayOrders = ref([
         <div class="orders-header">
           <h3 class="card-title">📋 订单中心</h3>
           <div class="filter-section">
-            <el-tag type="primary" effect="plain" class="filter-tag active">今日订单</el-tag>
-            <el-tag type="primary" effect="plain" class="filter-tag">本周订单</el-tag>
-            <el-tag type="primary" effect="plain" class="filter-tag">本月订单</el-tag>
-            <el-tag type="primary" effect="plain" class="filter-tag">全部订单</el-tag>
+            <el-tag
+              type="primary"
+              effect="plain"
+              class="filter-tag"
+              :class="{ active: activeFilter === 'today' }"
+              @click="filterOrders('today')"
+            >今日订单</el-tag>
+            <el-tag
+              type="primary"
+              effect="plain"
+              class="filter-tag"
+              :class="{ active: activeFilter === 'week' }"
+              @click="filterOrders('week')"
+            >本周订单</el-tag>
+            <el-tag
+              type="primary"
+              effect="plain"
+              class="filter-tag"
+              :class="{ active: activeFilter === 'month' }"
+              @click="filterOrders('month')"
+            >本月订单</el-tag>
+            <el-tag
+              type="primary"
+              effect="plain"
+              class="filter-tag"
+              :class="{ active: activeFilter === 'all' }"
+              @click="filterOrders('all')"
+            >全部订单</el-tag>
           </div>
         </div>
 
         <div class="orders-list">
-          <div class="order-item" v-for="order in todayOrders" :key="order.orderId">
+          <div class="order-item" v-for="order in filteredOrders" :key="order.orderId">
             <div class="order-info">
               <div class="order-no">🍽️ 订单号：{{ order.orderId }}</div>
               <div class="order-details">
@@ -164,6 +220,11 @@ const todayOrders = ref([
 
   .merchant-info-card {
     margin-bottom: 24px;
+    padding: 24px; /* 添加内边距 */
+    border: 2px solid #67c23a; /* 添加绿色边框 */
+    border-radius: 8px; /* 圆角边框 */
+    background-color: #ffffff; /* 白色背景 */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05); /* 添加阴影效果 */
 
     .info-header {
       display: flex;
@@ -205,6 +266,11 @@ const todayOrders = ref([
 
   .overview-card {
     margin-bottom: 24px;
+    padding: 24px; /* 添加内边距 */
+    border: 2px solid #e6a23c; /* 添加橙色边框 */
+    border-radius: 8px; /* 圆角边框 */
+    background-color: #ffffff; /* 白色背景 */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05); /* 添加阴影效果 */
 
     .card-title {
       font-size: 18px;
@@ -232,6 +298,11 @@ const todayOrders = ref([
 
   .orders-card {
     margin-bottom: 24px;
+    padding: 24px; /* 添加内边距 */
+    border: 2px solid #409EFF; /* 加强边框 */
+    border-radius: 8px; /* 圆角边框 */
+    background-color: #ffffff; /* 白色背景 */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05); /* 添加阴影效果 */
 
     .orders-header {
       display: flex;
@@ -248,6 +319,7 @@ const todayOrders = ref([
       .filter-section {
         .filter-tag {
           margin-right: 10px;
+          cursor: pointer; // 添加鼠标悬浮点击样式
 
           &.active {
             color: #409EFF;
@@ -301,6 +373,11 @@ const todayOrders = ref([
 
   .quick-actions-card {
     margin-bottom: 24px;
+    padding: 24px; /* 添加内边距 */
+    border: 2px solid #f56c6c; /* 添加红色边框 */
+    border-radius: 8px; /* 圆角边框 */
+    background-color: #ffffff; /* 白色背景 */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05); /* 添加阴影效果 */
 
     .card-title {
       font-size: 18px;

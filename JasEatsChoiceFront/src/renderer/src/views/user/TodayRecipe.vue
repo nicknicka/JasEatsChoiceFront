@@ -614,12 +614,13 @@ const filteredRecipes = computed(() => {
 
     &.one-column {
       flex-direction: column;
+      width: 100%; /* 容器宽度100% */
 
       .recipe-card {
-        flex: 1 1 100%; /* 单列时宽度100% */
-        max-width: 100%; /* 确保宽度充满容器 */
+        flex: 1 1 100% !important; /* 单列时宽度100% */
+        max-width: 100% !important; /* 确保宽度充满容器 */
         min-width: 280px; /* 最小宽度 */
-        width: 100%; /* 明确设置宽度为100% */
+        width: 100% !important; /* 明确设置宽度为100% */
         box-sizing: border-box; /* 确保padding和border不会增加总宽度 */
         margin: 0; /* 去除外边距 */
       }

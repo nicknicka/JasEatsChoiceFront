@@ -203,7 +203,6 @@ const toggleSelectAll = () => {
     <div class="dish-header">
       <div class="header-left">
         <h3 class="page-title">【菜品管理】</h3>
-        <el-button type="text" class="back-btn" @click="$router.back()">↩ 返回</el-button>
       </div>
       <div class="header-right">
         <el-input

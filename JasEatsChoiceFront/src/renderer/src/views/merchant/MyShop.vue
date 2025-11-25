@@ -134,7 +134,6 @@ const handleUpload = (file) => {
     <div class="shop-header">
       <div class="header-left">
         <h3 class="page-title">【我的店铺】</h3>
-        <el-button type="text" class="back-btn">↩ 返回</el-button>
       </div>
     </div>
 
