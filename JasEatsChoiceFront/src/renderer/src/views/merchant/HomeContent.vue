@@ -7,7 +7,52 @@ const router = useRouter();
 
 // 页面跳转
 const navigateToOrders = () => {
-  router.push('/merchant/orders');
+  router.push('/merchant/home/orders');
+};
+
+// 查看订单详情
+const viewOrderDetails = (order) => {
+  // 跳转到订单详情页面
+  router.push(`/merchant/home/orders/details?orderId=${order.orderId}`);
+};
+
+// 更新订单状态
+const updateOrderStatus = (order) => {
+  // 模拟状态更新逻辑
+  const statusFlow = {
+    '待处理': '制作中',
+    '制作中': '待配送',
+    '待配送': '已完成',
+    '已完成': '已完成'
+  };
+
+  const nextStatus = statusFlow[order.status] || '已完成';
+  order.status = nextStatus;
+
+  // 发送WebSocket通知或API请求
+
+  ElMessage.success(`订单 ${order.orderId} 状态已更新为 ${nextStatus}`);
+};
+
+// 通知用户
+const notifyUser = (order) => {
+  // 模拟通知用户逻辑
+  // 这里可以通过WebSocket或推送服务发送通知
+
+  ElMessage.success(`已通知用户订单 ${order.orderId} 的最新状态`);
+};
+
+// 概览项导航
+const navigateToStatistics = () => {
+  router.push('/merchant/home/statistics');
+};
+
+const navigateToComments = () => {
+  router.push('/merchant/home/comments');
+};
+
+const navigateToMessages = () => {
+  router.push('/merchant/home/messages');
 };
 
 // 筛选功能
@@ -17,6 +62,13 @@ const activeFilter = ref('today');
 const allOrders = ref([
   { orderId: 'JD20241121001', items: 3, amount: 78.00, time: '2024-11-21 12:30', status: '制作中' },
   { orderId: 'JD20241121002', items: 2, amount: 45.00, time: '2024-11-21 12:45', status: '待配送' },
+  { orderId: 'JD20241121003', items: 1, amount: 62.00, time: '2024-11-21 10:40', status: '已完成' },
+  { orderId: 'JD20241121004', items: 5, amount: 128.00, time: '2024-11-21 11:00', status: '制作中' },
+  { orderId: 'JD20241121005', items: 4, amount: 96.00, time: '2024-11-21 11:15', status: '待配送' },
+  { orderId: 'JD20241121006', items: 2, amount: 58.50, time: '2024-11-21 11:30', status: '制作中' },
+  { orderId: 'JD20241121007', items: 6, amount: 156.00, time: '2024-11-21 10:25', status: '已完成' },
+  { orderId: 'JD20241121008', items: 1, amount: 32.80, time: '2024-11-21 11:45', status: '制作中' },
+  { orderId: 'JD20241121009', items: 3, amount: 89.00, time: '2024-11-21 12:00', status: '待配送' },
   { orderId: 'JD20241120005', items: 1, amount: 28.00, time: '2024-11-20 20:15', status: '已完成' },
   { orderId: 'JD20241119003', items: 4, amount: 98.00, time: '2024-11-19 18:30', status: '已完成' },
   { orderId: 'JD20241115010', items: 2, amount: 55.00, time: '2024-11-15 13:20', status: '已完成' }
@@ -52,8 +104,55 @@ const filterOrders = (filterType) => {
 };
 
 const navigateToMenu = () => {
-  router.push('/merchant/menu');
+  router.push('/merchant/home/menu');
 };
+
+// 快捷操作函数 - 设置优惠
+const setDiscount = () => {
+  ElMessage.info('设置优惠功能已触发');
+  // 可以在此处添加具体的实现逻辑
+};
+
+// 快捷操作函数 - 调整营业时间
+const adjustBusinessHours = () => {
+  ElMessage.info('调整营业时间功能已触发');
+  // 可以在此处添加具体的实现逻辑
+};
+
+// 快捷操作函数 - 联系客服
+const contactCustomerService = () => {
+  ElMessage.info('联系客服功能已触发');
+  // 可以在此处添加具体的实现逻辑
+};
+
+// 菜单状态映射
+const menuStatusMap = {
+  online: { text: '上架中', icon: '🟢', type: 'success' },
+  draft: { text: '草稿', icon: '🟡', type: 'warning' },
+  offline: { text: '下架中', icon: '🔴', type: 'danger' }
+};
+
+// 今日菜单数据
+const todayMenus = ref([
+  {
+    id: 1,
+    name: '午餐菜单',
+    dishes: 12,
+    status: 'online',
+    updateTime: '2024-11-21 10:00',
+    autoOnline: '2024-11-22 11:00',
+    autoOffline: '2024-11-22 14:00'
+  },
+  {
+    id: 4,
+    name: '今日特色菜单',
+    dishes: 5,
+    status: 'online',
+    updateTime: '2024-11-21 09:00',
+    autoOnline: '',
+    autoOffline: ''
+  }
+]);
 
 // 商家信息
 const merchantInfo = ref({
@@ -109,19 +208,19 @@ const businessOverview = ref({
       <div class="overview-card">
         <h3 class="card-title">📈 今日营业概览：</h3>
         <div class="overview-grid">
-          <div class="overview-item">
+          <div class="overview-item" @click="navigateToStatistics">
             <span class="overview-label">💰 营业额：</span>
             <span class="overview-value">¥{{ businessOverview.sales.toFixed(0) }}</span>
           </div>
-          <div class="overview-item">
+          <div class="overview-item" @click="navigateToOrders">
             <span class="overview-label">🍽️ 订单数：</span>
             <span class="overview-value">{{ businessOverview.orders }}</span>
           </div>
-          <div class="overview-item">
+          <div class="overview-item" @click="navigateToComments">
             <span class="overview-label">🌟 新增评价：</span>
             <span class="overview-value">{{ businessOverview.newComments }}</span>
           </div>
-          <div class="overview-item">
+          <div class="overview-item" @click="navigateToMessages">
             <span class="overview-label">📞 未读消息：</span>
             <span class="overview-value">{{ businessOverview.unreadMessages }}</span>
           </div>
@@ -176,9 +275,9 @@ const businessOverview = ref({
               </div>
             </div>
             <div class="order-actions">
-              <el-button type="primary" size="small">🔍 详情</el-button>
-              <el-button type="success" size="small">⏱️ 更新状态</el-button>
-              <el-button type="warning" size="small">🔔 通知用户</el-button>
+              <el-button type="primary" size="small" @click="viewOrderDetails(order)">🔍 详情</el-button>
+              <el-button type="success" size="small" @click="updateOrderStatus(order)">⏱️ 更新状态</el-button>
+              <el-button type="warning" size="small" @click="notifyUser(order)">🔔 通知用户</el-button>
             </div>
           </div>
         </div>
@@ -196,19 +295,58 @@ const businessOverview = ref({
             <div class="action-icon">➕</div>
             <div class="action-label">新增菜品</div>
           </div>
-          <div class="action-item">
+          <div class="action-item" @click="setDiscount">
             <div class="action-icon">💰</div>
             <div class="action-label">设置优惠</div>
           </div>
-          <div class="action-item">
+          <div class="action-item" @click="adjustBusinessHours">
             <div class="action-icon">⏱️</div>
             <div class="action-label">调整营业时间</div>
           </div>
-          <div class="action-item">
+          <div class="action-item" @click="contactCustomerService">
             <div class="action-icon">📞</div>
             <div class="action-label">联系客服</div>
           </div>
         </div>
+      </div>
+      <!-- 今日菜单 -->
+      <div class="today-menu-card">
+        <div class="menu-header">
+          <h3 class="card-title">🍽️ 今日菜单</h3>
+          <div class="view-all">
+            <el-button type="text" @click="navigateToMenu">📤 管理全部菜单</el-button>
+          </div>
+        </div>
+
+        <div class="menu-list">
+          <div class="menu-item" v-for="menu in todayMenus" :key="menu.id">
+            <div class="menu-info">
+              <div class="menu-name">
+                <span class="name">{{ menu.name }}</span>
+                <el-tag :type="menuStatusMap[menu.status].type">
+                  {{ menuStatusMap[menu.status].icon }} {{ menuStatusMap[menu.status].text }}
+                </el-tag>
+              </div>
+
+              <div class="menu-stats">
+                <span class="dishes-count">🍴 {{ menu.dishes }} 菜品</span>
+                <span class="update-time">⏰ 更新时间：{{ menu.updateTime }}</span>
+              </div>
+
+              <div class="auto-times" v-if="menu.autoOnline || menu.autoOffline">
+                <span v-if="menu.autoOnline" class="auto-online">
+                  ⏰ 自动上架：{{ menu.autoOnline }}
+                </span>
+                <span v-if="menu.autoOffline" class="auto-offline">
+                  ⏰ 自动下架：{{ menu.autoOffline }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 空数据提示 -->
+        <el-empty v-if="todayMenus.length === 0" description="暂无今日菜单"></el-empty>
       </div>
     </div>
   </div>
@@ -279,14 +417,24 @@ const businessOverview = ref({
     }
 
     .overview-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      row-gap: 20px;
 
       .overview-item {
         display: flex;
-        align-items: center;
-        gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        cursor: pointer;
+        padding: 12px;
+        border-radius: 8px;
+        transition: background-color 0.3s;
+
+        &:hover {
+          background-color: #f8fafc;
+        }
 
         .overview-value {
           font-size: 20px;
@@ -330,6 +478,10 @@ const businessOverview = ref({
     }
 
     .orders-list {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 8px;
+
       .order-item {
         display: flex;
         justify-content: space-between;
@@ -413,6 +565,82 @@ const businessOverview = ref({
           font-size: 14px;
           font-weight: 500;
         }
+      }
+    }
+
+    // 今日菜单
+    .today-menu-card {
+      margin-bottom: 24px;
+      padding: 24px; /* 添加内边距 */
+      border: 2px solid #909399; /* 灰色边框 */
+      border-radius: 8px; /* 圆角边框 */
+      background-color: #ffffff; /* 白色背景 */
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05); /* 添加阴影效果 */
+
+      .menu-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+
+        .card-title {
+          font-size: 18px;
+          font-weight: 600;
+          margin: 0;
+        }
+      }
+
+      .menu-list {
+        margin-bottom: 20px;
+
+        .menu-item {
+          padding: 16px;
+          border: 1px solid #e4e7ed;
+          border-radius: 4px;
+          margin-bottom: 12px;
+          background-color: #fff;
+          transition: box-shadow 0.3s;
+
+          &:hover {
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+          }
+
+          .menu-info {
+            .menu-name {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              margin-bottom: 12px;
+
+              .name {
+                font-size: 16px;
+                font-weight: 600;
+              }
+            }
+
+            .menu-stats, .auto-times {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 24px;
+              margin-bottom: 8px;
+              font-size: 14px;
+
+              .dishes-count {
+                color: #606266;
+              }
+            }
+
+            .auto-times {
+              font-size: 13px;
+              color: #909399;
+            }
+          }
+        }
+      }
+
+      .view-all {
+        text-align: right;
+        margin-top: 12px;
       }
     }
   }

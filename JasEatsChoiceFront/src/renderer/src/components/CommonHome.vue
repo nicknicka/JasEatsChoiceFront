@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import {
   Search, Menu, Shop, Calendar, DataAnalysis,
   Document, List, Message, ChatDotRound, Setting,
@@ -39,11 +39,12 @@ const menuData = {
   // 商家端菜单
   merchant: [
     { index: '1', name: '商家首页', icon: HomeFilled, path: '/merchant/home' },
-    { index: '2', name: '订单管理', icon: List, path: '/merchant/home/orders' }, // 修改为正确的路由路径
+    { index: '2', name: '今日订单', icon: List, path: '/merchant/home/today-orders' }, // 修改为正确的路由路径
     { index: '3', name: '菜单管理', icon: Shop, path: '/merchant/home/menu' }, // 修改为正确的路由路径
     { index: '4', name: '菜品管理', icon: Document, path: '/merchant/home/dish-management' },
     { index: '5', name: '我的店铺', icon: Shop, path: '/merchant/home/my-shop' },
     { index: '6', name: '商家聊天', icon: ChatDotRound, path: '/merchant/home/chat' },
+    { index: '7', name: '评价中心', icon: DataAnalysis, path: '/merchant/home/comments' }, // 添加评价中心菜单
     { index: '8', name: '经营统计', icon: DataAnalysis, path: '/merchant/home/statistics' },
     { index: '9', name: '消息管理', icon: Message, path: '/merchant/home/messages' } // 修改为正确的路由路径
   ]
@@ -80,10 +81,10 @@ const toggleRole = () => {
 
     // 更新用户信息和跳转
     if (userRole.value === 'user') {
-      userInfo.value = { name: '佳食用户', avatar: '👤' };
+      userInfo.value = { name: '用户端', avatar: '👤' };
       navigateTo('/user/home');
     } else {
-      userInfo.value = { name: '佳商', avatar: '🏪' };
+      userInfo.value = { name: '商户端', avatar: '🏪' };
       navigateTo('/merchant/home');
     }
 
@@ -96,20 +97,67 @@ const toggleRole = () => {
   }
 };
 
-// 页面加载时从localStorage恢复角色
+// 页面加载时从localStorage或当前路由恢复角色
 onMounted(() => {
   try {
-    const savedRole = localStorage.getItem('currentRole');
-    if (savedRole) {
-      userRole.value = savedRole;
-      if (userRole.value === 'merchant') {
-        userInfo.value = { name: '佳商', avatar: '🏪' };
-      }
+    // 1. First check current route to determine role
+    let detectedRole = 'user'; // Default to user
+
+    if (router.currentRoute.value?.path?.startsWith('/merchant/')) {
+      detectedRole = 'merchant';
     }
+
+    // 2. Then check localStorage
+    const savedRole = localStorage.getItem('currentRole');
+
+    // 3. Use detected role from route if route is for merchant, otherwise use saved or default
+    if (savedRole && (detectedRole === 'user' || router.currentRoute.path === '/')) {
+      userRole.value = savedRole;
+    } else {
+      userRole.value = detectedRole;
+    }
+
+    // Update user info
+    if (userRole.value === 'merchant') {
+      userInfo.value = { name: '商户端', avatar: '🏪' };
+    }else if (userRole.value === 'user') {
+      userInfo.value = { name: '用户端', avatar: '👤' };
+    }
+
+    // Save the final role to localStorage
+    localStorage.setItem('currentRole', userRole.value);
+
+    console.log('恢复角色成功:', userRole.value);
   } catch (error) {
     console.error('恢复角色失败:', error);
   }
 });
+
+// Watch for route changes to update role automatically
+watch(() => router.currentRoute.value?.path, (newPath) => {
+  let newRole = 'user'; // Default to user
+
+  if (newPath?.startsWith('/merchant/')) {
+    newRole = 'merchant';
+  }
+
+  // Only update if role changed
+  if (userRole.value !== newRole) {
+    userRole.value = newRole;
+
+    // Update user info
+    if (userRole.value === 'merchant') {
+      userInfo.value = { name: '商户端', avatar: '🏪' };
+    }else if (userRole.value === 'user') {
+      userInfo.value = { name: '用户端', avatar: '👤' };
+    }
+
+    // Save the new role to localStorage
+    localStorage.setItem('currentRole', userRole.value);
+    console.log('路由变化自动更新角色:', userRole.value);
+  }
+});
+
 const searchQuery = ref('');
 
 const handleSearch = (value) => {
@@ -162,7 +210,6 @@ const handleSearch = (value) => {
       </el-input>
       <div class="user-info">
         <el-button type="text" class="identity-switch" @click="toggleRole">👤/🏪</el-button>
-        <span>{{ userInfo.name }}</span>
       </div>
     </el-header>
 
@@ -171,6 +218,7 @@ const handleSearch = (value) => {
       <el-aside width="168px" class="sidebar-menu">
         <div class="avatar-section" @click="handleAvatarClick">
           <el-avatar :size="80" class="user-avatar" style="cursor: pointer;">{{ userRole === 'merchant' ? '🏪' : '👤' }}</el-avatar>
+          <div class="username">{{ userInfo.name }}</div>
         </div>
 
         <el-menu
@@ -269,6 +317,13 @@ const handleSearch = (value) => {
 
     .user-avatar {
       background-color: #FF6B6B;
+    }
+
+    .username {
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
     }
   }
 

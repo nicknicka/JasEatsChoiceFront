@@ -32,9 +32,59 @@ const dishesList = ref([
 // 搜索关键词
 const searchKeyword = ref('');
 
+// 模拟所有菜单数据（与Menu.vue保持一致）
+const allMenus = ref([
+  {
+    id: 1,
+    name: '午餐菜单',
+    dishes: 12,
+    status: 'online',
+    updateTime: '2024-11-21 10:00',
+    autoOnline: '2024-11-22 11:00',
+    autoOffline: '2024-11-22 14:00',
+    description: '精选午餐菜品，营养美味'
+  },
+  {
+    id: 2,
+    name: '晚餐菜单',
+    dishes: 8,
+    status: 'offline',
+    updateTime: '2024-11-21 14:00',
+    autoOnline: '',
+    autoOffline: '',
+    description: '美味晚餐，让您回味无穷'
+  },
+  {
+    id: 3,
+    name: '夜宵菜单',
+    dishes: 5,
+    status: 'draft',
+    updateTime: '2024-11-20 22:00',
+    autoOnline: '',
+    autoOffline: '',
+    description: '深夜美食，满足您的味蕾'
+  }
+]);
+
 // 页面加载
 onMounted(() => {
-  // 可以从路由参数获取菜单ID并加载菜单数据
+  // 从路由参数获取菜单ID并加载菜单数据
+  const menuId = parseInt(route.query.menuId);
+  if (menuId) {
+    // 根据菜单ID查找菜单
+    const menu = allMenus.value.find(m => m.id === menuId);
+    if (menu) {
+      // 更新菜单信息
+      menuInfo.value = {
+        name: menu.name,
+        description: menu.description || '',
+        autoOnline: menu.autoOnline,
+        autoOffline: menu.autoOffline,
+        status: menu.status
+      };
+      console.log('加载菜单:', menu);
+    }
+  }
 });
 
 // 保存菜单

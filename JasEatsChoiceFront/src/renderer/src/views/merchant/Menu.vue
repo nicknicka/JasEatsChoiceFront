@@ -1,7 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 // 菜单状态映射
 const menuStatusMap = {
   online: { text: '上架中', icon: '🟢', type: 'success' },
@@ -92,7 +94,8 @@ const toggleMenuStatus = (menu) => {
 // 编辑菜单
 const editMenu = (menu) => {
   console.log('编辑菜单:', menu);
-  ElMessage.info('编辑菜单功能开发中');
+  // 导航到菜单编辑页面并传递菜单ID
+  router.push({ path: '/merchant/menu-edit', query: { menuId: menu.id } });
 };
 
 // 删除菜单

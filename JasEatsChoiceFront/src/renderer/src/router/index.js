@@ -28,6 +28,7 @@ const UserContact = () => import('../views/user/Contact.vue') // 联系客服
 const MerchantHome = () => import('../views/merchant/Home.vue') // 商家首页
 const MerchantHomeContent = () => import('../views/merchant/HomeContent.vue') // 商家首页内容
 const MerchantOrders = () => import('../views/merchant/Orders.vue') // 商家订单管理
+const MerchantTodayOrders = () => import('../views/merchant/TodayOrders.vue') // 商家今日订单
 const MerchantMenu = () => import('../views/merchant/Menu.vue') // 商家菜单管理
 const MerchantMessages = () => import('../views/merchant/Messages.vue') // 商家消息管理
 const MerchantMyShop = () => import('../views/merchant/MyShop.vue') // 我的店铺
@@ -37,6 +38,7 @@ const MerchantDishEdit = () => import('../views/merchant/DishEdit.vue') // 菜�
 const MerchantChat = () => import('../views/merchant/Chat.vue') // 商家聊天
 const MerchantStatistics = () => import('../views/merchant/Statistics.vue') // 经营统计
 const MerchantOrderDetail = () => import('../views/merchant/OrderDetail.vue') // 订单详情
+const MerchantComments = () => import('../views/merchant/Comments.vue') // 商家评价中心
 
 // 创建路由实例
 const router = createRouter({
@@ -216,6 +218,12 @@ const router = createRouter({
           meta: { title: '佳食宜选-商家订单管理' }
         },
         {
+          path: 'today-orders', // 相对路径，继承自 /merchant/home
+          name: 'merchant-today-orders',
+          component: MerchantTodayOrders,
+          meta: { title: '佳食宜选-商家今日订单' }
+        },
+        {
           path: 'menu', // 相对路径，继承自 /merchant/home
           name: 'merchant-menu',
           component: MerchantMenu,
@@ -268,6 +276,12 @@ const router = createRouter({
           name: 'merchant-order-detail',
           component: MerchantOrderDetail,
           meta: { title: '佳食宜选-订单详情' }
+        },
+        {
+          path: 'comments', // 评价中心路由
+          name: 'merchant-comments',
+          component: MerchantComments,
+          meta: { title: '佳食宜选-商家评价中心' }
         }
       ]
     }

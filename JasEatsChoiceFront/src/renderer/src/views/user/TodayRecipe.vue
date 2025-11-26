@@ -239,37 +239,6 @@ const filteredRecipes = computed(() => {
       </div>
     </div>
 
-    <!-- 添加菜单按钮和布局切换 -->
-    <div class="add-menu-section">
-      <el-button
-        type="primary"
-        size="small"
-        @click="addMenuVisible = true"
-        style="margin-right: 20px;"
-      >
-        ➕ 添加菜单
-      </el-button>
-
-      <!-- 布局切换按钮 -->
-      <el-button-group>
-        <el-button
-          type="primary"
-          :plain="layoutType !== 'one-column'"
-          @click="layoutType = 'one-column'"
-          size="small"
-        >
-          一列布局
-        </el-button>
-        <el-button
-          type="primary"
-          :plain="layoutType !== 'two-column'"
-          @click="layoutType = 'two-column'"
-          size="small"
-        >
-          两列布局
-        </el-button>
-      </el-button-group>
-    </div>
 
     <!-- 营养摄入统计 -->
     <el-card class="nutrition-card">
@@ -296,6 +265,39 @@ const filteredRecipes = computed(() => {
       </div>
     </el-card>
 
+    
+    <!-- 添加菜单按钮和布局切换 -->
+    <div class="add-menu-section" >
+      
+
+      <!-- 布局切换按钮 -->
+      <el-button-group>
+        <el-button
+          type="primary"
+          :plain="layoutType !== 'one-column'"
+          @click="layoutType = 'one-column'"
+          size="small"
+        >
+          一列布局
+        </el-button>
+        <el-button
+          type="primary"
+          :plain="layoutType !== 'two-column'"
+          @click="layoutType = 'two-column'"
+          size="small"
+        >
+          两列布局
+        </el-button>
+      </el-button-group>
+
+      <el-button
+        type="primary"
+        size="small"
+        @click="addMenuVisible = true"
+      >
+        ➕ 添加菜单
+      </el-button>
+    </div>
     <!-- 食谱列表 -->
     <div :class="['recipe-list', layoutType]">
       <el-card
@@ -817,6 +819,15 @@ const filteredRecipes = computed(() => {
         font-size: 24px;
       }
     }
+  }
+
+  .add-menu-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 17px;
+    margin-left: 7px;
+    margin-right: 7px;
   }
 }
 

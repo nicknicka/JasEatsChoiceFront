@@ -54,6 +54,61 @@ const orders = ref([
     total: 128.00,
     time: '2024-11-21 11:00',
     unread: true
+  },
+  {
+    id: 5,
+    orderNo: 'JD20241121005',
+    status: 'preparing',
+    user: '小王',
+    phone: '135XXXX5555',
+    address: '公园地址',
+    total: 96.00,
+    time: '2024-11-21 11:15',
+    unread: false
+  },
+  {
+    id: 6,
+    orderNo: 'JD20241121006',
+    status: 'pending',
+    user: '小张',
+    phone: '134XXXX4444',
+    address: '医院地址',
+    total: 58.50,
+    time: '2024-11-21 11:30',
+    unread: true
+  },
+  {
+    id: 7,
+    orderNo: 'JD20241121007',
+    status: 'completed',
+    user: '小赵',
+    phone: '133XXXX3333',
+    address: '车站地址',
+    total: 156.00,
+    time: '2024-11-21 10:25',
+    unread: false
+  },
+  {
+    id: 8,
+    orderNo: 'JD20241121008',
+    status: 'pending',
+    user: '小钱',
+    phone: '132XXXX2222',
+    address: '商场地址',
+    total: 32.80,
+    time: '2024-11-21 11:45',
+    unread: true
+  },
+  {
+    id: 9,
+    orderNo: 'JD20241121009',
+    status: 'preparing',
+    user: '小孙',
+    phone: '131XXXX1111',
+    address: '工厂地址',
+    total: 89.00,
+    time: '2024-11-21 12:00',
+    unread: false
   }
 ]);
 
@@ -63,9 +118,13 @@ const activeStatusFilter = ref('all');
 // 搜索关键词
 const searchKeyword = ref('');
 
+// 获取今天的日期（格式：YYYY-MM-DD）
+const today = new Date().toISOString().split('T')[0];
+
 // 筛选后的订单
 const filteredOrders = ref([]);
-filteredOrders.value = [...orders.value];
+// 初始只显示今天的订单
+filteredOrders.value = orders.value.filter(order => order.time.startsWith(today));
 
 // 订单概览统计
 const orderOverview = computed(() => {
@@ -87,6 +146,9 @@ const orderOverview = computed(() => {
 // 更新筛选
 const updateFilter = () => {
   filteredOrders.value = orders.value.filter(order => {
+    // 日期筛选：仅今天
+    const dateMatch = order.time.startsWith(today);
+
     // 状态筛选
     const statusMatch = activeStatusFilter.value === 'all' || order.status === activeStatusFilter.value;
 
@@ -95,7 +157,7 @@ const updateFilter = () => {
       order.orderNo.includes(searchKeyword.value) ||
       order.user.includes(searchKeyword.value);
 
-    return statusMatch && searchMatch;
+    return dateMatch && statusMatch && searchMatch;
   });
 };
 
@@ -168,7 +230,7 @@ updateFilter();
   <div class="merchant-orders-container">
     <div class="orders-header">
       <div class="header-left">
-        <h3 class="page-title">【全部订单】</h3>
+        <h3 class="page-title">【今日订单】</h3>
       </div>
       <div class="header-right">
         <el-button type="default" @click="$router.back()">🔙 返回</el-button>
@@ -179,7 +241,7 @@ updateFilter();
     <div class="overview-section">
       <div class="overview-info">
         <div class="overview-item">
-          <span class="label">📊 全部订单概览：</span>
+          <span class="label">📊 今日订单概览：</span>
         </div>
         <div class="overview-stats">
           <span class="stat-item">🍽️ 总订单数：{{ orderOverview.total }}</span>

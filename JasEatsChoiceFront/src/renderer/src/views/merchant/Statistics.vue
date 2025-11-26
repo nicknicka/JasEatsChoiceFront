@@ -319,11 +319,15 @@ const updateChartData = () => {
         <h4 class="section-title">📈 订单趋势</h4>
         <div class="chart-container" v-show="true">
           <v-chart
+            v-if="chartContainerWidth > 0"
             :options="orderChartOptions"
             style="height: 250px; width: 100%"
             :autoresize="true"
             ref="chartRef"
           />
+          <div v-else class="chart-placeholder">
+            图表加载中...
+          </div>
         </div>
       </div>
 
@@ -434,6 +438,11 @@ const updateChartData = () => {
         align-items: center;
         justify-content: center;
         width: 100%;
+        
+        .chart-placeholder {
+          color: #909399;
+          font-size: 14px;
+        }
       }
     }
 

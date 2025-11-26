@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 // 菜品状态映射
@@ -22,7 +22,8 @@ const loading = ref(false);
 const searchKeyword = ref('');
 const activeStatusFilter = ref('all');
 const selectedDishes = ref([]);
-
+// 三态全选复选框的状态：0=未选择，1=部分选择，2=全选
+// const selectAllState = ref(0); // 不再需要这个状态变量，直接通过计算获得
 // 页面加载时初始化
 onMounted(() => {
   loading.value = true;
@@ -70,8 +71,31 @@ const toggleDishStatus = (dish) => {
 
 // 编辑菜品
 const editDish = (dish) => {
-  console.log('编辑菜品:', dish);
-  ElMessage.info('编辑菜品功能开发中');
+  openEditDishDialog(dish);
+};
+
+// 保存编辑后的菜品
+const saveEditedDish = () => {
+  // 简单的表单验证
+  if (!editDishForm.value.name.trim()) {
+    ElMessage.warning('请填写菜品名称');
+    return;
+  }
+
+  // 找到要编辑的菜品并更新
+  const index = dishesList.value.findIndex(item => item.id === editDishForm.value.id);
+  if (index !== -1) {
+    // 更新菜品信息
+    dishesList.value[index] = {
+      ...dishesList.value[index],
+      ...editDishForm.value,
+      updateTime: new Date().toISOString().slice(0, 19).replace('T', ' ') // 更新时间
+    };
+
+    updateFilter();
+    editDishDialogVisible.value = false;
+    ElMessage.success('菜品已更新');
+  }
 };
 
 // 删除菜品
@@ -132,10 +156,28 @@ const batchOperation = (operation) => {
 
   updateFilter();
   selectedDishes.value = [];
+  // 强制更新界面，确保全选状态正确更新
+  setTimeout(() => {
+    updateFilter();
+  }, 0);
 };
 
 // 新增菜品对话框
 const addDishDialogVisible = ref(false);
+
+// 食材数据（模拟）
+const ingredients = ref([
+  // 必选食材
+  { id: 1, name: '米饭', type: 'mandatory', calories: 116 },
+  { id: 2, name: '面条', type: 'mandatory', calories: 137 },
+  { id: 3, name: '面包', type: 'mandatory', calories: 264 },
+  // 可选食材
+  { id: 4, name: '鸡肉', type: 'optional', calories: 165 },
+  { id: 5, name: '猪肉', type: 'optional', calories: 242 },
+  { id: 6, name: '牛肉', type: 'optional', calories: 250 },
+  { id: 7, name: '蔬菜', type: 'optional', calories: 50 },
+  { id: 8, name: '鸡蛋', type: 'optional', calories: 78 }
+]);
 
 // 新菜品表单数据
 const newDish = ref({
@@ -143,8 +185,49 @@ const newDish = ref({
   price: 0,
   category: '主食',
   status: 'online',
-  stock: 100
+  stock: 100,
+  ingredients: {
+    mandatory: [], // 必选食材列表
+    optional: []    // 可选食材列表
+  },
+  totalCalories: 0 // 总卡路里
 });
+
+// 计算总卡路里
+const calculateTotalCalories = () => {
+  let total = 0;
+
+  // 计算必选食材卡路里
+  newDish.value.ingredients.mandatory.forEach(ingredientId => {
+    const ingredient = ingredients.value.find(ing => ing.id === ingredientId);
+    if (ingredient) {
+      total += ingredient.calories;
+    }
+  });
+
+  // 计算可选食材卡路里
+  newDish.value.ingredients.optional.forEach(ingredientId => {
+    const ingredient = ingredients.value.find(ing => ing.id === ingredientId);
+    if (ingredient) {
+      total += ingredient.calories;
+    }
+  });
+
+  newDish.value.totalCalories = total;
+};
+
+// 编辑菜品对话框
+const editDishDialogVisible = ref(false);
+
+// 编辑菜品表单数据
+const editDishForm = ref({});
+
+// 打开编辑菜品对话框
+const openEditDishDialog = (dish) => {
+  // 复制菜品数据到编辑表单
+  editDishForm.value = JSON.parse(JSON.stringify(dish));
+  editDishDialogVisible.value = true;
+};
 
 // 打开添加菜品对话框
 const openAddDishDialog = () => {
@@ -167,6 +250,8 @@ const saveNewDish = () => {
     category: newDish.value.category,
     status: newDish.value.status,
     stock: newDish.value.stock,
+    ingredients: newDish.value.ingredients,
+    totalCalories: newDish.value.totalCalories,
     updateTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
   };
 
@@ -186,16 +271,67 @@ const toggleDishSelection = (dish) => {
   } else {
     selectedDishes.value.splice(index, 1);
   }
+  console.log('dish',dish) ;
+  console.log('选择状态：', getSelectAllState());
+  console.log('已选择菜品：', selectedDishes.value);
 };
 
 // 全选/取消全选
 const toggleSelectAll = () => {
-  if (selectedDishes.value.length === filteredDishes.value.length) {
+  const currentState = getSelectAllState();
+
+  if (currentState === 2) {
+    // 当前是全选状态，点击后取消全选
     selectedDishes.value = [];
   } else {
+    // 当前是未选或部分选择状态，点击后全选
     selectedDishes.value = [...filteredDishes.value];
   }
+
+  // 触发Vue的响应式更新
+  selectedDishes.value = [...selectedDishes.value];
+
+  console.log('全选状态：', getSelectAllState());
+  console.log('已选择菜品：', selectedDishes.value);
 };
+
+// 检查全选状态
+const getSelectAllState = () => {
+  if (selectedDishes.value.length === 0) {
+    return 0;
+  } else if (selectedDishes.value.length === filteredDishes.value.length && filteredDishes.value.length > 0) {
+    // 已选择所有项目
+    return 2;
+  } else {
+    // 部分选择
+    return 1;
+  }
+};
+
+// 监听filteredDishes变化，确保全选状态正确更新
+watch(() => filteredDishes.value, () => {
+  // 如果过滤后的菜品数量减少，且当前选中的菜品数量等于过滤前的数量，那么需要调整选中的菜品
+  if (selectedDishes.value.length > filteredDishes.value.length) {
+    // 只保留过滤后仍存在的菜品
+    selectedDishes.value = selectedDishes.value.filter(selectedDish =>
+      filteredDishes.value.some(filteredDish => filteredDish.id === selectedDish.id)
+    );
+  }
+});
+
+// 获取单个菜品的选中状态
+const getDishCheckedState = (dish) => {
+  // 直接根据selectedDishes数组判断菜品是否被选中
+  console.log('getDishCheckedState selected',selectedDishes.value);
+  console.log('getDishCheckedState',dish);
+  console.log('getDishCheckedState checked', selectedDishes.value.some(item => item.id === dish.id));
+  
+  // 确保返回值是布尔类型
+  const isChecked = selectedDishes.value.some(item => item.id === dish.id);
+  console.log('getDishCheckedState final result:', isChecked);
+  return isChecked;
+};
+
 </script>
 
 <template>
@@ -238,7 +374,7 @@ const toggleSelectAll = () => {
       <div class="dish-item" v-for="dish in filteredDishes" :key="dish.id">
         <div class="dish-selection">
           <el-checkbox
-            :checked="selectedDishes.includes(dish)"
+            :model-value="getDishCheckedState(dish)"
             @change="toggleDishSelection(dish)"
           />
         </div>
@@ -292,7 +428,8 @@ const toggleSelectAll = () => {
     <div class="batch-actions" v-if="filteredDishes.length > 0">
       <span class="select-all">
         <el-checkbox
-          :checked="selectedDishes.length === filteredDishes.length"
+          :indeterminate="getSelectAllState() === 1"
+          :model-value="getSelectAllState() === 2"
           @change="toggleSelectAll"
         />
         全选
@@ -364,6 +501,41 @@ const toggleSelectAll = () => {
             <el-option label="下架" value="offline" />
           </el-select>
         </el-form-item>
+
+        <!-- 必选食材 -->
+        <el-form-item label="必选食材" required>
+          <el-select v-model="newDish.ingredients.mandatory" style="width: 100%;" placeholder="请选择必选食材" @change="calculateTotalCalories">
+            <el-option
+              v-for="ingredient in ingredients"
+              :key="ingredient.id"
+              :value="ingredient.id"
+              v-if="ingredient.type === 'mandatory'"
+            >
+              {{ ingredient.name }} ({{ ingredient.calories }} kcal)
+            </el-option>
+          </el-select>
+        </el-form-item>
+
+        <!-- 可选食材 -->
+        <el-form-item label="可选食材">
+          <el-select v-model="newDish.ingredients.optional" style="width: 100%;" placeholder="请选择可选食材" multiple @change="calculateTotalCalories">
+            <el-option
+              v-for="ingredient in ingredients"
+              :key="ingredient.id"
+              :value="ingredient.id"
+              v-if="ingredient.type === 'optional'"
+            >
+              {{ ingredient.name }} ({{ ingredient.calories }} kcal)
+            </el-option>
+          </el-select>
+        </el-form-item>
+
+        <!-- 卡路里计算 -->
+        <el-form-item label="总卡路里">
+          <div class="calorie-display">
+            {{ newDish.totalCalories }} kcal
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -372,10 +544,61 @@ const toggleSelectAll = () => {
         </span>
       </template>
     </el-dialog>
+
+    <!-- 编辑菜品对话框 -->
+    <el-dialog
+      v-model="editDishDialogVisible"
+      title="编辑菜品"
+      width="600px"
+      top="10%"
+    >
+      <el-form :model="editDishForm" label-width="100px" status-icon>
+        <el-form-item label="名称" prop="name" required>
+          <el-input v-model="editDishForm.name" placeholder="请输入菜品名称" />
+        </el-form-item>
+
+        <el-form-item label="价格" prop="price" required>
+          <el-input v-model.number="editDishForm.price" placeholder="请输入价格" type="number" />
+        </el-form-item>
+
+        <el-form-item label="分类" prop="category" required>
+          <el-select v-model="editDishForm.category" style="width: 100%;">
+            <el-option label="主食" value="主食" />
+            <el-option label="汤品" value="汤品" />
+            <el-option label="饮料" value="饮料" />
+            <el-option label="小吃" value="小吃" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="库存" prop="stock" required>
+          <el-input v-model.number="editDishForm.stock" placeholder="请输入库存" type="number" />
+        </el-form-item>
+
+        <el-form-item label="状态">
+          <el-select v-model="editDishForm.status" style="width: 100%;">
+            <el-option label="上架" value="online" />
+            <el-option label="即将售罄" value="almost_sold" />
+            <el-option label="下架" value="offline" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="editDishDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveEditedDish">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped lang="less">
+.calorie-display {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f56c6c;
+}
+
 .dish-management-container {
   padding: 0 20px 20px 20px;
 
