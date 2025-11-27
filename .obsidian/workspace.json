@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "1b5a6416c5ce338b",
+        "id": "501e692f1b39d486",
         "type": "tabs",
         "children": [
           {
-            "id": "23f711f3e54a9992",
+            "id": "d4063282471e365c",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "商家端页面/今日订单页面设计.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "今日订单页面设计"
+              "title": "新标签页"
             }
           }
         ]
@@ -169,19 +165,23 @@
       "bases:创建新数据库": false
     }
   },
-  "active": "23f711f3e54a9992",
+  "active": "d4063282471e365c",
   "lastOpenFiles": [
-    "JasEatsChoiceFront/out/renderer/assets/index-c818aa41.js",
-    "JasEatsChoiceFront/out/renderer/assets/Statistics-5449ec10.js",
-    "JasEatsChoiceFront/out/renderer/assets/Comments-997d455e.js",
-    "JasEatsChoiceFront/out/renderer/assets/CommonHome-80170e86.js",
-    "JasEatsChoiceFront/out/renderer/assets/MyShop-36238db0.js",
-    "JasEatsChoiceFront/out/renderer/assets/Chat-12181807.js",
-    "JasEatsChoiceFront/out/renderer/assets/Messages-3276cc4e.js",
-    "JasEatsChoiceFront/out/renderer/assets/HomeContent-d316c2b6.js",
-    "JasEatsChoiceFront/out/renderer/assets/Orders-d69bf671.js",
-    "JasEatsChoiceFront/out/renderer/assets/MenuEdit-75693c06.js",
-    "JasEatsChoiceFront/out/renderer/assets/DishManagement-29c93032.js",
+    "JasEatsChoiceFront/out/renderer/assets/index-3cccb60a.js",
+    "JasEatsChoiceFront/out/renderer/assets/Statistics-5bdb7436.js",
+    "JasEatsChoiceFront/out/renderer/assets/TodayOrders-59f17f5a.js",
+    "JasEatsChoiceFront/out/renderer/assets/MyShop-6224dff6.js",
+    "JasEatsChoiceFront/out/renderer/assets/Address-c3031eb6.js",
+    "JasEatsChoiceFront/out/renderer/assets/OrderConfirmation-950fd267.js",
+    "JasEatsChoiceFront/out/renderer/assets/DishEdit-cb15200c.js",
+    "JasEatsChoiceFront/out/renderer/assets/DishManagement-5926e6fe.js",
+    "JasEatsChoiceFront/out/renderer/assets/OrderDetail-447f9404.js",
+    "JasEatsChoiceFront/out/renderer/assets/HomeContent-83d4d255.js",
+    "JasEatsChoiceFront/out/renderer/assets/MyCollection-87afaae2.js",
+    "JasEatsChoiceFront/node_modules/electron/README.md",
+    "商家端页面/今日订单页面设计.md",
+    "PRD_补充完善.md",
+    "用户端页面/商家下单主页设计.md",
     "JasEatsChoiceFront/node_modules/@types/lodash/README.md",
     "JasEatsChoiceFront/node_modules/@types/http-cache-semantics/README.md",
     "JasEatsChoiceFront/node_modules/@types/responselike/README.md",
@@ -203,10 +203,6 @@
     "JasEatsChoiceFront/node_modules/hosted-git-info/README.md",
     "JasEatsChoiceFront/node_modules/fd-slicer/README.md",
     "JasEatsChoiceFront/node_modules/fd-slicer/CHANGELOG.md",
-    "JasEatsChoiceFront/node_modules/dmg-license/README.md",
-    "JasEatsChoiceFront/node_modules/callsites/readme.md",
-    "JasEatsChoiceFront/node_modules/@pkgjs/parseargs/README.md",
-    "JasEatsChoiceFront/node_modules/@pkgjs/parseargs/CHANGELOG.md",
     "JasEatsChoiceFront/node_modules/dotenv-expand/dotenv-expand.png",
     "JasEatsChoiceFront/node_modules/retry/equation.gif",
     "JasEatsChoiceFront/node_modules/app-builder-lib/templates/icons/proton-native/linux/64x64.png",

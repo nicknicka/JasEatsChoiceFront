@@ -1,41 +1,82 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with code in this repository.
 
 ---
 
-### 项目文档指引
-- 项目概述：查看 `佳食宜选.md`
-- 技术实现：查看 `佳食宜选技术实现指导.md`
-- 详细需求：查看 `产品需求说明书（PRD）.md`
+## 项目文档体系
+- **项目概述**：佳食宜选.md
+- **详细需求**：产品需求说明书（PRD）.md
+- **PRD补充**：PRD_补充完善.md（记录系统现有实现与设计的差异）
+- **技术实现**：佳食宜选技术实现指导.md
+- **后端API**：后端API文档.md
 
-### Excluded Features
-- Offline store cash register system
-- Supply chain warehouse management
-- Third-party delivery scheduling (only integrates delivery status query)
+## 页面设计文件
+### 用户端页面
+- 最终用户端首页效果图.md
+- 今日食谱子页面设计.md
+- 卡路里统计子页面设计.md
+- 我的食谱页面设计.md
+- AI聊天助手页面设计.md
+- 设置页面设计.md
+- 用户中心页面设计.md
+- 消息中心页面设计.md
+- 系统通知详情页面设计.md
+- 查看所有订单页面设计.md
+- 消费记录页面设计.md
+- 管理地址页面设计.md
+- 联系客服页面设计.md
+- 群订单支付页面设计.md
+- 群订单专属会话页面设计.md
+- 群聊会话详情页面设计.md
+- 用户单聊会话详情页面设计.md
+- 用户端-登录页面-纯小框设计.md
+- 用户端-注册页面-纯小框设计.md
 
-### UI Designs
-- **Main Pages**:
-  - 最终用户端首页效果图.md
-  - 今日食谱子页面设计.md
-  - 卡路里统计子页面设计.md
-  - 我的食谱页面设计.md
-  - AI聊天助手页面设计.md
-  - 设置页面设计.md
-  - 用户中心页面设计.md
+### 商家端页面
+- 菜单编辑页面设计.md
+- 菜单管理页面设计.md
+- 菜品编辑页面设计.md
+- 菜品管理页面设计.md
+- 今日订单页面设计.md
+- 商家单聊页面设计.md
+- 商家群聊会话详情页面设计.md
+- 商家消息中心页面设计.md
+- 商家中心页面设计.md
+- 我的店铺页面设计.md
+- 新增菜单页面设计.md
+- 营业统计页面设计.md
 
-- **Message Center Pages**:
-  - 消息中心页面设计.md
-  - 系统通知详情页面设计.md
-  - 商家单聊会话详情页面设计.md
-  - 商家群聊会话详情页面设计.md
+## 已实现核心功能
+### 用户端
+- 个性化饮食推荐
+- 卡路里精准管理
+- 全流程订单管理
+- AI饮食助手
+- 社交聊天与互动
+- 我的收藏与食谱
+- 个人中心与设置
 
-- **User Center Subpages**:
-  - 查看所有订单页面设计.md
-  - 消费记录页面设计.md
-  - 管理地址页面设计.md
-  - 联系客服页面设计.md
+### 商家端
+- 订单管理系统
+- 菜单与菜品管理
+- 店铺信息管理
+- 营业统计分析
+- 评价中心
+- 消息与聊天系统
 
+## 排除功能
+- 线下门店收银系统
+- 供应链仓储管理
+- 第三方配送调度（仅集成配送状态查询）
 
+## 开发规范
+- 回答问题时请使用中文
+- 代码实现需遵循技术文档中的技术栈要求
+- 保持代码结构清晰，符合Vue 3最佳实践
+- 使用Element Plus组件库实现统一UI风格
 
-# 回答的时候，请以中文形式回答
+## 技术栈
+- 后端：SpringBoot + MyBatis-Plus + MySQL + Redis + Netty
+- 前端：Electron + Vue 3 + Element Plus
+- 小程序：UniApp

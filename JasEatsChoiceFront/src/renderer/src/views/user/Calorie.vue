@@ -26,16 +26,22 @@ const calorieData = ref({
 
 // 获取营养百分比（模拟）
 const getNutritionPercentage = (value, name) => {
+  let percentage;
   switch (name) {
     case '蛋白质':
-      return (value / 90) * 100; // 目标90g
+      percentage = (value / 90) * 100; // 目标90g
+      break;
     case '碳水化合物':
-      return (value / 250) * 100; // 目标250g
+      percentage = (value / 250) * 100; // 目标250g
+      break;
     case '脂肪':
-      return (value / 70) * 100; // 目标70g
+      percentage = (value / 70) * 100; // 目标70g
+      break;
     default:
-      return 0;
+      percentage = 0;
   }
+  // 四舍五入保留两位小数
+  return Math.round(percentage * 100) / 100;
 };
 
 // 获取营养颜色
@@ -99,6 +105,7 @@ const getNutritionColor = (name) => {
           <el-progress
             :percentage="getNutritionPercentage(item.value, item.name)"
             :color="getNutritionColor(item.name)"
+            :format="() => getNutritionPercentage(item.value, item.name) + '%'"
           />
         </div>
       </div>
@@ -119,7 +126,7 @@ const getNutritionColor = (name) => {
           <div class="bar-container">
             <div
               class="bar-fill"
-              :style="{ width: (item.consumed / calorieData.today.target * 100) + '%' }"
+              :style="{ width: (item.consumed / calorieData.today.target * 100).toFixed(2) + '%' }"
               :class="{ 'over-target': item.consumed > calorieData.today.target }"
             >
               {{ item.consumed }}

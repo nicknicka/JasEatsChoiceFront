@@ -180,7 +180,7 @@ onMounted(() => {
         </div>
 
         <div class="nearby-section">
-          <el-button type="primary" size="large" class="nearby-btn" @click="navigateTo('/user/merchants')">
+          <el-button type="primary" size="large" class="nearby-btn" @click="navigateTo('/user/home/merchants')">
             <el-icon><Location /></el-icon>
             查找附近商家
           </el-button>
@@ -198,7 +198,10 @@ onMounted(() => {
               <span>夏日低卡饮食指南</span>
             </el-card>
           </div>
-          <el-link type="primary" class="more-link" @click="navigateTo('/user/home/tutorials')">查看更多教程</el-link>
+          <el-button type="primary" size="large" class="more-link" @click="navigateTo('/user/home/tutorials')">
+            <el-icon><ArrowRight /></el-icon>
+            <span>查看更多教程</span>
+          </el-button>
         </div>
 </template>
 
@@ -396,7 +399,8 @@ onMounted(() => {
     }
 
     .more-link {
-      font-size: 16px;
+      font-size: 14px;
+      margin: 0;
     }
   }
 }

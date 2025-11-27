@@ -107,7 +107,7 @@ const saveMenu = (saveType) => {
   ElMessage.success('菜单保存成功');
 
   // 跳回菜单管理页面
-  router.push('/merchant/menu');
+  router.push('/merchant/home/menu');
 };
 
 // 移除菜品
@@ -116,6 +116,74 @@ const removeDish = (dish) => {
   if (index !== -1) {
     dishesList.value.splice(index, 1);
     ElMessage.success('菜品已移除');
+  }
+};
+
+// 模拟可用菜品数据
+const availableDishes = ref([
+  { id: 1, name: '麻辣香锅饭', price: 18, status: 'online', statusText: '🟢 在售' },
+  { id: 2, name: '鱼香肉丝面', price: 16, status: 'online', statusText: '🟢 在售' },
+  { id: 3, name: '宫保鸡丁饭', price: 18, status: 'almost_sold', statusText: '🟡 即将售罄' },
+  { id: 4, name: '酸辣汤', price: 8, status: 'online', statusText: '🟢 在售' },
+  { id: 5, name: '可乐', price: 3, status: 'offline', statusText: '🔴 下架' },
+  { id: 6, name: '红烧肉饭', price: 20, status: 'online', statusText: '🟢 在售' },
+  { id: 7, name: '炒青菜', price: 10, status: 'online', statusText: '🟢 在售' },
+  { id: 8, name: '番茄鸡蛋面', price: 15, status: 'online', statusText: '🟢 在售' }
+]);
+
+// 添加菜品对话框
+const showAddDishDialog = ref(false);
+const selectedDish = ref(null);
+
+// 批量关联菜品对话框
+const showBatchAssociateDialog = ref(false);
+const selectedDishesBatch = ref([]);
+
+// 添加菜品
+const addDish = () => {
+  if (selectedDish.value) {
+    // 检查菜品是否已在菜单中
+    const isExist = dishesList.value.some(dish => dish.id === selectedDish.value.id);
+    if (!isExist) {
+      dishesList.value.push({ ...selectedDish.value });
+      ElMessage.success('菜品已添加');
+    } else {
+      ElMessage.warning('该菜品已在菜单中');
+    }
+    // 重置状态
+    showAddDishDialog.value = false;
+    selectedDish.value = null;
+  }
+};
+
+// 批量关联菜品
+const batchAssociateDishes = () => {
+  if (selectedDishesBatch.value.length > 0) {
+    let addedCount = 0;
+    let existingCount = 0;
+
+    selectedDishesBatch.value.forEach(dish => {
+      const isExist = dishesList.value.some(existingDish => existingDish.id === dish.id);
+      if (!isExist) {
+        dishesList.value.push({ ...dish });
+        addedCount++;
+      } else {
+        existingCount++;
+      }
+    });
+
+    // 显示结果信息
+    const messages = [];
+    if (addedCount > 0) messages.push(`${addedCount} 个菜品已成功关联`);
+    if (existingCount > 0) messages.push(`${existingCount} 个菜品已在菜单中`);
+
+    if (messages.length > 0) {
+      ElMessage.success(messages.join('；'));
+    }
+
+    // 重置状态
+    showBatchAssociateDialog.value = false;
+    selectedDishesBatch.value = [];
   }
 };
 </script>
@@ -184,8 +252,8 @@ const removeDish = (dish) => {
             style="width: 250px;"
             class="dishes-search"
           />
-          <el-button type="primary" size="small">➕ 添加菜品</el-button>
-          <el-button type="info" size="small">🔗 批量关联菜品</el-button>
+          <el-button type="primary" size="small" @click="showAddDishDialog = true">➕ 添加菜品</el-button>
+          <el-button type="info" size="small" @click="showBatchAssociateDialog = true">🔗 批量关联菜品</el-button>
         </div>
         <div class="dishes-list">
           <div
@@ -212,6 +280,71 @@ const removeDish = (dish) => {
         <el-button type="info" @click="saveMenu('draft')">💾 保存为草稿</el-button>
         <el-button type="text" @click="$router.back()">🔙 取消编辑</el-button>
       </div>
+
+      <!-- 添加菜品对话框 -->
+      <el-dialog
+        v-model="showAddDishDialog"
+        title="添加菜品"
+        width="600px"
+        top="10%"
+      >
+        <div class="dialog-content">
+          <el-select
+            v-model="selectedDish"
+            placeholder="请选择要添加的菜品"
+            style="width: 100%;"
+            filterable
+            clearable
+          >
+            <el-option
+              v-for="dish in availableDishes"
+              :key="dish.id"
+              :label="`${dish.name} - ¥${dish.price} ${dish.statusText}`"
+              :value="dish"
+            />
+          </el-select>
+        </div>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="showAddDishDialog = false">取消</el-button>
+            <el-button type="primary" @click="addDish">确定添加</el-button>
+          </div>
+        </template>
+      </el-dialog>
+
+      <!-- 批量关联菜品对话框 -->
+      <el-dialog
+        v-model="showBatchAssociateDialog"
+        title="批量关联菜品"
+        width="600px"
+        top="10%"
+      >
+        <div class="dialog-content">
+          <el-select
+            v-model="selectedDishesBatch"
+            multiple
+            placeholder="请选择要关联的菜品"
+            style="width: 100%;"
+            filterable
+            clearable
+            collapse-tags
+            collapse-tags-tooltip
+          >
+            <el-option
+              v-for="dish in availableDishes"
+              :key="dish.id"
+              :label="`${dish.name} - ¥${dish.price} ${dish.statusText}`"
+              :value="dish"
+            /> 
+          </el-select>
+        </div>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="showBatchAssociateDialog = false">取消</el-button>
+            <el-button type="primary" @click="batchAssociateDishes">确定关联</el-button>
+          </div>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>

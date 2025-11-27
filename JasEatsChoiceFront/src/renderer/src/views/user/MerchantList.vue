@@ -72,8 +72,11 @@ onMounted(() => {
 const viewMerchantDetails = (merchant) => {
   // 将商家信息存储到会话存储，以便在详情页面使用
   sessionStorage.setItem('selectedMerchant', JSON.stringify(merchant));
-  // 跳转到商家详情页面
-  router.push('/user/home/merchant-detail');
+  // 跳转到商家详情页面，使用查看详情模式
+  router.push({
+    path: '/user/home/merchant-detail',
+    query: { viewMode: 'details' }
+  });
 };
 
 // 立即下单功能
@@ -81,7 +84,10 @@ const orderNow = (merchant) => {
   // 将商家信息存储到会话存储
   sessionStorage.setItem('selectedMerchant', JSON.stringify(merchant));
   // 跳转到商家详情页面的立即下单流程
-  router.push('/user/home/merchant-detail');
+  router.push({
+    path: '/user/home/merchant-detail',
+    query: { viewMode: 'order' }
+  });
 };
 
 // 计算属性：过滤和排序后的商家列表

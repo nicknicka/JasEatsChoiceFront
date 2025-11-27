@@ -85,7 +85,7 @@ const saveEditedDish = () => {
   // 找到要编辑的菜品并更新
   const index = dishesList.value.findIndex(item => item.id === editDishForm.value.id);
   if (index !== -1) {
-    // 更新菜品信息
+    // 更新菜品信息，确保包含食材和卡路里
     dishesList.value[index] = {
       ...dishesList.value[index],
       ...editDishForm.value,
@@ -187,8 +187,8 @@ const newDish = ref({
   status: 'online',
   stock: 100,
   ingredients: {
-    mandatory: [], // 必选食材列表
-    optional: []    // 可选食材列表
+    mandatory: null, // 必选食材是单个值
+    optional: []    // 可选食材是数组
   },
   totalCalories: 0 // 总卡路里
 });
@@ -197,15 +197,15 @@ const newDish = ref({
 const calculateTotalCalories = () => {
   let total = 0;
 
-  // 计算必选食材卡路里
-  newDish.value.ingredients.mandatory.forEach(ingredientId => {
-    const ingredient = ingredients.value.find(ing => ing.id === ingredientId);
+  // 计算必选食材卡路里 - 必选是单个值
+  if (newDish.value.ingredients.mandatory) {
+    const ingredient = ingredients.value.find(ing => ing.id === newDish.value.ingredients.mandatory);
     if (ingredient) {
       total += ingredient.calories;
     }
-  });
+  }
 
-  // 计算可选食材卡路里
+  // 计算可选食材卡路里 - 可选是数组
   newDish.value.ingredients.optional.forEach(ingredientId => {
     const ingredient = ingredients.value.find(ing => ing.id === ingredientId);
     if (ingredient) {
@@ -220,13 +220,51 @@ const calculateTotalCalories = () => {
 const editDishDialogVisible = ref(false);
 
 // 编辑菜品表单数据
-const editDishForm = ref({});
+const editDishForm = ref({
+  ingredients: {
+    mandatory: null, // 必选食材是单个值，不是数组
+    optional: []     // 可选食材是数组
+  },
+  totalCalories: 0
+});
 
 // 打开编辑菜品对话框
 const openEditDishDialog = (dish) => {
-  // 复制菜品数据到编辑表单
-  editDishForm.value = JSON.parse(JSON.stringify(dish));
+  // 复制菜品数据到编辑表单，确保包含食材信息
+  editDishForm.value = JSON.parse(JSON.stringify({
+    ...dish,
+    ingredients: dish.ingredients || { mandatory: null, optional: [] },
+    totalCalories: dish.totalCalories || 0
+  }));
   editDishDialogVisible.value = true;
+};
+
+// 计算编辑菜品的总卡路里
+const calculateEditTotalCalories = () => {
+  let total = 0;
+
+  // 确保 ingredients 存在
+  if (!editDishForm.value.ingredients) {
+    editDishForm.value.ingredients = { mandatory: null, optional: [] };
+  }
+
+  // 计算必选食材卡路里 - 必选是单个值
+  if (editDishForm.value.ingredients.mandatory) {
+    const ingredient = ingredients.value.find(ing => ing.id === editDishForm.value.ingredients.mandatory);
+    if (ingredient) {
+      total += ingredient.calories;
+    }
+  }
+
+  // 计算可选食材卡路里 - 可选是数组
+  editDishForm.value.ingredients.optional?.forEach(ingredientId => {
+    const ingredient = ingredients.value.find(ing => ing.id === ingredientId);
+    if (ingredient) {
+      total += ingredient.calories;
+    }
+  });
+
+  editDishForm.value.totalCalories = total;
 };
 
 // 打开添加菜品对话框
@@ -271,9 +309,9 @@ const toggleDishSelection = (dish) => {
   } else {
     selectedDishes.value.splice(index, 1);
   }
-  console.log('dish',dish) ;
-  console.log('选择状态：', getSelectAllState());
-  console.log('已选择菜品：', selectedDishes.value);
+  // console.log('dish',dish) ;
+  // console.log('选择状态：', getSelectAllState());
+  // console.log('已选择菜品：', selectedDishes.value);
 };
 
 // 全选/取消全选
@@ -291,8 +329,8 @@ const toggleSelectAll = () => {
   // 触发Vue的响应式更新
   selectedDishes.value = [...selectedDishes.value];
 
-  console.log('全选状态：', getSelectAllState());
-  console.log('已选择菜品：', selectedDishes.value);
+  // console.log('全选状态：', getSelectAllState());
+  // console.log('已选择菜品：', selectedDishes.value);
 };
 
 // 检查全选状态
@@ -322,13 +360,13 @@ watch(() => filteredDishes.value, () => {
 // 获取单个菜品的选中状态
 const getDishCheckedState = (dish) => {
   // 直接根据selectedDishes数组判断菜品是否被选中
-  console.log('getDishCheckedState selected',selectedDishes.value);
-  console.log('getDishCheckedState',dish);
-  console.log('getDishCheckedState checked', selectedDishes.value.some(item => item.id === dish.id));
+  // console.log('getDishCheckedState selected',selectedDishes.value);
+  // console.log('getDishCheckedState',dish);
+  // console.log('getDishCheckedState checked', selectedDishes.value.some(item => item.id === dish.id));
   
   // 确保返回值是布尔类型
   const isChecked = selectedDishes.value.some(item => item.id === dish.id);
-  console.log('getDishCheckedState final result:', isChecked);
+  // console.log('getDishCheckedState final result:', isChecked);
   return isChecked;
 };
 
@@ -509,7 +547,7 @@ const getDishCheckedState = (dish) => {
               v-for="ingredient in ingredients"
               :key="ingredient.id"
               :value="ingredient.id"
-              v-if="ingredient.type === 'mandatory'"
+              v-if="ingredient && ingredient.type === 'mandatory'"
             >
               {{ ingredient.name }} ({{ ingredient.calories }} kcal)
             </el-option>
@@ -523,7 +561,7 @@ const getDishCheckedState = (dish) => {
               v-for="ingredient in ingredients"
               :key="ingredient.id"
               :value="ingredient.id"
-              v-if="ingredient.type === 'optional'"
+              v-if="ingredient && ingredient.type === 'optional'"
             >
               {{ ingredient.name }} ({{ ingredient.calories }} kcal)
             </el-option>
@@ -580,6 +618,41 @@ const getDishCheckedState = (dish) => {
             <el-option label="即将售罄" value="almost_sold" />
             <el-option label="下架" value="offline" />
           </el-select>
+        </el-form-item>
+
+        <!-- 必选食材 -->
+        <el-form-item label="必选食材">
+          <el-select v-model="editDishForm.ingredients.mandatory" style="width: 100%;" placeholder="请选择必选食材" @change="calculateEditTotalCalories">
+            <el-option
+              v-for="ingredient in ingredients"
+              :key="ingredient.id"
+              :value="ingredient.id"
+              v-if="ingredient && ingredient.type === 'mandatory'"
+            >
+              {{ ingredient.name }} ({{ ingredient.calories }} kcal)
+            </el-option>
+          </el-select>
+        </el-form-item>
+
+        <!-- 可选食材 -->
+        <el-form-item label="可选食材">
+          <el-select v-model="editDishForm.ingredients.optional" style="width: 100%;" placeholder="请选择可选食材" multiple @change="calculateEditTotalCalories">
+            <el-option
+              v-for="ingredient in ingredients"
+              :key="ingredient.id"
+              :value="ingredient.id"
+              v-if="ingredient && ingredient.type === 'optional'"
+            >
+              {{ ingredient.name }} ({{ ingredient.calories }} kcal)
+            </el-option>
+          </el-select>
+        </el-form-item>
+
+        <!-- 卡路里计算 -->
+        <el-form-item label="总卡路里">
+          <div class="calorie-display">
+            {{ editDishForm.totalCalories }} kcal
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>

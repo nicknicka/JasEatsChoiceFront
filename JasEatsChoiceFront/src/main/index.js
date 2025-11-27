@@ -3,22 +3,20 @@
 const { app, shell, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
-const WebSocket = require('ws');
 
 // Check if we're in development mode
-const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV
-const icon = path.join(__dirname, '../../resources/icon.png')
+const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV;
+const icon = path.join(__dirname, '../../resources/icon.png');
 
 // Initialize electron-store later when app is ready
-let store
-
-let mainWindow
+let store;
+let mainWindow;
 
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1200, // Updated to match desktop design
-    height: 800, // Updated to match desktop design
+    width: 1200,
+    height: 800,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -26,34 +24,29 @@ function createWindow() {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false
     }
-  })
+  });
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-    // Open DevTools to check for renderer errors
-    mainWindow.webContents.openDevTools()
-  })
+    mainWindow.show();
+    mainWindow.webContents.openDevTools();
+  });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+    shell.openExternal(details.url);
+    return { action: 'deny' };
+  });
 
   // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  // Set app user model id for windows
-  app.setAppUserModelId('com.electron')
+// This method will be called when Electron has finished initialization
+app.whenReady().then(() => {
+  app.setAppUserModelId('com.electron');
 
   // Initialize electron-store now that app is ready
   store = new Store({
@@ -67,162 +60,125 @@ app.on('ready', () => {
       offlineMenus: [],
       historyOrders: []
     }
-  })
+  });
 
-  // Create window
-  createWindow()
+  createWindow();
 
   // Electron-store IPC handlers
-  ipcMain.handle('store:set', (_, key, value) => {
-    store.set(key, value)
-  })
-
-  ipcMain.handle('store:get', (_, key) => {
-    return store.get(key)
-  })
-
-  ipcMain.handle('store:delete', (_, key) => {
-    store.delete(key)
-  })
-
-  ipcMain.handle('store:clear', () => {
-    store.clear()
-  })
+  ipcMain.handle('store:set', (_, key, value) => store.set(key, value));
+  ipcMain.handle('store:get', (_, key) => store.get(key));
+  ipcMain.handle('store:delete', (_, key) => store.delete(key));
+  ipcMain.handle('store:clear', () => store.clear());
 
   app.on('activate', () => {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
-})
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+// Quit when all windows are closed (except on macOS)
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
+  if (process.platform !== 'darwin') app.quit();
+});
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
 
-// WebSocket connection manager
-let ws = null
+// WebSocket implementation
+const WebSocket = require('ws');
+
+let webSocketClient = null;
 
 // WebSocket IPC handlers
-ipcMain.handle('websocket:connect', async (_, url) => {
+ipcMain.handle('websocket:connect', async (event, url) => {
   try {
-    // Create WebSocket connection
-    ws = new WebSocket(url)
+    if (webSocketClient && webSocketClient.readyState === WebSocket.OPEN) {
+      webSocketClient.close();
+    }
 
-    // Connection opened
-    ws.on('open', (event) => {
-      mainWindow.webContents.send('websocket:open', event)
-    })
+    webSocketClient = new WebSocket(url);
 
-    // Listen for messages
-    ws.on('message', (message) => {
+    webSocketClient.on('open', (eventData) => {
+      mainWindow.webContents.send('websocket:open', eventData);
+    });
+
+    webSocketClient.on('message', (message) => {
+      mainWindow.webContents.send('websocket:message', message);
+
+      // Dispatch message to specific handlers based on message type
       try {
-        const parsedMsg = JSON.parse(message)
-        console.log('WebSocket message received:', parsedMsg)
-
-        // Extract message type for classification
-        const msgType = parsedMsg.msgType || 'unknown'
-
-        // Handle different message types based on PRD and backend API
-        // All message types are forwarded to renderer, with specific handlers if needed
-
-        // For security, we can add message validation here
-
-        // Forward to renderer with specific channel based on message type
-        switch (msgType) {
+        const parsedMessage = JSON.parse(message);
+        switch (parsedMessage.type) {
           case 'auth':
-          case 'authResponse':
-            mainWindow.webContents.send('websocket:auth', parsedMsg)
-            break
+            mainWindow.webContents.send('websocket:auth', message);
+            break;
           case 'orderUpdate':
-          case 'orderStatusChange':
-            mainWindow.webContents.send('websocket:orderUpdate', parsedMsg)
-            break
+            mainWindow.webContents.send('websocket:orderUpdate', message);
+            break;
           case 'chat':
-          case 'privateChat':
-          case 'groupChat':
-          case 'systemMessage':
-            mainWindow.webContents.send('websocket:chat', parsedMsg)
-            break
+            mainWindow.webContents.send('websocket:chat', message);
+            break;
           case 'merchantUpdate':
-          case 'menuUpdate':
-            mainWindow.webContents.send('websocket:merchantUpdate', parsedMsg)
-            break
+            mainWindow.webContents.send('websocket:merchantUpdate', message);
+            break;
           case 'recommend':
-            mainWindow.webContents.send('websocket:recommend', parsedMsg)
-            break
+            mainWindow.webContents.send('websocket:recommend', message);
+            break;
           case 'notification':
-          case 'systemNotification':
-            mainWindow.webContents.send('websocket:notification', parsedMsg)
-            break
+            mainWindow.webContents.send('websocket:notification', message);
+            break;
           default:
-            // For all other message types, use the general channel
-            mainWindow.webContents.send('websocket:message', parsedMsg)
-            break
+            // Handle other message types
+            break;
         }
       } catch (error) {
-        console.error('Failed to parse WebSocket message:', error)
-        console.error('Raw message:', message)
-
-        // Send error to renderer for debugging
-        mainWindow.webContents.send('websocket:error', {
-          message: 'Failed to parse WebSocket message',
-          error: error.toString(),
-          rawMessage: message
-        })
+        // Not a JSON message, handle as raw
+        console.error('WebSocket message parse error:', error);
       }
-    })
+    });
 
-    // Connection closed
-    ws.on('close', (code, reason) => {
-      mainWindow.webContents.send('websocket:close', code, reason)
-      ws = null
-    })
+    webSocketClient.on('close', (code, reason) => {
+      mainWindow.webContents.send('websocket:close', code, reason);
+      webSocketClient = null;
+    });
 
-    // Error occurred
-    ws.on('error', (error) => {
-      mainWindow.webContents.send('websocket:error', error)
-      ws = null
-    })
+    webSocketClient.on('error', (error) => {
+      mainWindow.webContents.send('websocket:error', error);
+    });
 
-    return true
+    return 'WebSocket connection initiated';
   } catch (error) {
-    console.error('WebSocket connection error:', error)
-    mainWindow.webContents.send('websocket:error', error)
-    return false
+    console.error('WebSocket connection error:', error);
+    return { error: error.message };
   }
-})
+});
 
-ipcMain.handle('websocket:send', async (_, message) => {
+ipcMain.handle('websocket:send', async (event, message) => {
   try {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(message))
-      return true
+    if (webSocketClient && webSocketClient.readyState === WebSocket.OPEN) {
+      webSocketClient.send(message);
+      return 'Message sent successfully';
+    } else {
+      return { error: 'WebSocket not connected' };
     }
-    return false
   } catch (error) {
-    console.error('Failed to send WebSocket message:', error)
-    return false
+    console.error('WebSocket send error:', error);
+    return { error: error.message };
   }
-})
+});
 
 ipcMain.handle('websocket:disconnect', async () => {
   try {
-    if (ws) {
-      ws.close()
-      ws = null
+    if (webSocketClient) {
+      webSocketClient.close();
+      webSocketClient = null;
+      return 'WebSocket disconnected successfully';
+    } else {
+      return 'WebSocket was not connected';
     }
-    return true
   } catch (error) {
-    console.error('Failed to close WebSocket connection:', error)
-    return false
+    console.error('WebSocket disconnect error:', error);
+    return { error: error.message };
   }
-})
+});
+
+

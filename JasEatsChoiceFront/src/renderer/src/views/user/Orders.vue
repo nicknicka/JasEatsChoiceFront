@@ -66,8 +66,12 @@ const filteredOrders = computed(() => {
 
 // 查看订单详情
 const viewOrderDetails = (order) => {
-  // 实际应用中可以导航到订单详情页
-  console.log('查看订单详情:', order);
+  // 导航到订单详情页
+  router.push({
+    path: `/user/home/order-detail/${order.id}`,
+    name: 'user-order-detail',
+    params: { id: order.id }
+  });
 };
 
 // 取消订单

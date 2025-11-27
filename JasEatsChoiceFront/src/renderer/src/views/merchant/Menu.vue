@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter } from 'vue-router';
 
@@ -76,6 +76,14 @@ const updateFilter = () => {
   });
 };
 
+// 监听filteredMenus变化，确保全选状态正确更新
+watch(() => filteredMenus.value, () => {
+  // 如果过滤后的菜单数量减少，且当前选中的菜单数量等于过滤前的数量，那么需要调整选中的菜单
+  if (selectedMenus.value.length > filteredMenus.value.length) {
+    selectedMenus.value = selectedMenus.value.filter(menu => filteredMenus.value.includes(menu));
+  }
+}, { deep: true });
+
 // 切换状态
 const toggleMenuStatus = (menu) => {
   let newStatus = '';
@@ -95,7 +103,7 @@ const toggleMenuStatus = (menu) => {
 const editMenu = (menu) => {
   console.log('编辑菜单:', menu);
   // 导航到菜单编辑页面并传递菜单ID
-  router.push({ path: '/merchant/menu-edit', query: { menuId: menu.id } });
+  router.push({ path: '/merchant/home/menu-edit', query: { menuId: menu.id } });
 };
 
 // 删除菜单
@@ -229,13 +237,31 @@ const saveNewMenu = () => {
   ElMessage.success('菜单已添加');
 };
 
+// 检查全选状态：0=未选择，1=部分选择，2=全选
+const getSelectAllState = () => {
+  if (selectedMenus.value.length === 0) {
+    return 0;
+  } else if (selectedMenus.value.length === filteredMenus.value.length && filteredMenus.value.length > 0) {
+    return 2;
+  } else {
+    return 1;
+  }
+};
+
 // 全选/取消全选
 const toggleSelectAll = () => {
-  if (selectedMenus.value.length === filteredMenus.value.length) {
+  const currentState = getSelectAllState();
+
+  if (currentState === 2) {
+    // 当前是全选状态，点击后取消全选
     selectedMenus.value = [];
   } else {
+    // 当前是未选或部分选择状态，点击后全选
     selectedMenus.value = [...filteredMenus.value];
   }
+
+  // 触发Vue的响应式更新
+  selectedMenus.value = [...selectedMenus.value];
 };
 </script>
 
@@ -282,7 +308,7 @@ const toggleSelectAll = () => {
       <div class="menu-item" v-for="menu in filteredMenus" :key="menu.id">
         <div class="menu-selection">
           <el-checkbox
-            :checked="selectedMenus.includes(menu)"
+            :model-value="selectedMenus.includes(menu)"
             @change="toggleMenuSelection(menu)"
           />
         </div>
@@ -351,7 +377,8 @@ const toggleSelectAll = () => {
     <div class="batch-actions" v-if="filteredMenus.length > 0">
       <span class="select-all">
         <el-checkbox
-          :checked="selectedMenus.length === filteredMenus.length"
+          :indeterminate="getSelectAllState() === 1"
+          :model-value="getSelectAllState() === 2"
           @change="toggleSelectAll"
         />
         全选

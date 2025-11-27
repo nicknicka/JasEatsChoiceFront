@@ -13,12 +13,14 @@ const UserTodayRecipe = () => import('../views/user/TodayRecipe.vue') // 今日�
 const UserCalorie = () => import('../views/user/Calorie.vue') // 卡路里统计
 const UserMyRecipe = () => import('../views/user/MyRecipe.vue') // 我的食谱
 const UserOrders = () => import('../views/user/Orders.vue') // 我的订单
+const UserOrderDetail = () => import('../views/user/OrderDetail.vue') // 订单详情
 const UserConsumeHistory = () => import('../views/user/ConsumeHistory.vue') // 消费记录
 const UserMessageCenter = () => import('../views/user/MessageCenter.vue') // 消息中心
 const UserSystemNotification = () => import('../views/user/SystemNotification.vue') // 系统通知
 const UserChat = () => import('../views/user/Chat.vue') // 单聊
 const UserGroupChat = () => import('../views/user/GroupChat.vue') // 群聊
 const UserAI = () => import('../views/user/AI.vue') // AI饮食助手
+const UserOrderConfirmation = () => import('../views/user/OrderConfirmation.vue') // 订单确认
 const UserSettings = () => import('../views/user/Settings.vue') // 设置
 const UserProfile = () => import('../views/user/Profile.vue') // 用户中心
 const UserAddress = () => import('../views/user/Address.vue') // 地址管理
@@ -100,6 +102,12 @@ const router = createRouter({
           meta: { title: '佳食宜选-商家详情' }
         },
         {
+          path: 'order-confirmation',
+          name: 'user-order-confirmation',
+          component: UserOrderConfirmation,
+          meta: { title: '佳食宜选-订单确认' }
+        },
+        {
           path: 'today-recipe',
           name: 'user-today-recipe',
           component: UserTodayRecipe,
@@ -122,6 +130,12 @@ const router = createRouter({
           name: 'user-orders',
           component: UserOrders,
           meta: { title: '佳食宜选-我的订单' }
+        },
+        {
+          path: 'order-detail/:id',
+          name: 'user-order-detail',
+          component: UserOrderDetail,
+          meta: { title: '佳食宜选-订单详情' }
         },
         {
           path: 'consume-history',
@@ -317,3 +331,4 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
+
