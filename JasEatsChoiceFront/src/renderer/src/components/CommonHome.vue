@@ -90,9 +90,33 @@ const menuData = {
 };
 
 // 根据当前角色过滤菜单
+// 当前激活的菜单项索引
+const activeMenuIndex = ref("1");
+
+// 根据当前角色过滤菜单
 const currentMenu = computed(() => {
 	return menuData[userRole.value] ? menuData[userRole.value] : menuData.user || [];
 });
+
+// 根据当前路由计算并设置激活的菜单项索引
+const updateActiveMenuIndex = () => {
+	const currentPath = router.currentRoute.value.path;
+	console.log("当前路由:", currentPath);
+
+	// 查找当前路由对应的菜单项
+	for (const menuItem of currentMenu.value) {
+		// 检查当前路由是否以菜单项的path开头
+		if (currentPath.startsWith(menuItem.path)) {
+			activeMenuIndex.value = menuItem.index;
+			console.log("匹配到的菜单项:", menuItem);
+			return;
+		}
+	}
+
+	// 如果没有匹配到，默认激活第一个菜单项
+	activeMenuIndex.value = currentMenu.value[0]?.index || "1";
+	console.log("未匹配到菜单项，默认激活第一个");
+};
 
 // 菜单点击事件处理
 const handleMenuSelect = (index) => {
@@ -166,10 +190,29 @@ onMounted(() => {
 		localStorage.setItem("currentRole", userRole.value);
 
 		console.log("恢复角色成功:", userRole.value);
+
+		// 页面加载后更新菜单项高亮
+		updateActiveMenuIndex();
 	} catch (error) {
 		console.error("恢复角色失败:", error);
 	}
 });
+
+// 监听路由变化，更新菜单项高亮
+watch(
+	() => router.currentRoute.value.path,
+	() => {
+		updateActiveMenuIndex();
+	}
+);
+
+// 监听当前菜单变化，更新菜单项高亮
+watch(
+	currentMenu,
+	() => {
+		updateActiveMenuIndex();
+	}, { deep: true }
+);
 
 // Watch for route changes to update role automatically
 watch(
@@ -195,6 +238,8 @@ watch(
 			// Save the new role to localStorage
 			localStorage.setItem("currentRole", userRole.value);
 			console.log("路由变化自动更新角色:", userRole.value);
+			// 更新角色后，重新计算激活的菜单项索引
+			updateActiveMenuIndex();
 		}
 	}
 );
@@ -276,7 +321,7 @@ const handleSearch = (value) => {
 					<div class="username">{{ userInfo.name }}</div>
 				</div>
 
-				<el-menu default-active="1" class="menu-list" @select="handleMenuSelect">
+				<el-menu v-model:default-active="activeMenuIndex" class="menu-list" @select="handleMenuSelect">
 					<el-menu-item
 						v-for="menuItem in currentMenu"
 						:key="menuItem.index"

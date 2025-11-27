@@ -37,8 +37,8 @@
               <span class="info-value">{{ orderInfo.orderId }}</span>
             </div>
             <div class="overview-item">
-              <span class="info-label">群名称：</span>
-              <span class="info-value">{{ orderInfo.groupName }}</span>
+              <span class="info-label">{{ isGroupOrder ? '群名称' : '用户名' }}：</span>
+              <span class="info-value">{{ isGroupOrder ? orderInfo.groupName : orderInfo.userName || '未知用户' }}</span>
             </div>
             <div class="overview-item paid-amount">
               <span class="info-label">已支付金额：</span>
@@ -136,8 +136,39 @@
           </div>
 
           <div class="unpaid-total">
-            <span class="total-label">💰 未支付总价：</span>
-            <span class="total-value">{{ orderInfo.totalUnpaid.toFixed(2) }}元</span>
+            <div class="price-breakdown">
+              <span class="total-label">💰 未支付总价：</span>
+              <span class="total-value">{{ orderInfo.totalUnpaid.toFixed(2) }}元</span>
+            </div>
+
+            <!-- 折叠价格组成详情 -->
+            <el-collapse-transition>
+              <div v-show="isPriceDetailsOpen" class="price-details-container">
+                <div class="price-details">
+                  <div class="detail-item" v-for="(item, index) in orderInfo.unpaidItems" :key="index">
+                    <span class="item-name">{{ item.name }} ×{{ item.quantity }}</span>
+                    <span class="item-amount">¥{{ item.totalPrice.toFixed(2) }}</span>
+                  </div>
+
+                  <!-- 优惠信息 -->
+                  <div v-if="orderInfo.originalTotal && orderInfo.originalTotal > orderInfo.totalUnpaid" class="detail-item discount-item">
+                    <span class="item-name">优惠:</span>
+                    <span class="item-amount discount-amount">-¥{{ (orderInfo.originalTotal - orderInfo.totalUnpaid).toFixed(2) }}</span>
+                  </div>
+                </div>
+              </div>
+            </el-collapse-transition>
+
+            <!-- 折叠按钮 -->
+            <div class="price-details-toggle">
+              <el-button
+                type="text"
+                size="small"
+                @click="isPriceDetailsOpen = !isPriceDetailsOpen"
+              >
+                {{ isPriceDetailsOpen ? '▲' : '▶' }} {{ isPriceDetailsOpen ? '收起详情' : '展开详情' }}
+              </el-button>
+            </div>
           </div>
         </div>
 
@@ -175,12 +206,18 @@
         <!-- 可用优惠 -->
         <div class="order-section discounts">
           <div class="section-title">📥 可用优惠</div>
-          <div class="discount-item">
+          <div class="discount-item" v-for="discount in discounts" :key="discount.id">
             <div class="discount-info">
               <span class="discount-icon">🎁 </span>
-              <span class="discount-text">新用户专享50元优惠券</span>
+              <span class="discount-text">{{ discount.name }}</span>
             </div>
-            <el-button type="text" class="use-discount">立即使用</el-button>
+            <div v-if="!discount.used">
+              <el-button type="text" class="use-discount" @click="useDiscount">立即使用</el-button>
+            </div>
+            <div v-else>
+              <span class="discount-used-text">已使用</span>
+              <el-button type="text" class="cancel-discount" @click="cancelDiscount">取消</el-button>
+            </div>
           </div>
         </div>
 
@@ -198,12 +235,13 @@
       </el-card>
     </div>
 
-    <!-- 可拖动悬浮购物车 -->
+    <!-- 可拖动悬浮购物车 - 订单确认页面隐藏该按钮 -->
     <div
       ref="cartBallRef"
       class="draggable-cart-ball"
       @mousedown="startDrag"
       @click="viewCart"
+      style="display: none;"
     >
       <div class="cart-icon">🛒</div>
       <el-badge :value="cartItems.length" class="cart-badge" />
@@ -309,6 +347,7 @@ const pendingOrder = JSON.parse(sessionStorage.getItem('pendingOrder')) || {};
 const orderInfo = ref({
   orderId: `JD${new Date().getTime()}`,
   groupName: pendingOrder.groupName || '默认订单群',
+  userName: pendingOrder.userName || '',
   paidItems: [],
   unpaidItems: pendingOrder.cartItems || [],
   totalPaid: 0.0,
@@ -438,24 +477,104 @@ const selectedPaymentMethod = ref(paymentMethods.value[0]);
 // 平台币余额
 const platformBalance = ref(125.0);
 
-const confirmOrder = () => {
-  ElMessageBox.confirm('请确认订单信息无误后支付', '订单确认', {
-    confirmButtonText: '立即支付',
-    cancelButtonText: '取消',
-    type: 'warning'
-  })
-  .then(() => {
-    // 清除会话存储中的未完成订单
-    sessionStorage.removeItem('pendingOrder');
+// 可用优惠
+const discounts = ref([
+  {
+    id: 1,
+    name: '新用户专享50元优惠券',
+    amount: 50.0,
+    available: true,
+    used: false
+  }
+]);
 
-    ElMessage.success('支付成功！您的订单正在处理中');
-    setTimeout(() => {
-      router.push('/user/home/orders');
-    }, 1500);
-  })
-  .catch(() => {
-    ElMessage.info('已取消支付');
-  });
+// 已选择的优惠
+const selectedDiscount = ref(null);
+
+// 价格详情折叠状态
+const isPriceDetailsOpen = ref(true);
+
+// 使用优惠
+const useDiscount = () => {
+  const discount = discounts.value[0];
+  if (!discount || !discount.available || discount.used) return;
+
+  // 应用优惠
+  selectedDiscount.value = discount;
+  discount.used = true;
+
+  // 保存原价
+  if (!orderInfo.value.originalTotal) {
+    orderInfo.value.originalTotal = orderInfo.value.totalUnpaid;
+  }
+
+  // 更新订单金额
+  const discountAmount = Math.min(discount.amount, orderInfo.value.totalUnpaid);
+  orderInfo.value.totalUnpaid -= discountAmount;
+
+  ElMessage.success('优惠已使用');
+};
+
+// 取消使用优惠
+const cancelDiscount = () => {
+  if (!selectedDiscount.value) return;
+
+  // 恢复订单金额
+  const discountAmount = Math.min(selectedDiscount.value.amount, orderInfo.value.totalUnpaid + selectedDiscount.value.amount);
+  orderInfo.value.totalUnpaid += discountAmount;
+
+  // 移除原价记录
+  delete orderInfo.value.originalTotal;
+
+  // 标记优惠为未使用
+  selectedDiscount.value.used = false;
+  selectedDiscount.value = null;
+
+  ElMessage.success('优惠已取消');
+};
+
+const confirmOrder = () => {
+  // 检查是否选择了"他人代付"
+  if (selectedPaymentMethod.value.name === '他人代付') {
+    ElMessageBox.prompt('请输入代付人手机号码或昵称:', '他人代付', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputPattern: /^1[3456789]\d{9}$|^[\u4e00-\u9fa5]{2,8}$/,
+      inputErrorMessage: '请输入有效的手机号码或2-8位中文昵称'
+    })
+    .then(({ value }) => {
+      // 这里可以添加发送代付请求的逻辑
+      // 清除会话存储中的未完成订单
+      sessionStorage.removeItem('pendingOrder');
+
+      ElMessage.success(`代付请求已发送给${value}！`);
+      setTimeout(() => {
+        router.push('/user/home/orders');
+      }, 1500);
+    })
+    .catch(() => {
+      ElMessage.info('已取消代付');
+    });
+  } else {
+    // 普通支付流程
+    ElMessageBox.confirm('请确认订单信息无误后支付', '订单确认', {
+      confirmButtonText: '立即支付',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    .then(() => {
+      // 清除会话存储中的未完成订单
+      sessionStorage.removeItem('pendingOrder');
+
+      ElMessage.success('支付成功！您的订单正在处理中');
+      setTimeout(() => {
+        router.push('/user/home/orders');
+      }, 1500);
+    })
+    .catch(() => {
+      ElMessage.info('已取消支付');
+    });
+  }
 };
 </script>
 
@@ -701,13 +820,46 @@ const confirmOrder = () => {
         // 未支付订单
         &.unpaid-orders {
           .unpaid-total {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
             padding: 20px;
             background: rgba(255, 248, 225, 0.9);
             border-radius: 8px;
             border: 1px solid #fff3cd;
+
+            .price-breakdown {
+              display: flex;
+              justify-content: flex-end;
+              align-items: center;
+              margin-bottom: 0;
+            }
+
+            .price-details-toggle {
+              text-align: right;
+              margin-top: 8px;
+            }
+
+            .price-details-container {
+              margin-top: 16px;
+              border-top: 1px dashed #ffeeba;
+              padding-top: 12px;
+            }
+
+            .price-details {
+              .detail-item {
+                display: flex;
+                justify-content: space-between;
+                font-size: 14px;
+                margin-bottom: 8px;
+                color: #666;
+
+                &.discount-item {
+                  color: #67c23a;
+
+                  .item-amount.discount-amount {
+                    color: #f56c6c;
+                  }
+                }
+              }
+            }
 
             .total-label {
               font-size: 18px;
@@ -835,6 +987,22 @@ const confirmOrder = () => {
 
               &:hover {
                 color: #d89a33;
+              }
+            }
+
+            .discount-used-text {
+              color: #67c23a;
+              font-weight: 600;
+              margin-right: 8px;
+            }
+
+            .cancel-discount {
+              color: #f56c6c;
+              font-weight: 600;
+              transition: color 0.3s ease;
+
+              &:hover {
+                color: #f78989;
               }
             }
           }
@@ -979,6 +1147,13 @@ const confirmOrder = () => {
       font-size: 11px;
       font-weight: 600;
     }
+  }
+
+  // 购物车列表样式
+  .cart-items {
+    max-height: 300px; /* 设置购物车最大高度 */
+    overflow-y: auto; /* 超出部分显示滚动条 */
+    padding-right: 8px; /* 为滚动条预留空间 */
   }
 }
 </style>

@@ -705,18 +705,25 @@ onMounted(() => {
   const savedMerchant = sessionStorage.getItem('selectedMerchant');
   if (savedMerchant) {
     merchant.value = JSON.parse(savedMerchant);
+
+    // 加载当前商家的独立购物车
+    if (!cartItemsByMerchant.value[merchant.value.id]) {
+      cartItemsByMerchant.value[merchant.value.id] = [];
+    }
+    cartItems.value = cartItemsByMerchant.value[merchant.value.id];
   } else {
     // 如果没有商家信息，返回商家列表
     // router.push('/user/home/merchants');
+    return;
   }
 
   // 恢复购物车数据（当从订单确认页返回且未完成支付时）
   const pendingOrder = sessionStorage.getItem('pendingOrder');
   if (pendingOrder) {
     const parsedOrder = JSON.parse(pendingOrder);
-    if (parsedOrder.cartItems && parsedOrder.cartItems.length > 0) {
+    if (parsedOrder.cartItems && parsedOrder.cartItems.length > 0 && parsedOrder.merchant.id === merchant.value.id) {
       // 清空当前购物车
-      cartItems.value = [];
+      cartItemsByMerchant.value[merchant.value.id] = [];
       // 恢复购物车项目
       parsedOrder.cartItems.forEach(item => {
         // 确保购物车项目有必要的属性
@@ -726,10 +733,15 @@ onMounted(() => {
           tempNote: item.tempNote || '',
           isEditingNote: item.isEditingNote || false
         };
-        cartItems.value.push(cartItem);
+        cartItemsByMerchant.value[merchant.value.id].push(cartItem);
       });
+      // 更新当前购物车引用
+      cartItems.value = cartItemsByMerchant.value[merchant.value.id];
       // 更新购物车统计信息
       updateCartStats();
+
+      // 清除sessionStorage中的pendingOrder
+      // sessionStorage.removeItem('pendingOrder');
     }
   }
 });
@@ -742,16 +754,19 @@ const toggleFavorite = () => {
   console.log('收藏状态:', isFavorite.value);
 };
 
-// 购物车数据
+// 购物车数据 - 每个商家有独立的购物车
+const cartItemsByMerchant = ref({});
+
+// 当前商家的购物车数据
 const cartItems = ref([]);
 
 // 购物车显示状态
 const cartVisible = ref(false);
 
-// 计算购物车总数量（所有商品数量之和）
+// 计算购物车总数量（当前商家购物车所有商品数量之和）
 const cartTotalQuantity = ref(0);
 
-// 计算购物车总金额
+// 计算购物车总金额（当前商家购物车总金额）
 const cartTotalAmount = ref(0);
 
 // 可拖动购物车相关
@@ -833,16 +848,26 @@ const stopDrag = () => {
   }
 }
 
-// 更新购物车统计信息
+// 更新购物车统计信息 - 使用当前商家的购物车
 const updateCartStats = () => {
+  if (!merchant.value || !merchant.value.id) return;
+
+  // 确保当前购物车引用正确
+  cartItems.value = cartItemsByMerchant.value[merchant.value.id];
+
   cartTotalQuantity.value = cartItems.value.reduce((total, item) => total + item.quantity, 0);
   cartTotalAmount.value = cartItems.value.reduce((total, item) => total + item.totalPrice, 0);
 };
 
-// 更新购物车
+// 更新购物车 - 使用当前商家的购物车
 const updateCart = (item) => {
+  if (!merchant.value || !merchant.value.id) return;
+
+  // 获取当前商家的购物车
+  const currentMerchantCart = cartItemsByMerchant.value[merchant.value.id];
+
   // 检查是否有相同的商品和相同的可选食材组合
-  const existingItem = cartItems.value.find(cartItem =>
+  const existingItem = currentMerchantCart.find(cartItem =>
     cartItem.id === item.id &&
     JSON.stringify(cartItem.selectedOptionalIngredients) === JSON.stringify(item.selectedOptionalIngredients)
   );
@@ -853,7 +878,7 @@ const updateCart = (item) => {
     existingItem.totalPrice += item.totalPrice;
   } else {
     // 如果不存在，添加新的购物车项目
-    cartItems.value.push({ ...item });
+    currentMerchantCart.push({ ...item });
   }
 
   // 更新购物车统计信息
@@ -941,7 +966,12 @@ const goToOrderConfirmation = () => {
   const orderInfo = {
     merchant: merchant.value,
     cartItems: cartItems.value,
-    totalAmount: cartItems.value.reduce((total, item) => total + item.totalPrice, 0)
+    totalAmount: cartItems.value.reduce((total, item) => total + item.totalPrice, 0),
+    // 单聊/店铺直接下单时，设置默认值
+    fromChat: false,
+    groupName: '默认订单群',
+    // 这里可以替换为实际的用户名，假设从用户信息中获取
+    userName: '当前用户' // 示例值，实际应从登录信息中获取
   };
   sessionStorage.setItem('pendingOrder', JSON.stringify(orderInfo));
 
@@ -1412,6 +1442,9 @@ const goToOrderConfirmation = () => {
   }
 
   .cart-items {
+    max-height: 400px;  // 设置购物车最大高度
+    overflow-y: auto;  // 超出部分显示滚动条
+    padding-right: 8px;  // 为滚动条预留空间
     .cart-item {
       display: flex;
       justify-content: space-between;

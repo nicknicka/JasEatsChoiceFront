@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npm run dev:*)",
       "Bash(npm ls electron-vite)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(npm run build:front:*)",
+      "Bash(npm run)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
