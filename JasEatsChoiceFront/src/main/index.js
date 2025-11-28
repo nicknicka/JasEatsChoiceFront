@@ -1,16 +1,16 @@
 // CommonJS syntax for Electron main process
 
-const { app, shell, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const Store = require('electron-store');
+const { app, shell, BrowserWindow, ipcMain } = require('electron')
+const path = require('path')
+const Store = require('electron-store')
 
 // Check if we're in development mode
-const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV;
-const icon = path.join(__dirname, '../../resources/icon.png');
+const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV
+const icon = path.join(__dirname, '../../resources/icon.png')
 
 // Initialize electron-store later when app is ready
-let store;
-let mainWindow;
+let store
+let mainWindow
 
 function createWindow() {
   // Create the browser window.
@@ -24,29 +24,29 @@ function createWindow() {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false
     }
-  });
+  })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show();
-    mainWindow.webContents.openDevTools();
-  });
+    mainWindow.show()
+    mainWindow.webContents.openDevTools()
+  })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url);
-    return { action: 'deny' };
-  });
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
 
   // HMR for renderer base on electron-vite cli.
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
 }
 
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
-  app.setAppUserModelId('com.electron');
+  app.setAppUserModelId('com.electron')
 
   // Initialize electron-store now that app is ready
   store = new Store({
@@ -60,125 +60,123 @@ app.whenReady().then(() => {
       offlineMenus: [],
       historyOrders: []
     }
-  });
+  })
 
-  createWindow();
+  createWindow()
 
   // Electron-store IPC handlers
-  ipcMain.handle('store:set', (_, key, value) => store.set(key, value));
-  ipcMain.handle('store:get', (_, key) => store.get(key));
-  ipcMain.handle('store:delete', (_, key) => store.delete(key));
-  ipcMain.handle('store:clear', () => store.clear());
+  ipcMain.handle('store:set', (_, key, value) => store.set(key, value))
+  ipcMain.handle('store:get', (_, key) => store.get(key))
+  ipcMain.handle('store:delete', (_, key) => store.delete(key))
+  ipcMain.handle('store:clear', () => store.clear())
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-});
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
 
 // Quit when all windows are closed (except on macOS)
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+  if (process.platform !== 'darwin') app.quit()
+})
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
 
 // WebSocket implementation
-const WebSocket = require('ws');
+const WebSocket = require('ws')
 
-let webSocketClient = null;
+let webSocketClient = null
 
 // WebSocket IPC handlers
 ipcMain.handle('websocket:connect', async (event, url) => {
   try {
     if (webSocketClient && webSocketClient.readyState === WebSocket.OPEN) {
-      webSocketClient.close();
+      webSocketClient.close()
     }
 
-    webSocketClient = new WebSocket(url);
+    webSocketClient = new WebSocket(url)
 
     webSocketClient.on('open', (eventData) => {
-      mainWindow.webContents.send('websocket:open', eventData);
-    });
+      mainWindow.webContents.send('websocket:open', eventData)
+    })
 
     webSocketClient.on('message', (message) => {
-      mainWindow.webContents.send('websocket:message', message);
+      mainWindow.webContents.send('websocket:message', message)
 
       // Dispatch message to specific handlers based on message type
       try {
-        const parsedMessage = JSON.parse(message);
+        const parsedMessage = JSON.parse(message)
         switch (parsedMessage.type) {
           case 'auth':
-            mainWindow.webContents.send('websocket:auth', message);
-            break;
+            mainWindow.webContents.send('websocket:auth', message)
+            break
           case 'orderUpdate':
-            mainWindow.webContents.send('websocket:orderUpdate', message);
-            break;
+            mainWindow.webContents.send('websocket:orderUpdate', message)
+            break
           case 'chat':
-            mainWindow.webContents.send('websocket:chat', message);
-            break;
+            mainWindow.webContents.send('websocket:chat', message)
+            break
           case 'merchantUpdate':
-            mainWindow.webContents.send('websocket:merchantUpdate', message);
-            break;
+            mainWindow.webContents.send('websocket:merchantUpdate', message)
+            break
           case 'recommend':
-            mainWindow.webContents.send('websocket:recommend', message);
-            break;
+            mainWindow.webContents.send('websocket:recommend', message)
+            break
           case 'notification':
-            mainWindow.webContents.send('websocket:notification', message);
-            break;
+            mainWindow.webContents.send('websocket:notification', message)
+            break
           default:
             // Handle other message types
-            break;
+            break
         }
       } catch (error) {
         // Not a JSON message, handle as raw
-        console.error('WebSocket message parse error:', error);
+        console.error('WebSocket message parse error:', error)
       }
-    });
+    })
 
     webSocketClient.on('close', (code, reason) => {
-      mainWindow.webContents.send('websocket:close', code, reason);
-      webSocketClient = null;
-    });
+      mainWindow.webContents.send('websocket:close', code, reason)
+      webSocketClient = null
+    })
 
     webSocketClient.on('error', (error) => {
-      mainWindow.webContents.send('websocket:error', error);
-    });
+      mainWindow.webContents.send('websocket:error', error)
+    })
 
-    return 'WebSocket connection initiated';
+    return 'WebSocket connection initiated'
   } catch (error) {
-    console.error('WebSocket connection error:', error);
-    return { error: error.message };
+    console.error('WebSocket connection error:', error)
+    return { error: error.message }
   }
-});
+})
 
 ipcMain.handle('websocket:send', async (event, message) => {
   try {
     if (webSocketClient && webSocketClient.readyState === WebSocket.OPEN) {
-      webSocketClient.send(message);
-      return 'Message sent successfully';
+      webSocketClient.send(message)
+      return 'Message sent successfully'
     } else {
-      return { error: 'WebSocket not connected' };
+      return { error: 'WebSocket not connected' }
     }
   } catch (error) {
-    console.error('WebSocket send error:', error);
-    return { error: error.message };
+    console.error('WebSocket send error:', error)
+    return { error: error.message }
   }
-});
+})
 
 ipcMain.handle('websocket:disconnect', async () => {
   try {
     if (webSocketClient) {
-      webSocketClient.close();
-      webSocketClient = null;
-      return 'WebSocket disconnected successfully';
+      webSocketClient.close()
+      webSocketClient = null
+      return 'WebSocket disconnected successfully'
     } else {
-      return 'WebSocket was not connected';
+      return 'WebSocket was not connected'
     }
   } catch (error) {
-    console.error('WebSocket disconnect error:', error);
-    return { error: error.message };
+    console.error('WebSocket disconnect error:', error)
+    return { error: error.message }
   }
-});
-
-
+})

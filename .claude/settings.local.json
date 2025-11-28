@@ -6,7 +6,21 @@
       "Bash(npm run build)",
       "Bash(npm run build:front:*)",
       "Bash(npm run)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(xargs diff:*)",
+      "Bash(npm install)",
+      "Bash(exit:*)",
+      "Bash(npm run lint)",
+      "Bash(npx vite build --mode=development)",
+      "Bash(npm install electron)",
+      "Bash(npm run dev:frontend:*)",
+      "Bash(npm run start)",
+      "Bash(open:*)",
+      "Bash(npm install @element-plus/icons-vue)",
+      "Bash(npm run serve)",
+      "Bash(libreoffice:*)",
+      "Bash(__NEW_LINE__ npm run build)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

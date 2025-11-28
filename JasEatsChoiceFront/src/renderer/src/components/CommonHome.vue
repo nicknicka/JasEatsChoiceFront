@@ -51,7 +51,7 @@ const menuData = {
 			path: "/user/home/message-center",
 		},
 		{ index: "9", name: "AI饮食助手", icon: ChatDotRound, path: "/user/home/ai" },
-		{ index: "10", name: "用户聊天", icon: ChatDotRound, path: "/user/home/chat" },
+		{ index: "10", name: "聊天消息", icon: ChatDotRound, path: "/user/home/chat" },
 		{
 			index: "11",
 			name: "设置",

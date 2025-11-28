@@ -158,14 +158,8 @@ const router = createRouter({
         {
           path: 'chat',
           name: 'user-chat',
-          component: UserChat,
-          meta: { title: '佳食宜选-单聊' }
-        },
-        {
-          path: 'group-chat',
-          name: 'user-group-chat',
-          component: UserGroupChat,
-          meta: { title: '佳食宜选-群聊' }
+          component: () => import('../views/user/UnifiedChat.vue'),
+          meta: { title: '佳食宜选-消息中心' }
         },
         {
           path: 'ai',
@@ -331,4 +325,3 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
-

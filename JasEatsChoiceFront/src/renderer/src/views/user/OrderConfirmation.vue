@@ -147,7 +147,7 @@
                 <div class="price-details">
                   <div class="detail-item" v-for="(item, index) in orderInfo.unpaidItems" :key="index">
                     <span class="item-name">{{ item.name }} ×{{ item.quantity }}</span>
-                    <span class="item-amount">¥{{ item.totalPrice.toFixed(2) }}</span>
+                    <span class="item-amount">¥{{ (item.totalPrice || (item.price * item.quantity)).toFixed(2) }}</span>
                   </div>
 
                   <!-- 优惠信息 -->
