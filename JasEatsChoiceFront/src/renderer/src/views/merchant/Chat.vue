@@ -73,6 +73,9 @@ const selectedConversation = ref(null);
 // 新消息内容
 const newMessage = ref('');
 
+// 同步至群聊开关
+const syncToGroup = ref(false);
+
 // 页面加载
 onMounted(() => {
   // 将会话按最后消息时间排序（从最新到最旧）
@@ -128,6 +131,33 @@ const sendMessage = () => {
   if (index > -1) {
     conversations.value.splice(index, 1);
     conversations.value.unshift(selectedConversation.value);
+  }
+
+  // 同步消息到所有群聊
+  if (syncToGroup.value && selectedConversation.value.type === 'private') {
+    const syncMessageContent = `【订单同步】${message.content}`;
+
+    // 更新所有群聊的最后消息
+    conversations.value.forEach(conversation => {
+      if (conversation.type === 'group') {
+        conversation.lastMessage = syncMessageContent;
+        conversation.time = message.time;
+        conversation.unreadCount++;
+
+        // 将群聊会话移到前面
+        const groupIndex = conversations.value.indexOf(conversation);
+        if (groupIndex > -1) {
+          conversations.value.splice(groupIndex, 1);
+          conversations.value.unshift(conversation);
+        }
+      }
+    });
+
+    // 重置同步开关
+    syncToGroup.value = false;
+
+    // 提示用户消息已同步
+    ElMessage.info('消息已同步至所有群聊');
   }
 
   // 清空输入框
@@ -213,14 +243,20 @@ const sendMessage = () => {
 
         <!-- 消息输入框 -->
         <div class="message-input-container">
-          <el-input
-            v-model="newMessage"
-            type="textarea"
-            placeholder="输入消息内容..."
-            :rows="2"
-            @keyup.enter="sendMessage"
-          />
-          <el-button type="primary" @click="sendMessage">发送</el-button>
+          <div style="width: 100%; margin-bottom: 8px;">
+            <el-checkbox v-model="syncToGroup" style="font-size: 12px;">同步至群聊</el-checkbox>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <el-input
+              v-model="newMessage"
+              type="textarea"
+              placeholder="输入消息内容..."
+              :rows="2"
+              @keyup.enter="sendMessage"
+              style="flex: 1;"
+            />
+            <el-button type="primary" @click="sendMessage">发送</el-button>
+          </div>
         </div>
       </div>
     </div>

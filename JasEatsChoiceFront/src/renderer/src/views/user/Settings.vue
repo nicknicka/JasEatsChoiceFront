@@ -124,6 +124,13 @@
         </div>
 
         <div class="form-row">
+          <div class="form-label">天气推荐</div>
+          <div class="form-content">
+            <el-switch v-model="privacy.weatherRecommendation" />
+          </div>
+        </div>
+
+        <div class="form-row">
           <div class="form-content">
             <el-button type="warning" size="small" style="margin-right: 10px;" @click="clearCache">清除缓存</el-button>
             <el-button type="primary" size="small" @click="exportData">数据导出</el-button>
@@ -239,7 +246,8 @@ const notifications = ref({
 // Privacy settings
 const privacy = ref({
   location: true,
-  recommendation: true
+  recommendation: true,
+  weatherRecommendation: true // 添加天气推荐设置
 });
 
 // User info edit dialogs
@@ -283,7 +291,8 @@ onMounted(() => {
     };
     privacy.value = parsed.privacy || {
       location: true,
-      recommendation: true
+      recommendation: true,
+      weatherRecommendation: true
     };
     // Update theme
     updateTheme();
@@ -322,7 +331,8 @@ const resetSettings = () => {
   };
   privacy.value = {
     location: true,
-    recommendation: true
+    recommendation: true,
+    weatherRecommendation: true
   };
   // Save reset settings
   saveSettings();
