@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 // 订单状态映射
@@ -100,8 +100,18 @@ const updateFilter = () => {
 };
 
 // 查看订单详情
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
+
+// 初始化时从URL获取搜索参数
+onMounted(() => {
+  const searchParam = route.query.search;
+  if (searchParam) {
+    searchKeyword.value = searchParam;
+    updateFilter();
+  }
+});
 
 const viewOrderDetails = (order) => {
   // 标记为已读

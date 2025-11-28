@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 // Import auth views
-const Login = () => import('../views/auth/Login.vue')
+const Login = () => import('../views/user/Login.vue')
+const Register = () => import('../views/user/Register.vue')
 
 // Import user views
 const UserHome = () => import('../views/user/Home.vue') // 用户首页
@@ -52,6 +53,12 @@ const router = createRouter({
       name: 'login',
       component: Login,
       meta: { title: '佳食宜选-登录' }
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: Register,
+      meta: { title: '佳食宜选-注册' }
     },
     // 根路径默认跳转到登录页面
     {
@@ -202,6 +209,12 @@ const router = createRouter({
           name: 'user-tutorials',
           component: () => import('../views/user/Tutorials.vue'),
           meta: { title: '佳食宜选-制作教程与指南' }
+        },
+        {
+          path: 'tutorials/:id',
+          name: 'user-tutorial-detail',
+          component: () => import('../views/user/TutorialDetail.vue'),
+          meta: { title: '佳食宜选-教程详情' }
         }
       ]
     },

@@ -184,6 +184,8 @@ const sendMessage = () => {
             <div v-if="conversation.unreadCount > 0" class="unread-count">
               {{ conversation.unreadCount }}
             </div>
+            <!-- 群聊标签 -->
+            <div v-if="conversation.type === 'group'" class="group-tag">群聊</div>
           </div>
           <!-- 置顶按钮 -->
           <div
@@ -403,6 +405,20 @@ const sendMessage = () => {
           min-height: 7px; /* 设置最小高度，确保单个数字也能显示为圆形 */
           min-width: 7px; /* 设置最小宽度，确保单个数字也能显示为圆形 */
           text-align: center; /* 文字居中 */
+        }
+
+        /* 群聊标签样式 */
+        .group-tag {
+          background-color: #409eff;
+          color: #fff;
+          font-size: 8px;
+          padding: 1px 4px;
+          border-radius: 3px;
+          position: absolute;
+          top: 0;
+          right: 0;
+          transform: translate(0, 0); /* 图片右上角与标签右上角完全对齐 */
+          z-index: 2; /* 确保标签覆盖在图片之上 */
         }
       }
     }

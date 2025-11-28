@@ -103,8 +103,10 @@ const updateActiveMenuIndex = () => {
 	const currentPath = router.currentRoute.value.path;
 	console.log("当前路由:", currentPath);
 
-	// 查找当前路由对应的菜单项
-	for (const menuItem of currentMenu.value) {
+	// 查找当前路由对应的菜单项 - 按路径长度降序排序，确保更长的路径优先匹配
+	const sortedMenuItems = [...currentMenu.value].sort((a, b) => b.path.length - a.path.length);
+
+	for (const menuItem of sortedMenuItems) {
 		// 检查当前路由是否以菜单项的path开头
 		if (currentPath.startsWith(menuItem.path)) {
 			activeMenuIndex.value = menuItem.index;
@@ -264,9 +266,12 @@ const handleSearch = (value) => {
 				query: { search: value.trim() },
 			});
 		} else {
-			// 商家角色，跳转到商家订单页面或其他适合商家的搜索页面
-			navigateTo("/merchant/home/orders");
-			console.log("商家角色搜索功能待实现:", value);
+			// 商家角色，跳转到订单页面并携带搜索参数
+			navigateTo({
+				path: "/merchant/home/orders",
+				query: { search: value.trim() },
+			});
+			console.log("商家角色搜索功能:", value);
 		}
 	} catch (error) {
 		console.error("搜索失败:", error);

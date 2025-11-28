@@ -36,6 +36,7 @@ const tutorials = ref([
         :key="tutorial.id"
         class="tutorial-card"
         shadow="hover"
+        @click="router.push(`/user/home/tutorials/${tutorial.id}`)"
       >
         <div class="tutorial-header">
           <el-icon :class="tutorial.type === 'video' ? 'video-icon' : 'article-icon'">

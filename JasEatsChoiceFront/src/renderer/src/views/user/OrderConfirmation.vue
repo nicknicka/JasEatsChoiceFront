@@ -330,6 +330,77 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- AA支付模态框 -->
+    <el-dialog
+      v-model="aaPaymentModalVisible"
+      title="AA支付确认"
+      width="400px"
+    >
+      <div class="aa-payment-content">
+        <div class="aa-info">
+          <div class="info-item">
+            <span class="info-label">订单总金额:</span>
+            <span class="info-value">¥{{ orderInfo.totalUnpaid.toFixed(2) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">参与人数:</span>
+            <span class="info-value">{{ orderInfo.members.length }}人</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">每人需支付:</span>
+            <span class="info-value highlight">¥{{ aaShareAmount.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="aaPaymentModalVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmAAPayment">确认AA支付</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 自定义分摊模态框 -->
+    <el-dialog
+      v-model="customShareModalVisible"
+      title="自定义分摊"
+      width="500px"
+    >
+      <div class="custom-share-content">
+        <div class="custom-info">
+          <div class="info-item">
+            <span class="info-label">订单总金额:</span>
+            <span class="info-value">¥{{ orderInfo.totalUnpaid.toFixed(2) }}</span>
+          </div>
+        </div>
+
+        <div class="share-list">
+          <div
+            class="share-item"
+            v-for="(share, index) in customShares"
+            :key="index"
+          >
+            <div class="member-name">{{ share.member }}</div>
+            <el-input-number
+              v-model="share.amount"
+              :min="0"
+              :precision="2"
+              :step="0.01"
+              style="width: 120px"
+              @change="updateCustomShare(index, share.amount)"
+            />
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="customShareModalVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmCustomShare">确认自定义分摊</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -343,16 +414,26 @@ const router = useRouter();
 // 从会话存储获取订单信息
 const pendingOrder = JSON.parse(sessionStorage.getItem('pendingOrder')) || {};
 
+// 检查订单是否为空
+const isEmptyOrder = !pendingOrder.cartItems || pendingOrder.cartItems.length === 0;
+
 // 订单信息（将购物车商品作为未支付订单）
 const orderInfo = ref({
   orderId: `JD${new Date().getTime()}`,
   groupName: pendingOrder.groupName || '默认订单群',
   userName: pendingOrder.userName || '',
+  creator: pendingOrder.creator || '', // 添加订单创建者信息
   paidItems: [],
   unpaidItems: pendingOrder.cartItems || [],
   totalPaid: 0.0,
   totalUnpaid: pendingOrder.totalAmount || (pendingOrder.cartItems || []).reduce((total, item) => total + (item.totalPrice || item.price * item.quantity), 0)
 });
+
+// 如果订单为空，返回上一页并提示
+if (isEmptyOrder) {
+  ElMessage.warning('购物车为空，无法进行订单确认');
+  router.back();
+}
 
 // 购物车数据（用于悬浮购物车显示）
 const cartItems = ref(pendingOrder.cartItems || []);
@@ -456,14 +537,18 @@ const fromChat = ref(pendingOrder.fromChat || false);
 // 检测是否来自单聊
 const fromSingleChat = ref(fromChat.value && !isGroupOrder.value);
 
-// 支付方式 - 根据订单类型动态显示
+// 支付方式 - 根据订单类型和身份动态显示
+// 仅订单发起者可以看到AA支付和自定义分摊
 const paymentMethods = ref(
   isGroupOrder.value
     ? [
         { id: 1, name: '个人下单', icon: '👤' },
-        { id: 2, name: '统一提交集中支付', icon: '🧮' },
-        { id: 3, name: 'AA自动拆分', icon: '🎉' },
-        { id: 4, name: '自定义分摊', icon: '📝' }
+        // 仅订单发起者显示其他支付方式
+        ...(orderInfo.value.creator === '我' ? [
+          { id: 2, name: '统一提交集中支付', icon: '🧮' },
+          { id: 3, name: 'AA自动拆分', icon: '🎉' },
+          { id: 4, name: '自定义分摊', icon: '📝' }
+        ] : [])
       ]
     : [
         { id: 1, name: '个人支付', icon: '💳' },
@@ -473,6 +558,87 @@ const paymentMethods = ref(
 
 // 更新默认选中支付方式
 const selectedPaymentMethod = ref(paymentMethods.value[0]);
+
+// AA支付相关
+const aaPaymentModalVisible = ref(false);
+const aaShareAmount = ref(0);
+
+// 自定义分摊相关
+const customShareModalVisible = ref(false);
+const customShares = ref([]);
+
+// 计算AA支付每人金额
+const calculateAAShare = () => {
+  if (orderInfo.value && orderInfo.value.totalUnpaid && orderInfo.value.members.length > 0) {
+    const share = orderInfo.value.totalUnpaid / orderInfo.value.members.length;
+    aaShareAmount.value = parseFloat(share.toFixed(2));
+  }
+};
+
+// 初始化自定义分摊
+const initCustomShares = () => {
+  if (orderInfo.value && orderInfo.value.members.length > 0) {
+    customShares.value = orderInfo.value.members.map(member => ({
+      member,
+      amount: parseFloat((orderInfo.value.totalUnpaid / orderInfo.value.members.length).toFixed(2))
+    }));
+  }
+};
+
+// 打开AA支付模态框
+const openAAPaymentModal = () => {
+  calculateAAShare();
+  aaPaymentModalVisible.value = true;
+};
+
+// 打开自定义分摊模态框
+const openCustomShareModal = () => {
+  initCustomShares();
+  customShareModalVisible.value = true;
+};
+
+// 确认AA支付
+const confirmAAPayment = () => {
+  // 这里可以添加AA支付的实际逻辑
+  aaPaymentModalVisible.value = false;
+  ElMessage.success('AA支付已发起，将自动为每位成员创建支付订单');
+
+  // 清除会话存储中的未完成订单
+  sessionStorage.removeItem('pendingOrder');
+
+  // 跳转到订单列表页
+  setTimeout(() => {
+    router.push('/user/home/orders');
+  }, 1500);
+};
+
+// 确认自定义分摊
+const confirmCustomShare = () => {
+  // 验证分摊总额是否等于订单总额
+  const totalShare = customShares.value.reduce((sum, share) => sum + share.amount, 0);
+  if (Math.abs(totalShare - orderInfo.value.totalUnpaid) > 0.01) {
+    ElMessage.error('分摊总额必须等于订单总额');
+    return;
+  }
+
+  // 这里可以添加自定义分摊的实际逻辑
+  customShareModalVisible.value = false;
+  ElMessage.success('自定义分摊已发起，将为每位成员创建对应金额的支付订单');
+
+  // 清除会话存储中的未完成订单
+  sessionStorage.removeItem('pendingOrder');
+
+  // 跳转到订单列表页
+  setTimeout(() => {
+    router.push('/user/home/orders');
+  }, 1500);
+};
+
+// 更新自定义分摊金额
+const updateCustomShare = (index, amount) => {
+  customShares.value[index].amount = parseFloat(amount);
+};
+
 
 // 平台币余额
 const platformBalance = ref(125.0);
@@ -534,46 +700,80 @@ const cancelDiscount = () => {
 };
 
 const confirmOrder = () => {
-  // 检查是否选择了"他人代付"
-  if (selectedPaymentMethod.value.name === '他人代付') {
-    ElMessageBox.prompt('请输入代付人手机号码或昵称:', '他人代付', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      inputPattern: /^1[3456789]\d{9}$|^[\u4e00-\u9fa5]{2,8}$/,
-      inputErrorMessage: '请输入有效的手机号码或2-8位中文昵称'
-    })
-    .then(({ value }) => {
-      // 这里可以添加发送代付请求的逻辑
-      // 清除会话存储中的未完成订单
-      sessionStorage.removeItem('pendingOrder');
+  // 根据不同支付方式处理
+  switch(selectedPaymentMethod.value.id) {
+    case 2: // 统一提交集中支付
+      // 普通支付流程
+      ElMessageBox.confirm('请确认订单信息无误后支付', '订单确认', {
+        confirmButtonText: '立即支付',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      .then(() => {
+        // 清除会话存储中的未完成订单
+        sessionStorage.removeItem('pendingOrder');
 
-      ElMessage.success(`代付请求已发送给${value}！`);
-      setTimeout(() => {
-        router.push('/user/home/orders');
-      }, 1500);
-    })
-    .catch(() => {
-      ElMessage.info('已取消代付');
-    });
-  } else {
-    // 普通支付流程
-    ElMessageBox.confirm('请确认订单信息无误后支付', '订单确认', {
-      confirmButtonText: '立即支付',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    .then(() => {
-      // 清除会话存储中的未完成订单
-      sessionStorage.removeItem('pendingOrder');
+        ElMessage.success('支付成功！您的订单正在处理中');
+        setTimeout(() => {
+          router.push('/user/home/orders');
+        }, 1500);
+      })
+      .catch(() => {
+        ElMessage.info('已取消支付');
+      });
+      break;
 
-      ElMessage.success('支付成功！您的订单正在处理中');
-      setTimeout(() => {
-        router.push('/user/home/orders');
-      }, 1500);
-    })
-    .catch(() => {
-      ElMessage.info('已取消支付');
-    });
+    case 3: // AA自动拆分
+      openAAPaymentModal();
+      break;
+
+    case 4: // 自定义分摊
+      openCustomShareModal();
+      break;
+
+    case 2: // 他人代付
+      // 现有他人代付逻辑保持不变
+      ElMessageBox.prompt('请输入代付人手机号码或昵称:', '他人代付', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputPattern: /^1[3456789]\d{9}$|^[\u4e00-\u9fa5]{2,8}$/,
+        inputErrorMessage: '请输入有效的手机号码或2-8位中文昵称'
+      })
+      .then(({ value }) => {
+        // 这里可以添加发送代付请求的逻辑
+        // 清除会话存储中的未完成订单
+        sessionStorage.removeItem('pendingOrder');
+
+        ElMessage.success(`代付请求已发送给${value}！`);
+        setTimeout(() => {
+          router.push('/user/home/orders');
+        }, 1500);
+      })
+      .catch(() => {
+        ElMessage.info('已取消代付');
+      });
+      break;
+
+    default: // 个人支付
+      // 普通支付流程
+      ElMessageBox.confirm('请确认订单信息无误后支付', '订单确认', {
+        confirmButtonText: '立即支付',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      .then(() => {
+        // 清除会话存储中的未完成订单
+        sessionStorage.removeItem('pendingOrder');
+
+        ElMessage.success('支付成功！您的订单正在处理中');
+        setTimeout(() => {
+          router.push('/user/home/orders');
+        }, 1500);
+      })
+      .catch(() => {
+        ElMessage.info('已取消支付');
+      });
+      break;
   }
 };
 </script>
@@ -1154,6 +1354,70 @@ const confirmOrder = () => {
     max-height: 300px; /* 设置购物车最大高度 */
     overflow-y: auto; /* 超出部分显示滚动条 */
     padding-right: 8px; /* 为滚动条预留空间 */
+  }
+}
+
+/* AA支付模态框样式 */
+.aa-payment-content {
+  padding: 20px 0;
+
+  .aa-info {
+    .info-item {
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+
+      .info-label {
+        font-weight: 600;
+      }
+
+      .info-value {
+        font-size: 16px;
+        color: #303133;
+
+        &.highlight {
+          color: #e6a23c;
+          font-weight: 600;
+          font-size: 20px;
+        }
+      }
+    }
+  }
+}
+
+/* 自定义分摊模态框样式 */
+.custom-share-content {
+  padding: 20px 0;
+
+  .custom-info {
+    margin-bottom: 20px;
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+
+      .info-label {
+        font-weight: 600;
+      }
+
+      .info-value {
+        font-size: 16px;
+        color: #303133;
+      }
+    }
+  }
+
+  .share-list {
+    .share-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+
+      .member-name {
+        font-weight: 500;
+      }
+    }
   }
 }
 </style>

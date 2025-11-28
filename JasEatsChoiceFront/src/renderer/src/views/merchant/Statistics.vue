@@ -398,6 +398,7 @@ const updateChartData = () => {
         border-radius: 8px;
         box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
         min-width: 200px;
+        flex: 1;
 
         .stat-icon {
           font-size: 32px;

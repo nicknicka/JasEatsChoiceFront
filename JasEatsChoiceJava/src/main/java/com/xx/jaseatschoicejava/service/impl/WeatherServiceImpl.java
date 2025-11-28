@@ -1,10 +1,11 @@
 package com.xx.jaseatschoicejava.service.impl;
 
-import com.xx.jaseatschoicejava.service.WeatherService;
-import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import com.xx.jaseatschoicejava.service.WeatherService;
 
 /**
  * 天气服务实现

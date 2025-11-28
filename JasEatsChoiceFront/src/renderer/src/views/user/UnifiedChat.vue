@@ -6,6 +6,9 @@
         <el-button type="primary" size="small" @click="createNewChat">
           + 新建聊天
         </el-button>
+        <el-button type="primary" size="small" @click="openAddFriendDialog">
+          + 加好友
+        </el-button>
         <el-button type="primary" size="small" @click="createNewGroup">
           + 新建群聊
         </el-button>
@@ -33,6 +36,8 @@
             <div v-if="conversation.unreadCount > 0" class="unread-count">
               {{ conversation.unreadCount }}
             </div>
+            <!-- 群聊标签 -->
+            <div v-if="conversation.type === 'group'" class="group-tag">群聊</div>
           </div>
           <!-- 置顶按钮 - 仅支持私聊 -->
           <div
@@ -83,8 +88,9 @@
           </div>
           <!-- 群聊操作 - 创建/加入群订单 -->
           <div class="chat-actions" v-if="selectedConversation.type === 'group'">
-            <el-button type="primary" size="small" @click="createGroupOrder">创建群订单</el-button>
+            <el-button type="primary" size="small" @click="createGroupOrder" v-if="!groupOrders[selectedConversation.id]">创建群订单</el-button>
             <el-button size="small" @click="joinGroupOrder">加入群订单</el-button>
+            <el-button size="small" @click="openGroupDetail">群聊详情</el-button>
           </div>
         </div>
 
@@ -274,6 +280,88 @@
       </template>
     </el-dialog>
 
+    <!-- 新建聊天对话框 -->
+    <el-dialog
+      v-model="newChatDialogVisible"
+      title="新建聊天"
+      width="400px"
+    >
+      <el-input
+        v-model="searchQuery"
+        placeholder="搜索好友"
+        @input="searchFriends"
+        style="margin-bottom: 15px;"
+      >
+        <template #append>
+          <el-button icon="Search" @click="searchFriends"></el-button>
+        </template>
+      </el-input>
+
+      <div class="friend-list">
+        <div
+          v-for="friend in searchResults"
+          :key="friend.id"
+          class="friend-item"
+          @click="selectFriendForChat(friend)"
+        >
+          <div class="friend-avatar">{{ friend.avatar }}</div>
+          <div class="friend-info">
+            <div class="friend-name">{{ friend.name }}</div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="newChatDialogVisible = false">取消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 加好友对话框 -->
+    <el-dialog
+      v-model="addFriendDialogVisible"
+      title="添加好友"
+      width="400px"
+    >
+      <el-input
+        v-model="friendSearchQuery"
+        placeholder="搜索用户名"
+        @input="searchUsersForAdd"
+        style="margin-bottom: 15px;"
+      >
+        <template #append>
+          <el-button icon="Search" @click="searchUsersForAdd"></el-button>
+        </template>
+      </el-input>
+
+      <div class="user-list">
+        <div
+          v-for="user in addFriendResults"
+          :key="user.id"
+          class="user-item"
+        >
+          <div class="user-avatar">{{ user.avatar }}</div>
+          <div class="user-info">
+            <div class="user-name">{{ user.name }}</div>
+          </div>
+          <el-button
+            type="primary"
+            size="small"
+            @click="sendFriendRequest(user)"
+          >
+            加好友
+          </el-button>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="addFriendDialogVisible = false">取消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <!-- 商家选择对话框 -->
     <el-dialog
       v-model="merchantSelectDialogVisible"
@@ -397,6 +485,31 @@
           <el-button @click="productSelectDialogVisible = false">取消</el-button>
           <el-button type="info" @click="productSelectDialogVisible = false">稍后再看</el-button>
           <el-button type="primary" @click="confirmProductSelection">一键加入购物车</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 群聊详情对话框 -->
+    <el-dialog
+      v-model="groupDetailDialogVisible"
+      title="群聊详情"
+      width="500px"
+    >
+      <div v-if="currentGroupInfo" class="group-detail-content">
+        <div class="group-avatar">{{ currentGroupInfo.avatar }}</div>
+        <div class="group-name">{{ currentGroupInfo.name }}</div>
+        <div class="group-info-item">成员数量: {{ currentGroupInfo.memberCount }}人</div>
+        <div class="group-info-item">创建人: {{ currentGroupInfo.creator }}</div>
+        <div class="group-info-item">创建时间: {{ currentGroupInfo.createdAt }}</div>
+
+        <div class="group-members">
+          <div class="section-title">群成员:</div>
+          <div v-for="member in currentGroupInfo.members" :key="member" class="member-item">{{ member }}</div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="groupDetailDialogVisible = false">关闭</el-button>
         </div>
       </template>
     </el-dialog>
@@ -887,6 +1000,29 @@ onMounted(() => {
     selectedConversation.value = sortedConversations.value[0];
     // 加载对应的聊天记录
     chatMessages.value = chatHistory.value[selectedConversation.value.id] || [];
+
+    // 检查是否有未完成的订单需要恢复
+    const pendingOrder = JSON.parse(sessionStorage.getItem('pendingOrder'));
+    if (pendingOrder && pendingOrder.fromChat && selectedConversation.value.type === 'group') {
+      // 检查是否是同一个群的订单
+      if (pendingOrder.groupName === selectedConversation.value.name) {
+        // 恢复群订单信息
+        groupOrders.value[selectedConversation.value.id] = {
+          orderId: pendingOrder.orderId,
+          groupId: selectedConversation.value.id,
+          groupName: pendingOrder.groupName,
+          creator: pendingOrder.creator,
+          members: pendingOrder.members,
+          orderItems: pendingOrder.cartItems,
+          totalAmount: pendingOrder.totalAmount,
+          status: 'active',
+          createTime: new Date().toISOString()
+        };
+        // 可以选择自动打开订单抽屉
+        // orderDrawerVisible.value = true;
+        ElMessage.info('已恢复未完成的订单');
+      }
+    }
   }
 
   // 点击页面其他地方关闭右键菜单
@@ -966,31 +1102,151 @@ const selectConversation = (conversation) => {
   if (conversation.type === 'group') {
     // 这里可以添加实际的API请求
     // groupOrders.value[conversation.id] = await axios.get(`/api/group-orders/${conversation.id}`);
+
+    // 检查是否有未完成的订单需要恢复
+    const pendingOrder = JSON.parse(sessionStorage.getItem('pendingOrder'));
+    if (pendingOrder && pendingOrder.fromChat) {
+      // 检查是否是同一个群的订单
+      if (pendingOrder.groupName === conversation.name) {
+        // 恢复群订单信息
+        groupOrders.value[conversation.id] = {
+          orderId: pendingOrder.orderId,
+          groupId: conversation.id,
+          groupName: pendingOrder.groupName,
+          creator: pendingOrder.creator,
+          members: pendingOrder.members,
+          orderItems: pendingOrder.cartItems,
+          totalAmount: pendingOrder.totalAmount,
+          status: 'active',
+          createTime: new Date().toISOString()
+        };
+        // 可以选择自动打开订单抽屉
+        // orderDrawerVisible.value = true;
+        ElMessage.info('已恢复未完成的订单');
+      }
+    }
   }
 };
 
-// 新建聊天
+// 模拟好友列表数据
+const friends = ref([
+  { id: 101, name: '张三', avatar: '👨‍💼', lastMessage: '', time: '', unreadCount: 0, type: 'friend' },
+  { id: 102, name: '李四', avatar: '👩‍💼', lastMessage: '', time: '', unreadCount: 0, type: 'friend' },
+  { id: 103, name: '王五', avatar: '👨‍🍳', lastMessage: '', time: '', unreadCount: 0, type: 'friend' },
+  { id: 104, name: '赵六', avatar: '👩‍🔧', lastMessage: '', time: '', unreadCount: 0, type: 'friend' }
+]);
+
+// 好友搜索相关
+const searchQuery = ref('');
+const searchResults = ref([]);
+const searchDialogVisible = ref(false);
+
+// 新建聊天对话框可见性
+const newChatDialogVisible = ref(false);
+
+// 打开新建聊天对话框
 const createNewChat = () => {
-  // 模拟联系人列表对话框
-  ElMessageBox({
-    title: '选择联系人',
-    message: `
-      <div style="max-height: 300px; overflow-y: auto;">
-        <div class="contact-item" style="padding: 10px; cursor: pointer;">👨‍💼 张三</div>
-        <div class="contact-item" style="padding: 10px; cursor: pointer;">👩‍💼 李四</div>
-        <div class="contact-item" style="padding: 10px; cursor: pointer;">👨‍🍳 王五</div>
-        <div class="contact-item" style="padding: 10px; cursor: pointer;">👩‍🔧 赵六</div>
-      </div>
-    `,
-    dangerouslyUseHTMLString: true,
-    showCancelButton: true,
-    confirmButtonText: '开始聊天',
-    cancelButtonText: '取消'
-  }).then(() => {
-    ElMessage.success('聊天功能已实现，将跳转到聊天界面');
-  }).catch(() => {
-    // 取消操作
-  });
+  newChatDialogVisible.value = true;
+  // 默认显示所有好友
+  searchResults.value = [...friends.value];
+};
+
+// 搜索好友
+const searchFriends = () => {
+  if (!searchQuery.value) {
+    searchResults.value = [...friends.value];
+  } else {
+    searchResults.value = friends.value.filter(friend =>
+      friend.name.includes(searchQuery.value)
+    );
+  }
+};
+
+// 选择好友开始聊天
+const selectFriendForChat = (friend) => {
+  // 检查是否已有该好友的会话
+  const existingConversation = conversations.value.find(conv => conv.id === friend.id);
+
+  if (existingConversation) {
+    // 如果已有会话，直接切换到该会话
+    selectedConversation.value = existingConversation;
+  } else {
+    // 创建新的会话
+    const newConversation = {
+      ...friend,
+      lastMessage: '开始聊天吧！',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    // 添加到会话列表
+    conversations.value.unshift(newConversation);
+    selectedConversation.value = newConversation;
+
+    // 初始化聊天历史
+    chatHistory.value[newConversation.id] = [];
+  }
+
+  // 关闭对话框
+  newChatDialogVisible.value = false;
+  searchQuery.value = '';
+};
+
+// 加好友相关
+const addFriendDialogVisible = ref(false);
+const friendSearchQuery = ref('');
+const addFriendResults = ref([]);
+
+// 打开加好友对话框
+const openAddFriendDialog = () => {
+  addFriendDialogVisible.value = true;
+  addFriendResults.value = [];
+  friendSearchQuery.value = '';
+};
+
+// 搜索用户（用于加好友）
+const searchUsersForAdd = () => {
+  if (!friendSearchQuery.value) {
+    addFriendResults.value = [];
+    return;
+  }
+
+  // 模拟搜索结果
+  const mockUsers = [
+    { id: 201, name: friendSearchQuery.value, avatar: '👨‍💻', isFriend: false },
+    { id: 202, name: friendSearchQuery.value + '同学', avatar: '👩‍🎓', isFriend: false }
+  ];
+
+  addFriendResults.value = mockUsers.filter(user =>
+    user.name.includes(friendSearchQuery.value)
+  );
+};
+
+// 发送好友请求
+const sendFriendRequest = (user) => {
+  ElMessage.success(`已向 ${user.name} 发送好友请求`);
+  // 这里可以添加实际的API请求逻辑
+};
+
+// 群详情相关
+const groupDetailDialogVisible = ref(false);
+const currentGroupInfo = ref(null);
+
+// 打开群详情
+const openGroupDetail = () => {
+  if (!selectedConversation.value || selectedConversation.value.type !== 'group') return;
+
+  // 模拟群详情数据
+  currentGroupInfo.value = {
+    id: selectedConversation.value.id,
+    name: selectedConversation.value.name,
+    avatar: selectedConversation.value.avatar,
+    memberCount: selectedConversation.value.memberCount,
+    members: ['我', '张三', '李四', '王五', '赵六'], // 模拟群成员
+    creator: '我', // 模拟群创建者
+    createdAt: '2024-01-15 10:30:00' // 模拟创建时间
+  };
+
+  groupDetailDialogVisible.value = true;
 };
 
 // 新建群聊对话框可见性
@@ -1182,6 +1438,13 @@ const goToOrderConfirmation = () => {
   // 存储群订单信息到会话存储
   if (selectedConversation.value && groupOrders.value[selectedConversation.value.id]) {
     const currentOrder = groupOrders.value[selectedConversation.value.id];
+
+    // 检查购物车是否为空
+    if (!currentOrder.orderItems || currentOrder.orderItems.length === 0) {
+      ElMessage.warning('购物车为空，无法进行订单确认');
+      return;
+    }
+
     const pendingOrder = {
       cartItems: currentOrder.orderItems.map(item => ({
         ...item,
@@ -1269,12 +1532,17 @@ const goToOrderConfirmation = () => {
           right: 8px;
           font-size: 14px;
           cursor: pointer;
-          opacity: 0.5;
+          opacity: 0; /* 默认隐藏 */
           transition: opacity 0.2s;
 
           &:hover {
-            opacity: 1;
+            opacity: 1; /* 鼠标悬停在图标上时完全显示 */
           }
+        }
+
+        /* 当鼠标悬停在会话项上时显示针图标 */
+        .conversation-item:hover .pin-btn {
+          opacity: 0.5; /* 会话项悬停时显示图标，半透明 */
         }
 
         .conversation-avatar {
@@ -1359,6 +1627,20 @@ const goToOrderConfirmation = () => {
           min-height: 7px; /* 设置最小高度，确保单个数字也能显示为圆形 */
           min-width: 7px; /* 设置最小宽度，确保单个数字也能显示为圆形 */
           text-align: center; /* 文字居中 */
+        }
+
+        /* 群聊标签样式 */
+        .group-tag {
+          background-color: #409eff;
+          color: #fff;
+          font-size: 8px;
+          padding: 1px 4px;
+          border-radius: 3px;
+          position: absolute;
+          top: 0;
+          right: 0;
+          transform: translate(0, 0); /* 图片右上角与标签右上角完全对齐 */
+          z-index: 2; /* 确保标签覆盖在图片之上 */
         }
       }
     }
@@ -1785,6 +2067,39 @@ const goToOrderConfirmation = () => {
     }
   }
 
+  /* 新建聊天和加好友对话框样式 */
+  .friend-list, .user-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .friend-item, .user-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: #f5f7fa;
+    }
+  }
+
+  .friend-avatar, .user-avatar {
+    font-size: 28px;
+    margin-right: 12px;
+  }
+
+  .friend-info, .user-info {
+    flex: 1;
+
+    .friend-name, .user-name {
+      font-weight: 500;
+      font-size: 14px;
+    }
+  }
+
   /* 右键菜单样式 */
   .context-menu {
     position: fixed;
@@ -1809,4 +2124,41 @@ const goToOrderConfirmation = () => {
       background-color: #f5f7fa;
     }
   }
-}</style>
+
+  /* 群聊详情对话框样式 */
+  .group-detail-content {
+    padding: 20px;
+
+    .group-avatar {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .group-name {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .group-info-item {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #606266;
+    }
+
+    .group-members {
+      margin-top: 20px;
+
+      .section-title {
+        font-weight: 500;
+        margin-bottom: 12px;
+      }
+
+      .member-item {
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+    }
+  }
+}
+</style>
