@@ -1,5 +1,6 @@
+
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { ChatRound, Camera, Document, Loading } from '@element-plus/icons-vue';
 
 // Chat messages
@@ -19,7 +20,7 @@ const inputMessage = ref('');
 // Loading state for chat
 const isLoading = ref(false);
 
-// Tab selection
+// Tab selection - AI聊天已设置为默认
 const activeTab = ref('chat');
 
 // AI Dish Recognition
@@ -38,6 +39,14 @@ const handleImageUpload = (event) => {
   if (file) {
     selectedImage.value = URL.createObjectURL(file);
     recognitionResult.value = null; // Clear previous result
+  }
+};
+
+// New method to handle image upload click
+const handleUploadClick = () => {
+  const input = document.getElementById('image-upload');
+  if (input) {
+    input.click();
   }
 };
 
@@ -75,7 +84,13 @@ const optimizeRecipe = () => {
   setTimeout(() => {
     optimizedRecipe.value = {
       original: originalRecipe.value,
-      optimized: `${originalRecipe.value}\n\nAI优化建议：\n1. 减少食用油用量至15克\n2. 加入100克西兰花增加膳食纤维\n3. 将白糖替换为木糖醇\n4. 烹饪时间缩短至12分钟以保留更多营养`,
+      optimized: `${originalRecipe.value}
+
+AI优化建议：
+1. 减少食用油用量至15克
+2. 加入100克西兰花增加膳食纤维
+3. 将白糖替换为木糖醇
+4. 烹饪时间缩短至12分钟以保留更多营养`,
       improvements: ['低油', '高纤维', '无糖', '营养保留']
     };
     optimizationLoading.value = false;
@@ -122,6 +137,11 @@ const sendMessage = () => {
     }, 100);
   }, 1000);
 };
+
+// Ensure AI聊天 is the default tab on component mount
+onMounted(() => {
+  activeTab.value = 'chat';
+});
 </script>
 
 <template>
@@ -139,8 +159,8 @@ const sendMessage = () => {
           </div>
 
           <!-- Tab Menu -->
-          <el-tabs v-model:active-name="activeTab" type="border-card" class="ai-tabs">
-            <el-tab-pane label="AI聊天" name="chat" icon="ChatRound">
+          <el-tabs v-model="activeTab" type="border-card" class="ai-tabs">
+            <el-tab-pane label="AI聊天" name="chat" :icon="ChatRound">
               <div class="chat-messages">
                 <div
                   v-for="message in messages"
@@ -196,7 +216,7 @@ const sendMessage = () => {
               </div>
             </el-tab-pane>
 
-            <el-tab-pane label="菜品识别" name="recognition" icon="Camera">
+            <el-tab-pane label="菜品识别" name="recognition" :icon="Camera">
               <div class="recognition-section">
                 <div class="upload-area">
                   <input
@@ -206,7 +226,7 @@ const sendMessage = () => {
                     id="image-upload"
                     @change="handleImageUpload"
                   />
-                  <el-button type="primary" @click="document.getElementById('image-upload').click()">
+                  <el-button type="primary" @click="handleUploadClick">
                     <el-icon><Camera /></el-icon>
                     上传菜品图片
                   </el-button>
@@ -409,7 +429,9 @@ const sendMessage = () => {
   }
 
   .chat-messages {
-    flex: 1;
+    /* 固定聊天框高度 */
+    height: 400px;
+    max-height: 400px;
     overflow-y: auto;
     background-color: #fff;
     border-radius: 8px;
@@ -484,6 +506,12 @@ const sendMessage = () => {
   }
 
   .chat-input-area {
+    /* 固定发送消息区域在页面底部 */
+    position: sticky;
+    bottom: 0;
+    background-color: #fafafa;
+    padding: 10px 0 20px 0;
+    z-index: 100;
     display: flex;
     gap: 10px;
     margin-bottom: 20px;

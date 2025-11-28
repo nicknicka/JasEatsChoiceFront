@@ -29,7 +29,19 @@
       "Bash(__NEW_LINE__ cat /Users/nickxiao/JasEatsChoice/后端API文档.md)",
       "Bash(__NEW_LINE__ cd /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront)",
       "Bash(__NEW_LINE__ npm run test)",
-      "Bash(__NEW_LINE__ git status)"
+      "Bash(__NEW_LINE__ git status)",
+      "Bash(__NEW_LINE__ cat /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/src/renderer/src/views/user/AI.vue)",
+      "Bash(__NEW_LINE__ find /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront -name \"AI.vue\" -type f)",
+      "Bash(__NEW_LINE__ ls -la /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/src/renderer/src/views/user/AI.vue)",
+      "Bash(pandoc:*)",
+      "Bash(python3 -c:*)",
+      "Bash(pip3 install:*)",
+      "Bash(npm ls element-plus)",
+      "Bash(pip:*)",
+      "Bash(antiword:*)",
+      "Bash(npm install electron-vite@latest --save-dev)",
+      "Bash(npm start)",
+      "Bash(npm ls electron --save-dev)"
     ],
     "deny": [],
     "ask": []
