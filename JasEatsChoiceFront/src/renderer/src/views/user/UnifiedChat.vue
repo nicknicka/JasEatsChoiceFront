@@ -293,7 +293,7 @@
         style="margin-bottom: 15px;"
       >
         <template #append>
-          <el-button icon="Search" @click="searchFriends"></el-button>
+          <el-button :icon="Search" @click="searchFriends"></el-button>
         </template>
       </el-input>
 
@@ -331,7 +331,7 @@
         style="margin-bottom: 15px;"
       >
         <template #append>
-          <el-button icon="Search" @click="searchUsersForAdd"></el-button>
+          <el-button :icon="Search" @click="searchUsersForAdd"></el-button>
         </template>
       </el-input>
 
@@ -520,7 +520,7 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ShoppingCart } from '@element-plus/icons-vue';
+import { ShoppingCart, Search } from '@element-plus/icons-vue';
 
 const router = useRouter();
 

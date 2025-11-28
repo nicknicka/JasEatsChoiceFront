@@ -18,8 +18,6 @@ const UserOrderDetail = () => import('../views/user/OrderDetail.vue') // 订单�
 const UserConsumeHistory = () => import('../views/user/ConsumeHistory.vue') // 消费记录
 const UserMessageCenter = () => import('../views/user/MessageCenter.vue') // 消息中心
 const UserSystemNotification = () => import('../views/user/SystemNotification.vue') // 系统通知
-const UserChat = () => import('../views/user/Chat.vue') // 单聊
-const UserGroupChat = () => import('../views/user/GroupChat.vue') // 群聊
 const UserAI = () => import('../views/user/AI.vue') // AI饮食助手
 const UserOrderConfirmation = () => import('../views/user/OrderConfirmation.vue') // 订单确认
 const UserSettings = () => import('../views/user/Settings.vue') // 设置

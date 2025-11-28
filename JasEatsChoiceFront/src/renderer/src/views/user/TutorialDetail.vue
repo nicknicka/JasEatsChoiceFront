@@ -91,7 +91,7 @@ onMounted(() => {
 <template>
   <div class="tutorial-detail-container">
     <div class="page-header">
-      <el-button type="primary" icon="ArrowLeft" size="small" @click="goBackToList">
+      <el-button type="primary" :icon="ArrowLeft" size="small" @click="goBackToList">
         返回列表
       </el-button>
     </div>

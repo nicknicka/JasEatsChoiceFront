@@ -20,7 +20,16 @@
       "Bash(npm run serve)",
       "Bash(libreoffice:*)",
       "Bash(__NEW_LINE__ npm run build)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(npm install @element-plus/icons-vue@latest)",
+      "Bash(__NEW_LINE__ find /Users/nickxiao/JasEatsChoice -name \"*.md\")",
+      "Bash(__NEW_LINE__ find /Users/nickxiao/JasEatsChoice -name \"*PRD*.md\")",
+      "Bash(__NEW_LINE__ touch /Users/nickxiao/JasEatsChoice/后端API文档.md)",
+      "Bash(__NEW_LINE__ ls -la /Users/nickxiao/JasEatsChoice/)",
+      "Bash(__NEW_LINE__ cat /Users/nickxiao/JasEatsChoice/后端API文档.md)",
+      "Bash(__NEW_LINE__ cd /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront)",
+      "Bash(__NEW_LINE__ npm run test)",
+      "Bash(__NEW_LINE__ git status)"
     ],
     "deny": [],
     "ask": []

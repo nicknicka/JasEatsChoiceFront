@@ -136,6 +136,7 @@ const mockWeatherApiCall = () => {
   });
 };
 
+
 // 根据天气和时间生成推荐菜品（模拟）
 const generateWeatherTimeRecommendations = (timeType, weatherTags, weatherData) => {
   const rejectionHistory = loadRejectionHistory();
