@@ -27,8 +27,8 @@ export const API_CONFIG = {
 
   // 商家API端点
   merchant: {
-    list: '/api/v1/merchant/list', // 商家列表接口
-    detail: '/api/v1/merchant/detail' // 商家详情接口
+    list: '/api/v1/merchant', // 商家列表接口
+    detail: '/api/v1/merchant/' // 商家详情接口
   },
 
   // 消息API端点

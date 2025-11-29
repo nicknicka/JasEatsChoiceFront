@@ -118,8 +118,8 @@ const filteredMerchants = computed(() => {
   if (filters.value.sort === 'distance') {
     // 按距离排序
     result.sort((a, b) => {
-      const distanceA = parseFloat(a.distance.replace('km', ''));
-      const distanceB = parseFloat(b.distance.replace('km', ''));
+      const distanceA = parseFloat((a.distance || '0km').replace('km', ''));
+      const distanceB = parseFloat((b.distance || '0km').replace('km', ''));
       return distanceA - distanceB;
     });
   } else if (filters.value.sort === 'rating') {
