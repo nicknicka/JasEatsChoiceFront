@@ -70,7 +70,13 @@
       "Bash(npm run dev:renderer:*)",
       "Bash(npm run build:*)",
       "Bash(./mvnw clean compile spring-boot:run)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(brew services start:*)",
+      "Bash(brew services restart:*)",
+      "Bash(mysql:*)",
+      "Bash(do echo \"File: $file\" grep -n \"@RequestMapping\\|@GetMapping\\|@PostMapping\" \"$file\")",
+      "Bash(do echo \"=== $file ===\" grep -n \"^@\" \"$file\")",
+      "Bash(java:*)"
     ],
     "deny": [],
     "ask": []

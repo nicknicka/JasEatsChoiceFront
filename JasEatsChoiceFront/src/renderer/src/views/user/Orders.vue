@@ -109,7 +109,12 @@ const cancelOrder = (order) => {
 
 <template>
   <div class="orders-container">
-    <h2>查看订单</h2>
+    <div class="page-header">
+      <el-button type="primary" size="small" @click="router.go(-1)">
+        ← 返回
+      </el-button>
+      <h2 style="margin-left: 15px;">查看订单</h2>
+    </div>
 
     <!-- 订单筛选 -->
     <div class="order-filters">
@@ -191,9 +196,15 @@ const cancelOrder = (order) => {
 .orders-container {
   padding: 0 20px 20px 20px;
 
+  .page-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
   h2 {
     font-size: 24px;
-    margin: 0 0 20px 0;
+    margin: 0;
   }
 
   .order-filters {

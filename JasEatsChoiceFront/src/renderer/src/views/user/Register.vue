@@ -149,10 +149,14 @@ const submitForm = () => {
       if (valid) {
         // 这里可以添加实际的注册逻辑
         console.log('注册成功:', registerForm);
+        // 设置登录状态到localStorage
+        localStorage.setItem('isLoggedIn', 'true');
+        // 保存用户名
+        localStorage.setItem('username', registerForm.username);
         ElMessage.success('注册成功！');
-        // 注册成功后跳转到登录页面
+        // 注册成功后跳转到用户首页
         setTimeout(() => {
-          router.push('/login');
+          router.push('/user/home');
         }, 1500);
       } else {
         ElMessage.error('表单验证失败，请检查输入');

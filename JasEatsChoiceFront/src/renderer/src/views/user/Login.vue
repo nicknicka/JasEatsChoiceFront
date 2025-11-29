@@ -116,6 +116,10 @@ const submitForm = () => {
       if (valid) {
         // 这里可以添加实际的登录逻辑
         console.log('登录成功:', loginForm);
+        // 设置登录状态到localStorage
+        localStorage.setItem('isLoggedIn', 'true');
+        // 保存用户名
+        localStorage.setItem('username', loginForm.username);
         ElMessage.success('登录成功！');
         // 登录成功后跳转到用户首页
         setTimeout(() => {

@@ -44,19 +44,16 @@
         <h3 class="module-title">📜 订单模块</h3>
         <div class="order-stats">
           <div class="order-stat-card">
-            <div class="stat-value order-in-progress">{{ userInfo.orders.inProgress }}</div>
+            <div class="stat-value order-in-progress">{{ userInfo.orders.inProgress }}笔</div>
             <div class="stat-label">进行中订单</div>
-            <small>笔</small>
           </div>
           <div class="order-stat-card">
-            <div class="stat-value order-pending">{{ userInfo.orders.pending }}</div>
+            <div class="stat-value order-pending">{{ userInfo.orders.pending }}笔</div>
             <div class="stat-label">待确认订单</div>
-            <small>笔</small>
           </div>
           <div class="order-stat-card">
-            <div class="stat-value order-pending-comment">{{ userInfo.orders.pendingComment }}</div>
+            <div class="stat-value order-pending-comment">{{ userInfo.orders.pendingComment }}笔</div>
             <div class="stat-label">待评价订单</div>
-            <small>笔</small>
           </div>
         </div>
         <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
