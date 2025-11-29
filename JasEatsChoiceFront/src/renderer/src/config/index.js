@@ -43,6 +43,12 @@ export const API_CONFIG = {
     list: '/api/v1/tutorial/list' // 全部教程接口
   },
 
+  // 天气API端点
+  weather: {
+    current: '/api/v1/weather', // 获取天气信息接口
+    location: '/api/v1/location' // 获取当前定位接口
+  },
+
   // 订单API端点
   order: {
     list: '/api/v1/orders/user/', // 获取用户订单列表接口

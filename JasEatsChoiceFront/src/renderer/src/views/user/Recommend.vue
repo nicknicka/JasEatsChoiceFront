@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import axios from 'axios';
+import { API_CONFIG } from '../../config/index.js';
 
 const router = useRouter();
 
@@ -90,8 +92,11 @@ const updateRecommendationsByWeatherAndTime = async () => {
   }
 
   try {
-    // 模拟天气数据获取（实际项目中应调用真实的天气API）
-    const weatherData = await mockWeatherApiCall();
+    // 调用真实天气API获取天气数据
+    const response = await axios.get(API_CONFIG.baseURL + API_CONFIG.weather.current, {
+      params: { city: '北京' } // 默认查询北京天气，实际应用中可以先获取定位再查询
+    });
+    const weatherData = response.data.data;
     const { temperature, humidity, condition } = weatherData;
     const now = new Date();
     const hour = now.getHours();
@@ -122,19 +127,6 @@ const updateRecommendationsByWeatherAndTime = async () => {
   }
 };
 
-// 模拟天气API调用
-const mockWeatherApiCall = () => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({
-        temperature: 28, // 温度，单位：摄氏度
-        humidity: 75,    // 湿度，百分比
-        condition: '晴天', // 天气状况
-        windSpeed: 5     // 风速
-      });
-    }, 500);
-  });
-};
 
 
 // 根据天气和时间生成推荐菜品（模拟）

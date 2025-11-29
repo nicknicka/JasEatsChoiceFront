@@ -1,12 +1,14 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import { API_CONFIG } from '../../config/index.js';
 
 // 卡路里统计数据
 const calorieData = ref({
   today: {
-    consumed: 1560,
-    remaining: 440,
-    target: 2000
+    consumed: 0,
+    remaining: 0,
+    target: 2000 // 默认值，将从API获取
   },
   weekly: [
     { day: '周一', consumed: 1850 },
@@ -18,10 +20,44 @@ const calorieData = ref({
     { day: '周日', consumed: 2080 }
   ],
   nutrition: [
-    { name: '蛋白质', value: 75, unit: 'g' },
-    { name: '碳水化合物', value: 210, unit: 'g' },
-    { name: '脂肪', value: 52, unit: 'g' }
+    { name: '蛋白质', value: 0, unit: 'g' },
+    { name: '碳水化合物', value: 0, unit: 'g' },
+    { name: '脂肪', value: 0, unit: 'g' }
   ]
+});
+
+// 从API获取数据
+onMounted(() => {
+  // 获取用户偏好设置（包含卡路里目标）
+  const userId = 1; // 临时用户ID，实际应用中应从登录信息获取
+  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`)
+    .then(response => {
+      if (response.data && response.data.success && response.data.data.calorieTarget) {
+        calorieData.value.today.target = response.data.data.calorieTarget;
+      }
+    })
+    .catch(error => {
+      console.error('加载用户偏好失败:', error);
+    });
+
+  // 获取今日食谱和营养数据
+  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.recipe.today}`)
+    .then(response => {
+      if (response.data && response.data.success && response.data.data.nutrition) {
+        const nutrition = response.data.data.nutrition;
+        // 更新今日卡路里消耗
+        calorieData.value.today.consumed = nutrition.calories;
+        calorieData.value.today.remaining = calorieData.value.today.target - nutrition.calories;
+
+        // 更新营养数据
+        calorieData.value.nutrition[0].value = nutrition.protein; // 蛋白质
+        calorieData.value.nutrition[1].value = nutrition.carbs; // 碳水化合物
+        calorieData.value.nutrition[2].value = nutrition.fat; // 脂肪
+      }
+    })
+    .catch(error => {
+      console.error('加载今日营养数据失败:', error);
+    });
 });
 
 // 获取营养百分比（模拟）

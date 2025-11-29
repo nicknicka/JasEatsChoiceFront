@@ -76,7 +76,9 @@
       "Bash(mysql:*)",
       "Bash(do echo \"File: $file\" grep -n \"@RequestMapping\\|@GetMapping\\|@PostMapping\" \"$file\")",
       "Bash(do echo \"=== $file ===\" grep -n \"^@\" \"$file\")",
-      "Bash(java:*)"
+      "Bash(java:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

@@ -12,15 +12,48 @@ const router = useRouter();
 // 教程数据 - 从后端获取
 const featuredTutorials = ref([]);
 
-// Mock data for today's recommended dishes
-const recommendedDishes = ref([
-  { name: '冰镇西瓜汁', kcal: '180kcal', rating: 5, type: 'drink' },
-  { name: '泰式青木瓜沙拉', kcal: '120kcal', rating: 4, type: 'salad' },
-  { name: '凉面套餐', kcal: '320kcal', rating: 5, type: 'meal' }
-]);
+// Today's recommended dishes from backend
+const recommendedDishes = ref([]);
 
 // Mock weather data
 const weather = ref({ temp: 32, condition: '晴天' });
+
+// Fetch recommended dishes from backend
+const fetchRecommendedDishes = () => {
+  api.get(API_CONFIG.recipe.recommend)
+    .then(response => {
+      if (response.data) {
+        recommendedDishes.value = response.data;
+      }
+    })
+    .catch(error => {
+      console.error('加载推荐菜品失败:', error);
+      // 失败时使用模拟数据作为备份
+      recommendedDishes.value = [
+        { name: '冰镇西瓜汁', kcal: '180kcal', rating: 5, type: 'drink' },
+        { name: '泰式青木瓜沙拉', kcal: '120kcal', rating: 4, type: 'salad' },
+        { name: '凉面套餐', kcal: '320kcal', rating: 5, type: 'meal' }
+      ];
+    });
+};
+
+// Fetch weather data from backend
+const fetchWeather = () => {
+  // 默认查询北京天气，实际应用中可以先获取定位再查询
+  api.get(`${API_CONFIG.weather.current}?city=北京`)
+    .then(response => {
+      if (response.data) {
+        weather.value = {
+          temp: response.data.temperature,
+          condition: response.data.condition
+        };
+      }
+    })
+    .catch(error => {
+      console.error('加载天气失败:', error);
+      // 失败时保持现有模拟数据
+    });
+};
 
 // Mock user info removed - now handled by CommonHome component
 // Search functionality removed - now handled by CommonHome component
@@ -151,6 +184,8 @@ const fetchFeaturedTutorials = () => {
 // Initialize WebSocket on mount
 onMounted(() => {
   fetchFeaturedTutorials();
+  fetchRecommendedDishes();
+  fetchWeather();
 
   if (window.api) {
     initializeWebSocket();

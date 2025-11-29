@@ -1,6 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
+import { API_CONFIG } from '../../config/index.js';
+import { ElMessage } from 'element-plus';
 
 const router = useRouter();
 const route = useRoute();
@@ -8,139 +11,27 @@ const route = useRoute();
 // 订单详情数据
 const orderDetail = ref(null);
 
-// 模拟订单详情数据
-const mockOrders = [
-  {
-    id: 1,
-    orderNo: 'JD20231123001',
-    status: 'delivered',
-    merchant: '健康轻食馆',
-    total: 28.8,
-    time: '2023-11-23 12:30',
-    items: ['健康轻食套餐', '矿泉水'],
-    address: '北京市朝阳区科技园区8号',
-    deliveryTime: '2023-11-23 13:15',
-    paymentMethod: '平台币支付',
-    merchantInfo: {
-      name: '健康轻食馆',
-      phone: '13800138000',
-      address: '北京市朝阳区美食街123号'
-    },
-    orderItems: [
-      { id: 1, name: '健康轻食套餐', quantity: 1, price: 26.8, status: 'delivered' },
-      { id: 2, name: '矿泉水', quantity: 1, price: 2.0, status: 'delivered' }
-    ],
-    operationRecords: [
-      { id: 1, time: '2023-11-23 12:30:00', action: '订单创建', description: '用户成功提交订单，包含商品：健康轻食套餐(1份)、矿泉水(1份)' },
-      { id: 2, time: '2023-11-23 12:30:15', action: '支付完成', description: '用户已支付订单金额28.8元' },
-      { id: 3, time: '2023-11-23 12:32:00', action: '加菜', description: '用户添加商品：苹果，数量：1，价格：5.0元' },
-      { id: 4, time: '2023-11-23 12:35:00', action: '菜品状态变更', description: '健康轻食套餐 - 开始制作' },
-      { id: 5, time: '2023-11-23 12:40:00', action: '菜品状态变更', description: '矿泉水 - 开始制作' },
-      { id: 6, time: '2023-11-23 12:50:00', action: '菜品状态变更', description: '健康轻食套餐 - 制作完成' },
-      { id: 7, time: '2023-11-23 12:55:00', action: '菜品状态变更', description: '矿泉水 - 制作完成' },
-      { id: 8, time: '2023-11-23 13:00:00', action: '菜品状态变更', description: '苹果 - 开始制作' },
-      { id: 9, time: '2023-11-23 13:02:00', action: '菜品状态变更', description: '苹果 - 制作完成' },
-      { id: 10, time: '2023-11-23 13:05:00', action: '配送中', description: '骑手已取货，正在配送' },
-      { id: 11, time: '2023-11-23 13:15:00', action: '已送达', description: '订单商品已送达用户手中' }
-    ]
-  },
-  {
-    id: 2,
-    orderNo: 'JD20231123002',
-    status: 'processing',
-    merchant: '营养早餐店',
-    total: 15.5,
-    time: '2023-11-23 10:15',
-    items: ['营养早餐组合'],
-    address: '北京市海淀区中关村大街1号',
-    paymentMethod: '微信支付',
-    merchantInfo: {
-      name: '营养早餐店',
-      phone: '13800138001',
-      address: '北京市海淀区早餐街45号'
-    },
-    orderItems: [
-      { id: 1, name: '营养早餐组合', quantity: 1, price: 15.5, status: 'preparing' }
-    ],
-    operationRecords: [
-      { id: 1, time: '2023-11-23 10:15:00', action: '订单创建', description: '用户成功提交订单，包含商品：营养早餐组合(1份)' },
-      { id: 2, time: '2023-11-23 10:15:10', action: '支付完成', description: '用户已支付订单金额15.5元' },
-      { id: 3, time: '2023-11-23 10:20:00', action: '菜品状态变更', description: '营养早餐组合 - 开始制作' },
-      { id: 4, time: '2023-11-23 10:25:00', action: '菜品状态变更', description: '营养早餐组合 - 制作中（鸡蛋煎制完成）' },
-      { id: 5, time: '2023-11-23 10:28:00', action: '菜品状态变更', description: '营养早餐组合 - 制作中（面包烘烤完成）' }
-    ]
-  },
-  {
-    id: 3,
-    orderNo: 'JD20231122001',
-    status: 'completed',
-    merchant: '美食天地',
-    total: 42.0,
-    time: '2023-11-22 18:45',
-    items: ['宫保鸡丁', '麻婆豆腐', '米饭'],
-    address: '北京市东城区王府井大街5号',
-    deliveryTime: '2023-11-22 19:30',
-    paymentMethod: '支付宝支付',
-    merchantInfo: {
-      name: '美食天地',
-      phone: '13800138002',
-      address: '北京市东城区美食广场789号'
-    },
-    orderItems: [
-      { id: 1, name: '宫保鸡丁', quantity: 1, price: 22.0, status: 'completed' },
-      { id: 2, name: '麻婆豆腐', quantity: 1, price: 15.0, status: 'completed' },
-      { id: 3, name: '米饭', quantity: 2, price: 2.5, status: 'completed' }
-    ],
-    operationRecords: [
-      { id: 1, time: '2023-11-22 18:45:00', action: '订单创建', description: '用户成功提交订单' },
-      { id: 2, time: '2023-11-22 18:45:20', action: '支付完成', description: '用户已支付订单金额42.0元' },
-      { id: 3, time: '2023-11-22 18:50:00', action: '开始制作', description: '商家开始制作订单商品' },
-      { id: 4, time: '2023-11-22 19:10:00', action: '制作完成', description: '订单商品制作完成' },
-      { id: 5, time: '2023-11-22 19:15:00', action: '配送中', description: '骑手已取货，正在配送' },
-      { id: 6, time: '2023-11-22 19:30:00', action: '已送达', description: '订单商品已送达用户手中' },
-      { id: 7, time: '2023-11-22 19:35:00', action: '订单完成', description: '用户已确认收货，订单完成' }
-    ]
-  },
-  {
-    id: 4,
-    orderNo: 'JD20231121001',
-    status: 'cancelled',
-    merchant: '健身餐厅',
-    total: 35.0,
-    time: '2023-11-21 19:30',
-    items: ['健身餐套餐'],
-    address: '北京市西城区金融街10号',
-    paymentMethod: '平台币支付',
-    merchantInfo: {
-      name: '健身餐厅',
-      phone: '13800138003',
-      address: '北京市西城区健身街23号'
-    },
-    orderItems: [
-      { id: 1, name: '健身餐套餐', quantity: 1, price: 35.0, status: 'cancelled' }
-    ],
-    operationRecords: [
-      { id: 1, time: '2023-11-21 19:30:00', action: '订单创建', description: '用户成功提交订单' },
-      { id: 2, time: '2023-11-21 19:30:10', action: '支付完成', description: '用户已支付订单金额35.0元' },
-      { id: 3, time: '2023-11-21 19:32:00', action: '取消订单', description: '用户取消订单' },
-      { id: 4, time: '2023-11-21 19:33:00', action: '退款处理', description: '商家正在处理退款' },
-      { id: 5, time: '2023-11-21 19:35:00', action: '退款完成', description: '退款已成功到账用户账户' }
-    ]
-  }
-];
-
 onMounted(() => {
   // 从路由参数获取订单ID
   const orderId = parseInt(route.params.id);
 
-  // 在实际应用中，这里应该是从API获取订单详情
-  // 这里使用模拟数据
-  orderDetail.value = mockOrders.find(order => order.id === orderId);
-
-  if (!orderDetail.value) {
-    // 如果订单不存在，跳回订单列表
-    router.push('/user/home/orders');
-  }
+  // 从API获取订单详情
+  axios.get(API_CONFIG.baseURL + API_CONFIG.order.detail + orderId)
+    .then(response => {
+      if (response.data && response.data.success) {
+        orderDetail.value = response.data.data;
+      } else {
+        // 如果API返回错误，跳回订单列表并提示
+        router.push('/user/home/orders');
+        ElMessage.error('订单详情获取失败');
+      }
+    })
+    .catch(error => {
+      console.error('加载订单详情失败:', error);
+      // 如果请求失败，跳回订单列表并提示
+      router.push('/user/home/orders');
+      ElMessage.error('订单详情获取失败');
+    });
 });
 
 // 返回订单列表

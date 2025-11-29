@@ -105,4 +105,36 @@ public class RecipeController {
 
         return ResponseResult.success(myRecipes);
     }
+
+    /**
+     * 获取推荐食谱
+     */
+    @GetMapping("/recommend")
+    public ResponseResult<?> getRecommendedRecipes() {
+        // 模拟推荐食谱数据
+        List<Map<String, Object>> recommendedRecipes = new ArrayList<>();
+
+        Map<String, Object> dish1 = new HashMap<>();
+        dish1.put("name", "冰镇西瓜汁");
+        dish1.put("kcal", "180kcal");
+        dish1.put("rating", 5);
+        dish1.put("type", "drink");
+        recommendedRecipes.add(dish1);
+
+        Map<String, Object> dish2 = new HashMap<>();
+        dish2.put("name", "泰式青木瓜沙拉");
+        dish2.put("kcal", "120kcal");
+        dish2.put("rating", 4);
+        dish2.put("type", "salad");
+        recommendedRecipes.add(dish2);
+
+        Map<String, Object> dish3 = new HashMap<>();
+        dish3.put("name", "凉面套餐");
+        dish3.put("kcal", "320kcal");
+        dish3.put("rating", 5);
+        dish3.put("type", "meal");
+        recommendedRecipes.add(dish3);
+
+        return ResponseResult.success(recommendedRecipes);
+    }
 }

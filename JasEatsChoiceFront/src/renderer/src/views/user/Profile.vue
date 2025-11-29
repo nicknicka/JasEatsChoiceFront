@@ -134,35 +134,49 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import axios from 'axios';
+import { API_CONFIG } from '../../config';
 
 const router = useRouter();
 
 // 真实数据
-const userInfo = ref({
-  name: '张三',
-  phone: '138xxxx8888',
-  location: '北京朝阳',
-  todayCalorie: '620kcal',
-  weekBalance: '85%',
-  orders: {
-    inProgress: '2',
-    pending: '1',
-    pendingComment: '3'
-  },
-  wallet: {
-    balance: '177'
-  },
-  collections: '8',
-  addresses: '5',
-  defaultAddress: '公司'
-});
+const userInfo = ref({});
 
 // 从本地存储加载真实数据
 onMounted(() => {
-  const savedUserInfo = localStorage.getItem('userInfo');
-  if (savedUserInfo) {
-    userInfo.value = JSON.parse(savedUserInfo);
-  }
+  // 模拟用户ID，实际应该从登录状态中获取
+  const userId = 1;
+
+  // 从后端API获取用户信息
+  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.user.profile.replace('{userId}', userId)}`)
+    .then(response => {
+      if (response.data.data) {
+        userInfo.value = response.data.data;
+      }
+    })
+    .catch(error => {
+      console.error('加载用户信息失败:', error);
+      // 使用默认数据作为 fallback
+      userInfo.value = {
+        name: '张三',
+        phone: '138xxxx8888',
+        location: '北京朝阳',
+        todayCalorie: '620kcal',
+        weekBalance: '85%',
+        orders: {
+          inProgress: '2',
+          pending: '1',
+          pendingComment: '3'
+        },
+        wallet: {
+          balance: '177'
+        },
+        collections: '8',
+        addresses: '5',
+        defaultAddress: '公司'
+      };
+      ElMessage.error('加载用户信息失败，将显示默认数据');
+    });
 });
 
 // 跳转到所有订单页面
