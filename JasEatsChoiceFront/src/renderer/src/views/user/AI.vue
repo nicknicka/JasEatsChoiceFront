@@ -2,6 +2,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { ChatRound, Camera, Document, Loading } from '@element-plus/icons-vue';
+import axios from 'axios';
+
+// 从配置中导入API地址
+import { API_CONFIG } from '../../config/index.js';
 
 // Chat messages
 const messages = ref([
@@ -80,21 +84,37 @@ const optimizeRecipe = () => {
 
   optimizationLoading.value = true;
 
-  // Mock AI optimization
-  setTimeout(() => {
-    optimizedRecipe.value = {
-      original: originalRecipe.value,
-      optimized: `${originalRecipe.value}
-
-AI优化建议：
-1. 减少食用油用量至15克
-2. 加入100克西兰花增加膳食纤维
-3. 将白糖替换为木糖醇
-4. 烹饪时间缩短至12分钟以保留更多营养`,
-      improvements: ['低油', '高纤维', '无糖', '营养保留']
-    };
-    optimizationLoading.value = false;
-  }, 1500);
+  // Call backend API for recipe optimization
+  axios.post(API_CONFIG.baseURL + API_CONFIG.ai.recipe, { foodName: originalRecipe.value })
+    .then(response => {
+      // Format the backend response into the expected structure
+      const backendRecipes = response.data.data;
+      // For simplicity, take the first recipe as the optimized result
+      if (backendRecipes && backendRecipes.length > 0) {
+        const firstRecipe = backendRecipes[0];
+        optimizedRecipe.value = {
+          original: originalRecipe.value,
+          optimized: `推荐食谱：${firstRecipe.name}
+难度：${firstRecipe.difficulty}
+卡路里：${firstRecipe.calorie}大卡
+食材：${firstRecipe.ingredients}
+步骤：${firstRecipe.steps}`,
+          improvements: ['营养均衡', '口味优化', '步骤简化']
+        };
+      }
+    })
+    .catch(error => {
+      console.error('食谱优化接口调用失败:', error);
+      // Fallback to simple mock response
+      optimizedRecipe.value = {
+        original: originalRecipe.value,
+        optimized: `优化失败：无法获取AI优化建议。`,
+        improvements: []
+      };
+    })
+    .finally(() => {
+      optimizationLoading.value = false;
+    });
 };
 
 // Send message to AI
@@ -113,29 +133,43 @@ const sendMessage = () => {
   const userInput = inputMessage.value;
   inputMessage.value = '';
 
-  // Simulate AI response
+  // Call backend AI API
   isLoading.value = true;
 
-  // Mock AI response
-  setTimeout(() => {
-    const aiResponse = {
-      id: messages.value.length + 1,
-      sender: 'ai',
-      content: `我已经收到您的问题："${userInput}"。这是一个模拟的AI回复，实际应用中将连接后端API获取智能饮食建议。`,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      avatar: '🤖'
-    };
-    messages.value.push(aiResponse);
-    isLoading.value = false;
+  // 使用后端API获取AI回复
+  axios.post(API_CONFIG.baseURL + API_CONFIG.ai.chat, { message: userInput })
+    .then(response => {
+      const aiResponse = {
+        id: messages.value.length + 1,
+        sender: 'ai',
+        content: response.data.data.content, // 根据后端返回的结构调整
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        avatar: '🤖'
+      };
+      messages.value.push(aiResponse);
+    })
+    .catch(error => {
+      console.error('AI聊天接口调用失败:', error);
+      const aiResponse = {
+        id: messages.value.length + 1,
+        sender: 'ai',
+        content: '对不起，暂时无法获取AI回复，请稍后重试。',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        avatar: '🤖'
+      };
+      messages.value.push(aiResponse);
+    })
+    .finally(() => {
+      isLoading.value = false;
 
-    // Scroll to bottom of chat
-    setTimeout(() => {
-      const chatContainer = document.querySelector('.chat-messages');
-      if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }
-    }, 100);
-  }, 1000);
+      // Scroll to bottom of chat
+      setTimeout(() => {
+        const chatContainer = document.querySelector('.chat-messages');
+        if (chatContainer) {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      }, 100);
+    });
 };
 
 // Ensure AI聊天 is the default tab on component mount

@@ -13,6 +13,7 @@ import {
 	ChatDotRound,
 	Setting,
 	HomeFilled,
+	User,
 } from "@element-plus/icons-vue";
 
 const router = useRouter();
@@ -43,17 +44,18 @@ const menuData = {
 			path: "/user/home/calorie",
 		},
 		{ index: "6", name: "我的食谱", icon: Document, path: "/user/home/my-recipe" },
-		{ index: "7", name: "查看订单", icon: List, path: "/user/home/orders" },
+		{ index: "7", name: "用户中心", icon: User, path: "/user/home/profile" },
+		{ index: "8", name: "查看订单", icon: List, path: "/user/home/orders" },
 		{
-			index: "8",
+			index: "9",
 			name: "消息中心",
 			icon: Message,
 			path: "/user/home/message-center",
 		},
-		{ index: "9", name: "AI饮食助手", icon: ChatDotRound, path: "/user/home/ai" },
-		{ index: "10", name: "聊天消息", icon: ChatDotRound, path: "/user/home/chat" },
+		{ index: "10", name: "AI饮食助手", icon: ChatDotRound, path: "/user/home/ai" },
+		{ index: "11", name: "聊天消息", icon: ChatDotRound, path: "/user/home/chat" },
 		{
-			index: "11",
+			index: "12",
 			name: "设置",
 			icon: Setting,
 			path: "/user/home/settings",

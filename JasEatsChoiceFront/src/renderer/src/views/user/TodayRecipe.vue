@@ -1,26 +1,72 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { ArrowDown } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import { API_CONFIG } from '../../config';
+import axios from 'axios';
 
 // 今日食谱数据
-const todayRecipes = ref([
-  { id: 1, name: '早餐', type: 'breakfast', items: ['牛奶燕麦粥', '水煮蛋', '苹果'] },
-  { id: 2, name: '午餐', type: 'lunch', items: ['番茄炒蛋', '清炒菠菜', '杂粮饭'] },
-  { id: 3, name: '晚餐', type: 'dinner', items: ['清蒸鲈鱼', '凉拌黄瓜', '小米粥'] }
-]);
+const todayRecipes = ref([]);
 
 // 营养摄入数据
 const nutritionData = ref({
-  calories: 1850,
-  protein: 85,
-  carbs: 220,
-  fat: 55
+  calories: 0,
+  protein: 0,
+  carbs: 0,
+  fat: 0
 });
 
 // 筛选条件
 const filters = ref({
   mealType: 'all'
+});
+
+// 加载今日食谱数据
+const loadTodayRecipes = () => {
+  axios.get(API_CONFIG.baseURL + API_CONFIG.recipe.today)
+    .then(response => {
+      if (response.data.data) {
+        todayRecipes.value = response.data.data.recipes;
+        nutritionData.value = response.data.data.nutrition;
+      } else {
+        // 使用默认数据作为 fallback
+        todayRecipes.value = [
+          { id: 1, name: '早餐', type: 'breakfast', items: ['牛奶燕麦粥', '水煮蛋', '苹果'] },
+          { id: 2, name: '午餐', type: 'lunch', items: ['番茄炒蛋', '清炒菠菜', '杂粮饭'] },
+          { id: 3, name: '晚餐', type: 'dinner', items: ['清蒸鲈鱼', '凉拌黄瓜', '小米粥'] }
+        ];
+
+        nutritionData.value = {
+          calories: 1850,
+          protein: 85,
+          carbs: 220,
+          fat: 55
+        };
+      }
+    })
+    .catch(error => {
+      console.error('加载今日食谱失败:', error);
+      // 使用默认数据作为 fallback
+      todayRecipes.value = [
+        { id: 1, name: '早餐', type: 'breakfast', items: ['牛奶燕麦粥', '水煮蛋', '苹果'] },
+        { id: 2, name: '午餐', type: 'lunch', items: ['番茄炒蛋', '清炒菠菜', '杂粮饭'] },
+        { id: 3, name: '晚餐', type: 'dinner', items: ['清蒸鲈鱼', '凉拌黄瓜', '小米粥'] }
+      ];
+
+      nutritionData.value = {
+        calories: 1850,
+        protein: 85,
+        carbs: 220,
+        fat: 55
+      };
+
+      ElMessage.error('加载今日食谱失败，将显示默认数据');
+    });
+};
+
+// 组件挂载时加载数据
+onMounted(() => {
+  loadTodayRecipes();
 });
 
 // 布局设置

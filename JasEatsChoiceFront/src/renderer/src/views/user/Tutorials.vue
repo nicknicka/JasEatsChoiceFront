@@ -1,7 +1,9 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { VideoCamera, Document, ArrowLeft } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
+import api from '../../utils/api.js';
+import { API_CONFIG } from '../../config/index.js';
 
 const router = useRouter();
 
@@ -10,15 +12,35 @@ const goBackToHome = () => {
   router.push('/user/home');
 };
 
-// Mock tutorial data
-const tutorials = ref([
-  { id: 1, title: '青木瓜沙拉制作教程', type: 'video', duration: '5:30', views: '12.5k' },
-  { id: 2, title: '夏日低卡饮食指南', type: 'article', duration: '8分钟', views: '8.2k' },
-  { id: 3, title: '健康早餐搭配技巧', type: 'video', duration: '3:45', views: '9.7k' },
-  { id: 4, title: '减脂餐制作基础', type: 'article', duration: '12分钟', views: '15.8k' },
-  { id: 5, title: '果汁制作小技巧', type: 'video', duration: '4:15', views: '7.3k' },
-  { id: 6, title: '均衡饮食营养知识', type: 'article', duration: '15分钟', views: '21.2k' }
-]);
+// 教程数据 - 从后端获取
+const tutorials = ref([]);
+
+// 从后端获取所有教程数据
+const fetchTutorials = () => {
+  api.get(API_CONFIG.tutorial.list)
+    .then(response => {
+      if (response.data) {
+        tutorials.value = response.data;
+      }
+    })
+    .catch(error => {
+      console.error('加载教程列表失败:', error);
+      // 失败时使用模拟数据作为备份
+      tutorials.value = [
+        { id: 1, title: '青木瓜沙拉制作教程', type: 'video', duration: '5:30', views: '12.5k' },
+        { id: 2, title: '夏日低卡饮食指南', type: 'article', duration: '8分钟', views: '8.2k' },
+        { id: 3, title: '健康早餐搭配技巧', type: 'video', duration: '3:45', views: '9.7k' },
+        { id: 4, title: '减脂餐制作基础', type: 'article', duration: '12分钟', views: '15.8k' },
+        { id: 5, title: '果汁制作小技巧', type: 'video', duration: '4:15', views: '7.3k' },
+        { id: 6, title: '均衡饮食营养知识', type: 'article', duration: '15分钟', views: '21.2k' }
+      ];
+    });
+};
+
+// 页面加载时获取教程数据
+onMounted(() => {
+  fetchTutorials();
+});
 </script>
 
 <template>

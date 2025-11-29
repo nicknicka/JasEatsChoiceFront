@@ -1,52 +1,18 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import axios from 'axios';
+
+// 引入API配置
+import { API_CONFIG } from '../../config/index.js';
 
 const router = useRouter();
 
-// 商家列表数据
-const merchants = ref([
-  {
-    id: 1,
-    name: '健康轻食馆',
-    type: '轻食',
-    rating: 4.8,
-    distance: '1.2km',
-    status: '营业中',
-    tags: ['低卡', '新鲜', '快捷'],
-    image: '🥗'
-  },
-  {
-    id: 2,
-    name: '营养早餐店',
-    type: '早餐',
-    rating: 4.6,
-    distance: '2.5km',
-    status: '营业中',
-    tags: ['营养', '多样', '准时'],
-    image: '🥪'
-  },
-  {
-    id: 3,
-    name: '美食天地',
-    type: '中餐',
-    rating: 4.9,
-    distance: '3.8km',
-    status: '营业中',
-    tags: ['传统', '美味', '实惠'],
-    image: '🍚'
-  },
-  {
-    id: 4,
-    name: '健身餐厅',
-    type: '健身餐',
-    rating: 4.7,
-    distance: '500m',
-    status: '营业中',
-    tags: ['高蛋白', '增肌', '减脂'],
-    image: '🏋️‍♂️'
-  }
-]);
+// 商家列表数据 - 初始化为空数组
+const merchants = ref([]);
+
+// 加载状态
+const isLoading = ref(false);
 
 // 筛选条件
 const filters = ref({
@@ -60,13 +26,53 @@ const searchKeyword = ref('');
 // 获取当前路由
 const route = useRoute();
 
-// 页面加载时从URL获取搜索参数
+// 页面加载时从URL获取搜索参数并加载商家数据
 onMounted(() => {
   const searchQuery = route.query.search;
   if (searchQuery) {
     searchKeyword.value = searchQuery;
   }
+
+  // 加载商家列表数据
+  loadMerchants();
 });
+
+// 从后端加载商家列表
+const loadMerchants = () => {
+  isLoading.value = true;
+
+  // 调用后端API获取商家列表
+  axios.get(API_CONFIG.baseURL + API_CONFIG.merchant.list)
+    .then(response => {
+      // 假设后端返回的数据结构与前端期望的一致
+      // 如果结构不同，需要在这里进行转换
+      if (response.data.data) {
+        merchants.value = response.data.data;
+      } else {
+        // 处理空数据情况
+        merchants.value = [];
+      }
+    })
+    .catch(error => {
+      console.error('加载商家列表失败:', error);
+      // 失败时使用模拟数据作为备份
+      merchants.value = [
+        {
+          id: 1,
+          name: '健康轻食馆',
+          type: '轻食',
+          rating: 4.8,
+          distance: '1.2km',
+          status: '营业中',
+          tags: ['低卡', '新鲜', '快捷'],
+          image: '🥗'
+        }
+      ];
+    })
+    .finally(() => {
+      isLoading.value = false;
+    });
+};
 
 // 跳转到商家详情页面
 const viewMerchantDetails = (merchant) => {

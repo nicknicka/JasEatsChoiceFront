@@ -1,11 +1,16 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 // Import Element Plus icons
-import { Sunny, Location, VideoCamera } from '@element-plus/icons-vue';
+import { Sunny, Location, VideoCamera, ArrowRight } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
+import api from '../../utils/api.js';
+import { API_CONFIG } from '../../config/index.js';
 // import CommonHome from '../../components/CommonHome.vue'; // 不再需要，因为Home.vue已经包含了CommonHome
 
 const router = useRouter();
+
+// 教程数据 - 从后端获取
+const featuredTutorials = ref([]);
 
 // Mock data for today's recommended dishes
 const recommendedDishes = ref([
@@ -125,8 +130,28 @@ if (!listenersRegistered && window.api) {
   }
 }
 
+// 从后端获取精选教程数据
+const fetchFeaturedTutorials = () => {
+  api.get(API_CONFIG.tutorial.featured)
+    .then(response => {
+      if (response.data) {
+        featuredTutorials.value = response.data;
+      }
+    })
+    .catch(error => {
+      console.error('加载精选教程失败:', error);
+      // 失败时使用模拟数据作为备份
+      featuredTutorials.value = [
+        { name: '青木瓜沙拉制作教程', type: 'video' },
+        { name: '夏日低卡饮食指南', type: 'article' }
+      ];
+    });
+};
+
 // Initialize WebSocket on mount
 onMounted(() => {
+  fetchFeaturedTutorials();
+
   if (window.api) {
     initializeWebSocket();
   }
@@ -189,13 +214,12 @@ onMounted(() => {
         <div class="tutorial-section">
           <h3>制作教程与指南</h3>
           <div class="tutorial-grid">
-            <el-card shadow="hover" class="tutorial-card">
-              <el-icon class="video-icon"><VideoCamera /></el-icon>
-              <span>青木瓜沙拉制作教程</span>
-            </el-card>
-            <el-card shadow="hover" class="tutorial-card">
-              <el-icon class="light-icon">💡</el-icon>
-              <span>夏日低卡饮食指南</span>
+            <el-card shadow="hover" class="tutorial-card" v-for="(tutorial, index) in featuredTutorials" :key="index">
+              <el-icon :class="tutorial.type === 'video' ? 'video-icon' : 'light-icon'">
+                <VideoCamera v-if="tutorial.type === 'video'" />
+                <span v-else>💡</span>
+              </el-icon>
+              <span>{{ tutorial.name }}</span>
             </el-card>
           </div>
           <el-button type="primary" size="large" class="more-link" @click="navigateTo('/user/home/tutorials')">

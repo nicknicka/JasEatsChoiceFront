@@ -137,7 +137,7 @@ const resetForm = () => {
 
 // 跳转到注册页面
 const toRegister = () => {
-  router.push('/user/register');
+  router.push('/register');
 };
 
 // 微信扫码登录

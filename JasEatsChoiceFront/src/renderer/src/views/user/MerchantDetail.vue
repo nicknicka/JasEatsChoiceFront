@@ -476,6 +476,10 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import axios from 'axios';
+
+// 引入API配置
+import { API_CONFIG } from '../../config/index.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -704,7 +708,12 @@ const menuItems = ref([
 onMounted(() => {
   const savedMerchant = sessionStorage.getItem('selectedMerchant');
   if (savedMerchant) {
-    merchant.value = JSON.parse(savedMerchant);
+    // 从会话存储获取商家基本信息
+    const baseMerchantInfo = JSON.parse(savedMerchant);
+    merchant.value = { ...baseMerchantInfo };
+
+    // 从后端获取完整的商家详情和菜品信息
+    loadMerchantDetails(baseMerchantInfo.id);
 
     // 加载当前商家的独立购物车
     if (!cartItemsByMerchant.value[merchant.value.id]) {
@@ -713,7 +722,7 @@ onMounted(() => {
     cartItems.value = cartItemsByMerchant.value[merchant.value.id];
   } else {
     // 如果没有商家信息，返回商家列表
-    // router.push('/user/home/merchants');
+    router.push('/user/home/merchants');
     return;
   }
 
@@ -739,12 +748,60 @@ onMounted(() => {
       cartItems.value = cartItemsByMerchant.value[merchant.value.id];
       // 更新购物车统计信息
       updateCartStats();
-
-      // 清除sessionStorage中的pendingOrder
-      // sessionStorage.removeItem('pendingOrder');
     }
   }
 });
+
+// 从后端加载完整的商家详情和菜品信息
+const loadMerchantDetails = (merchantId) => {
+  axios.get(API_CONFIG.baseURL + API_CONFIG.merchant.detail, {
+    params: { merchantId }
+  })
+    .then(response => {
+      // 假设后端返回的数据结构如下：
+      // {
+      //   data: {
+      //     merchant: { ...完整的商家信息... },
+      //     menuItems: [ ...菜品列表... ]
+      //   }
+      // }
+
+      if (response.data && response.data.merchant) {
+        // 更新商家信息
+        merchant.value = {
+          ...merchant.value,
+          ...response.data.merchant
+        };
+
+        // 更新菜单信息
+        if (response.data.menuItems) {
+          // 为菜单项目添加必要的属性
+          menuItems.value = response.data.menuItems.map(item => ({
+            ...item,
+            quantity: 1, // 默认数量为1
+            optionalIngredients: item.optionalIngredients || [], // 确保可选食材数组存在
+            selectedOptionalIngredients: [], // 初始化选中的可选食材
+            note: '', // 添加备注字段
+            tempNote: '', // 添加临时备注字段
+            isEditingNote: false // 添加编辑状态字段
+          }));
+
+          // 确保可选食材有selected属性
+          menuItems.value.forEach(item => {
+            item.optionalIngredients.forEach(ingredient => {
+              ingredient.selected = ingredient.selected || false;
+            });
+          });
+        }
+      }
+    })
+    .catch(error => {
+      console.error('加载商家详情和菜单失败:', error);
+      // 失败时使用模拟数据作为备份
+      ElMessage.warning('加载商家详情失败，将使用模拟数据');
+      // 保持原来的模拟数据
+    });
+};
 
 // 切换收藏状态
 const toggleFavorite = () => {

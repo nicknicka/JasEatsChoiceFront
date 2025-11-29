@@ -2,6 +2,7 @@ package com.xx.jaseatschoicejava.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -35,14 +36,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // Configure CORS
+            .cors()
+            .and()
             // Disable CSRF protection for API endpoints
             .csrf().disable()
-            // Require authentication for all requests
+            // Allow all requests without authentication
             .authorizeRequests()
-            .anyRequest().authenticated()
-            // Use Basic Authentication
-            .and()
-            .httpBasic();
+            .anyRequest().permitAll();
 
         return http.build();
     }

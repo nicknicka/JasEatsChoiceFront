@@ -152,7 +152,7 @@ const submitForm = () => {
         ElMessage.success('注册成功！');
         // 注册成功后跳转到登录页面
         setTimeout(() => {
-          router.push('/user/login');
+          router.push('/login');
         }, 1500);
       } else {
         ElMessage.error('表单验证失败，请检查输入');
@@ -170,7 +170,7 @@ const resetForm = () => {
 
 // 跳转到登录页面
 const toLogin = () => {
-  router.push('/user/login');
+  router.push('/login');
 };
 
 // 微信扫码登录

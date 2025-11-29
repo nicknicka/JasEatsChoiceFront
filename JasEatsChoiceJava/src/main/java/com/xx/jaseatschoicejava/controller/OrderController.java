@@ -13,7 +13,7 @@ import java.util.List;
  * 订单控制器
  */
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/api/v1/orders")
 public class OrderController {
 
     @Autowired

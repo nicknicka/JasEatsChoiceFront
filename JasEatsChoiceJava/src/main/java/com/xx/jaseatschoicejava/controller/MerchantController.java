@@ -13,7 +13,7 @@ import java.util.List;
  * 商家控制器
  */
 @RestController
-@RequestMapping("/merchants")
+@RequestMapping("/api/v1/merchant")
 public class MerchantController {
 
     @Autowired

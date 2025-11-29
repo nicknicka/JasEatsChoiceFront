@@ -1,48 +1,68 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { API_CONFIG } from '../../config';
+import { ElMessage } from 'element-plus';
 
 const router = useRouter();
 
 // 用户订单数据
-const orders = ref([
-  {
-    id: 1,
-    orderNo: 'JD20231123001',
-    status: 'delivered',
-    merchant: '健康轻食馆',
-    total: 28.8,
-    time: '2023-11-23 12:30',
-    items: ['健康轻食套餐', '矿泉水']
-  },
-  {
-    id: 2,
-    orderNo: 'JD20231123002',
-    status: 'processing',
-    merchant: '营养早餐店',
-    total: 15.5,
-    time: '2023-11-23 10:15',
-    items: ['营养早餐组合']
-  },
-  {
-    id: 3,
-    orderNo: 'JD20231122001',
-    status: 'completed',
-    merchant: '美食天地',
-    total: 42.0,
-    time: '2023-11-22 18:45',
-    items: ['宫保鸡丁', '麻婆豆腐', '米饭']
-  },
-  {
-    id: 4,
-    orderNo: 'JD20231121001',
-    status: 'cancelled',
-    merchant: '健身餐厅',
-    total: 35.0,
-    time: '2023-11-21 19:30',
-    items: ['健身餐套餐']
-  }
-]);
+const orders = ref([]);
+
+// 加载用户订单数据
+const loadOrders = () => {
+  const userId = 1; // 临时使用固定用户ID
+  axios.get(API_CONFIG.baseURL + API_CONFIG.order.list + userId)
+    .then(response => {
+      if (response.data.data) {
+        orders.value = response.data.data;
+      }
+    })
+    .catch(error => {
+      console.error('加载订单失败:', error);
+      // 使用默认数据作为 fallback
+      orders.value = [
+        {
+          id: 1,
+          orderNo: 'JD20231123001',
+          status: 'delivered',
+          merchant: '健康轻食馆',
+          total: 28.8,
+          time: '2023-11-23 12:30',
+          items: ['健康轻食套餐', '矿泉水']
+        },
+        {
+          id: 2,
+          orderNo: 'JD20231123002',
+          status: 'processing',
+          merchant: '营养早餐店',
+          total: 15.5,
+          time: '2023-11-23 10:15',
+          items: ['营养早餐组合']
+        },
+        {
+          id: 3,
+          orderNo: 'JD20231122001',
+          status: 'completed',
+          merchant: '美食天地',
+          total: 42.0,
+          time: '2023-11-22 18:45',
+          items: ['宫保鸡丁', '麻婆豆腐', '米饭']
+        },
+        {
+          id: 4,
+          orderNo: 'JD20231121001',
+          status: 'cancelled',
+          merchant: '健身餐厅',
+          total: 35.0,
+          time: '2023-11-21 19:30',
+          items: ['健身餐套餐']
+        }
+      ];
+      ElMessage.error('加载订单失败，将显示默认数据');
+    });
+};
 
 // 订单状态筛选
 const activeStatus = ref('all');
@@ -55,6 +75,11 @@ const orderStatusMap = {
   'completed': '已完成',
   'cancelled': '已取消'
 };
+
+// 组件挂载时加载数据
+onMounted(() => {
+  loadOrders();
+});
 
 // 筛选后的订单
 const filteredOrders = computed(() => {

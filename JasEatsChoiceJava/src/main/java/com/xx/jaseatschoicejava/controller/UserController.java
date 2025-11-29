@@ -6,11 +6,15 @@ import com.xx.jaseatschoicejava.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 用户控制器
  */
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     @Autowired
@@ -50,5 +54,31 @@ public class UserController {
             return ResponseResult.success(user);
         }
         return ResponseResult.fail("404", "用户不存在");
+    }
+
+    /**
+     * 获取用户偏好设置
+     */
+    @GetMapping("/{userId}/preferences")
+    public ResponseResult<?> getPreferences(@PathVariable Long userId) {
+        // TODO: Implement preference retrieval from the database
+        // For now, return mock data
+        Map<String, Object> preferences = new HashMap<>();
+        preferences.put("dietaryRestrictions", "无");
+        preferences.put("calorieTarget", 2000);
+        preferences.put("preferredCuisine", "中式");
+        preferences.put("allergies", new ArrayList<>());
+
+        return ResponseResult.success(preferences);
+    }
+
+    /**
+     * 更新用户偏好设置
+     */
+    @PutMapping("/{userId}/preferences")
+    public ResponseResult<?> updatePreferences(@PathVariable Long userId, @RequestBody Map<String, Object> preferences) {
+        // TODO: Implement preference update in the database
+        // For now, return success
+        return ResponseResult.success("用户偏好设置已更新");
     }
 }
