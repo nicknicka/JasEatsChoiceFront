@@ -44,6 +44,8 @@
               v-model="merchant.rating"
               :disabled="true"
               show-text
+              :max="5"
+              :precision="1"
             />
           </div>
           <div class="merchant-location">
@@ -81,11 +83,16 @@
 
       <!-- 菜单展示区 -->
       <div class="menu-display-area">
+        <!-- 当前菜单名称 (仅在非用户评价标签时显示) -->
+        <div v-if="activeMenuTab !== 'comments'" class="current-menu-name">
+          <h2 class="menu-name-title">{{ currentMenuName }}</h2>
+        </div>
+
         <!-- 招牌菜 -->
-        <div v-if="activeMenuTab === 'weekday'" class="dish-category-section">
+        <div v-if="activeMenuTab !== 'comments' && menuItems.some(item => item.menuId === activeMenuTab && item.category === 'signature')" class="dish-category-section">
           <h3 class="category-title">🔥 招牌菜</h3>
           <div class="dish-grid">
-            <div class="dish-card" v-for="item in menuItems.filter(item => item.category === 'signature')" :key="item.id">
+            <div class="dish-card" v-for="item in menuItems.filter(item => item.menuId === activeMenuTab && item.category === 'signature')" :key="item.id">
               <div class="dish-image">{{ item.image || '🍱' }}</div>
               <div class="dish-name">{{ item.name }}</div>
               <div class="dish-price">¥{{ calculateRealTimePrice(item).toFixed(2) }}</div>
@@ -139,10 +146,10 @@
         </div>
 
         <!-- 主食 -->
-        <div v-if="activeMenuTab === 'weekday'" class="dish-category-section">
+        <div v-if="activeMenuTab !== 'comments' && menuItems.some(item => item.menuId === activeMenuTab && item.category === 'staple')" class="dish-category-section">
           <h3 class="category-title">🍚 主食</h3>
           <div class="dish-grid">
-            <div class="dish-card" v-for="item in menuItems.filter(item => item.category === 'staple')" :key="item.id">
+            <div class="dish-card" v-for="item in menuItems.filter(item => item.menuId === activeMenuTab && item.category === 'staple')" :key="item.id">
               <div class="dish-image">🍚</div>
               <div class="dish-name">{{ item.name }}</div>
               <div class="dish-price">¥{{ calculateRealTimePrice(item).toFixed(2) }}</div>
@@ -195,10 +202,10 @@
         </div>
 
         <!-- 饮品 -->
-        <div v-if="activeMenuTab === 'weekday'" class="dish-category-section">
+        <div v-if="activeMenuTab !== 'comments' && menuItems.some(item => item.menuId === activeMenuTab && item.category === 'drink')" class="dish-category-section">
           <h3 class="category-title">🥤 饮品</h3>
           <div class="dish-grid">
-            <div class="dish-card" v-for="item in menuItems.filter(item => item.category === 'drink')" :key="item.id">
+            <div class="dish-card" v-for="item in menuItems.filter(item => item.menuId === activeMenuTab && item.category === 'drink')" :key="item.id">
               <div class="dish-image">🥤</div>
               <div class="dish-name">{{ item.name }}</div>
               <div class="dish-price">¥{{ calculateRealTimePrice(item).toFixed(2) }}</div>
@@ -250,45 +257,15 @@
           </div>
         </div>
 
-        <!-- 周末菜单 -->
-        <div v-else-if="activeMenuTab === 'weekend'" class="dish-category-section">
-          <h3 class="category-title">🎉 周末特色</h3>
-          <div class="dish-grid">
-            <div class="dish-card" v-for="(item, index) in ['周末家庭套餐', '烧烤组合', '甜品拼盘']" :key="index">
-              <div class="dish-image">🍗</div>
-              <div class="dish-name">{{ item }}</div>
-              <div class="dish-price">¥{{ (index + 1) * 50 }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 下午茶菜单 -->
-        <div v-else-if="activeMenuTab === 'afternoon'" class="dish-category-section">
-          <h3 class="category-title">☕ 下午茶</h3>
-          <div class="dish-grid">
-            <div class="dish-card" v-for="(item, index) in ['咖啡+蛋糕', '奶茶+蛋挞', '水果沙拉']" :key="index">
-              <div class="dish-image">☕</div>
-              <div class="dish-name">{{ item }}</div>
-              <div class="dish-price">¥{{ (index + 1) * 25 }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 套餐菜单 -->
-        <div v-else-if="activeMenuTab === 'set'" class="dish-category-section">
-          <h3 class="category-title">🍱 套餐系列</h3>
-          <div class="dish-grid">
-            <div class="dish-card" v-for="(item, index) in ['商务套餐', '健身套餐', '学生套餐']" :key="index">
-              <div class="dish-image">🍱</div>
-              <div class="dish-name">{{ item }}</div>
-              <div class="dish-price">¥{{ (index + 1) * 35 }}</div>
-            </div>
-          </div>
-        </div>
-
         <!-- 用户评价 -->
         <div v-else-if="activeMenuTab === 'comments'" class="comments-section">
           <h3 class="category-title">⭐ 用户评价</h3>
+
+          <!-- 商家没有菜单的提示 -->
+          <div v-if="!hasMenus" class="no-menus-notice">
+            <p class="notice-text">当前商家还没有上架菜单</p>
+          </div>
+
           <div class="comments-list">
             <div class="comment-card" v-for="comment in comments" :key="comment.id">
               <div class="comment-header">
@@ -345,7 +322,7 @@
 
       <!-- 立即下单快捷操作区（仅在order模式下显示） -->
       <div
-        v-if="viewMode === 'order'"
+        v-if="viewMode === 'order' && hasMenus"
         class="quick-order-section"
       >
         <el-button type="primary" size="large" class="quick-order-button" @click="goToOrderConfirmation">
@@ -473,7 +450,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
@@ -489,7 +466,7 @@ const merchant = ref({
   id: 0,
   name: '',
   type: '',
-  rating: 0,
+  rating: 4.5, // Default to 4.5 for mock data
   distance: '',
   status: '',
   tags: [],
@@ -524,16 +501,21 @@ const submitOrder = () => {
   router.push({ path: '/user/home/order-confirmation' });
 };
 // 菜单类型标签
-const activeMenuTab = ref('weekday'); // 默认显示工作日菜单
+const activeMenuTab = ref('comments'); // 默认显示用户评价
 
-// 菜单类型数据 (匹配设计文件)
-const menuTabs = [
-  { value: 'weekday', label: '工作日菜单' },
-  { value: 'weekend', label: '周末菜单' },
-  { value: 'afternoon', label: '下午茶菜单' },
-  { value: 'set', label: '套餐菜单' },
+// 菜单类型数据
+const menuTabs = ref([
   { value: 'comments', label: '用户评价' }
-];
+]);
+
+// 标记商家是否有菜单
+const hasMenus = ref(false);
+
+// 计算当前选中的菜单名称
+const currentMenuName = computed(() => {
+  const activeTab = menuTabs.value.find(tab => tab.value === activeMenuTab.value);
+  return activeTab ? activeTab.label : '';
+});
 
 // 评价数据
 const comments = ref([
@@ -774,17 +756,28 @@ const loadMerchantDetails = (merchantId) => {
         };
 
         // 更新菜单信息
-        if (response.data.menuItems) {
+        if (response.data.menus && response.data.menus.length > 0) {
           // 为菜单项目添加必要的属性
-          menuItems.value = response.data.menuItems.map(item => ({
-            ...item,
-            quantity: 1, // 默认数量为1
-            optionalIngredients: item.optionalIngredients || [], // 确保可选食材数组存在
-            selectedOptionalIngredients: [], // 初始化选中的可选食材
-            note: '', // 添加备注字段
-            tempNote: '', // 添加临时备注字段
-            isEditingNote: false // 添加编辑状态字段
-          }));
+          const allMenuItems = [];
+
+          // 遍历所有菜单
+          response.data.menus.forEach(menu => {
+            menu.dishes.forEach(dish => {
+              allMenuItems.push({
+                ...dish,
+                menuId: menu.menuId, // 保存菜单ID
+                menuName: menu.menuName, // 保存菜单名称
+                quantity: 1, // 默认数量为1
+                optionalIngredients: dish.optionalIngredients || [], // 确保可选食材数组存在
+                selectedOptionalIngredients: [], // 初始化选中的可选食材
+                note: '', // 添加备注字段
+                tempNote: '', // 添加临时备注字段
+                isEditingNote: false // 添加编辑状态字段
+              });
+            });
+          });
+
+          menuItems.value = allMenuItems;
 
           // 确保可选食材有selected属性
           menuItems.value.forEach(item => {
@@ -792,6 +785,26 @@ const loadMerchantDetails = (merchantId) => {
               ingredient.selected = ingredient.selected || false;
             });
           });
+
+          // 根据后端返回的菜单生成标签
+          menuTabs.value = response.data.menus.map(menu => ({
+            value: menu.menuId,
+            label: menu.menuName
+          }));
+
+          // 添加用户评价标签
+          menuTabs.value.push({ value: 'comments', label: '用户评价' });
+
+          // 默认激活第一个菜单
+          activeMenuTab.value = response.data.menus[0].menuId;
+
+          hasMenus.value = true;
+        } else {
+          // 商家没有菜单
+          menuItems.value = [];
+          menuTabs.value = [{ value: 'comments', label: '用户评价' }];
+          activeMenuTab.value = 'comments';
+          hasMenus.value = false;
         }
       }
     })
@@ -799,7 +812,8 @@ const loadMerchantDetails = (merchantId) => {
       console.error('加载商家详情和菜单失败:', error);
       // 失败时使用模拟数据作为备份
       ElMessage.warning('加载商家详情失败，将使用模拟数据');
-      // 保持原来的模拟数据
+      // 设置hasMenus为true，因为模拟数据有菜单
+      hasMenus.value = true;
     });
 };
 
@@ -1202,6 +1216,33 @@ const goToOrderConfirmation = () => {
     .menu-display-area {
       padding: 24px;
       background-color: #ffffff;
+
+      // 当前菜单名称
+      .current-menu-name {
+        margin-bottom: 24px;
+
+        .menu-name-title {
+          font-size: 24px;
+          font-weight: bold;
+          color: #333;
+          padding-bottom: 12px;
+          border-bottom: 2px solid #e8e8e8;
+        }
+      }
+
+      // 没有菜单的提示
+      .no-menus-notice {
+        margin: 24px 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        text-align: center;
+
+        .notice-text {
+          color: #999;
+          font-size: 16px;
+        }
+      }
 
       // 菜品分类
       .dish-category-section {

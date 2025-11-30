@@ -24,19 +24,17 @@ const navigateTo = (path) => {
 };
 
 // 模拟用户信息
-const userInfo = ref({ name: "佳食用户", avatar: "👤" });
+const userInfo = ref({ name: "用户端", avatar: "👤", realAvatar: "https://picsum.photos/id/1005/150/150" });
 
 // 用户角色
 const userRole = ref("user"); // 'user' 或 'merchant'
 
 // 预定义菜单数据
 const menuData = {
-	// 用户端菜单
+	// 用户端菜单 - 按功能模块重新排序：首页 → 饮食服务 → 推荐/查找 → 个人中心 → 消息交流 → 设置
 	user: [
-		{ index: "1", name: "用户首页", icon: HomeFilled, path: "/user/home" },
-		{ index: "2", name: "我的推荐", icon: Menu, path: "/user/home/recommend" },
-		{ index: "3", name: "商家查找", icon: Shop, path: "/user/home/merchants" },
-		{ index: "4", name: "今日食谱", icon: Calendar, path: "/user/home/today-recipe" },
+		{ index: "1", name: "用户首页", icon: HomeFilled, path: "/user/home" }, // 首页入口
+		{ index: "4", name: "今日食谱", icon: Calendar, path: "/user/home/today-recipe" }, // 饮食服务模块
 		{
 			index: "5",
 			name: "卡路里统计",
@@ -44,16 +42,18 @@ const menuData = {
 			path: "/user/home/calorie",
 		},
 		{ index: "6", name: "我的食谱", icon: Document, path: "/user/home/my-recipe" },
-		{ index: "7", name: "用户中心", icon: User, path: "/user/home/profile" },
+		{ index: "2", name: "我的推荐", icon: Menu, path: "/user/home/recommend" }, // 推荐查找模块
+		{ index: "3", name: "商家查找", icon: Shop, path: "/user/home/merchants" },
+		{ index: "7", name: "用户中心", icon: User, path: "/user/home/profile" }, // 个人中心模块
 		{ index: "8", name: "查看订单", icon: List, path: "/user/home/orders" },
 		{
 			index: "9",
 			name: "消息中心",
 			icon: Message,
 			path: "/user/home/message-center",
-		},
-		{ index: "10", name: "AI饮食助手", icon: ChatDotRound, path: "/user/home/ai" },
+		}, // 消息交流模块
 		{ index: "11", name: "聊天消息", icon: ChatDotRound, path: "/user/home/chat" },
+		{ index: "10", name: "AI饮食助手", icon: ChatDotRound, path: "/user/home/ai" },
 		{
 			index: "12",
 			name: "设置",
@@ -63,10 +63,11 @@ const menuData = {
 		},
 	],
 	// 商家端菜单
+	// 商家端菜单 - 按功能模块重新排序：首页 → 核心业务 → 店铺管理 → 客户沟通 → 经营分析
 	merchant: [
-		{ index: "1", name: "商家首页", icon: HomeFilled, path: "/merchant/home" },
-		{ index: "2", name: "今日订单", icon: List, path: "/merchant/home/today-orders" }, // 修改为正确的路由路径
-		{ index: "3", name: "菜单管理", icon: Shop, path: "/merchant/home/menu" }, // 修改为正确的路由路径
+		{ index: "1", name: "商家首页", icon: HomeFilled, path: "/merchant/home" }, // 首页入口
+		{ index: "2", name: "今日订单", icon: List, path: "/merchant/home/today-orders" }, // 核心业务模块
+		{ index: "3", name: "菜单管理", icon: Shop, path: "/merchant/home/menu" }, // 店铺管理模块
 		{
 			index: "4",
 			name: "菜品管理",
@@ -74,20 +75,20 @@ const menuData = {
 			path: "/merchant/home/dish-management",
 		},
 		{ index: "5", name: "我的店铺", icon: Shop, path: "/merchant/home/my-shop" },
-		{ index: "6", name: "商家聊天", icon: ChatDotRound, path: "/merchant/home/chat" },
+		{ index: "6", name: "商家聊天", icon: ChatDotRound, path: "/merchant/home/chat" }, // 客户沟通模块
+		{ index: "9", name: "消息管理", icon: Message, path: "/merchant/home/messages" },
 		{
 			index: "7",
 			name: "评价中心",
 			icon: DataAnalysis,
 			path: "/merchant/home/comments",
-		}, // 添加评价中心菜单
+		},
 		{
 			index: "8",
 			name: "经营统计",
 			icon: DataAnalysis,
 			path: "/merchant/home/statistics",
-		},
-		{ index: "9", name: "消息管理", icon: Message, path: "/merchant/home/messages" }, // 修改为正确的路由路径
+		}, // 经营分析模块
 	],
 };
 
@@ -104,6 +105,13 @@ const currentMenu = computed(() => {
 const updateActiveMenuIndex = () => {
 	const currentPath = router.currentRoute.value.path;
 	console.log("当前路由:", currentPath);
+
+	// 特殊处理商家详情页 - 激活商家查找菜单
+	if (currentPath.startsWith("/user/home/merchant-detail")) {
+		activeMenuIndex.value = "3"; // "商家查找"的索引是3
+		console.log("匹配到商家详情页，激活商家查找菜单");
+		return;
+	}
 
 	// 查找当前路由对应的菜单项 - 按路径长度降序排序，确保更长的路径优先匹配
 	const sortedMenuItems = [...currentMenu.value].sort((a, b) => b.path.length - a.path.length);
@@ -147,10 +155,10 @@ const toggleRole = () => {
 
 		// 更新用户信息和跳转
 		if (userRole.value === "user") {
-			userInfo.value = { name: "用户端", avatar: "👤" };
+			userInfo.value = { name: "用户端", avatar: "👤", realAvatar: "https://picsum.photos/id/1005/150/150" };
 			navigateTo("/user/home");
 		} else {
-			userInfo.value = { name: "商户端", avatar: "🏪" };
+			userInfo.value = { name: "商户端", avatar: "🏪", realAvatar: "https://picsum.photos/id/200/150/150" };
 			navigateTo("/merchant/home");
 		}
 
@@ -185,9 +193,9 @@ onMounted(() => {
 
 		// Update user info
 		if (userRole.value === "merchant") {
-			userInfo.value = { name: "商户端", avatar: "🏪" };
+			userInfo.value = { name: "商户端", avatar: "🏪", realAvatar: "https://picsum.photos/id/200/150/150" };
 		} else if (userRole.value === "user") {
-			userInfo.value = { name: "用户端", avatar: "👤" };
+			userInfo.value = { name: "用户端", avatar: "👤", realAvatar: "https://picsum.photos/id/1005/150/150" };
 		}
 
 		// Save the final role to localStorage
@@ -234,9 +242,9 @@ watch(
 
 			// Update user info
 			if (userRole.value === "merchant") {
-				userInfo.value = { name: "商户端", avatar: "🏪" };
+				userInfo.value = { name: "商户端", avatar: "🏪", realAvatar: "https://picsum.photos/id/200/150/150" };
 			} else if (userRole.value === "user") {
-				userInfo.value = { name: "用户端", avatar: "👤" };
+				userInfo.value = { name: "用户端", avatar: "👤", realAvatar: "https://picsum.photos/id/1005/150/150" };
 			}
 
 			// Save the new role to localStorage
@@ -285,7 +293,7 @@ const handleSearch = (value) => {
 	<div class="app-container">
 		<!-- 顶部导航栏 -->
 		<el-header class="top-nav-bar">
-			<div class="logo" @click="navigateTo('/user/home')">🎨 佳食宜选</div>
+			<div class="logo" @click="() => navigateTo(userRole === 'merchant' ? '/merchant/home' : '/user/home')">🎨 佳食宜选</div>
 			<el-input
 				v-model="searchQuery"
 				placeholder="🔍 搜索框(支持菜品/商家搜索)"
@@ -322,9 +330,9 @@ const handleSearch = (value) => {
 			<!-- 左侧菜单栏 -->
 			<el-aside width="168px" class="sidebar-menu">
 				<div class="avatar-section" @click="handleAvatarClick">
-					<el-avatar :size="80" class="user-avatar" style="cursor: pointer">{{
-						userRole === "merchant" ? "🏪" : "👤"
-					}}</el-avatar>
+					<el-avatar :size="80" class="user-avatar" style="cursor: pointer" :src="userInfo.realAvatar">
+						{{ userRole === "merchant" ? "🏪" : "👤" }}
+					</el-avatar>
 					<div class="username">{{ userInfo.name }}</div>
 				</div>
 
@@ -352,7 +360,7 @@ const handleSearch = (value) => {
 		<!-- 头像放大对话框 -->
 		<el-dialog v-model="showLargeAvatar" title="个人头像" width="300px" top="20%">
 			<div style="text-align: center; padding: 20px 0">
-				<el-avatar :size="200" class="user-avatar">
+				<el-avatar :size="200" class="user-avatar" :src="userInfo.realAvatar">
 					{{ userRole === "merchant" ? "🏪" : "👤" }}
 				</el-avatar>
 			</div>

@@ -59,6 +59,11 @@
             <div class="last-message">{{ conversation.lastMessage || '暂无消息' }}</div>
           </div>
         </div>
+
+        <!-- 会话列表空数据提示 -->
+        <div v-if="conversations.length === 0" class="empty-conversations">
+          <el-empty description="暂无会话"></el-empty>
+        </div>
       </div>
 
       <!-- 会话右键菜单 -->
@@ -232,6 +237,11 @@
           </div>
         </div>
 
+        <!-- 聊天记录空数据提示 -->
+        <div v-if="chatMessages.length === 0" class="empty-chat">
+          <el-empty description="暂无聊天记录"></el-empty>
+        </div>
+
         <!-- 消息输入框 -->
         <div class="message-input-container">
           <el-input
@@ -302,7 +312,8 @@
           v-for="friend in searchResults"
           :key="friend.id"
           class="friend-item"
-          @click="selectFriendForChat(friend)"
+          :class="{ 'disabled': conversations.value.some(conv => conv.id === friend.id && conv.type === 'friend' || conv.type === 'private') }"
+          @click="!conversations.value.some(conv => conv.id === friend.id && conv.type === 'friend' || conv.type === 'private') && selectFriendForChat(friend)"
         >
           <div class="friend-avatar">{{ friend.avatar }}</div>
           <div class="friend-info">
@@ -521,6 +532,8 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { ShoppingCart, Search } from '@element-plus/icons-vue';
+import api from '../../utils/api.js';
+import { decodeJwt } from '../../utils/api.js';
 
 const router = useRouter();
 
@@ -529,90 +542,11 @@ const contextMenuVisible = ref(false);
 const selectedContextConversation = ref(null);
 const contextMenuPosition = ref({ x: 0, y: 0 });
 
-// 模拟统一的聊天会话列表
-const conversations = ref([
-  // 商家单聊会话
-  {
-    id: 1,
-    type: 'merchant',
-    name: '佳食餐馆',
-    avatar: '🏪',
-    lastMessage: '您的订单已准备好，请前往取餐',
-    time: '2024-11-21 14:30',
-    unreadCount: 1,
-    merchantId: 101,
-    pinned: false
-  },
-  {
-    id: 2,
-    type: 'merchant',
-    name: '美味小吃店',
-    avatar: '🏪',
-    lastMessage: '您点的奶茶已完成',
-    time: '2024-11-21 14:15',
-    unreadCount: 0,
-    merchantId: 102,
-    pinned: true
-  },
-  // 系统消息
-  {
-    id: 3,
-    type: 'system',
-    name: '系统通知',
-    avatar: '📢',
-    lastMessage: '您的账户已成功充值',
-    time: '2024-11-21 10:00',
-    unreadCount: 0,
-    pinned: false
-  },
-  // 群聊会话
-  {
-    id: 4,
-    type: 'group',
-    name: '美食爱好者群',
-    avatar: '🍴',
-    lastMessage: '李四: 我要麻婆豆腐',
-    time: '10:33',
-    unreadCount: 0,
-    memberCount: 10,
-    pinned: false
-  },
-  {
-    id: 5,
-    type: 'group',
-    name: '同事午餐群',
-    avatar: '👨‍💼',
-    lastMessage: '小明: 今天中午吃什么？',
-    time: '09:15',
-    unreadCount: 2,
-    memberCount: 5,
-    pinned: false
-  }
-]);
+// 统一的聊天会话列表 - 从后端获取
+const conversations = ref([]);
 
-// 模拟聊天记录 - 根据不同会话存储不同的聊天记录
-const chatHistory = ref({
-  1: [ // 佳食餐馆的聊天记录
-    { id: 1, sender: 'user', content: '这个麻辣香锅饭太好吃了！', time: '2024-11-21 14:30', isRead: false },
-    { id: 2, sender: 'merchant', content: '感谢您的好评！', time: '2024-11-21 14:31', isRead: true }
-  ],
-  2: [ // 美味小吃店的聊天记录
-    { id: 1, sender: 'merchant', content: '您点的奶茶已完成', time: '2024-11-21 14:15', isRead: true }
-  ],
-  3: [ // 系统通知的聊天记录
-    { id: 1, sender: 'system', content: '您的账户已成功充值', time: '2024-11-21 10:00', isRead: true }
-  ],
-  4: [ // 美食爱好者群的聊天记录
-    { id: 1, sender: '系统', content: '李四加入了群聊', time: '10:30' },
-    { id: 2, sender: '张三', content: '大家一起点个外卖吧！', time: '10:31' },
-    { id: 3, sender: '王五', content: '好啊，我要宫保鸡丁', time: '10:32' },
-    { id: 4, sender: '李四', content: '我要麻婆豆腐', time: '10:33' }
-  ],
-  5: [ // 同事午餐群的聊天记录
-    { id: 1, sender: '小明', content: '今天中午吃什么？', time: '09:15' },
-    { id: 2, sender: '小红', content: '我要一份红烧肉盖饭', time: '09:16' }
-  ]
-});
+// 聊天记录 - 根据不同会话存储不同的聊天记录
+const chatHistory = ref({});
 
 // 当前显示的聊天记录
 const chatMessages = ref([]);
@@ -994,51 +928,79 @@ const sortedConversations = computed(() => {
 
 
 // 页面加载
-onMounted(() => {
-  // 默认选中第一个会话
-  if (sortedConversations.value.length > 0) {
-    selectedConversation.value = sortedConversations.value[0];
-    // 加载对应的聊天记录
-    chatMessages.value = chatHistory.value[selectedConversation.value.id] || [];
+onMounted(async () => {
+  // 从后端获取会话列表
+  const token = localStorage.getItem('token');
+  let userId = 1; // 默认值
 
-    // 检查是否有未完成的订单需要恢复
-    const pendingOrder = JSON.parse(sessionStorage.getItem('pendingOrder'));
-    if (pendingOrder && pendingOrder.fromChat && selectedConversation.value.type === 'group') {
-      // 检查是否是同一个群的订单
-      if (pendingOrder.groupName === selectedConversation.value.name) {
-        // 恢复群订单信息
-        groupOrders.value[selectedConversation.value.id] = {
-          orderId: pendingOrder.orderId,
-          groupId: selectedConversation.value.id,
-          groupName: pendingOrder.groupName,
-          creator: pendingOrder.creator,
-          members: pendingOrder.members,
-          orderItems: pendingOrder.cartItems,
-          totalAmount: pendingOrder.totalAmount,
-          status: 'active',
-          createTime: new Date().toISOString()
-        };
-        // 可以选择自动打开订单抽屉
-        // orderDrawerVisible.value = true;
-        ElMessage.info('已恢复未完成的订单');
-      }
+  if (token) {
+    const decodedToken = decodeJwt(token);
+    if (decodedToken && decodedToken.userId) {
+      userId = decodedToken.userId;
     }
   }
 
-  // 点击页面其他地方关闭右键菜单
-  const closeContextMenu = () => {
-    contextMenuVisible.value = false;
-    selectedContextConversation.value = null;
-  };
+  try {
+    // 假设获取会话列表的API路径为 /api/v1/users/{userId}/chat-sessions
+    const response = await api.get(`/api/v1/users/${userId}/chat-sessions`);
 
-  // 添加全局点击事件监听器
-  document.addEventListener('click', closeContextMenu);
+    if (response.data && response.data.success) {
+      conversations.value = response.data.data;
 
-  // 在组件卸载时移除事件监听器
-  onBeforeUnmount(() => {
-    document.removeEventListener('click', closeContextMenu);
-  });
+      // 默认选中第一个会话并加载聊天记录
+      if (sortedConversations.value.length > 0) {
+        selectedConversation.value = sortedConversations.value[0];
+        // 加载对应的聊天记录
+        await loadChatMessages(selectedConversation.value.id);
+      }
+    }
+  } catch (error) {
+    console.error('加载会话列表失败:', error);
+    ElMessage.error('加载会话列表失败，请稍后重试');
+  }
 });
+
+// 点击页面其他地方关闭右键菜单
+const closeContextMenu = () => {
+  contextMenuVisible.value = false;
+  selectedContextConversation.value = null;
+};
+
+// 添加全局点击事件监听器
+onMounted(() => {
+  document.addEventListener('click', closeContextMenu);
+});
+
+// 在组件卸载时移除事件监听器
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeContextMenu);
+});
+
+// 加载聊天记录的函数
+const loadChatMessages = async (sessionId) => {
+  // 如果聊天记录已经存在，直接使用
+  if (chatHistory.value[sessionId]) {
+    chatMessages.value = chatHistory.value[sessionId];
+    return;
+  }
+
+  // 从后端获取聊天记录
+  try {
+    // 假设获取聊天记录的API路径为 /api/v1/chat/{sessionId}/messages
+    const response = await api.get(`/api/v1/chat/${sessionId}/messages`);
+
+    if (response.data && response.data.success) {
+      const messages = response.data.data;
+      chatHistory.value[sessionId] = messages;
+      chatMessages.value = messages;
+    }
+  } catch (error) {
+    console.error('加载聊天记录失败:', error);
+    ElMessage.error('加载聊天记录失败，请稍后重试');
+    // 加载失败时使用空数据
+    chatMessages.value = [];
+  }
+};
 
 // 显示右键菜单
 const showContextMenu = (conversation, event) => {
@@ -1082,7 +1044,7 @@ const deleteConversation = (conversation) => {
 };
 
 // 选择会话
-const selectConversation = (conversation) => {
+const selectConversation = async (conversation) => {
   selectedConversation.value = conversation;
 
   // 切换会话时，重置商家和商品选择状态
@@ -1096,7 +1058,7 @@ const selectConversation = (conversation) => {
   }
 
   // 根据会话ID加载对应的聊天记录
-  chatMessages.value = chatHistory.value[conversation.id] || [];
+  await loadChatMessages(conversation.id);
 
   // 加载群订单信息（如果是群聊）
   if (conversation.type === 'group') {
@@ -1326,32 +1288,69 @@ const cancelCreateGroup = () => {
 };
 
 // 发送消息
-const sendMessage = () => {
+const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedConversation.value) {
     return;
   }
 
-  // 创建新消息
-  const message = {
-    id: Date.now(),
-    sender: '我',
+  // 创建新消息对象
+  const messageData = {
+    sessionId: selectedConversation.value.id,
     content: newMessage.value.trim(),
-    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    isRead: true
+    messageType: 'text', // 可以根据实际情况设置不同的消息类型，如图片、语音等
+    sender: '我' // 可以根据实际情况从登录信息中获取
   };
 
-  // 添加到聊天记录
-  chatMessages.value.push(message);
+  try {
+    // 发送消息到后端
+    const response = await api.post('/api/v1/chat/messages', messageData);
 
-  // 更新会话列表的最后一条消息
-  selectedConversation.value.lastMessage = message.content;
-  selectedConversation.value.time = message.time;
+    if (response.data && response.data.success) {
+      // 如果后端返回消息对象，使用后端返回的消息
+      const newMessage = response.data.data;
 
-  // 将消息保存到对应的聊天历史中
-  chatHistory.value[selectedConversation.value.id] = chatMessages.value;
+      // 添加到聊天记录
+      chatMessages.value.push(newMessage);
 
-  // 清空输入框
-  newMessage.value = '';
+      // 更新会话列表的最后一条消息
+      selectedConversation.value.lastMessage = newMessage.content;
+      selectedConversation.value.time = newMessage.time;
+
+      // 将消息保存到对应的聊天历史中
+      chatHistory.value[selectedConversation.value.id] = chatMessages.value;
+
+      // 清空输入框
+      newMessage.value = '';
+
+      ElMessage.success('消息发送成功');
+    }
+  } catch (error) {
+    console.error('发送消息失败:', error);
+    ElMessage.error('发送消息失败，请稍后重试');
+
+    // 如果发送失败，可以选择将消息添加到本地聊天记录中，并标记为发送失败
+    const failedMessage = {
+      id: Date.now(),
+      sender: '我',
+      content: newMessage.value.trim(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isRead: true,
+      status: 'failed' // 标记为发送失败
+    };
+
+    // 添加到聊天记录
+    chatMessages.value.push(failedMessage);
+
+    // 更新会话列表的最后一条消息
+    selectedConversation.value.lastMessage = failedMessage.content;
+    selectedConversation.value.time = failedMessage.time;
+
+    // 将消息保存到对应的聊天历史中
+    chatHistory.value[selectedConversation.value.id] = chatMessages.value;
+
+    // 清空输入框
+    newMessage.value = '';
+  }
 };
 
 // 创建群订单
@@ -2065,6 +2064,18 @@ const goToOrderConfirmation = () => {
       font-size: 48px;
       margin-bottom: 16px;
     }
+  }
+
+  /* 会话列表空数据提示 */
+  .empty-conversations {
+    text-align: center;
+    margin-top: 50px;
+  }
+
+  /* 聊天记录空数据提示 */
+  .empty-chat {
+    text-align: center;
+    margin-top: 50px;
   }
 
   /* 新建聊天和加好友对话框样式 */

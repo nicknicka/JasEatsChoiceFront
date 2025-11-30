@@ -101,22 +101,52 @@ const updateSalesData = () => {
   updateChartData();
 };
 
+// 从后端获取统计数据
+const fetchStatisticsData = () => {
+  const merchantId = 1; // 假设商家ID为1，可以根据实际情况从登录信息或路由参数中获取
+  api.get(`/api/v1/merchant/${merchantId}/statistics`, { params: { timeRange: activeTimeRange.value } })
+    .then(response => {
+      if (response.code === '200' && response.data) {
+        // 更新基本统计数据
+        currentBasicStats.value = response.data.basicStats;
+
+        // 更新订单趋势数据
+        if (response.data.orderTrend) {
+          currentOrderTrend.value = response.data.orderTrend;
+          // 更新图表数据
+          updateChartData();
+        }
+
+        // 更新菜品销量排行数据
+        if (response.data.dishSalesRank) {
+          dishSalesRank.value = response.data.dishSalesRank;
+        }
+      }
+    })
+    .catch(error => {
+      console.error('获取统计数据失败:', error);
+      // 如果获取失败，保留模拟数据
+      updateSalesData();
+    });
+};
+
 // 时间范围变化时调用的方法
 const changeTimeRange = (range) => {
   activeTimeRange.value = range;
+  fetchStatisticsData();
 };
 
 // 监听时间范围变化更新数据
-watch(() => activeTimeRange.value, updateSalesData);
+watch(() => activeTimeRange.value, fetchStatisticsData);
 
 // 页面加载时初始化数据
 onMounted(() => {
-  updateSalesData();
+  fetchStatisticsData();
   // 初始化图表容器宽度
   nextTick(() => {
     updateChartContainerWidth();
   });
-  
+
   // 监听窗口大小变化
   window.addEventListener('resize', updateChartContainerWidth);
 });

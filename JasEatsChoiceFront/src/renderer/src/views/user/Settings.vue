@@ -8,7 +8,7 @@
         <div class="form-row">
           <div class="form-label">头像</div>
           <div class="form-content">
-            <el-avatar :size="60" class="user-avatar" :src="avatarUrl">👤</el-avatar>
+            <el-avatar :size="60" class="user-avatar" :src="userInfo.avatarUrl">👤</el-avatar>
             <input
               type="file"
               accept="image/*"
@@ -23,7 +23,7 @@
         <div class="form-row">
           <div class="form-label">手机号</div>
           <div class="form-content">
-            <el-input placeholder="13800138000" readonly style="width: 200px;" />
+            <el-input v-model="userInfo.phone" readonly style="width: 200px;" />
             <el-button type="text" size="small" style="margin-left: 10px;" @click="handleEditPhone">修改</el-button>
           </div>
         </div>
@@ -31,7 +31,7 @@
         <div class="form-row">
           <div class="form-label">邮箱</div>
           <div class="form-content">
-            <el-input placeholder="user@example.com" readonly style="width: 200px;" />
+            <el-input v-model="userInfo.email" readonly style="width: 200px;" />
             <el-button type="text" size="small" style="margin-left: 10px;" @click="handleEditEmail">修改</el-button>
           </div>
         </div>
@@ -230,6 +230,15 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElDialog, ElInput, ElForm, ElFormItem } from 'element-plus';
+import api, { decodeJwt } from '../../utils/api.js';
+import { API_CONFIG } from '../../config/index.js';
+
+// User information
+const userInfo = ref({
+  phone: '',
+  email: '',
+  avatarUrl: ''
+});
 
 // Display settings
 const fontSize = ref('medium');
@@ -273,11 +282,40 @@ const passwordForm = ref({
 });
 
 // Avatar upload
-const avatarUrl = ref('');
 const avatarUploadInput = ref(null);
 
-// Load saved settings from localStorage on mount
+// Load saved settings from localStorage on mount and fetch user info from backend
 onMounted(() => {
+  // Fetch user information from backend
+  const fetchUserInfo = () => {
+    const token = localStorage.getItem('token');
+    let userId = 1; // 默认值
+
+    if (token) {
+      const decodedToken = decodeJwt(token);
+      if (decodedToken && decodedToken.userId) {
+        userId = decodedToken.userId;
+      }
+    }
+
+    // 调用后端API获取用户信息
+    api.get(API_CONFIG.user.profile.replace('{userId}', userId))
+      .then(response => {
+        if (response.data && response.data.success) {
+          userInfo.value = response.data.data;
+
+          // Load avatar from backend or use default
+          if (userInfo.value.avatar) {
+            userInfo.value.avatarUrl = userInfo.value.avatar;
+          }
+        }
+      })
+      .catch(error => {
+        console.error('加载用户信息失败:', error);
+      });
+  };
+
+  // Load saved settings
   const savedSettings = localStorage.getItem('userSettings');
   if (savedSettings) {
     const parsed = JSON.parse(savedSettings);
@@ -298,10 +336,13 @@ onMounted(() => {
     updateTheme();
   }
 
-  // Load avatar
+  // Fetch user info from backend
+  fetchUserInfo();
+
+  // Load avatar from localStorage as fallback
   const savedAvatar = localStorage.getItem('userAvatar');
   if (savedAvatar) {
-    avatarUrl.value = savedAvatar;
+    userInfo.value.avatarUrl = savedAvatar;
   }
 });
 
@@ -360,8 +401,8 @@ const handleAvatarUpload = (event) => {
   if (file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      avatarUrl.value = e.target.result;
-      localStorage.setItem('userAvatar', avatarUrl.value);
+      userInfo.value.avatarUrl = e.target.result;
+      localStorage.setItem('userAvatar', userInfo.value.avatarUrl);
       ElMessage.success('头像已更换');
     };
     reader.readAsDataURL(file);
@@ -437,12 +478,11 @@ const clearCache = () => {
 
 // Handle data export
 const exportData = () => {
-  // Create mock data to export
+  // Create data to export
   const userData = {
     profile: {
-      name: '张三',
-      phone: '138xxxx8888',
-      email: 'user@example.com'
+      phone: userInfo.value.phone || '未设置',
+      email: userInfo.value.email || '未设置',
     },
     settings: JSON.parse(localStorage.getItem('userSettings') || '{}'),
     exportDate: new Date().toISOString()

@@ -1,42 +1,55 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { ElMessageBox } from 'element-plus';
+import { ref, computed, onMounted } from 'vue';
+import { ElMessage } from 'element-plus';
+import api, { decodeJwt } from '../../utils/api.js';
+import { API_CONFIG } from '../../config/index.js';
 
 // 消息中心数据
-const messages = ref([
-  {
-    id: 1,
-    type: 'order',
-    title: '您的订单已送达',
-    content: '订单号：JD20231123001 已送达，请注意查收。',
-    time: '2023-11-23 12:30',
-    read: false
-  },
-  {
-    id: 2,
-    type: 'system',
-    title: '系统更新通知',
-    content: '佳食宜选系统已完成更新，新增多项功能，欢迎体验。',
-    time: '2023-11-22 18:00',
-    read: true
-  },
-  {
-    id: 3,
-    type: 'promotion',
-    title: '双11优惠活动',
-    content: '双11期间，所有订单享受8折优惠，快来下单吧！',
-    time: '2023-11-20 10:00',
-    read: true
-  },
-  {
-    id: 4,
-    type: 'order',
-    title: '您的订单已接单',
-    content: '商家已接单，正在为您准备美食。',
-    time: '2023-11-23 11:00',
-    read: false
+const messages = ref([]);
+
+// 页面加载时初始化
+onMounted(() => {
+  // 从JWT令牌中获取用户ID
+  const token = localStorage.getItem('token');
+  let userId = 1; // 默认值
+
+  if (token) {
+    const decodedToken = decodeJwt(token);
+    if (decodedToken && decodedToken.userId) {
+      userId = decodedToken.userId;
+    }
+  } else {
+    ElMessage.error('无法获取用户ID，请重新登录');
   }
-]);
+
+  // 从后端API加载消息数据
+  api.get(API_CONFIG.message.list, {
+    params: { userId }
+  })
+    .then(response => {
+      if (response.data && response.data.success) {
+        // 转换后端返回的数据格式以匹配前端期望的字段
+        const formattedMessages = response.data.data.map(message => ({
+          id: message.id,
+          // 后端返回的content作为前端的title和content
+          title: message.content,
+          content: message.content,
+          // 后端返回的createTime作为前端的time
+          time: message.createTime,
+          // 后端返回的readStatus作为前端的read
+          read: message.readStatus,
+          // 暂时默认所有消息类型为system，实际应用中应根据后端返回类型映射
+          type: message.type || 'system'
+        }));
+
+        messages.value = formattedMessages;
+      }
+    })
+    .catch(error => {
+      console.error('加载消息失败:', error);
+      ElMessage.error('加载消息失败，请稍后重试');
+    });
+});
 
 // 切换消息分类
 const activeTab = ref('all');

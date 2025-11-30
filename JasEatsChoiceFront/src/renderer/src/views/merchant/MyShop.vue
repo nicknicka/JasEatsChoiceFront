@@ -2,17 +2,20 @@
 import { ref, onMounted, computed } from 'vue';
 import { ElMessage, ElDialog, ElForm, ElFormItem, ElInput, ElUpload, ElMessageBox } from 'element-plus';
 import { Plus, Clock, Document, Coin, Phone } from '@element-plus/icons-vue';
+import axios from 'axios';
+import { API_CONFIG } from '../../config/index.js';
+import api, { decodeJwt } from '../../utils/api.js';
 
-// 店铺基本信息
+// 店铺基本信息 - 初始化为空，等待后端数据
 const shopInfo = ref({
-  name: 'XX餐厅',
-  avatar: '🏪', // 默认店铺头像
-  rating: '4.8/5.0',
-  address: '北京市朝阳区XX路123号',
-  phone: '13877778888',
-  email: 'xx@jaseats.com',
-  businessHours: '10:00-22:00',
-  status: 'open' // open: 营业中, closed: 休息中
+  name: '',
+  avatar: '',
+  rating: '',
+  address: '',
+  phone: '',
+  email: '',
+  businessHours: '',
+  status: ''
 });
 
 // 编辑用的临时店铺信息
@@ -25,12 +28,8 @@ const editShopInfo = ref({
   email: ''
 });
 
-// 优惠活动列表
-const discounts = ref([
-  { id: 1, name: '满30减5', type: '满减', description: '消费满30元减5元', status: 'active' },
-  { id: 2, name: '满50减10', type: '满减', description: '消费满50元减10元', status: 'active' },
-  { id: 3, name: '新用户立减2元', type: '新人优惠', description: '新用户首单立减2元', status: 'inactive' }
-]);
+// 优惠活动列表 - 初始化为空，等待后端数据
+const discounts = ref([]);
 
 // 优惠管理对话框
 const discountDialogVisible = ref(false);
@@ -47,16 +46,30 @@ const batchDeleteDiscounts = () => {
     return;
   }
 
+  const discountIds = selectedDiscounts.value.map(discount => discount.id);
+
   ElMessageBox.confirm(`确定要删除选中的 ${selectedDiscounts.value.length} 个优惠活动吗？`, '批量删除', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
   .then(() => {
-    // 实际开发中这里应该调用API
-    discounts.value = discounts.value.filter(discount => !selectedDiscounts.value.includes(discount.id));
-    selectedDiscounts.value = [];
-    ElMessage.success('优惠活动删除成功');
+    // 调用后端API批量删除优惠
+    api.delete(API_CONFIG.merchant.discounts.replace('{merchantId}', shopInfo.value.id), {
+      data: discountIds // 发送删除的ID列表
+    })
+    .then(response => {
+      if (response.data && response.data.success) {
+        // 更新本地数据
+        discounts.value = discounts.value.filter(discount => !discountIds.includes(discount.id));
+        selectedDiscounts.value = [];
+        ElMessage.success('优惠活动批量删除成功');
+      }
+    })
+    .catch(error => {
+      console.error('批量删除优惠活动失败:', error);
+      ElMessage.error('批量删除优惠活动失败');
+    });
   })
   .catch(() => {
     ElMessage.info('已取消删除');
@@ -92,19 +105,35 @@ const saveDiscount = () => {
 
   if (isEditingDiscount.value) {
     // 编辑模式 - 更新现有优惠
-    const index = discounts.value.findIndex(d => d.id === currentDiscountForm.value.id);
-    if (index !== -1) {
-      discounts.value[index] = { ...currentDiscountForm.value };
-      ElMessage.success('优惠活动已更新');
-    }
+    api.put(API_CONFIG.merchant.discounts.replace('{merchantId}', shopInfo.value.id), currentDiscountForm.value)
+      .then(response => {
+        if (response.data && response.data.success) {
+          // 更新本地数据
+          const index = discounts.value.findIndex(d => d.id === currentDiscountForm.value.id);
+          if (index !== -1) {
+            discounts.value[index] = { ...currentDiscountForm.value };
+          }
+          ElMessage.success('优惠活动已更新');
+        }
+      })
+      .catch(error => {
+        console.error('更新优惠活动失败:', error);
+        ElMessage.error('更新优惠活动失败');
+      });
   } else {
     // 新增模式 - 添加新优惠
-    const newDiscount = {
-      ...currentDiscountForm.value,
-      id: Date.now()
-    };
-    discounts.value.push(newDiscount);
-    ElMessage.success('优惠活动已添加');
+    api.post(API_CONFIG.merchant.discounts.replace('{merchantId}', shopInfo.value.id), currentDiscountForm.value)
+      .then(response => {
+        if (response.data && response.data.success) {
+          const newDiscount = response.data.data;
+          discounts.value.push(newDiscount);
+          ElMessage.success('优惠活动已添加');
+        }
+      })
+      .catch(error => {
+        console.error('添加优惠活动失败:', error);
+        ElMessage.error('添加优惠活动失败');
+      });
   }
 
   discountDialogVisible.value = false;
@@ -119,11 +148,21 @@ const deleteDiscount = (discount) => {
     type: 'warning'
   })
   .then(() => {
-    const index = discounts.value.findIndex(d => d.id === discount.id);
-    if (index !== -1) {
-      discounts.value.splice(index, 1);
-      ElMessage.success('优惠活动删除成功');
-    }
+    // 调用后端API删除优惠
+    api.delete(`${API_CONFIG.merchant.discounts.replace('{merchantId}', shopInfo.value.id)}/${discount.id}`)
+      .then(response => {
+        if (response.data && response.data.success) {
+          const index = discounts.value.findIndex(d => d.id === discount.id);
+          if (index !== -1) {
+            discounts.value.splice(index, 1);
+          }
+          ElMessage.success('优惠活动删除成功');
+        }
+      })
+      .catch(error => {
+        console.error('删除优惠活动失败:', error);
+        ElMessage.error('删除优惠活动失败');
+      });
   })
   .catch(() => {
     ElMessage.info('已取消删除');
@@ -140,15 +179,8 @@ const notificationSettings = ref({
 // 店铺相册（包含模拟图片）
 const shopAlbum = ref({
   environment: [
-    'https://picsum.photos/id/237/200/200',
-    'https://picsum.photos/id/238/200/200',
-    'https://picsum.photos/id/239/200/200'
   ],
   dishes: [
-    'https://picsum.photos/id/1001/200/200',
-    'https://picsum.photos/id/1002/200/200',
-    'https://picsum.photos/id/1003/200/200',
-    'https://picsum.photos/id/1004/200/200'
   ]
 });
 
@@ -160,13 +192,101 @@ const editDialogVisible = ref(false);
 
 // 页面加载
 onMounted(() => {
-  // 模拟数据加载
+  // 从JWT令牌中获取商家ID
+  const token = localStorage.getItem('token');
+  let merchantId = 1; // 默认值
+
+  if (token) {
+    const decodedToken = decodeJwt(token);
+    if (decodedToken && decodedToken.merchantId) {
+      merchantId = decodedToken.merchantId;
+    }
+  }
+
+  // 从API获取店铺信息
+  api.get(`${API_CONFIG.merchant.detail}${merchantId}`)
+    .then(response => {
+      if (response.data && response.data.success) {
+        const merchantData = response.data.data;
+        // 将后端返回的数据映射到店铺信息
+        shopInfo.value = {
+          name: merchantData.name,
+          avatar: merchantData.avatar || '🏪',
+          rating: merchantData.rating || '4.8/5.0',
+          address: merchantData.address,
+          phone: merchantData.phone,
+          email: merchantData.email,
+          businessHours: merchantData.businessHours,
+          status: merchantData.status ? 'open' : 'closed'
+        };
+
+        // 保存商家ID到shopInfo中，方便后续使用
+        shopInfo.value.id = merchantData.id;
+      }
+    })
+    .catch(error => {
+      console.error('加载店铺信息失败:', error);
+      ElMessage.error('加载店铺信息失败');
+    });
+
+  // 从API获取店铺相册
+  api.get(`${API_CONFIG.merchant.album.replace('{merchantId}', merchantId)}`)
+    .then(response => {
+      if (response.data && response.data.success) {
+        const albumData = response.data.data;
+        // 将后端返回的数据映射到店铺相册
+        shopAlbum.value = {
+          environment: albumData.environment || [],
+          dishes: albumData.dishes || []
+        };
+      }
+    })
+    .catch(error => {
+      console.error('加载店铺相册失败:', error);
+      // 如果获取失败，保留模拟数据
+    });
+
+  // 从API获取优惠活动
+  api.get(`${API_CONFIG.merchant.discounts.replace('{merchantId}', merchantId)}`)
+    .then(response => {
+      if (response.data && response.data.success) {
+        const discountsData = response.data.data;
+        // 将后端返回的数据映射到优惠活动
+        discounts.value = discountsData || [];
+      }
+    })
+    .catch(error => {
+      console.error('加载优惠活动失败:', error);
+      // 如果获取失败，保留模拟数据
+      const mockDiscounts = [
+        { id: 1, name: '满30减5', type: '满减', description: '消费满30元减5元', status: 'active' },
+        { id: 2, name: '满50减10', type: '满减', description: '消费满50元减10元', status: 'active' },
+        { id: 3, name: '新用户立减2元', type: '新人优惠', description: '新用户首单立减2元', status: 'inactive' }
+      ];
+      discounts.value = mockDiscounts;
+    });
 });
 
 // 切换营业状态
 const toggleBusinessStatus = () => {
-  shopInfo.value.status = shopInfo.value.status === 'open' ? 'closed' : 'open';
-  ElMessage.success(`店铺已${shopInfo.value.status === 'open' ? '切换为营业中' : '切换为休息中'}`);
+  // 调用后端API切换状态
+  const newStatus = shopInfo.value.status === 'open' ? 'closed' : 'open';
+
+  api.put(`${API_CONFIG.merchant.detail}${shopInfo.value.id}/status`, null, {
+    params: { status: newStatus }
+  })
+  .then(response => {
+    if (response.data && response.data.success) {
+      shopInfo.value.status = newStatus;
+      ElMessage.success(`店铺已${newStatus === 'open' ? '切换为营业中' : '切换为休息中'}`);
+    } else {
+      ElMessage.error('切换店铺状态失败');
+    }
+  })
+  .catch(error => {
+    console.error('切换店铺状态失败:', error);
+    ElMessage.error('切换店铺状态失败');
+  });
 };
 
 // 打开编辑对话框
@@ -198,8 +318,6 @@ const contactPlatform = () => {
 const saveShopInfo = () => {
   // 数据合法性验证
   let isValid = true;
-
-  // 验证店铺名称
   if (!editShopInfo.value.name || editShopInfo.value.name.trim() === '') {
     ElMessage.error('请填写店铺名称');
     isValid = false;
@@ -233,17 +351,29 @@ const saveShopInfo = () => {
       type: 'warning'
     })
     .then(() => {
-      // 用户点击确定，更新店铺信息
-      shopInfo.value.name = editShopInfo.value.name;
-      shopInfo.value.avatar = editShopInfo.value.avatar; // Update avatar
-      shopInfo.value.businessHours = editShopInfo.value.businessHours;
-      shopInfo.value.address = editShopInfo.value.address;
-      shopInfo.value.phone = editShopInfo.value.phone;
-      shopInfo.value.email = editShopInfo.value.email;
+      // 用户点击确定，调用API更新店铺信息
+      api.put(`${API_CONFIG.merchant.detail}${shopInfo.value.id}`, editShopInfo.value)
+        .then(response => {
+          if (response.data && response.data.success) {
+            // 更新本地店铺信息
+            shopInfo.value.name = editShopInfo.value.name;
+            shopInfo.value.avatar = editShopInfo.value.avatar; // Update avatar
+            shopInfo.value.businessHours = editShopInfo.value.businessHours;
+            shopInfo.value.address = editShopInfo.value.address;
+            shopInfo.value.phone = editShopInfo.value.phone;
+            shopInfo.value.email = editShopInfo.value.email;
 
-      // 关闭对话框并提示成功
-      editDialogVisible.value = false;
-      ElMessage.success('店铺信息已更新');
+            // 关闭对话框并提示成功
+            editDialogVisible.value = false;
+            ElMessage.success('店铺信息已更新');
+          } else {
+            ElMessage.error('更新店铺信息失败');
+          }
+        })
+        .catch(error => {
+          console.error('更新店铺信息失败:', error);
+          ElMessage.error('更新店铺信息失败');
+        });
     })
     .catch(() => {
       // 用户点击取消，不保存
@@ -297,21 +427,40 @@ const confirmUpload = () => {
   const uploadCount = imageUploadList.value.length;
   const albumTypeText = uploadAlbumType.value === 'environment' ? '店铺环境' : '菜品展示';
 
-  // 模拟上传所有选定的照片
-  imageUploadList.value.forEach(() => {
-    // 在实际开发中，这里会将文件上传到服务器并获取返回的URL
-    // 模拟上传成功，将图片URL保存到对应相册
-    const mockImageUrl = `https://picsum.photos/id/${Math.floor(Math.random() * 1000)}/200/200`;
-    shopAlbum.value[uploadAlbumType.value].push(mockImageUrl);
+  // 创建FormData对象
+  const formData = new FormData();
 
-    // 更新上传进度或状态可以在这里处理
+  // 添加图片文件
+  imageUploadList.value.forEach(file => {
+    formData.append('images', file.raw);
   });
 
-  // 上传完成后清空上传列表
-  imageUploadList.value = [];
+  // 添加相册类型
+  formData.append('albumType', uploadAlbumType.value);
 
-  // 显示上传成功提示
-  ElMessage.success(`已成功上传${uploadCount}张照片到${albumTypeText}相册`);
+  // 调用后端API上传照片
+  api.post(API_CONFIG.merchant.album.replace('{merchantId}', shopInfo.value.id), formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+  .then(response => {
+    if (response.data && response.data.success) {
+      // 将后端返回的图片URL保存到对应相册
+      const uploadedImages = response.data.data || [];
+      shopAlbum.value[uploadAlbumType.value].push(...uploadedImages);
+
+      // 上传完成后清空上传列表
+      imageUploadList.value = [];
+
+      // 显示上传成功提示
+      ElMessage.success(`已成功上传${uploadCount}张照片到${albumTypeText}相册`);
+    }
+  })
+  .catch(error => {
+    console.error('上传照片失败:', error);
+    ElMessage.error('上传照片失败');
+  });
 };
 
 // 删除相册图片
@@ -322,8 +471,26 @@ const deleteAlbumImage = (type, index) => {
     type: 'warning'
   })
   .then(() => {
-    shopAlbum.value[type].splice(index, 1);
-    ElMessage.success('照片已删除');
+    const imageUrl = shopAlbum.value[type][index];
+
+    // 调用后端API删除照片
+    api.delete(API_CONFIG.merchant.album.replace('{merchantId}', shopInfo.value.id), {
+      params: {
+        imageUrl,
+        albumType: type
+      }
+    })
+    .then(response => {
+      if (response.data && response.data.success) {
+        // 从本地相册中删除图片
+        shopAlbum.value[type].splice(index, 1);
+        ElMessage.success('照片已删除');
+      }
+    })
+    .catch(error => {
+      console.error('删除照片失败:', error);
+      ElMessage.error('删除照片失败');
+    });
   })
   .catch(() => {
     ElMessage.info('已取消删除');
@@ -511,6 +678,10 @@ const openFullAlbumPreview = () => {
               />
             </div>
           </div>
+          <!-- 空状态提示 -->
+          <div v-if="shopAlbum.environment.length === 0" class="album-empty">
+            【...图片暂时为空】
+          </div>
         </div>
 
         <!-- 菜品展示图片 -->
@@ -534,6 +705,10 @@ const openFullAlbumPreview = () => {
                 fit="cover"
               />
             </div>
+          </div>
+          <!-- 空状态提示 -->
+          <div v-if="shopAlbum.dishes.length === 0" class="album-empty">
+            【...图片暂时为空】
           </div>
         </div>
 
@@ -712,245 +887,5 @@ const openFullAlbumPreview = () => {
 </template>
 
 <style scoped lang="less">
-.merchant-shop-container {
-  padding: 0 20px 20px 20px;
-
-  .shop-header {
-    margin-bottom: 20px;
-
-    .page-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0;
-    }
-  }
-
-  .shop-content {
-    .shop-info-card, .shop-status-card, .shop-album-card, .quick-settings-card {
-      background-color: #fff;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-
-      .card-title {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 16px;
-      }
-
-      .shop-avatar-section {
-        margin-bottom: 20px;
-        text-align: center;
-      }
-
-      .shop-avatar {
-        cursor: pointer;
-        border: 2px solid #eee;
-      }
-    }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 20px;
-      margin-left: 17px;
-      
-      .info-item {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        
-        .info-label {
-          color: #606266;
-          font-weight: 500;
-          white-space: nowrap;
-        }
-        
-        .info-value {
-          flex: 1;
-          color: #303133;
-        }
-      }
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .discounts-section {
-      margin-bottom: 16px;
-    }
-
-    .discounts-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-    }
-
-    .discount-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-
-      .active-discounts {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-
-        .discount-tag {
-          cursor: pointer;
-          transition: all 0.3s;
-
-          &:hover {
-            opacity: 0.8;
-            transform: translateY(-2px);
-          }
-        }
-      }
-    }
-
-    .discounts-table-container {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-
-    .notification-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-
-      .info-label {
-        color: #606266;
-      }
-    }
-
-    .album-stats {
-      display: flex;
-      gap: 24px;
-      margin-bottom: 20px;
-
-      .stat-item {
-        color: #606266;
-      }
-    }
-
-    .album-section {
-      margin-bottom: 24px;
-
-      .section-title {
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: #303133;
-      }
-
-      .album-grid {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-
-        .album-item {
-          width: 100px;
-          height: 100px;
-          border-radius: 4px;
-          overflow: hidden;
-          cursor: pointer;
-          transition: all 0.3s;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          position: relative;
-
-          &:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-          }
-
-          .album-item-overlay {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            opacity: 0;
-            transition: opacity 0.3s;
-
-            .delete-img-btn {
-              opacity: 0.9;
-              transition: all 0.3s;
-              width: 28px;
-              height: 28px;
-              padding: 0;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-          }
-
-          &:hover .album-item-overlay {
-            opacity: 1;
-          }
-        }
-      }
-
-      .upload-section {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-top: 16px;
-
-        .upload-select {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-
-          .upload-label {
-            color: #606266;
-          }
-        }
-      }
-    }
-
-    .full-album-preview {
-      width: 100%;
-      height: 70vh;
-    }
-
-    .upload-btn {
-      margin-top: 16px;
-    }
-
-    .upload-confirm-btn {
-      margin-top: 16px;
-      margin-left: 12px;
-    }
-
-    .settings-grid {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-  }
-}
-
-// Avatar uploader style
-.avatar-uploader {
-  margin-bottom: 20px;
-
-  .avatar-uploader-icon {
-    font-size: 28px;
-    color: #8c939d;
-    width: 80px;
-    height: 80px;
-    line-height: 80px;
-    text-align: center;
-  }
-}
+@import "./MyShop.less";
 </style>

@@ -7,6 +7,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 
 // 我的食谱数据
 const myRecipes = ref([]);
+const loadingFailed = ref(false);
 
 // 加载我的食谱数据
 const loadMyRecipes = () => {
@@ -14,46 +15,16 @@ const loadMyRecipes = () => {
     .then(response => {
       if (response.data.data) {
         myRecipes.value = response.data.data;
+      } else {
+        myRecipes.value = [];
       }
+      loadingFailed.value = false;
     })
     .catch(error => {
       console.error('加载我的食谱失败:', error);
-      // 使用默认数据作为 fallback
-      myRecipes.value = [
-        {
-          id: 1,
-          name: '健康早餐组合',
-          type: '早餐',
-          calories: 380,
-          time: '5分钟',
-          favorite: true
-        },
-        {
-          id: 2,
-          name: '减脂午餐',
-          type: '午餐',
-          calories: 450,
-          time: '15分钟',
-          favorite: false
-        },
-        {
-          id: 3,
-          name: '轻食晚餐',
-          type: '晚餐',
-          calories: 320,
-          time: '10分钟',
-          favorite: true
-        },
-        {
-          id: 4,
-          name: '健身餐',
-          type: '加餐',
-          calories: 280,
-          time: '8分钟',
-          favorite: true
-        }
-      ];
-      ElMessage.error('加载我的食谱失败，将显示默认数据');
+      myRecipes.value = [];
+      loadingFailed.value = true;
+      ElMessage.error('加载我的食谱失败');
     });
 };
 
@@ -258,7 +229,7 @@ const deleteRecipe = (id) => {
     <!-- 空数据提示 -->
     <el-empty
       v-if="filteredRecipes.length === 0"
-      description="暂无食谱"
+      :description="loadingFailed ? '暂未找到我的食谱' : '暂无食谱'"
     ></el-empty>
   </div>
 

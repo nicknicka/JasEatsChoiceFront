@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import axios from 'axios';
+import { API_CONFIG } from '../../config/index.js';
 
 // 菜品状态映射
 const dishStatusMap = {
@@ -9,14 +11,8 @@ const dishStatusMap = {
   offline: { text: '🔴 下架', type: 'danger' }
 };
 
-// 模拟菜品数据
-const dishesList = ref([
-  { id: 1, name: '麻辣香锅饭', price: 18, category: '主食', status: 'online', stock: 50, updateTime: '2024-11-21 10:00' },
-  { id: 2, name: '鱼香肉丝面', price: 16, category: '主食', status: 'online', stock: 30, updateTime: '2024-11-21 14:00' },
-  { id: 3, name: '宫保鸡丁饭', price: 18, category: '主食', status: 'almost_sold', stock: 5, updateTime: '2024-11-20 22:00' },
-  { id: 4, name: '酸辣汤', price: 8, category: '汤品', status: 'online', stock: 100, updateTime: '2024-11-21 09:30' },
-  { id: 5, name: '可乐', price: 3, category: '饮料', status: 'offline', stock: 0, updateTime: '2024-11-20 18:00' }
-]);
+// 菜品数据
+const dishesList = ref([]);
 
 const loading = ref(false);
 const searchKeyword = ref('');
@@ -27,15 +23,25 @@ const selectedDishes = ref([]);
 // 页面加载时初始化
 onMounted(() => {
   loading.value = true;
-  // 模拟异步加载
-  setTimeout(() => {
-    loading.value = false;
-  }, 500);
+  // 从API获取菜品数据
+  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.dish.list}`)
+    .then(response => {
+      if (response.data && response.data.success) {
+        dishesList.value = response.data.data;
+        filteredDishes.value = [...dishesList.value]; // 更新筛选后的菜品
+      }
+    })
+    .catch(error => {
+      console.error('加载菜品失败:', error);
+      ElMessage.error('加载菜品失败');
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 });
 
 // 筛选菜品
 const filteredDishes = ref([]);
-filteredDishes.value = [...dishesList.value];
 
 // 更新筛选
 const updateFilter = () => {

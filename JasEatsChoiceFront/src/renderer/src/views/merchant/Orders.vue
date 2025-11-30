@@ -1,61 +1,18 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import axios from 'axios';
+import { API_CONFIG } from '../../config/index.js';
 
 // 订单状态映射
 const orderStatusMap = {
-  'pending': { text: '待处理', icon: '🔴', type: 'danger' },
-  'preparing': { text: '准备中', icon: '🟡', type: 'warning' },
-  'completed': { text: '已完成', icon: '✅', type: 'success' }
+  1: { text: '待处理', icon: '🔴', type: 'danger' },
+  2: { text: '准备中', icon: '🟡', type: 'warning' },
+  5: { text: '已完成', icon: '✅', type: 'success' }
 };
 
-// 模拟全部订单数据
-const orders = ref([
-  {
-    id: 1,
-    orderNo: 'JD20241121001',
-    status: 'pending',
-    user: '小明',
-    phone: '138XXXX8888',
-    address: '公司地址',
-    total: 78.00,
-    time: '2024-11-21 10:30',
-    unread: true
-  },
-  {
-    id: 2,
-    orderNo: 'JD20241121002',
-    status: 'preparing',
-    user: '小红',
-    phone: '139XXXX9999',
-    address: '家庭地址',
-    total: 45.00,
-    time: '2024-11-21 10:35',
-    unread: false
-  },
-  {
-    id: 3,
-    orderNo: 'JD20241121003',
-    status: 'completed',
-    user: '小刚',
-    phone: '137XXXX7777',
-    address: '学校地址',
-    total: 62.00,
-    time: '2024-11-21 10:40',
-    unread: false
-  },
-  {
-    id: 4,
-    orderNo: 'JD20241121004',
-    status: 'pending',
-    user: '小李',
-    phone: '136XXXX6666',
-    address: '酒店地址',
-    total: 128.00,
-    time: '2024-11-21 11:00',
-    unread: true
-  }
-]);
+// 订单数据
+const orders = ref([]);
 
 // 当前选中的状态筛选
 const activeStatusFilter = ref('all');
@@ -65,15 +22,14 @@ const searchKeyword = ref('');
 
 // 筛选后的订单
 const filteredOrders = ref([]);
-filteredOrders.value = [...orders.value];
 
 // 订单概览统计
 const orderOverview = computed(() => {
   const total = filteredOrders.value.length;
-  const totalAmount = filteredOrders.value.reduce((sum, order) => sum + order.total, 0);
-  const pendingCount = filteredOrders.value.filter(order => order.status === 'pending').length;
-  const preparingCount = filteredOrders.value.filter(order => order.status === 'preparing').length;
-  const completedCount = filteredOrders.value.filter(order => order.status === 'completed').length;
+  const totalAmount = filteredOrders.value.reduce((sum, order) => sum + (order.totalAmount ? order.totalAmount : 0), 0);
+  const pendingCount = filteredOrders.value.filter(order => order.status === 1).length;
+  const preparingCount = filteredOrders.value.filter(order => order.status === 2).length;
+  const completedCount = filteredOrders.value.filter(order => order.status === 5).length;
 
   return {
     total,
@@ -88,12 +44,11 @@ const orderOverview = computed(() => {
 const updateFilter = () => {
   filteredOrders.value = orders.value.filter(order => {
     // 状态筛选
-    const statusMatch = activeStatusFilter.value === 'all' || order.status === activeStatusFilter.value;
+    const statusMatch = activeStatusFilter.value === 'all' || order.status === parseInt(activeStatusFilter.value);
 
     // 搜索筛选
     const searchMatch = !searchKeyword.value ||
-      order.orderNo.includes(searchKeyword.value) ||
-      order.user.includes(searchKeyword.value);
+      order.id.toString().includes(searchKeyword.value);
 
     return statusMatch && searchMatch;
   });
@@ -104,8 +59,24 @@ import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
 const route = useRoute();
 
-// 初始化时从URL获取搜索参数
+// 初始化时从URL获取搜索参数并加载订单数据
 onMounted(() => {
+  // 模拟商家ID，实际应用中应从登录信息获取
+  const merchantId = 1;
+
+  // 从API获取订单数据
+  axios.get(`${API_CONFIG.baseURL}/api/v1/orders/merchant/${merchantId}`)
+    .then(response => {
+      if (response.data && response.data.success) {
+        orders.value = response.data.data;
+        updateFilter();
+      }
+    })
+    .catch(error => {
+      console.error('加载订单失败:', error);
+      ElMessage.error('加载订单失败');
+    });
+
   const searchParam = route.query.search;
   if (searchParam) {
     searchKeyword.value = searchParam;
@@ -127,9 +98,25 @@ const viewOrderDetails = (order) => {
 
 // 更新订单状态
 const updateOrderStatus = (order, newStatus) => {
-  order.status = newStatus;
-  updateFilter();
-  ElMessage.success(`订单状态已更新为${orderStatusMap[newStatus].text}`);
+  // 调用后端API更新状态
+  axios.put(`${API_CONFIG.baseURL}/api/v1/orders/${order.id}/status`, null, {
+    params: {
+      status: newStatus
+    }
+  })
+  .then(response => {
+    if (response.data && response.data.success) {
+      order.status = newStatus;
+      updateFilter();
+      ElMessage.success(`订单状态已更新为${orderStatusMap[newStatus].text}`);
+    } else {
+      ElMessage.error('更新订单状态失败');
+    }
+  })
+  .catch(error => {
+    console.error('更新订单状态失败:', error);
+    ElMessage.error('更新订单状态失败');
+  });
 };
 
 // 取消订单前添加确认
@@ -140,9 +127,8 @@ const cancelOrder = (order) => {
     type: 'warning',
   })
   .then(() => {
-    // 假设取消订单后状态变为'cancelled'，如果需要其他状态请修改
-    updateOrderStatus(order, 'completed'); // 当前代码中取消订单也设置为已完成，保持一致
-    ElMessage.success('订单已取消');
+    // 调用更新订单状态API，6表示已取消
+    updateOrderStatus(order, 6);
   })
   .catch(() => {
     ElMessage.info('已取消订单取消操作');
@@ -217,7 +203,7 @@ updateFilter();
       <div class="orders-filter">
         <span class="filter-label">📋 订单列表 (状态筛选：</span>
         <el-tag
-          v-for="status in ['all', 'pending', 'preparing', 'completed']"
+          v-for="status in ['all', 1, 2, 5]"
           :key="status"
           :type="activeStatusFilter === status ? 'primary' : 'info'"
           effect="plain"
@@ -237,14 +223,12 @@ updateFilter();
         >
           <div class="order-left">
             <div class="order-basic-info">
-              <div class="order-no">订单号：{{ order.orderNo }}</div>
-              <div class="order-amount">💰 ¥{{ order.total.toFixed(2) }}</div>
-              <div class="order-time">⏰ {{ order.time }}</div>
+              <div class="order-no">订单号：{{ order.id }}</div>
+              <div class="order-amount">💰 ¥{{ order.totalAmount?.toFixed(2) || '0.00' }}</div>
+              <div class="order-time">⏰ {{ order.createTime }}</div>
             </div>
 
             <div class="order-user-info">
-              <div class="user-name">👤 用户：{{ order.user }}</div>
-              <div class="user-phone">📞 {{ order.phone }}</div>
               <div class="user-address">📍 {{ order.address }}</div>
             </div>
           </div>
@@ -268,25 +252,25 @@ updateFilter();
 
               <!-- 状态转换按钮 -->
               <el-button
-                v-if="order.status === 'pending'"
+                v-if="order.status === 1"
                 type="success"
                 size="small"
-                @click="updateOrderStatus(order, 'preparing')"
+                @click="updateOrderStatus(order, 2)"
               >
                 🟡 标记为准备中
               </el-button>
 
               <el-button
-                v-if="order.status === 'preparing'"
+                v-if="order.status === 2"
                 type="success"
                 size="small"
-                @click="updateOrderStatus(order, 'completed')"
+                @click="updateOrderStatus(order, 5)"
               >
                 ✅ 标记为已完成
               </el-button>
 
               <el-button
-                v-if="order.status !== 'completed'"
+                v-if="order.status !== 5"
                 type="danger"
                 size="small"
                 @click="cancelOrder(order)"

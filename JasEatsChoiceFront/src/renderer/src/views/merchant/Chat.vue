@@ -2,70 +2,99 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import api from '../../utils/api.js';
+import { decodeJwt } from '../../utils/api.js';
 
 // 合并的会话列表（包含单聊和群聊）
-const conversations = ref([
-  // 单聊会话
-  {
-    id: 1,
-    type: 'private',
-    name: '小明',
-    avatar: '👤', // 用 emoji 替代外部图片
-    lastMessage: '这个麻辣香锅饭太好吃了！',
-    time: '2024-11-21 14:30',
-    unreadCount: 1,
-    userId: 1
-  },
-  {
-    id: 2,
-    type: 'private',
-    name: '小红',
-    avatar: '👤', // 用 emoji 替代外部图片
-    lastMessage: '我想取消订单',
-    time: '2024-11-21 14:15',
-    unreadCount: 0,
-    userId: 2
-  },
-  // 群聊会话
-  {
-    id: 3,
-    type: 'group',
-    name: '商家交流群',
-    avatar: '👥', // 用 emoji 替代外部图片
-    lastMessage: '大家最近生意怎么样？',
-    time: '2024-11-21 14:30',
-    unreadCount: 2,
-    memberCount: 25
-  },
-  {
-    id: 4,
-    type: 'group',
-    name: '新品推广群',
-    avatar: '👥', // 用 emoji 替代外部图片
-    lastMessage: '新品上线，欢迎大家体验！',
-    time: '2024-11-21 14:15',
-    unreadCount: 0,
-    memberCount: 18
-  }
-]);
+const conversations = ref([]);
 
-// 模拟聊天记录
-const chatMessages = ref([
-  {
-    id: 1,
-    sender: 'user',
-    content: '这个麻辣香锅饭太好吃了！',
-    time: '2024-11-21 14:30',
-    isRead: false
-  },
-  {
-    id: 2,
-    sender: 'merchant',
-    content: '感谢您的好评！',
-    time: '2024-11-21 14:31',
-    isRead: true
+// 页面加载
+onMounted(() => {
+  // 从JWT令牌中获取用户ID
+  const token = localStorage.getItem('token');
+  let userId = '1'; // 默认值
+
+  if (token) {
+    const decodedToken = decodeJwt(token);
+    if (decodedToken && decodedToken.userId) {
+      userId = decodedToken.userId;
+    }
+  } else {
+    ElMessage.error('无法获取用户ID，请重新登录');
   }
-]);
+
+  // 从后端API获取会话列表
+  api.get(`/api/v1/users/${userId}/chat-sessions`)
+    .then(response => {
+      if (response.data && response.data.success) {
+        // 转换后端返回的数据格式以匹配前端期望的字段
+        const formattedConversations = response.data.data.map(session => {
+          // 根据最后一条消息判断是单聊还是群聊
+          const isGroupChat = session.msgType === 'group';
+
+          return {
+            id: isGroupChat ? session.toId : session.fromId === userId ? session.toId : session.fromId,
+            type: isGroupChat ? 'group' : 'private',
+            name: isGroupChat ? session.toId : `用户${session.fromId === userId ? session.toId : session.fromId}`,
+            avatar: isGroupChat ? '👥' : '👤',
+            lastMessage: session.content,
+            time: session.createTime,
+            unreadCount: 0,
+            memberCount: isGroupChat ? Math.floor(Math.random() * 50) + 10 : undefined,
+            userId: isGroupChat ? undefined : (session.fromId === userId ? session.toId : session.fromId)
+          };
+        });
+
+        // 将会话按最后消息时间排序（从最新到最旧）
+        formattedConversations.sort((a, b) => {
+          return new Date(b.time) - new Date(a.time);
+        });
+
+        conversations.value = formattedConversations;
+
+        // 默认选中第一个会话
+        if (conversations.value.length > 0) {
+          selectedConversation.value = conversations.value[0];
+        }
+      }
+    })
+    .catch(error => {
+      console.error('加载会话列表失败:', error);
+      ElMessage.error('加载会话列表失败，请稍后重试');
+
+      // 如果后端请求失败，使用默认模拟数据
+      conversations.value = [
+        {
+          id: 1,
+          type: 'private',
+          name: '小明',
+          avatar: '👤',
+          lastMessage: '这个麻辣香锅饭太好吃了！',
+          time: '2024-11-21 14:30',
+          unreadCount: 1,
+          userId: 1
+        },
+        {
+          id: 3,
+          type: 'group',
+          name: '商家交流群',
+          avatar: '👥',
+          lastMessage: '大家最近生意怎么样？',
+          time: '2024-11-21 14:30',
+          unreadCount: 2,
+          memberCount: 25
+        }
+      ];
+
+      // 默认选中第一个会话
+      if (conversations.value.length > 0) {
+        selectedConversation.value = conversations.value[0];
+      }
+    });
+});
+
+// 聊天记录
+const chatMessages = ref([]);
 
 // 当前选中的会话
 const selectedConversation = ref(null);
@@ -76,23 +105,6 @@ const newMessage = ref('');
 // 同步至群聊开关
 const syncToGroup = ref(false);
 
-// 页面加载
-onMounted(() => {
-  // 将会话按最后消息时间排序（从最新到最旧）
-  conversations.value.sort((a, b) => {
-    // 将时间字符串转换为Date对象进行比较
-    const dateA = new Date(a.time);
-    const dateB = new Date(b.time);
-    // 返回倒序，最新的在前面
-    return dateB - dateA;
-  });
-
-  // 默认选中第一个会话
-  if (conversations.value.length > 0) {
-    selectedConversation.value = conversations.value[0];
-  }
-});
-
 // 选择会话
 const selectConversation = (conversation) => {
   selectedConversation.value = conversation;
@@ -101,7 +113,68 @@ const selectConversation = (conversation) => {
     conversation.unreadCount = 0;
     ElMessage.success('消息已标记为已读');
   }
-  // 这里可以根据会话类型加载对应的聊天记录
+
+  // 从JWT令牌中获取用户ID
+  const token = localStorage.getItem('token');
+  let userId = '1'; // 默认值
+
+  if (token) {
+    const decodedToken = decodeJwt(token);
+    if (decodedToken && decodedToken.userId) {
+      userId = decodedToken.userId;
+    }
+  }
+
+  // 构建会话ID
+  let sessionId = '';
+  if (conversation.type === 'group') {
+    // 群聊会话ID就是群ID
+    sessionId = conversation.id;
+  } else {
+    // 单聊会话ID格式：fromId_toId
+    // 确保会话ID唯一，按字典序排列
+    const ids = [userId, conversation.id];
+    ids.sort();
+    sessionId = ids.join('_');
+  }
+
+  // 从后端API获取聊天记录
+  api.get(`/api/v1/chat/${sessionId}/messages`)
+    .then(response => {
+      if (response.data && response.data.success) {
+        // 转换后端返回的数据格式以匹配前端期望的字段
+        const formattedMessages = response.data.data.records.map(message => ({
+          id: message.id,
+          sender: message.fromId === userId ? (conversation.type === 'private' ? 'merchant' : '我') : message.fromId,
+          content: message.content,
+          time: message.createTime,
+          isRead: message.readStatus
+        }));
+
+        chatMessages.value = formattedMessages;
+      }
+    })
+    .catch(error => {
+      console.error('加载聊天记录失败:', error);
+
+      // 如果后端请求失败，使用默认模拟数据
+      chatMessages.value = [
+        {
+          id: 1,
+          sender: 'user',
+          content: '这个麻辣香锅饭太好吃了！',
+          time: '2024-11-21 14:30',
+          isRead: false
+        },
+        {
+          id: 2,
+          sender: 'merchant',
+          content: '感谢您的好评！',
+          time: '2024-11-21 14:31',
+          isRead: true
+        }
+      ];
+    });
 };
 
 // 发送消息
@@ -110,58 +183,88 @@ const sendMessage = () => {
     return;
   }
 
-  // 创建新消息
-  const message = {
-    id: Date.now(),
-    sender: selectedConversation.value.type === 'private' ? 'merchant' : '我',
+  // 从JWT令牌中获取用户ID
+  const token = localStorage.getItem('token');
+  let fromId = '1'; // 默认值
+
+  if (token) {
+    const decodedToken = decodeJwt(token);
+    if (decodedToken && decodedToken.userId) {
+      fromId = decodedToken.userId;
+    }
+  }
+
+  // 构建消息对象
+  const messageData = {
+    fromId: fromId,
+    toId: selectedConversation.value.id,
     content: newMessage.value.trim(),
-    time: new Date().toISOString().slice(0, 19).replace('T', ' '),
-    isRead: true
+    msgType: selectedConversation.value.type === 'group' ? 'group' : 'private'
   };
 
-  // 添加到聊天记录
-  chatMessages.value.push(message);
+  // 发送消息到后端API
+  api.post('/api/v1/chat/messages', messageData)
+    .then(response => {
+      if (response.data && response.data.success) {
+        // 创建新消息对象
+        const message = {
+          id: Date.now(),
+          sender: selectedConversation.value.type === 'private' ? 'merchant' : '我',
+          content: newMessage.value.trim(),
+          time: new Date().toISOString().slice(0, 19).replace('T', ' '),
+          isRead: true
+        };
 
-  // 更新会话列表的最后一条消息
-  selectedConversation.value.lastMessage = message.content;
-  selectedConversation.value.time = message.time;
+        // 添加到聊天记录
+        chatMessages.value.push(message);
 
-  // 将当前会话移到最前面
-  const index = conversations.value.indexOf(selectedConversation.value);
-  if (index > -1) {
-    conversations.value.splice(index, 1);
-    conversations.value.unshift(selectedConversation.value);
-  }
+        // 更新会话列表的最后一条消息
+        selectedConversation.value.lastMessage = message.content;
+        selectedConversation.value.time = message.time;
 
-  // 同步消息到所有群聊
-  if (syncToGroup.value && selectedConversation.value.type === 'private') {
-    const syncMessageContent = `【订单同步】${message.content}`;
-
-    // 更新所有群聊的最后消息
-    conversations.value.forEach(conversation => {
-      if (conversation.type === 'group') {
-        conversation.lastMessage = syncMessageContent;
-        conversation.time = message.time;
-        conversation.unreadCount++;
-
-        // 将群聊会话移到前面
-        const groupIndex = conversations.value.indexOf(conversation);
-        if (groupIndex > -1) {
-          conversations.value.splice(groupIndex, 1);
-          conversations.value.unshift(conversation);
+        // 将当前会话移到最前面
+        const index = conversations.value.indexOf(selectedConversation.value);
+        if (index > -1) {
+          conversations.value.splice(index, 1);
+          conversations.value.unshift(selectedConversation.value);
         }
+
+        // 同步消息到所有群聊
+        if (syncToGroup.value && selectedConversation.value.type === 'private') {
+          const syncMessageContent = `【订单同步】${message.content}`;
+
+          // 更新所有群聊的最后消息
+          conversations.value.forEach(conversation => {
+            if (conversation.type === 'group') {
+              conversation.lastMessage = syncMessageContent;
+              conversation.time = message.time;
+              conversation.unreadCount++;
+
+              // 将群聊会话移到前面
+              const groupIndex = conversations.value.indexOf(conversation);
+              if (groupIndex > -1) {
+                conversations.value.splice(groupIndex, 1);
+                conversations.value.unshift(conversation);
+              }
+            }
+          });
+
+          // 重置同步开关
+          syncToGroup.value = false;
+
+          // 提示用户消息已同步
+          ElMessage.info('消息已同步至所有群聊');
+        }
+
+        // 清空输入框
+        newMessage.value = '';
+        ElMessage.success('消息发送成功');
       }
+    })
+    .catch(error => {
+      console.error('发送消息失败:', error);
+      ElMessage.error('发送消息失败，请稍后重试');
     });
-
-    // 重置同步开关
-    syncToGroup.value = false;
-
-    // 提示用户消息已同步
-    ElMessage.info('消息已同步至所有群聊');
-  }
-
-  // 清空输入框
-  newMessage.value = '';
 };
 </script>
 
@@ -203,12 +306,16 @@ const sendMessage = () => {
               {{ conversation.lastMessage }}
             </div>
           </div>
-          
+        </div>
+
+        <!-- 会话列表空数据提示 -->
+        <div v-if="conversations.length === 0" class="empty-conversations">
+          <el-empty description="暂无会话"></el-empty>
         </div>
       </div>
 
-      <!-- 右侧聊天内容 -->
-      <div class="chat-area" v-if="selectedConversation">
+      <!-- 右侧聊天内容或空提示 -->
+      <div v-if="selectedConversation" class="chat-area">
         <!-- 右侧上方：会话名称 -->
         <div class="chat-area-header">
           <div class="conversation-info">
@@ -239,6 +346,11 @@ const sendMessage = () => {
               <div class="message-time">{{ message.time }}</div>
             </div>
           </div>
+
+          <!-- 空数据提示 -->
+          <div v-if="chatMessages.length === 0" class="empty-chat">
+            <el-empty description="暂无聊天记录"></el-empty>
+          </div>
         </div>
 
         <!-- 消息输入框 -->
@@ -257,6 +369,15 @@ const sendMessage = () => {
             />
             <el-button type="primary" @click="sendMessage">发送</el-button>
           </div>
+        </div>
+      </div>
+
+      <!-- 未选择会话时的提示 -->
+      <div v-else class="chat-area">
+        <div class="chat-area-empty">
+          <el-empty
+            :description="conversations.length === 0 ? '暂无会话' : '请先选择一个会话'"
+          ></el-empty>
         </div>
       </div>
     </div>

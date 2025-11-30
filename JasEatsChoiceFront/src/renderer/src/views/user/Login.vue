@@ -121,9 +121,14 @@ const submitForm = () => {
         // 保存用户名
         localStorage.setItem('username', loginForm.username);
         ElMessage.success('登录成功！');
-        // 登录成功后跳转到用户首页
+        // 登录成功后根据当前角色跳转到对应首页
         setTimeout(() => {
-          router.push('/user/home');
+          const currentRole = localStorage.getItem('currentRole') || 'user';
+          if (currentRole === 'merchant') {
+            router.push('/merchant/home');
+          } else {
+            router.push('/user/home');
+          }
         }, 1500);
       } else {
         ElMessage.error('表单验证失败，请检查输入');

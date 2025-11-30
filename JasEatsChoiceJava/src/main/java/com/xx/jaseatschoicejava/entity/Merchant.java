@@ -51,6 +51,7 @@ public class Merchant {
     @TableField("phone")
     @ApiModelProperty(value = "联系电话")
     private String phone; // 联系电话
+    private String avatar; // 商家头像
 
     @TableField("business_hours")
     @ApiModelProperty(value = "营业时间（JSON格式）")
@@ -71,4 +72,8 @@ public class Merchant {
     @TableField("update_time")
     @ApiModelProperty(value = "更新时间")
     private LocalDateTime updateTime; // 更新时间
+
+    @TableField("album")
+    @ApiModelProperty(value = "店铺相册（JSON格式，包含environment和dishes两个数组）")
+    private JsonNode album; // 店铺相册（JSON格式，包含environment和dishes两个数组）
 }

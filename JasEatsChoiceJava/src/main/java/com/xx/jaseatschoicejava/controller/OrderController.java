@@ -55,6 +55,17 @@ public class OrderController {
     }
 
     /**
+     * 根据商家ID获取订单列表
+     */
+    @GetMapping("/merchant/{merchantId}")
+    public ResponseResult<?> getOrdersByMerchantId(@PathVariable Long merchantId) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Order::getMerchantId, merchantId);
+        List<Order> orders = orderService.list(queryWrapper);
+        return ResponseResult.success(orders);
+    }
+
+    /**
      * 更新订单状态
      */
     @PutMapping("/{orderId}/status")

@@ -139,8 +139,25 @@ import { API_CONFIG } from '../../config';
 
 const router = useRouter();
 
-// 真实数据
-const userInfo = ref({});
+// 真实数据，初始化完整结构
+const userInfo = ref({
+  name: '',
+  phone: '',
+  location: '',
+  todayCalorie: '0kcal',
+  weekBalance: '0%',
+  orders: {
+    inProgress: 0,
+    pending: 0,
+    pendingComment: 0
+  },
+  wallet: {
+    balance: 0
+  },
+  collections: 0,
+  addresses: 0,
+  defaultAddress: ''
+});
 
 // 从本地存储加载真实数据
 onMounted(() => {

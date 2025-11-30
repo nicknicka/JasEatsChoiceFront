@@ -325,9 +325,10 @@ router.beforeEach((to, from, next) => {
     // 如果未登录且访问受保护路由，跳转到登录页面
     next('/login')
   } else {
-    // 如果已登录且访问登录页面，跳转到用户首页
+    // 如果已登录且访问登录页面，根据当前角色跳转到对应首页
     if (to.path === '/login' && isLoggedIn) {
-      next('/user/home')
+      const currentRole = localStorage.getItem('currentRole') || 'user';
+      next(currentRole === 'merchant' ? '/merchant/home' : '/user/home')
     } else {
       // 其他情况正常跳转
       next()

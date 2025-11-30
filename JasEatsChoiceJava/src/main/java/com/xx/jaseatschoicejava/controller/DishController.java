@@ -25,13 +25,17 @@ public class DishController {
      */
     @GetMapping
     public ResponseResult<?> getDishes(@RequestParam(required = false) String category,
-                                      @RequestParam(required = false) String keyword) {
+                                      @RequestParam(required = false) String keyword,
+                                      @RequestParam(required = false) Long merchantId) {
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
         if (category != null) {
             queryWrapper.eq(Dish::getCategory, category);
         }
         if (keyword != null) {
             queryWrapper.like(Dish::getName, keyword);
+        }
+        if (merchantId != null) {
+            queryWrapper.eq(Dish::getMerchantId, merchantId);
         }
         // 只显示上架的菜品
         queryWrapper.eq(Dish::getStatus, true);

@@ -2,6 +2,9 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useRouter } from 'vue-router';
+import api, { decodeJwt } from '../../utils/api.js';
+import { API_CONFIG } from '../../config/index.js';
+
 const router = useRouter();
 
 // 消息分类映射
@@ -12,52 +15,13 @@ const messageCategories = {
   comment: '评价消息'
 };
 
-// 模拟消息数据
-const messages = ref([
-  {
-    id: 1,
-    type: 'order',
-    sender: '系统',
-    title: '新订单提醒：订单号JD20241121001',
-    content: '您有一个新的订单需要处理，订单号：JD20241121001',
-    time: '2024-11-21 14:30',
-    isRead: false
-  },
-  {
-    id: 2,
-    type: 'system',
-    sender: '系统',
-    title: '系统通知：新功能上线',
-    content: '商家后台已新增菜单批量导入功能，欢迎使用！',
-    time: '2024-11-21 14:15',
-    isRead: false
-  },
-  {
-    id: 3,
-    type: 'comment',
-    sender: '系统',
-    title: '评价消息：用户给了五星好评',
-    content: '用户张三对您的餐厅给出了五星好评，感谢您的服务！',
-    time: '2024-11-21 13:45',
-    isRead: true
-  },
-  {
-    id: 4,
-    type: 'order',
-    sender: '系统',
-    title: '订单已完成：订单号JD20241120005',
-    content: '订单JD20241120005已完成配送，感谢您的服务！',
-    time: '2024-11-21 10:30',
-    isRead: true
-  }
-]);
-
+// 消息数据，将从后端API获取
+const messages = ref([]);
 const selectedMessage = ref(null);
 const activeCategory = ref('all');
 
 // 筛选后的消息
 const filteredMessages = ref([]);
-filteredMessages.value = [...messages.value];
 
 // 未读消息统计
 const unreadCounts = ref({
@@ -85,8 +49,50 @@ const updateFilter = () => {
 
 // 页面加载时初始化
 onMounted(() => {
-  // 可以在这里加载实际数据
-  calculateUnreadCounts(); // 初始化未读消息统计
+  // 从后端API加载实际消息数据
+  // 从JWT令牌中获取用户ID
+  const token = localStorage.getItem('token');
+  let userId = 1; // 默认值
+
+  if (token) {
+    const decodedToken = decodeJwt(token);
+    if (decodedToken && decodedToken.userId) {
+      userId = decodedToken.userId;
+    }
+  }else {
+    ElMessage.error('无法获取用户ID，请重新登录');
+  }
+
+  api.get(API_CONFIG.message.list, {
+    params: { userId }
+  })
+    .then(response => {
+      if (response.data && response.data.success) {
+        // 转换后端返回的数据格式以匹配前端期望的字段
+        const formattedMessages = response.data.data.map(message => ({
+          id: message.id,
+          // 后端返回的content作为前端的title
+          title: message.content,
+          content: message.content,
+          // 后端返回的senderName作为前端的sender
+          sender: message.senderName,
+          // 后端返回的createTime作为前端的time
+          time: message.createTime,
+          // 后端返回的readStatus作为前端的isRead
+          isRead: message.readStatus,
+          // 暂时默认所有消息类型为system
+          type: 'system'
+        }));
+
+        messages.value = formattedMessages;
+        filteredMessages.value = [...messages.value];
+        calculateUnreadCounts(); // 初始化未读消息统计
+      }
+    })
+    .catch(error => {
+      console.error('加载消息失败:', error);
+      ElMessage.error('加载消息失败，请稍后重试');
+    });
 });
 
 // 查看消息详情

@@ -2,6 +2,8 @@
 import { ref, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { API_CONFIG } from '../../config/index.js';
 
 const router = useRouter();
 // 菜单状态映射
@@ -11,53 +13,37 @@ const menuStatusMap = {
   offline: { text: '下架中', icon: '🔴', type: 'danger' }
 };
 
-// 模拟菜单数据
-const menuList = ref([
-  {
-    id: 1,
-    name: '午餐菜单',
-    dishes: 12,
-    status: 'online',
-    updateTime: '2024-11-21 10:00',
-    autoOnline: '2024-11-22 11:00',
-    autoOffline: '2024-11-22 14:00'
-  },
-  {
-    id: 2,
-    name: '晚餐菜单',
-    dishes: 8,
-    status: 'offline',
-    updateTime: '2024-11-21 14:00',
-    autoOnline: '',
-    autoOffline: ''
-  },
-  {
-    id: 3,
-    name: '夜宵菜单',
-    dishes: 5,
-    status: 'draft',
-    updateTime: '2024-11-20 22:00',
-    autoOnline: '',
-    autoOffline: ''
-  }
-]);
+// 菜单数据
+const menuList = ref([]);
 
 const loading = ref(false);
 const searchKeyword = ref('');
 const activeStatusFilter = ref('all');
 
+// 筛选菜单
+const filteredMenus = ref([]);
+
 // 页面加载时初始化
 onMounted(() => {
   loading.value = true;
-  // 模拟异步加载
-  setTimeout(() => {
-    loading.value = false;
-  }, 500);
+  // 模拟商家ID，实际应用中应从登录信息获取
+  const merchantId = 1;
+  // 从API获取菜单数据
+  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}`)
+    .then(response => {
+      if (response.data && response.data.success) {
+        menuList.value = response.data.data;
+        filteredMenus.value = [...menuList.value]; // 更新筛选后的菜单
+      }
+    })
+    .catch(error => {
+      console.error('加载菜单失败:', error);
+      ElMessage.error('加载菜单失败');
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 });
-
-// 筛选菜单
-const filteredMenus = ref([]);
-filteredMenus.value = [...menuList.value];
 
 // 更新筛选
 const updateFilter = () => {

@@ -25,42 +25,22 @@ const filters = ref({
 const loadTodayRecipes = () => {
   axios.get(API_CONFIG.baseURL + API_CONFIG.recipe.today)
     .then(response => {
-      if (response.data.data) {
+      if (response.data.data && response.data.data.recipes && response.data.data.recipes.length > 0) {
+        // console.log('加载今日食谱成功:', response.data.data.recipes);
         todayRecipes.value = response.data.data.recipes;
-        nutritionData.value = response.data.data.nutrition;
+        nutritionData.value = response.data.data.nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 };
       } else {
-        // 使用默认数据作为 fallback
-        todayRecipes.value = [
-          { id: 1, name: '早餐', type: 'breakfast', items: ['牛奶燕麦粥', '水煮蛋', '苹果'] },
-          { id: 2, name: '午餐', type: 'lunch', items: ['番茄炒蛋', '清炒菠菜', '杂粮饭'] },
-          { id: 3, name: '晚餐', type: 'dinner', items: ['清蒸鲈鱼', '凉拌黄瓜', '小米粥'] }
-        ];
-
-        nutritionData.value = {
-          calories: 1850,
-          protein: 85,
-          carbs: 220,
-          fat: 55
-        };
+        // 后端没有返回数据
+        todayRecipes.value = [];
+        nutritionData.value = { calories: 0, protein: 0, carbs: 0, fat: 0 };
       }
     })
     .catch(error => {
       console.error('加载今日食谱失败:', error);
-      // 使用默认数据作为 fallback
-      todayRecipes.value = [
-        { id: 1, name: '早餐', type: 'breakfast', items: ['牛奶燕麦粥', '水煮蛋', '苹果'] },
-        { id: 2, name: '午餐', type: 'lunch', items: ['番茄炒蛋', '清炒菠菜', '杂粮饭'] },
-        { id: 3, name: '晚餐', type: 'dinner', items: ['清蒸鲈鱼', '凉拌黄瓜', '小米粥'] }
-      ];
-
-      nutritionData.value = {
-        calories: 1850,
-        protein: 85,
-        carbs: 220,
-        fat: 55
-      };
-
-      ElMessage.error('加载今日食谱失败，将显示默认数据');
+      // 请求失败时，也显示没有数据
+      todayRecipes.value = [];
+      nutritionData.value = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      ElMessage.error('加载今日食谱失败');
     });
 };
 
@@ -346,7 +326,11 @@ const filteredRecipes = computed(() => {
     </div>
     <!-- 食谱列表 -->
     <div :class="['recipe-list', layoutType]">
+      <div v-if="filteredRecipes.length === 0" class="no-recipes-message">
+        <el-empty description="今日没有食谱数据"></el-empty>
+      </div>
       <el-card
+        v-else
         v-for="recipe in filteredRecipes"
         :key="recipe.id"
         class="recipe-card"

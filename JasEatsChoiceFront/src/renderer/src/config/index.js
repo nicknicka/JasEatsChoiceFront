@@ -28,7 +28,18 @@ export const API_CONFIG = {
   // 商家API端点
   merchant: {
     list: '/api/v1/merchant', // 商家列表接口
-    detail: '/api/v1/merchant/' // 商家详情接口
+    detail: '/api/v1/merchant/', // 商家详情接口
+    menu: '/api/v1/merchants/{merchantId}/menu', // 商家菜单接口
+    comments: '/api/v1/merchant/{merchantId}/comments', // 商家评价接口
+    album: '/api/v1/merchant/{merchantId}/album', // 商家相册接口
+    discounts: '/api/v1/merchant/{merchantId}/discounts', // 商家优惠接口
+    businessOverview: '/api/v1/merchant/{merchantId}/business-overview' // 营业概览接口
+  },
+
+  // 菜品API端点
+  dish: {
+    list: '/dishes', // 菜品列表接口
+    detail: '/dishes/' // 菜品详情接口
   },
 
   // 消息API端点

@@ -26,14 +26,32 @@ const calorieData = ref({
   ]
 });
 
+// 推荐营养目标（根据膳食指南）
+const recommendedGoals = ref({
+  '蛋白质': 90, // g
+  '碳水化合物': 250, // g
+  '脂肪': 70 // g
+});
+
+// 自定义营养目标（用户设置）
+const customGoals = ref({});
+
 // 从API获取数据
 onMounted(() => {
-  // 获取用户偏好设置（包含卡路里目标）
+  // 获取用户偏好设置（包含卡路里目标和营养目标）
   const userId = 1; // 临时用户ID，实际应用中应从登录信息获取
   axios.get(`${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`)
     .then(response => {
-      if (response.data && response.data.success && response.data.data.calorieTarget) {
-        calorieData.value.today.target = response.data.data.calorieTarget;
+      if (response.data && response.data.success) {
+        // 设置卡路里目标
+        if (response.data.data.calorieTarget) {
+          calorieData.value.today.target = response.data.data.calorieTarget;
+        }
+
+        // 设置自定义营养目标
+        if (response.data.data.nutritionGoals) {
+          customGoals.value = response.data.data.nutritionGoals;
+        }
       }
     })
     .catch(error => {
@@ -60,22 +78,12 @@ onMounted(() => {
     });
 });
 
-// 获取营养百分比（模拟）
+// 获取营养百分比
 const getNutritionPercentage = (value, name) => {
-  let percentage;
-  switch (name) {
-    case '蛋白质':
-      percentage = (value / 90) * 100; // 目标90g
-      break;
-    case '碳水化合物':
-      percentage = (value / 250) * 100; // 目标250g
-      break;
-    case '脂肪':
-      percentage = (value / 70) * 100; // 目标70g
-      break;
-    default:
-      percentage = 0;
-  }
+  // 优先使用用户自定义目标，若无则使用推荐目标
+  const goal = customGoals.value[name] || recommendedGoals.value[name] || 1;
+  // 避免除以0
+  let percentage = goal > 0 ? (value / goal) * 100 : 0;
   // 四舍五入保留两位小数
   return Math.round(percentage * 100) / 100;
 };
