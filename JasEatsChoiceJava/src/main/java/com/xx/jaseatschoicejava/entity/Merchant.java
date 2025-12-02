@@ -51,11 +51,32 @@ public class Merchant {
     @TableField("phone")
     @ApiModelProperty(value = "联系电话")
     private String phone; // 联系电话
+
+    @TableField("password")
+    @ApiModelProperty(value = "密码")
+    private String password; // 密码
+
+    @TableField("email")
+    @ApiModelProperty(value = "邮箱")
+    private String email; // 邮箱
+
+    @TableField("business_license")
+    @ApiModelProperty(value = "营业执照号")
+    private String businessLicense; // 营业执照号
+
+    @TableField("business_scope")
+    @ApiModelProperty(value = "经营范围")
+    private String businessScope; // 经营范围
+
+    @TableField("contact_name")
+    @ApiModelProperty(value = "联系人姓名")
+    private String contactName; // 联系人姓名
+    @TableField("avatar")
     private String avatar; // 商家头像
 
     @TableField("business_hours")
-    @ApiModelProperty(value = "营业时间（JSON格式）")
-    private JsonNode businessHours; // 营业时间（JSON格式）
+    @ApiModelProperty(value = "营业时间")
+    private String businessHours; // 营业时间
 
     @TableField("average_price")
     @ApiModelProperty(value = "人均消费")

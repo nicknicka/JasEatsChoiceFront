@@ -20,6 +20,7 @@ const messages = ref([
 
 // User input for chat
 const inputMessage = ref('');
+const inputMaxLength = 500; // Maximum message length for chat
 
 // Loading state for chat
 const isLoading = ref(false);
@@ -31,18 +32,36 @@ const activeTab = ref('chat');
 const recognitionResult = ref(null);
 const recognitionLoading = ref(false);
 const selectedImage = ref(null);
+const imageMaxSize = 10 * 1024 * 1024; // 10MB maximum image size
 
 // AI Recipe Optimization
 const originalRecipe = ref('');
 const optimizedRecipe = ref(null);
 const optimizationLoading = ref(false);
+const recipeMinLength = 20; // Minimum recipe length
+const recipeMaxLength = 10000; // Maximum recipe length
 
 // Image upload handling
 const handleImageUpload = (event) => {
   const file = event.target.files[0];
   if (file) {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      ElMessage.error('请选择图片文件');
+      event.target.value = ''; // Clear the input to allow reselect
+      return;
+    }
+
+    // Validate file size
+    if (file.size > imageMaxSize) {
+      ElMessage.error('图片大小不能超过10MB');
+      event.target.value = ''; // Clear the input to allow reselect
+      return;
+    }
+
     selectedImage.value = URL.createObjectURL(file);
     recognitionResult.value = null; // Clear previous result
+    ElMessage.success('图片上传成功');
   }
 };
 
@@ -78,7 +97,18 @@ const recognizeDish = () => {
 
 // Simulate AI recipe optimization
 const optimizeRecipe = () => {
-  if (!originalRecipe.value.trim()) {
+  // Validate recipe content
+  const trimmedRecipe = originalRecipe.value.trim();
+  if (!trimmedRecipe) {
+    ElMessage.warning('请输入食谱');
+    return;
+  }
+  if (trimmedRecipe.length < recipeMinLength) {
+    ElMessage.warning(`食谱长度不能少于${recipeMinLength}个字符`);
+    return;
+  }
+  if (trimmedRecipe.length > recipeMaxLength) {
+    ElMessage.warning(`食谱长度不能超过${recipeMaxLength}个字符`);
     return;
   }
 
@@ -101,16 +131,38 @@ const optimizeRecipe = () => {
 步骤：${firstRecipe.steps}`,
           improvements: ['营养均衡', '口味优化', '步骤简化']
         };
+      } else {
+        // No recipes returned from backend
+        optimizedRecipe.value = {
+          original: originalRecipe.value,
+          optimized: `优化失败：没有找到合适的优化食谱。`,
+          improvements: []
+        };
       }
     })
     .catch(error => {
       console.error('食谱优化接口调用失败:', error);
-      // Fallback to simple mock response
+      let errorMsg = `优化失败：无法获取AI优化建议。`;
+
+      // Add more specific error messages
+      if (error.response) {
+        // Server responded with error status code
+        if (error.response.status === 404) {
+          errorMsg = '食谱优化服务暂时不可用，请稍后重试。';
+        } else if (error.response.status === 500) {
+          errorMsg = '服务器内部错误，请稍后重试。';
+        }
+      } else if (error.request) {
+        // No response received from server
+        errorMsg = '网络连接超时，请检查网络设置。';
+      }
+
       optimizedRecipe.value = {
         original: originalRecipe.value,
-        optimized: `优化失败：无法获取AI优化建议。`,
+        optimized: errorMsg,
         improvements: []
       };
+      ElMessage.error(errorMsg);
     })
     .finally(() => {
       optimizationLoading.value = false;
@@ -119,18 +171,27 @@ const optimizeRecipe = () => {
 
 // Send message to AI
 const sendMessage = () => {
-  if (!inputMessage.value.trim()) return;
+  // Validate message content
+  const trimmedMsg = inputMessage.value.trim();
+  if (!trimmedMsg) {
+    ElMessage.warning('请输入问题');
+    return;
+  }
+  if (trimmedMsg.length > inputMaxLength) {
+    ElMessage.warning(`消息长度不能超过${inputMaxLength}个字符`);
+    return;
+  }
 
   // Add user message
   const userMsg = {
     id: messages.value.length + 1,
     sender: 'user',
-    content: inputMessage.value,
+    content: trimmedMsg,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     avatar: '👤'
   };
   messages.value.push(userMsg);
-  const userInput = inputMessage.value;
+  const userInput = trimmedMsg;
   inputMessage.value = '';
 
   // Call backend AI API
@@ -139,21 +200,41 @@ const sendMessage = () => {
   // 使用后端API获取AI回复
   axios.post(API_CONFIG.baseURL + API_CONFIG.ai.chat, { message: userInput })
     .then(response => {
-      const aiResponse = {
-        id: messages.value.length + 1,
-        sender: 'ai',
-        content: response.data.data.content, // 根据后端返回的结构调整
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        avatar: '🤖'
-      };
-      messages.value.push(aiResponse);
+      // Check if response is valid
+      if (response.data && response.data.data && response.data.data.content) {
+        const aiResponse = {
+          id: messages.value.length + 1,
+          sender: 'ai',
+          content: response.data.data.content, // 根据后端返回的结构调整
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          avatar: '🤖'
+        };
+        messages.value.push(aiResponse);
+      } else {
+        throw new Error('Invalid response format');
+      }
     })
     .catch(error => {
       console.error('AI聊天接口调用失败:', error);
+      let errorMsg = '对不起，暂时无法获取AI回复，请稍后重试。';
+
+      // Add more specific error messages
+      if (error.response) {
+        // Server responded with error status code
+        if (error.response.status === 404) {
+          errorMsg = 'AI聊天服务暂时不可用，请稍后重试。';
+        } else if (error.response.status === 500) {
+          errorMsg = '服务器内部错误，请稍后重试。';
+        }
+      } else if (error.request) {
+        // No response received from server
+        errorMsg = '网络连接超时，请检查网络设置。';
+      }
+
       const aiResponse = {
         id: messages.value.length + 1,
         sender: 'ai',
-        content: '对不起，暂时无法获取AI回复，请稍后重试。',
+        content: errorMsg,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         avatar: '🤖'
       };
@@ -226,7 +307,11 @@ onMounted(() => {
                   :rows="2"
                   type="textarea"
                   @keyup.enter="sendMessage"
-                ></el-input>
+                >
+                  <template #append>
+                    <div class="input-counter">{{ inputMessage.trim().length }}/{{ inputMaxLength }}</div>
+                  </template>
+                </el-input>
                 <el-button
                   type="primary"
                   size="large"
@@ -308,7 +393,11 @@ onMounted(() => {
                     resize="vertical"
                     :rows="6"
                     type="textarea"
-                  ></el-input>
+                  >
+                    <template #append>
+                      <div class="input-counter">{{ originalRecipe.trim().length }}/{{ recipeMaxLength }}</div>
+                    </template>
+                  </el-input>
                 </div>
 
                 <el-button
@@ -566,6 +655,13 @@ onMounted(() => {
       &:hover {
         background-color: #ff5252;
       }
+    }
+
+    .input-counter {
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #909399;
+      align-self: flex-end;
     }
   }
 

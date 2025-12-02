@@ -31,7 +31,9 @@
             </div>
           </div>
           <div class="action-buttons">
-            <el-button type="primary" size="small" @click="shareProfile" class="share-btn">📤 分享</el-button>
+            <el-button type="primary" size="small" class="share-btn" @click="shareProfile"
+              >📤 分享</el-button
+            >
           </div>
         </div>
       </div>
@@ -52,11 +54,13 @@
             <div class="stat-label">待确认订单</div>
           </div>
           <div class="order-stat-card">
-            <div class="stat-value order-pending-comment">{{ userInfo.orders.pendingComment }}笔</div>
+            <div class="stat-value order-pending-comment">
+              {{ userInfo.orders.pendingComment }}笔
+            </div>
             <div class="stat-label">待评价订单</div>
           </div>
         </div>
-        <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px">
           <el-button type="primary" size="small" @click="goToAllOrders">
             <span>🔍 查看所有订单</span>
           </el-button>
@@ -76,10 +80,15 @@
             <span class="balance-unit">个</span>
           </div>
           <div class="wallet-actions">
-            <el-button type="primary" size="small" @click="recharge" class="wallet-action-btn">
+            <el-button type="primary" size="small" class="wallet-action-btn" @click="recharge">
               💸 充值
             </el-button>
-            <el-button type="primary" size="small" @click="withdraw" class="wallet-action-btn withdraw-btn">
+            <el-button
+              type="primary"
+              size="small"
+              class="wallet-action-btn withdraw-btn"
+              @click="withdraw"
+            >
               📥 提现
             </el-button>
             <el-button type="text" size="small" @click="goToConsumeHistory">
@@ -100,7 +109,7 @@
               <div class="module-item-desc">共{{ userInfo.collections }}个</div>
             </div>
           </div>
-          <el-button type="text" size="small" @click="goToMyCollection" class="module-item-btn">
+          <el-button type="text" size="small" class="module-item-btn" @click="goToMyCollection">
             查看收藏
           </el-button>
         </div>
@@ -110,10 +119,12 @@
             <div class="module-item-icon">📝</div>
             <div class="module-item-info">
               <div class="module-item-title">我的地址</div>
-              <div class="module-item-desc">共{{ userInfo.addresses }}个 | 默认地址：{{ userInfo.defaultAddress }}</div>
+              <div class="module-item-desc">
+                共{{ userInfo.addresses }}个 | 默认地址：{{ userInfo.defaultAddress }}
+              </div>
             </div>
           </div>
-          <el-button type="text" size="small" @click="goToAddress" class="module-item-btn">
+          <el-button type="text" size="small" class="module-item-btn" @click="goToAddress">
             管理地址
           </el-button>
         </div>
@@ -127,17 +138,41 @@
         <el-button type="text" size="small" danger @click="logout">🔚 退出登录</el-button>
       </div>
     </el-card>
+
+    <!-- 分享对话框 -->
+    <el-dialog v-model="shareDialogVisible" title="分享个人中心" width="400px" center>
+      <div class="share-content">
+        <div class="share-link-section">
+          <div class="section-title">分享链接</div>
+          <el-input v-model="shareLink" readonly class="share-input" />
+          <el-button type="primary" size="small" class="copy-btn" @click="copyShareLink">
+            📋 复制链接
+          </el-button>
+        </div>
+
+        <div v-if="qrCodeDataUrl" class="qr-code-section">
+          <div class="section-title">二维码分享</div>
+          <img :src="qrCodeDataUrl" alt="分享二维码" class="qr-code" />
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="shareDialogVisible = false">关闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import axios from 'axios';
-import { API_CONFIG } from '../../config';
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import axios from 'axios'
+import { API_CONFIG } from '../../config'
 
-const router = useRouter();
+const router = useRouter()
 
 // 真实数据，初始化完整结构
 const userInfo = ref({
@@ -157,22 +192,23 @@ const userInfo = ref({
   collections: 0,
   addresses: 0,
   defaultAddress: ''
-});
+})
 
 // 从本地存储加载真实数据
 onMounted(() => {
   // 模拟用户ID，实际应该从登录状态中获取
-  const userId = 1;
+  const userId = 1
 
   // 从后端API获取用户信息
-  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.user.profile.replace('{userId}', userId)}`)
-    .then(response => {
+  axios
+    .get(`${API_CONFIG.baseURL}${API_CONFIG.user.profile.replace('{userId}', userId)}`)
+    .then((response) => {
       if (response.data.data) {
-        userInfo.value = response.data.data;
+        userInfo.value = response.data.data
       }
     })
-    .catch(error => {
-      console.error('加载用户信息失败:', error);
+    .catch((error) => {
+      console.error('加载用户信息失败:', error)
       // 使用默认数据作为 fallback
       userInfo.value = {
         name: '张三',
@@ -191,30 +227,30 @@ onMounted(() => {
         collections: '8',
         addresses: '5',
         defaultAddress: '公司'
-      };
-      ElMessage.error('加载用户信息失败，将显示默认数据');
-    });
-});
+      }
+      ElMessage.error('加载用户信息失败，将显示默认数据')
+    })
+})
 
 // 跳转到所有订单页面
 const goToAllOrders = () => {
-  router.push('/user/home/orders');
-};
+  router.push('/user/home/orders')
+}
 
 // 跳转到消费记录页面
 const goToConsumeHistory = () => {
-  router.push('/user/home/consume-history');
-};
+  router.push('/user/home/consume-history')
+}
 
 // 跳转到我的收藏页面
 const goToMyCollection = () => {
-  router.push('/user/home/my-collection');
-};
+  router.push('/user/home/my-collection')
+}
 
 // 跳转到地址管理页面
 const goToAddress = () => {
-  router.push('/user/home/address');
-};
+  router.push('/user/home/address')
+}
 
 // 充值功能
 const recharge = () => {
@@ -223,51 +259,51 @@ const recharge = () => {
     inputPattern: /^[1-9]\d*$/,
     inputValidator: (value) => {
       if (!value) {
-        return '请输入充值金额';
+        return '请输入充值金额'
       }
       if (Number(value) <= 0) {
-        return '充值金额必须大于0';
+        return '充值金额必须大于0'
       }
-      return true;
+      return true
     }
   })
-  .then(({ value }) => {
-    // 模拟充值成功
-    const newBalance = (Number(userInfo.value.wallet.balance) + Number(value)).toString();
-    userInfo.value.wallet.balance = newBalance;
+    .then(({ value }) => {
+      // 模拟充值成功
+      const newBalance = (Number(userInfo.value.wallet.balance) + Number(value)).toString()
+      userInfo.value.wallet.balance = newBalance
 
-    // 创建交易记录
-    const rechargeRecord = {
-      id: Date.now(),
-      date: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      type: 'recharge',
-      amount: Number(value),
-      description: '平台币充值',
-      status: 'success'
-    };
+      // 创建交易记录
+      const rechargeRecord = {
+        id: Date.now(),
+        date: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        type: 'recharge',
+        amount: Number(value),
+        description: '平台币充值',
+        status: 'success'
+      }
 
-    // 保存到交易历史
-    let history = localStorage.getItem('consumeHistory');
-    if (history) {
-      history = JSON.parse(history);
-      history.push(rechargeRecord);
-    } else {
-      history = [rechargeRecord];
-    }
-    localStorage.setItem('consumeHistory', JSON.stringify(history));
+      // 保存到交易历史
+      let history = localStorage.getItem('consumeHistory')
+      if (history) {
+        history = JSON.parse(history)
+        history.push(rechargeRecord)
+      } else {
+        history = [rechargeRecord]
+      }
+      localStorage.setItem('consumeHistory', JSON.stringify(history))
 
-    // 更新本地存储
-    localStorage.setItem('userInfo', JSON.stringify(userInfo.value));
+      // 更新本地存储
+      localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
 
-    // 跳转到消费记录页面查看交易
-    router.push('/user/home/consume-history');
+      // 跳转到消费记录页面查看交易
+      router.push('/user/home/consume-history')
 
-    ElMessage.success(`充值成功!已到账${value}平台币`);
-  })
-  .catch(() => {
-    ElMessage.info('已取消充值');
-  });
-};
+      ElMessage.success(`充值成功!已到账${value}平台币`)
+    })
+    .catch(() => {
+      ElMessage.info('已取消充值')
+    })
+}
 
 // 提现功能
 const withdraw = () => {
@@ -276,87 +312,133 @@ const withdraw = () => {
     inputPattern: /^[1-9]\d*$/,
     inputValidator: (value) => {
       if (!value) {
-        return '请输入提现金额';
+        return '请输入提现金额'
       }
-      const numValue = Number(value);
-      const balance = Number(userInfo.value.wallet.balance);
+      const numValue = Number(value)
+      const balance = Number(userInfo.value.wallet.balance)
 
       if (numValue <= 0) {
-        return '提现金额必须大于0';
+        return '提现金额必须大于0'
       }
 
       if (numValue > balance) {
-        return `提现金额不能超过余额${balance}平台币`;
+        return `提现金额不能超过余额${balance}平台币`
       }
 
-      return true;
+      return true
     }
   })
-  .then(({ value }) => {
-    // 模拟提现成功
-    const newBalance = (Number(userInfo.value.wallet.balance) - Number(value)).toString();
-    userInfo.value.wallet.balance = newBalance;
+    .then(({ value }) => {
+      // 模拟提现成功
+      const newBalance = (Number(userInfo.value.wallet.balance) - Number(value)).toString()
+      userInfo.value.wallet.balance = newBalance
 
-    // 创建交易记录
-    const withdrawRecord = {
-      id: Date.now(),
-      date: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      type: 'withdraw',
-      amount: Number(value),
-      description: '平台币提现',
-      status: 'success'
-    };
+      // 创建交易记录
+      const withdrawRecord = {
+        id: Date.now(),
+        date: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        type: 'withdraw',
+        amount: Number(value),
+        description: '平台币提现',
+        status: 'success'
+      }
 
-    // 保存到交易历史
-    let history = localStorage.getItem('consumeHistory');
-    if (history) {
-      history = JSON.parse(history);
-      history.push(withdrawRecord);
-    } else {
-      history = [withdrawRecord];
-    }
-    localStorage.setItem('consumeHistory', JSON.stringify(history));
+      // 保存到交易历史
+      let history = localStorage.getItem('consumeHistory')
+      if (history) {
+        history = JSON.parse(history)
+        history.push(withdrawRecord)
+      } else {
+        history = [withdrawRecord]
+      }
+      localStorage.setItem('consumeHistory', JSON.stringify(history))
 
-    // 更新本地存储
-    localStorage.setItem('userInfo', JSON.stringify(userInfo.value));
+      // 更新本地存储
+      localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
 
-    // 跳转到消费记录页面查看交易
-    router.push('/user/home/consume-history');
+      // 跳转到消费记录页面查看交易
+      router.push('/user/home/consume-history')
 
-    ElMessage.success(`提现成功!已转出${value}平台币`);
-  })
-  .catch(() => {
-    ElMessage.info('已取消提现');
-  });
-};
+      ElMessage.success(`提现成功!已转出${value}平台币`)
+    })
+    .catch(() => {
+      ElMessage.info('已取消提现')
+    })
+}
 
 // 跳转到联系客服页面
 const goToContact = () => {
-  router.push('/user/home/contact');
-};
+  router.push('/user/home/contact')
+}
 
 // 提交反馈建议
 const submitFeedback = () => {
-  ElMessage.success('反馈已提交，我们会尽快处理');
-};
+  ElMessage.success('反馈已提交，我们会尽快处理')
+}
 
 // 退出登录
 const logout = () => {
-  // 清除本地存储
-  localStorage.removeItem('isLoggedIn');
-  localStorage.removeItem('userInfo');
-  localStorage.removeItem('userAvatar');
+  // 弹出确认对话框
+  ElMessageBox.confirm('确认要退出登录吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(() => {
+      // 清除本地存储
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('userAvatar')
 
-  // 跳转到登录页面
-  router.push('/login');
-  ElMessage.success('已退出登录');
-};
+      // 跳转到登录页面
+      router.push('/login')
+      ElMessage.success('已退出登录')
+    })
+    .catch(() => {
+      // 取消退出登录
+      ElMessage.info('已取消退出登录')
+    })
+}
+
+// 导入qrcode库
+import QRCode from 'qrcode'
+
+// 分享对话框可见性
+const shareDialogVisible = ref(false)
+// 分享链接
+const shareLink = ref('')
+// 二维码数据URL
+const qrCodeDataUrl = ref('')
 
 // 分享功能
 const shareProfile = () => {
-  // 模拟分享功能
-  ElMessage.info('分享功能正在开发中');
-};
+  // 生成分享链接
+  const userId = 1 // 模拟用户ID，实际应该从登录状态中获取
+  shareLink.value = `${window.location.origin}/user/profile/${userId}`
+
+  // 生成二维码
+  QRCode.toDataURL(shareLink.value, (err, url) => {
+    if (err) {
+      console.error('生成二维码失败:', err)
+      qrCodeDataUrl.value = ''
+    } else {
+      qrCodeDataUrl.value = url
+    }
+  })
+
+  // 打开分享对话框
+  shareDialogVisible.value = true
+}
+
+// 复制分享链接
+const copyShareLink = async () => {
+  try {
+    await navigator.clipboard.writeText(shareLink.value)
+    ElMessage.success('分享链接已复制到剪贴板')
+  } catch (err) {
+    console.error('复制失败:', err)
+    ElMessage.error('复制失败，请手动复制')
+  }
+}
 </script>
 
 <style scoped>
@@ -478,7 +560,9 @@ const shareProfile = () => {
   border-radius: 12px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .order-stat-card:hover {
@@ -529,7 +613,7 @@ const shareProfile = () => {
 .stat-value {
   font-size: 18px;
   font-weight: bold;
-  color: #FF6B6B;
+  color: #ff6b6b;
 }
 
 .wallet-card {
@@ -691,5 +775,42 @@ const shareProfile = () => {
   background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
   border: none;
   color: #fff;
+}
+
+/* 分享对话框样式 */
+.share-content {
+  padding: 20px 0;
+}
+
+.share-link-section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.share-input {
+  margin-bottom: 15px;
+}
+
+.copy-btn {
+  width: 100%;
+}
+
+.qr-code-section {
+  margin-top: 25px;
+  padding-top: 25px;
+  border-top: 1px solid #eee;
+}
+
+.qr-code {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  display: block;
 }
 </style>

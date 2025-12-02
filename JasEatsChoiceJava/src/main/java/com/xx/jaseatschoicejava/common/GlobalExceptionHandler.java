@@ -3,8 +3,10 @@ package com.xx.jaseatschoicejava.common;
 import com.xx.jaseatschoicejava.exception.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * 全局异常处理类
@@ -28,6 +30,59 @@ public class GlobalExceptionHandler {
         logger.error("Business Exception: Code={}, Message={}", e.getCode(), e.getMessage());
         // 返回标准化的失败响应
         return ResponseResult.fail(e.getCode(), e.getMessage());
+    }
+
+    /**
+     * 处理方法参数类型不匹配异常
+     * 当前端传递的参数类型与后端方法参数类型不匹配时调用此方法
+     * 特别是处理将字符串"undefined"转换为Long类型失败的情况
+     * @param e 参数类型不匹配异常对象
+     * @return 标准化的响应结果
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseResult<?> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException e) {
+        // 记录异常日志
+        logger.error("MethodArgumentTypeMismatchException: Parameter={}, ExpectedType={}, Value={}",
+            e.getPropertyName(), e.getRequiredType().getSimpleName(), e.getValue());
+
+        // 处理"undefined"字符串的特殊情况
+        String value = String.valueOf(e.getValue());
+        if ("undefined".equals(value)) {
+            return ResponseResult.fail("400", "参数错误：商家ID不能为空或无效");
+        }
+
+        // 处理其他类型不匹配情况
+        return ResponseResult.fail("400", "参数类型错误：" + e.getPropertyName() + " 应是 " + e.getRequiredType().getSimpleName() + " 类型");
+    }
+
+    /**
+     * 处理数据完整性约束异常
+     * 当数据库操作违反数据完整性约束时调用此方法
+     * 如JSON格式错误、字段长度超限等
+     * @param e 数据完整性约束异常对象
+     * @return 标准化的响应结果
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseResult<?> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        // 记录异常日志
+        logger.error("DataIntegrityViolationException: {}", e.getMessage());
+
+        // 处理JSON格式错误的特殊情况
+        if (e.getMessage() != null && (e.getMessage().contains("JSON") || e.getMessage().contains("json"))) {
+            // Check for business_hours specific error
+            if (e.getMessage().contains("business_hours")) {
+                return ResponseResult.fail("400", "参数错误：营业时间格式无效，请确保为有效的JSON格式");
+            }
+            // Check for album specific error
+            if (e.getMessage().contains("album")) {
+                return ResponseResult.fail("400", "参数错误：店铺相册格式无效，请确保为有效的JSON格式");
+            }
+            // Generic JSON error
+            return ResponseResult.fail("400", "参数错误：JSON格式无效，请确保为有效的JSON格式");
+        }
+
+        // 处理其他数据完整性约束错误
+        return ResponseResult.fail("400", "参数错误：数据格式不符合要求");
     }
 
     /**

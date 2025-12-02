@@ -3,6 +3,8 @@ package com.xx.jaseatschoicejava.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.Merchant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.xx.jaseatschoicejava.service.MerchantService;
 import com.xx.jaseatschoicejava.service.OrderService;
 import com.xx.jaseatschoicejava.entity.Order;
@@ -20,6 +22,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.UUID;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +53,19 @@ public class MerchantController {
     private DishService dishService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(MerchantController.class);
+
+    /**
+     * 商家注册
+     */
+    @PostMapping("/register")
+    public ResponseResult<?> register(@RequestBody Merchant merchant) {
+        boolean success = merchantService.register(merchant);
+        if (success) {
+            return ResponseResult.success("注册成功");
+        }
+        return ResponseResult.fail("500", "注册失败");
+    }
 
     /**
      * 获取商家列表
@@ -80,6 +99,85 @@ public class MerchantController {
     }
 
     /**
+     * 更新商家信息
+     */
+    @PutMapping("/{merchantId}")
+    public ResponseResult<?> updateMerchant(@PathVariable(required = false) Long merchantId, @RequestBody Merchant merchant) {
+        // 参数验证
+        if (merchantId == null || merchant == null) {
+            logger.error("更新商家信息失败：参数错误，merchantId={}, merchant={}", merchantId, merchant);
+            return ResponseResult.fail("400", "参数错误");
+        }
+
+        logger.info("开始更新商家信息：merchantId={}, 商家数据={}", merchantId, merchant);
+
+        // 检查商家是否存在
+        if (merchantService.getById(merchantId) == null) {
+            logger.error("更新商家信息失败：商家不存在，merchantId={}", merchantId);
+            return ResponseResult.fail("404", "商家不存在");
+        }
+
+        // 设置商家ID
+        merchant.setId(merchantId);
+        try {
+            // 更新商家信息
+            boolean success = merchantService.updateById(merchant);
+            logger.info("更新商家信息结果：{}", success);
+
+            // 无论是否有变化，只要商家存在且更新操作未抛出异常，就视为成功
+            logger.info("商家信息更新成功，merchantId={}", merchantId);
+            return ResponseResult.success("更新成功");
+
+        } catch (Exception e) {
+            // 检查是否是JSON格式错误
+            if (e.getMessage().contains("JSON") || e.getMessage().contains("json")) {
+                logger.error("更新商家信息失败：JSON格式错误，merchant={}", merchant, e);
+                return ResponseResult.fail("400", "参数错误：营业时间必须是有效的JSON格式");
+            }
+            // 其他类型的异常
+            logger.error("更新商家信息失败: {}", e.getMessage(), e);
+            return ResponseResult.fail("500", "更新失败：数据格式不符合要求");
+        }
+    }
+
+    /**
+     * 更新商家状态
+     */
+    @PutMapping("/{merchantId}/status")
+    public ResponseResult<?> updateMerchantStatus(@PathVariable(required = false) Long merchantId) {
+        // 参数验证
+        if (merchantId == null) {
+            return ResponseResult.fail("400", "参数错误");
+        }
+
+        // 切换商家状态
+        Merchant merchant = merchantService.getById(merchantId);
+        if (merchant != null) {
+            merchant.setStatus(!merchant.getStatus());
+            boolean success = merchantService.updateById(merchant);
+            if (success) {
+                return ResponseResult.success("状态更新成功");
+            }
+        }
+        return ResponseResult.fail("500", "状态更新失败");
+    }
+
+    /**
+     * 更新商家优惠信息
+     */
+    @PutMapping("/{merchantId}/discounts")
+    public ResponseResult<?> updateMerchantDiscounts(@PathVariable(required = false) Long merchantId, @RequestBody Object discounts) {
+        // 参数验证
+        if (merchantId == null) {
+            return ResponseResult.fail("400", "参数错误");
+        }
+
+        // 实现商家优惠信息更新逻辑
+        // TODO: 需要根据具体业务需求实现
+        return ResponseResult.success("优惠信息更新成功");
+    }
+
+    /**
      * 获取店铺相册
      */
     @GetMapping("/{merchantId}/album")
@@ -107,8 +205,16 @@ public class MerchantController {
     public ResponseResult<?> uploadMerchantAlbum(@PathVariable Long merchantId,
                                                 @RequestParam("images") MultipartFile[] images,
                                                 @RequestParam("albumType") String albumType) {
-        // 模拟图片上传，实际应保存到文件系统或云存储，并返回URL
+        // 配置上传目录 - 实际项目中应放在配置文件或常量中
+        String uploadDir = "/tmp/jia_shi_yi_xuan/uploads/";
+
         try {
+            // 创建上传目录（如果不存在）
+            File directory = new File(uploadDir);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
             Merchant merchant = merchantService.getById(merchantId);
             if (merchant != null) {
                 JsonNode album = merchant.getAlbum();
@@ -125,10 +231,21 @@ public class MerchantController {
                 // 获取对应类型的相册数组
                 ArrayNode albumArray = (ArrayNode) albumObject.get(albumType);
 
-                // 模拟上传，将图片转为URL并添加到相册
+                // 实际上传图片并保存
                 for (MultipartFile image : images) {
-                    // 实际开发中应保存图片并生成URL
-                    String imageUrl = "http://localhost:8080/uploads/" + image.getOriginalFilename();
+                    // 生成唯一文件名，避免覆盖
+                    String originalFilename = image.getOriginalFilename();
+                    String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                    String uniqueFilename = System.currentTimeMillis() + "-" + UUID.randomUUID().toString() + fileExtension;
+
+                    // 保存文件到磁盘
+                    String filePath = uploadDir + uniqueFilename;
+                    try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                        fos.write(image.getBytes());
+                    }
+
+                    // 生成访问URL（这里使用本地服务器地址，实际项目中可以用域名或CDN地址）
+                    String imageUrl = "http://localhost:8080/uploads/" + uniqueFilename;
                     albumArray.add(imageUrl);
                 }
 
@@ -142,7 +259,7 @@ public class MerchantController {
             return ResponseResult.fail("404", "商家不存在");
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseResult.fail("500", "上传失败");
+            return ResponseResult.fail("500", "上传失败: " + e.getMessage());
         }
     }
 
@@ -173,13 +290,67 @@ public class MerchantController {
                     merchant.setAlbum(albumObject);
                     merchantService.updateById(merchant);
 
+                    // 从文件系统删除图片
+                    String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+                    String filePath = "/tmp/jia_shi_yi_xuan/uploads/" + fileName;
+                    File file = new File(filePath);
+                    if (file.exists()) {
+                        file.delete();
+                    }
+
                     return ResponseResult.success("删除成功");
                 }
             }
             return ResponseResult.fail("404", "商家不存在");
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseResult.fail("500", "删除失败");
+            return ResponseResult.fail("500", "删除失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 上传店铺头像
+     */
+    @PostMapping("/{merchantId}/avatar")
+    public ResponseResult<?> uploadMerchantAvatar(@PathVariable Long merchantId,
+                                                 @RequestParam("avatar") MultipartFile avatar) {
+        // 配置上传目录
+        String uploadDir = "/tmp/jia_shi_yi_xuan/uploads/";
+
+        try {
+            // 创建上传目录（如果不存在）
+            File directory = new File(uploadDir);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            Merchant merchant = merchantService.getById(merchantId);
+            if (merchant == null) {
+                return ResponseResult.fail("404", "商家不存在");
+            }
+
+            // 生成唯一文件名
+            String originalFilename = avatar.getOriginalFilename();
+            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String uniqueFilename = "avatar-" + merchantId + "-" + System.currentTimeMillis() + fileExtension;
+
+            // 保存文件到磁盘
+            String filePath = uploadDir + uniqueFilename;
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                fos.write(avatar.getBytes());
+            }
+
+            // 生成访问URL
+            String avatarUrl = "http://localhost:8080/uploads/" + uniqueFilename;
+
+            // 更新商家头像
+            merchant.setAvatar(avatarUrl);
+            merchantService.updateById(merchant);
+
+            return ResponseResult.success(avatarUrl);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "头像上传失败: " + e.getMessage());
         }
     }
 

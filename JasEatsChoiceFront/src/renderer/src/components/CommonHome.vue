@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, provide } from "vue";
 import {
 	Search,
 	Menu,
@@ -15,6 +15,7 @@ import {
 	HomeFilled,
 	User,
 } from "@element-plus/icons-vue";
+import { decodeJwt } from '../utils/api.js';
 
 const router = useRouter();
 
@@ -23,17 +24,26 @@ const navigateTo = (path) => {
 	router.push(path);
 };
 
-// 模拟用户信息
+// 用户信息
 const userInfo = ref({ name: "用户端", avatar: "👤", realAvatar: "https://picsum.photos/id/1005/150/150" });
 
 // 用户角色
 const userRole = ref("user"); // 'user' 或 'merchant'
 
+// 是否已经注册商家端
+const isMerchantRegistered = ref(false);
+
+// 提供更新用户信息的方法给子组件
+const updateSidebarAvatar = (avatarUrl) => {
+	userInfo.value.realAvatar = avatarUrl;
+};
+provide('updateSidebarAvatar', updateSidebarAvatar);
+
 // 预定义菜单数据
 const menuData = {
 	// 用户端菜单 - 按功能模块重新排序：首页 → 饮食服务 → 推荐/查找 → 个人中心 → 消息交流 → 设置
 	user: [
-		{ index: "1", name: "用户首页", icon: HomeFilled, path: "/user/home" }, // 首页入口
+		{ index: "1", name: "首页", icon: HomeFilled, path: "/user/home" }, // 首页入口
 		{ index: "4", name: "今日食谱", icon: Calendar, path: "/user/home/today-recipe" }, // 饮食服务模块
 		{
 			index: "5",
@@ -183,6 +193,13 @@ onMounted(() => {
 
 		// 2. Then check localStorage
 		const savedRole = localStorage.getItem("currentRole");
+		const userInfoStr = localStorage.getItem("userInfo");
+
+		// Check if user has registered as merchant
+		if (userInfoStr) {
+			const userInfoData = JSON.parse(userInfoStr);
+			isMerchantRegistered.value = userInfoData?.role === "merchant" || savedRole === "merchant";
+		}
 
 		// 3. Use detected role from route if route is for merchant, otherwise use saved or default
 		if (savedRole && (detectedRole === "user" || router.currentRoute.path === "/")) {
@@ -193,13 +210,35 @@ onMounted(() => {
 
 		// Update user info
 		if (userRole.value === "merchant") {
-			userInfo.value = { name: "商户端", avatar: "🏪", realAvatar: "https://picsum.photos/id/200/150/150" };
+			// 从localStorage获取商家头像，如果没有则使用默认
+			const savedMerchantAvatar = localStorage.getItem('merchantAvatar');
+			userInfo.value = {
+				name: "商户端",
+				avatar: "🏪",
+				realAvatar: savedMerchantAvatar || "https://picsum.photos/id/200/150/150"
+			};
 		} else if (userRole.value === "user") {
-			userInfo.value = { name: "用户端", avatar: "👤", realAvatar: "https://picsum.photos/id/1005/150/150" };
+			// 从JWT令牌获取实际用户名
+			const token = localStorage.getItem('token');
+			let username = "用户端";
+
+			if (token) {
+				const decodedToken = decodeJwt(token);
+				if (decodedToken && decodedToken.username) {
+					username = decodedToken.username;
+				}
+			}
+
+			userInfo.value = {
+				name: username,
+				avatar: "👤",
+				realAvatar: "https://picsum.photos/id/1005/150/150"
+			};
 		}
 
 		// Save the final role to localStorage
 		localStorage.setItem("currentRole", userRole.value);
+
 
 		console.log("恢复角色成功:", userRole.value);
 
@@ -242,9 +281,30 @@ watch(
 
 			// Update user info
 			if (userRole.value === "merchant") {
-				userInfo.value = { name: "商户端", avatar: "🏪", realAvatar: "https://picsum.photos/id/200/150/150" };
+				// 从localStorage获取商家头像，如果没有则使用默认
+				const savedMerchantAvatar = localStorage.getItem('merchantAvatar');
+				userInfo.value = {
+					name: "商户端",
+					avatar: "🏪",
+					realAvatar: savedMerchantAvatar || "https://picsum.photos/id/200/150/150"
+				};
 			} else if (userRole.value === "user") {
-				userInfo.value = { name: "用户端", avatar: "👤", realAvatar: "https://picsum.photos/id/1005/150/150" };
+				// 从JWT令牌获取实际用户名
+				const token = localStorage.getItem('token');
+				let username = "用户端";
+
+				if (token) {
+					const decodedToken = decodeJwt(token);
+					if (decodedToken && decodedToken.username) {
+						username = decodedToken.username;
+					}
+				}
+
+				userInfo.value = {
+					name: username,
+					avatar: "👤",
+					realAvatar: "https://picsum.photos/id/1005/150/150"
+				};
 			}
 
 			// Save the new role to localStorage
@@ -310,7 +370,8 @@ const handleSearch = (value) => {
 				</template>
 			</el-input>
 			<div class="user-info">
-				<el-button type="text" class="identity-switch" @click="toggleRole">
+				<!-- 商家端已注册：显示角色切换按钮 -->
+				<el-button v-if="isMerchantRegistered" type="text" class="identity-switch" @click="toggleRole">
 					<span
 						:class="['user-icon', userRole === 'user' ? 'icon-enlarged' : '']"
 						>👤</span
@@ -322,6 +383,11 @@ const handleSearch = (value) => {
 						]"
 						>🏪</span
 					>
+				</el-button>
+				<!-- 商家端未注册：显示注册跳转图标 -->
+				<el-button v-else type="text" @click="navigateTo('/merchant/register')">
+					<el-icon><Shop /></el-icon>
+					<span>商家注册</span>
 				</el-button>
 			</div>
 		</el-header>

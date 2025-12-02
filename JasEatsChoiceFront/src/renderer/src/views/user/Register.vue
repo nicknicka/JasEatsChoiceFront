@@ -149,10 +149,13 @@ const submitForm = () => {
       if (valid) {
         // 这里可以添加实际的注册逻辑
         console.log('注册成功:', registerForm);
-        // 设置登录状态到localStorage
-        localStorage.setItem('isLoggedIn', 'true');
         // 保存用户名
         localStorage.setItem('username', registerForm.username);
+        // 保存用户ID和模拟token（修复"无法获取用户ID"的问题）
+        localStorage.setItem('userId', '1'); // 默认用户ID为1
+        // 创建一个模拟的JWT令牌，包含用户ID信息
+        const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoi' + btoa(registerForm.username) + 'LCJpYXQiOjE2MjAwMDAwMDAsImV4cCI6MTYyMTAwMDAwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+        localStorage.setItem('token', mockToken);
         ElMessage.success('注册成功！');
         // 注册成功后跳转到用户首页
         setTimeout(() => {

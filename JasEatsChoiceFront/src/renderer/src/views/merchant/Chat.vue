@@ -1,7 +1,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import router from '../../router/index.js';
 import api from '../../utils/api.js';
 import { decodeJwt } from '../../utils/api.js';
 
@@ -20,7 +21,25 @@ onMounted(() => {
       userId = decodedToken.userId;
     }
   } else {
-    ElMessage.error('无法获取用户ID，请重新登录');
+    // 无法获取用户ID，弹出提示框要求重新登录
+    ElMessageBox.alert('无法获取用户ID，请重新登录', '身份验证失败', {
+      confirmButtonText: '重新登录',
+      type: 'error',
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+    })
+    .then(() => {
+      // 用户点击重新登录按钮，清除本地存储并跳转到登录页面
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentRole');
+      router.push('/login');
+    })
+    .catch(() => {
+      // 点击取消按钮的处理，也可以跳转到登录页面
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentRole');
+      router.push('/login');
+    });
   }
 
   // 从后端API获取会话列表

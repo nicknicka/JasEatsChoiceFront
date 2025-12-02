@@ -358,56 +358,32 @@ const rejectRecommendation = (item) => {
   ElMessage.success('已标记为不感兴趣');
 };
 
-// 页面加载时获取定位和节日推荐
-onMounted(() => {
+// 从后端获取推荐数据
+const fetchRecommendationsFromBackend = async () => {
+  try {
+    const response = await axios.get(API_CONFIG.baseURL + API_CONFIG.recipe.recommend);
+    const data = response.data;
+
+    // 假设后端返回的数据结构与前端需要的一致，如果不一致需要转换
+    recommendations.value = data;
+    return data;
+  } catch (error) {
+    console.error('获取推荐数据失败:', error);
+    ElMessage.error('获取推荐数据失败');
+    return null;
+  }
+};
+
+// 页面加载时获取定位、节日推荐和后端推荐数据
+onMounted(async () => {
   getCurrentLocation();
   addFestivalRecommendations();
   updateRecommendationsByWeatherAndTime();
+  await fetchRecommendationsFromBackend();
 });
 
 // 我的推荐数据
-const recommendations = ref([
-  {
-    id: 1,
-    name: '健康轻食套餐',
-    type: '午餐',
-    calories: 420,
-    tags: ['低卡', '高纤维', '蛋白质丰富'],
-    reason: '基于您的卡路里目标和饮食偏好推荐',
-    rating: 4.8,
-    image: '🥗'
-  },
-  {
-    id: 2,
-    name: '营养早餐组合',
-    type: '早餐',
-    calories: 380,
-    tags: ['营养均衡', '能量持久'],
-    reason: '适合您的早起时间和健康需求',
-    rating: 4.6,
-    image: '🥪'
-  },
-  {
-    id: 3,
-    name: '轻脂晚餐',
-    type: '晚餐',
-    calories: 320,
-    tags: ['低脂肪', '易消化'],
-    reason: '帮助您保持每日卡路里摄入平衡',
-    rating: 4.7,
-    image: '🍲'
-  },
-  {
-    id: 4,
-    name: '健身补充餐',
-    type: '加餐',
-    calories: 280,
-    tags: ['高蛋白', '增肌'],
-    reason: '适合您的健身计划',
-    rating: 4.9,
-    image: '🥤'
-  }
-]);
+const recommendations = ref([]);
 </script>
 
 <template>
@@ -415,7 +391,7 @@ const recommendations = ref([
     <h2>我的推荐</h2>
 
     <!-- 推荐列表 -->
-    <div class="recommend-grid">
+    <div class="recommend-grid" v-if="recommendations.length > 0">
       <el-card
         v-for="item in recommendations"
         :key="item.id"
@@ -464,6 +440,14 @@ const recommendations = ref([
           <el-button type="text" size="small" @click="rejectRecommendation(item)">不感兴趣</el-button>
         </div>
       </el-card>
+    </div>
+
+    <!-- 空状态提示 -->
+    <div class="empty-state" v-else>
+      <div class="empty-icon">🥺</div>
+      <div class="empty-text">暂无推荐数据</div>
+      <div class="empty-subtext">系统正在努力为您生成个性化推荐</div>
+      <el-button type="primary" size="small" @click="fetchRecommendationsFromBackend">重试获取推荐</el-button>
     </div>
   </div>
 </template>
@@ -545,6 +529,32 @@ const recommendations = ref([
         }
       }
     }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  margin-top: 20px;
+
+  .empty-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+  }
+
+  .empty-text {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  .empty-subtext {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 30px;
   }
 }
 </style>

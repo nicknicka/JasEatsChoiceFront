@@ -35,13 +35,45 @@ public class UserController {
     /**
      * 用户登录
      */
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     @PostMapping("/login")
-    public ResponseResult<?> login(@RequestBody User loginUser) {
-        String token = userService.login(loginUser.getPhone(), loginUser.getPassword());
-        if (token != null) {
-            return ResponseResult.success(token);
+    public ResponseResult<?> login(@RequestBody LoginRequest loginRequest) {
+        try {
+            // 验证验证码
+            if (loginRequest.getCaptcha() == null || loginRequest.getCheckCodeKey() == null) {
+                return ResponseResult.fail("400", "验证码不能为空");
+            }
+
+            // 从Redis获取验证码
+            String redisCaptcha = redisTemplate.opsForValue().get("captcha:" + loginRequest.getCheckCodeKey());
+            if (redisCaptcha == null) {
+                return ResponseResult.fail("400", "验证码已过期");
+            }
+
+            // 比较验证码
+            if (!loginRequest.getCaptcha().equalsIgnoreCase(redisCaptcha)) {
+                return ResponseResult.fail("400", "验证码错误");
+            }
+
+            // 验证码验证通过后，删除Redis中的验证码
+            redisTemplate.delete("captcha:" + loginRequest.getCheckCodeKey());
+
+            // 兼容处理：如果前端发送的是username，将其作为phone处理
+            String phone = loginRequest.getPhone() != null ? loginRequest.getPhone() : loginRequest.getUsername();
+            String password = loginRequest.getPassword();
+
+            // 调用登录服务
+            String token = userService.login(phone, password);
+            if (token != null) {
+                return ResponseResult.success(token);
+            }
+            return ResponseResult.fail("500", "手机号或密码错误");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "登录失败");
         }
-        return ResponseResult.fail("500", "手机号或密码错误");
     }
 
     /**

@@ -1,5 +1,6 @@
 
 <script setup>
+import api from '../../utils/api';
 import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { use } from 'echarts/core';

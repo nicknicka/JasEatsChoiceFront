@@ -33,7 +33,8 @@ export const API_CONFIG = {
     comments: '/api/v1/merchant/{merchantId}/comments', // 商家评价接口
     album: '/api/v1/merchant/{merchantId}/album', // 商家相册接口
     discounts: '/api/v1/merchant/{merchantId}/discounts', // 商家优惠接口
-    businessOverview: '/api/v1/merchant/{merchantId}/business-overview' // 营业概览接口
+    businessOverview: '/api/v1/merchant/{merchantId}/business-overview', // 营业概览接口
+    avatar: '/api/v1/merchant/{merchantId}/avatar' // 商家头像接口
   },
 
   // 菜品API端点

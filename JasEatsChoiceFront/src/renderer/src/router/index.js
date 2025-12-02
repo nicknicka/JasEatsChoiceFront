@@ -40,6 +40,7 @@ const MerchantChat = () => import('../views/merchant/Chat.vue') // 商家聊天
 const MerchantStatistics = () => import('../views/merchant/Statistics.vue') // 经营统计
 const MerchantOrderDetail = () => import('../views/merchant/OrderDetail.vue') // 订单详情
 const MerchantComments = () => import('../views/merchant/Comments.vue') // 商家评价中心
+const MerchantRegister = () => import('../views/merchant/MerchantRegister.vue') // 商家注册
 
 // 创建路由实例
 const router = createRouter({
@@ -56,7 +57,13 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: Register,
-      meta: { title: '佳食宜选-注册' }
+      meta: { title: '佳食宜选-用户注册' }
+    },
+    {
+      path: '/merchant/register',
+      name: 'merchant-register',
+      component: MerchantRegister,
+      meta: { title: '佳食宜选-商户注册' }
     },
     // 根路径默认跳转到登录页面
     {
@@ -314,26 +321,16 @@ router.beforeEach((to, from, next) => {
     document.title = to.meta.title
   }
 
-  // 检查用户是否已登录
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
-  // 定义需要登录才能访问的受保护路由前缀
-  const protectedPaths = ['/user/', '/merchant/']
+  // 注释掉开发环境自动清除登录信息的代码，否则会导致登录后无法跳转
+  // 检查是否是开发环境，如果是，自动清除登录信息，方便调试
+  // if (process.env.NODE_ENV === 'development') {
+  //   localStorage.removeItem('token');
+  //   localStorage.removeItem('isLoggedIn');
+  //   localStorage.removeItem('currentRole');
+  // }
 
-  // 检查当前路由是否为受保护路由
-  const isProtectedRoute = protectedPaths.some((path) => to.path.startsWith(path))
-  if (isProtectedRoute && !isLoggedIn) {
-    // 如果未登录且访问受保护路由，跳转到登录页面
-    next('/login')
-  } else {
-    // 如果已登录且访问登录页面，根据当前角色跳转到对应首页
-    if (to.path === '/login' && isLoggedIn) {
-      const currentRole = localStorage.getItem('currentRole') || 'user';
-      next(currentRole === 'merchant' ? '/merchant/home' : '/user/home')
-    } else {
-      // 其他情况正常跳转
-      next()
-    }
-  }
+  // 移除路由保护逻辑，直接跳转
+  next()
 })
 
 export default router

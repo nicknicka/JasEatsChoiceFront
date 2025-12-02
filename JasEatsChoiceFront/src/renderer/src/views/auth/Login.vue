@@ -15,7 +15,6 @@ const handleLogin = () => {
   console.log('Logging in with:', loginForm);
 
   // For demo purposes, we'll just simulate a successful login and redirect to user home
-  localStorage.setItem('isLoggedIn', 'true');
   router.push('/user/home');
 };
 </script>
