@@ -171,7 +171,9 @@
         <el-form-item label="验证码">
           <div style="display: flex;">
             <el-input v-model="phoneForm.verificationCode" placeholder="请输入验证码" style="margin-right: 10px;" />
-            <el-button type="primary">获取验证码</el-button>
+            <el-button type="primary" @click="sendSmsCode" :disabled="smsCodeCountdown > 0">
+              {{ smsCodeCountdown > 0 ? `${smsCodeCountdown}秒后重新发送` : '获取验证码' }}
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -192,7 +194,9 @@
         <el-form-item label="验证码">
           <div style="display: flex;">
             <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="margin-right: 10px;" />
-            <el-button type="primary">获取验证码</el-button>
+            <el-button type="primary" @click="sendEmailCode" :disabled="emailCodeCountdown > 0">
+              {{ emailCodeCountdown > 0 ? `${emailCodeCountdown}秒后重新发送` : '获取验证码' }}
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -228,7 +232,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import { ElMessage, ElDialog, ElInput, ElForm, ElFormItem } from 'element-plus';
 import api, { decodeJwt } from '../../utils/api.js';
 import { API_CONFIG } from '../../config/index.js';
@@ -274,6 +278,10 @@ const emailForm = ref({
   email: '',
   verificationCode: ''
 });
+
+// Verification code countdowns
+const smsCodeCountdown = ref(0);
+const emailCodeCountdown = ref(0);
 
 const passwordForm = ref({
   oldPassword: '',
@@ -392,6 +400,9 @@ const updateTheme = () => {
 };
 
 // Avatar upload functionality
+// Get the update function from CommonHome.vue
+const updateSidebarAvatar = inject('updateSidebarAvatar');
+
 const handleAvatarClick = () => {
   document.getElementById('avatar-upload').click();
 };
@@ -401,41 +412,146 @@ const handleAvatarUpload = (event) => {
   if (file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      userInfo.value.avatarUrl = e.target.result;
-      localStorage.setItem('userAvatar', userInfo.value.avatarUrl);
+      const newAvatarUrl = e.target.result;
+
+      // Update local user info
+      userInfo.value.avatarUrl = newAvatarUrl;
+
+      // Update sidebar avatar
+      if (updateSidebarAvatar) {
+        updateSidebarAvatar(newAvatarUrl);
+      }
+
+      // Save to localStorage
+      localStorage.setItem('userAvatar', newAvatarUrl);
+
       ElMessage.success('头像已更换');
     };
     reader.readAsDataURL(file);
   }
 };
 
+// Handle send SMS verification code
+const sendSmsCode = () => {
+  const phone = phoneForm.value.phone;
+  if (!phone) {
+    ElMessage.warning('请输入手机号');
+    return;
+  }
+
+  // Call backend API to send SMS code
+  api.post(`${API_CONFIG.user.sendSmsCode}`, { phone })
+    .then(response => {
+      if (response.success) {
+        ElMessage.success('验证码已发送');
+        // Start countdown
+        smsCodeCountdown.value = 60;
+        const timer = setInterval(() => {
+          smsCodeCountdown.value--;
+          if (smsCodeCountdown.value <= 0) {
+            clearInterval(timer);
+          }
+        }, 1000);
+      } else {
+        ElMessage.error(response.message || '发送失败');
+      }
+    })
+    .catch(error => {
+      ElMessage.error(error.message || '发送失败');
+    });
+};
+
 // Handle edit phone
 const handleEditPhone = () => {
   editPhoneDialogVisible.value = true;
+  // Auto-fill current phone number
+  phoneForm.value.phone = userInfo.value.phone;
 };
 
 const submitPhoneEdit = () => {
   if (phoneForm.value.phone && phoneForm.value.verificationCode) {
-    // In real app: call API to update phone
-    ElMessage.success('手机号已修改');
-    editPhoneDialogVisible.value = false;
-    phoneForm.value = { phone: '', verificationCode: '' };
+    // Call backend API to update phone number
+    api.put(`${API_CONFIG.user.profile.replace('{userId}', userInfo.value.id)}`, {
+      phone: phoneForm.value.phone,
+      verificationCode: phoneForm.value.verificationCode
+    })
+    .then(response => {
+      if (response.success) {
+        ElMessage.success('手机号已修改');
+        // Update local user info
+        userInfo.value.phone = phoneForm.value.phone;
+        editPhoneDialogVisible.value = false;
+        phoneForm.value = { phone: '', verificationCode: '' };
+      } else {
+        ElMessage.error(response.message || '手机号修改失败');
+      }
+    })
+    .catch(error => {
+      ElMessage.error(error.message || '手机号修改失败');
+    });
   } else {
     ElMessage.warning('请填写完整信息');
   }
 };
 
+// Handle send email verification code
+const sendEmailCode = () => {
+  const email = emailForm.value.email;
+  if (!email) {
+    ElMessage.warning('请输入邮箱地址');
+    return;
+  }
+
+  // Call backend API to send email code
+  api.post(`${API_CONFIG.user.sendEmailCode}`, { email })
+    .then(response => {
+      if (response.success) {
+        ElMessage.success('验证码已发送');
+        // Start countdown
+        emailCodeCountdown.value = 60;
+        const timer = setInterval(() => {
+          emailCodeCountdown.value--;
+          if (emailCodeCountdown.value <= 0) {
+            clearInterval(timer);
+          }
+        }, 1000);
+      } else {
+        ElMessage.error(response.message || '发送失败');
+      }
+    })
+    .catch(error => {
+      ElMessage.error(error.message || '发送失败');
+    });
+};
+
 // Handle edit email
 const handleEditEmail = () => {
   editEmailDialogVisible.value = true;
+  // Auto-fill current email
+  emailForm.value.email = userInfo.value.email;
 };
 
 const submitEmailEdit = () => {
   if (emailForm.value.email && emailForm.value.verificationCode) {
-    // In real app: call API to update email
-    ElMessage.success('邮箱已修改');
-    editEmailDialogVisible.value = false;
-    emailForm.value = { email: '', verificationCode: '' };
+    // Call backend API to update email
+    api.put(`${API_CONFIG.user.profile.replace('{userId}', userInfo.value.id)}`, {
+      email: emailForm.value.email,
+      verificationCode: emailForm.value.verificationCode
+    })
+    .then(response => {
+      if (response.success) {
+        ElMessage.success('邮箱已修改');
+        // Update local user info
+        userInfo.value.email = emailForm.value.email;
+        editEmailDialogVisible.value = false;
+        emailForm.value = { email: '', verificationCode: '' };
+      } else {
+        ElMessage.error(response.message || '邮箱修改失败');
+      }
+    })
+    .catch(error => {
+      ElMessage.error(error.message || '邮箱修改失败');
+    });
   } else {
     ElMessage.warning('请填写完整信息');
   }
@@ -565,6 +681,6 @@ const submitFeedback = () => {
 }
 
 .settings-container .user-avatar {
-  background-color: #6C5CE7;
+  background-color: transparent; /* 移除额外的背景颜色 */
 }
 </style>

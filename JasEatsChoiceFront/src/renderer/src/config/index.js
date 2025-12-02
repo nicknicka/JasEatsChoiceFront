@@ -15,7 +15,9 @@ export const API_CONFIG = {
   user: {
     login: '/api/v1/users/login', // 登录接口
     profile: '/api/v1/users/{userId}', // 用户信息接口
-    preferences: '/api/v1/users/{userId}/preferences' // 用户偏好接口
+    preferences: '/api/v1/users/{userId}/preferences', // 用户偏好接口
+    sendSmsCode: '/api/v1/users/send-sms-code', // 发送手机验证码接口
+    sendEmailCode: '/api/v1/users/send-email-code' // 发送邮箱验证码接口
   },
 
   // 食谱API端点

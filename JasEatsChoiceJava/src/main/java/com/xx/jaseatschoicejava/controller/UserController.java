@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 用户控制器
@@ -104,6 +105,46 @@ public class UserController {
         preferences.put("allergies", new ArrayList<>());
 
         return ResponseResult.success(preferences);
+    }
+
+    /**
+     * 发送手机验证码
+     */
+    @PostMapping("/send-sms-code")
+    public ResponseResult<?> sendSmsCode(@RequestBody Map<String, String> request) {
+        String phone = request.get("phone");
+        if (phone == null || phone.isEmpty()) {
+            return ResponseResult.fail("400", "手机号不能为空");
+        }
+
+        // TODO: Implement actual SMS sending logic here
+        // For demonstration, generate a random 6-digit code
+        String code = String.format("%06d", (int)(Math.random() * 1000000));
+
+        // Store code in Redis with 5 minutes expiration
+        redisTemplate.opsForValue().set("sms-code:" + phone, code, 5, TimeUnit.MINUTES);
+
+        return ResponseResult.success("手机验证码已发送");
+    }
+
+    /**
+     * 发送邮箱验证码
+     */
+    @PostMapping("/send-email-code")
+    public ResponseResult<?> sendEmailCode(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isEmpty()) {
+            return ResponseResult.fail("400", "邮箱地址不能为空");
+        }
+
+        // TODO: Implement actual email sending logic here
+        // For demonstration, generate a random 6-digit code
+        String code = String.format("%06d", (int)(Math.random() * 1000000));
+
+        // Store code in Redis with 5 minutes expiration
+        redisTemplate.opsForValue().set("email-code:" + email, code, 5, TimeUnit.MINUTES);
+
+        return ResponseResult.success("邮箱验证码已发送");
     }
 
     /**

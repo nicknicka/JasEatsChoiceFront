@@ -300,10 +300,12 @@ watch(
 					}
 				}
 
+				// 从localStorage获取用户头像
+				const savedUserAvatar = localStorage.getItem('userAvatar');
 				userInfo.value = {
 					name: username,
 					avatar: "👤",
-					realAvatar: "https://picsum.photos/id/1005/150/150"
+					realAvatar: savedUserAvatar || "https://picsum.photos/id/1005/150/150"
 				};
 			}
 
@@ -505,7 +507,7 @@ const handleSearch = (value) => {
 		border-bottom: 1px solid #eee;
 
 		.user-avatar {
-			background-color: #ff6b6b;
+			background-color: transparent; /* 移除额外的背景颜色 */
 		}
 
 		.username {
