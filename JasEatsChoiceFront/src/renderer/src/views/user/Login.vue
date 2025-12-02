@@ -204,7 +204,7 @@ const submitForm = async () => {
       if (valid) {
         try {
           // 实际登录逻辑 - 发送用户名、密码、验证码和验证码key到后端
-          const response = await axios.post(`${API_CONFIG.baseURL}/login`, {
+          const response = await axios.post(`${API_CONFIG.baseURL}${API_CONFIG.user.login}`, {
             username: loginForm.username,
             password: loginForm.password,
             captcha: loginForm.captcha,
@@ -212,11 +212,11 @@ const submitForm = async () => {
           })
 
           // 登录成功处理
-          const { data } = response.data
+          const token = response.data.data // 后端直接返回token字符串
           // 保存用户信息到localStorage
           localStorage.setItem('username', loginForm.username)
-          localStorage.setItem('userId', data.userId || '1')
-          localStorage.setItem('token', data.token)
+          localStorage.setItem('userId', '1') // 后端未返回userId，暂时使用默认值
+          localStorage.setItem('token', token)
 
           // 保存账号信息
           if (rememberPassword.value) {

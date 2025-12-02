@@ -1,9 +1,11 @@
 package com.xx.jaseatschoicejava.controller;
 
 import com.xx.jaseatschoicejava.common.ResponseResult;
+import com.xx.jaseatschoicejava.entity.LoginRequest;
 import com.xx.jaseatschoicejava.entity.User;
 import com.xx.jaseatschoicejava.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
