@@ -31,15 +31,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * User login, return JWT token if successful
-     * @param phone Phone number
+     * @param account Login account (phone number)
      * @param password Password
      * @return JWT token if successful, null otherwise
      */
     @Override
-public String login(String phone, String password) {
-        // Find user by phone
+    public String login(String account, String password) {
+        // In our system, login account is always phone number
         User user = lambdaQuery()
-                .eq(User::getPhone, phone)
+                .eq(User::getPhone, account)
                 .one();
 
         // Check if user exists and password is correct

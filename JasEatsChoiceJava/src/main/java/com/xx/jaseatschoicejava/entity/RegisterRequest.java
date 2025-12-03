@@ -3,14 +3,12 @@ package com.xx.jaseatschoicejava.entity;
 import lombok.Data;
 
 /**
- * 登录请求参数
+ * 注册请求参数
  */
 @Data
-public class LoginRequest {
-
-
+public class RegisterRequest {
     /**
-     * 手机号（兼容之前的登录方式）
+     * 手机号码
      */
     private String phone;
 
@@ -29,6 +27,8 @@ public class LoginRequest {
      */
     private String checkCodeKey;
 
-
-
+    /**
+     * 昵称
+     */
+    private String nickname;
 }

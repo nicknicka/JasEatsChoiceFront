@@ -4,15 +4,12 @@
       <h2 class="login-title">用户登录</h2>
 
       <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-width="80px">
-        <el-form-item label="用户名" prop="username">
-          <el-autocomplete
-            v-model="loginForm.username"
-            :fetch-suggestions="querySearch"
-            placeholder="请输入用户名"
+        <el-form-item label="手机号" prop="phone">
+          <el-input
+            v-model="loginForm.phone"
+            placeholder="请输入手机号"
             clearable
             size="large"
-            @select="handleUsernameChange"
-            @input="handleUsernameChange"
           />
         </el-form-item>
 
@@ -116,7 +113,7 @@ const router = useRouter()
 
 // 登录表单数据
 const loginForm = reactive({
-  username: '',
+  phone: '',
   password: '',
   captcha: ''
 })
@@ -129,7 +126,10 @@ const rememberPassword = ref(false)
 
 // 表单验证规则
 const loginRules = reactive({
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3456789]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+  ],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
   captcha: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
 })
@@ -219,7 +219,7 @@ const submitForm = async () => {
         try {
           // 实际登录逻辑 - 发送用户名、密码、验证码和验证码key到后端
           const response = await axios.post(`${API_CONFIG.baseURL}${API_CONFIG.user.login}`, {
-            username: loginForm.username,
+            phone: loginForm.phone,
             password: loginForm.password,
             captcha: loginForm.captcha,
             checkCodeKey: checkCodeKey.value

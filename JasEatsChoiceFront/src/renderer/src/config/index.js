@@ -14,6 +14,7 @@ export const API_CONFIG = {
   // 用户API端点
   user: {
     login: '/api/v1/users/login', // 登录接口
+    register: '/api/v1/users/register', // 注册接口
     profile: '/api/v1/users/{userId}', // 用户信息接口
     preferences: '/api/v1/users/{userId}/preferences', // 用户偏好接口
     sendSmsCode: '/api/v1/users/send-sms-code', // 发送手机验证码接口

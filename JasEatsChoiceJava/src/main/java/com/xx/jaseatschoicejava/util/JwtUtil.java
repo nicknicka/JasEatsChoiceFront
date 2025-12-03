@@ -2,8 +2,9 @@ package com.xx.jaseatschoicejava.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.SignatureAlgorithm;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
@@ -12,8 +13,11 @@ import java.util.Map;
 
 public class JwtUtil {
 
-    // Use a simple secret key string for simplicity (in production, use a secure key management system)
-    private static final Key SECRET_KEY = Keys.hmacShaKeyFor("jaseatschoice_secret_key_123456789012345678901234567890".getBytes(StandardCharsets.UTF_8));
+    // 使用原生JCE创建HMAC密钥，避免Keys.hmacShaKeyFor的类加载问题
+    private static final Key SECRET_KEY = new SecretKeySpec(
+        "jaseatschoice_secret_key_123456789012345678901234567890".getBytes(StandardCharsets.UTF_8),
+        SignatureAlgorithm.HS256.getJcaName()
+    );
 
     // Token expiration time (1 hour)
     private static final long EXPIRATION_TIME = 3600000;

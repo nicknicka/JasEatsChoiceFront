@@ -144,7 +144,11 @@
       "Bash(mvn dependency:tree:*)",
       "Bash(gradle clean:*)",
       "Bash(unzip:*)",
-      "Bash(__NEW_LINE__ echo \"应用启动失败是因为端口被占用，不是数据库问题。我们之前的数据库列错误已经解决！\")"
+      "Bash(__NEW_LINE__ echo \"应用启动失败是因为端口被占用，不是数据库问题。我们之前的数据库列错误已经解决！\")",
+      "Bash(__NEW_LINE__ echo \"JWT依赖错误解决方案：已添加缺失的jjwt-jackson依赖\")",
+      "Bash(__NEW_LINE__ echo \"重新编译项目...\")",
+      "Bash(./mvnw dependency:tree:*)",
+      "Bash(openssl:*)"
     ],
     "deny": [],
     "ask": []

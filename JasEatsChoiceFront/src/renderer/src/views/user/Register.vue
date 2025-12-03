@@ -162,29 +162,44 @@ watch(
 );
 
 // 提交表单
-const submitForm = () => {
+const submitForm = async () => {
   if (registerFormRef.value) {
-    registerFormRef.value.validate((valid) => {
+    registerFormRef.value.validate(async (valid) => {
       if (valid) {
-        // 这里可以添加实际的注册逻辑
-        console.log('注册成功:', registerForm);
-        // 保存用户名
-        localStorage.setItem('username', registerForm.username);
-        // 保存用户ID和模拟token（修复"无法获取用户ID"的问题）
-        localStorage.setItem('userId', '1'); // 默认用户ID为1
-        // 创建一个模拟的JWT令牌，包含用户ID信息
-        const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoi' + btoa(registerForm.username) + 'LCJpYXQiOjE2MjAwMDAwMDAsImV4cCI6MTYyMTAwMDAwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
-        localStorage.setItem('token', mockToken);
-        ElMessage.success('注册成功！');
-        // 注册成功后跳转到登录页面
-        setTimeout(() => {
-          router.push('/login');
-        }, 1500);
+        try {
+          // 发送注册请求到后端
+          const response = await axios.post(`${API_CONFIG.baseURL}${API_CONFIG.user.register}`, {
+            username: registerForm.username,
+            password: registerForm.password,
+            email: registerForm.email,
+            phone: registerForm.phone,
+            captcha: registerForm.captcha,
+            checkCodeKey: checkCodeKey.value
+          });
+
+          // 检查后端返回的业务码
+          if (response.data.code === '200') {
+            ElMessage.success('注册成功！');
+            // 清空表单
+            resetForm();
+            // 注册成功后跳转到登录页面
+            router.push('/login');
+          } else {
+            // 注册失败
+            ElMessage.error(response.data.message || '注册失败，请稍后重试');
+          }
+        } catch (error) {
+          console.error('注册请求失败:', error);
+          ElMessage.error(error.response?.data?.message || '网络请求失败，请稍后重试');
+        } finally {
+          // 无论成功失败，重新生成验证码
+          generateCaptcha();
+        }
       } else {
         ElMessage.error('表单验证失败，请检查输入');
+        // 验证失败，重新生成验证码
+        generateCaptcha();
       }
-      // 无论成功失败，重新生成验证码
-      generateCaptcha();
     });
   }
 };

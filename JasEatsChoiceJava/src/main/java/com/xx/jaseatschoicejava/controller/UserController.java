@@ -2,6 +2,7 @@ package com.xx.jaseatschoicejava.controller;
 
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.LoginRequest;
+import com.xx.jaseatschoicejava.entity.RegisterRequest;
 import com.xx.jaseatschoicejava.entity.User;
 import com.xx.jaseatschoicejava.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,12 +30,44 @@ public class UserController {
      * 用户注册
      */
     @PostMapping("/register")
-    public ResponseResult<?> register(@RequestBody User user) {
-        boolean success = userService.register(user);
-        if (success) {
-            return ResponseResult.success("注册成功");
+    public ResponseResult<?> register(@RequestBody RegisterRequest registerRequest) {
+        try {
+            log.info("Received register request: {}", registerRequest.toString());
+            // 验证验证码
+            if (registerRequest.getCaptcha() == null || registerRequest.getCheckCodeKey() == null) {
+                return ResponseResult.fail("400", "验证码不能为空");
+            }
+
+            // 从Redis获取验证码
+            String redisCaptcha = redisTemplate.opsForValue().get("captcha:" + registerRequest.getCheckCodeKey());
+            if (redisCaptcha == null) {
+                return ResponseResult.fail("400", "验证码已过期");
+            }
+
+            // 比较验证码 - 使用严格的区分大小写比较
+            if (!registerRequest.getCaptcha().equals(redisCaptcha)) {
+                return ResponseResult.fail("400", "验证码错误");
+            }
+
+            // 验证码验证通过后，删除Redis中的验证码
+            redisTemplate.delete("captcha:" + registerRequest.getCheckCodeKey());
+
+            // 创建User对象并设置属性
+            User user = new User();
+            user.setPhone(registerRequest.getPhone());
+            user.setPassword(registerRequest.getPassword());
+            user.setNickname(registerRequest.getNickname());
+
+            // 调用注册服务
+            boolean success = userService.register(user);
+            if (success) {
+                return ResponseResult.success("注册成功");
+            }
+            return ResponseResult.fail("500", "注册失败");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "注册失败");
         }
-        return ResponseResult.fail("500", "注册失败");
     }
 
     /**
@@ -46,7 +79,7 @@ public class UserController {
     @PostMapping("/login")
     public ResponseResult<?> login(@RequestBody LoginRequest loginRequest) {
         try {
-            log.info("Received login request: {}", loginRequest);
+            log.info("Received login request: {}", loginRequest.toString());
             // 验证验证码
             if (loginRequest.getCaptcha() == null || loginRequest.getCheckCodeKey() == null) {
                 return ResponseResult.fail("400", "验证码不能为空");
@@ -68,12 +101,12 @@ public class UserController {
             // 验证码验证通过后，删除Redis中的验证码
             redisTemplate.delete("captcha:" + loginRequest.getCheckCodeKey());
 
-            // 兼容处理：如果前端发送的是username，将其作为phone处理
-            String phone = loginRequest.getPhone() != null ? loginRequest.getPhone() : loginRequest.getUsername();
+            // 处理登录账号：前端传phone或username（统一作为手机号处理，因为User实体没有username字段）
+            String account = loginRequest.getPhone();
             String password = loginRequest.getPassword();
 
             // 调用登录服务
-            String token = userService.login(phone, password);
+            String token = userService.login(account, password);
             if (token != null) {
                 return ResponseResult.success(token);
             }
