@@ -1,12 +1,26 @@
 <template>
   <div class="login-container">
+    <!-- 加载动画遮罩 -->
+    <div class="loading-mask" v-if="showLoading">
+      <div class="loading-content">
+        <svg t="1578185648636" class="loading-svg" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3603" width="80" height="80">
+          <path d="M512 96c-229.888 0-416 186.112-416 416s186.112 416 416 416 416-186.112 416-416S741.888 96 512 96z m0 768c-194.688 0-352-157.312-352-352s157.312-352 352-352 352 157.312 352 352-157.312 352-352 352z" p-id="3604" fill="#fff"></path>
+          <path d="M671.808 512c0-88.256-71.552-159.808-159.808-159.808V256c123.776 0 224 100.224 224 224 0 5.184-0.128 10.304-0.384 15.424-2.048 39.36-16.384 75.712-39.488 105.408l-87.488-87.488zM352.192 512c0 88.256 71.552 159.808 159.808 159.808V768c-123.776 0-224-100.224-224-224 0-5.184 0.128-10.304 0.384-15.424 2.048-39.36 16.384-75.712 39.488-105.408l87.488 87.488z" p-id="3605" fill="#409eff" animation-name="loadingRotate" animation-duration="1s" animation-iteration-count="infinite" animation-timing-function="linear"></path>
+        </svg>
+        <p class="loading-text">正在加载...</p>
+      </div>
+    </div>
+
     <div class="login-card">
       <h2 class="login-title">用户登录</h2>
 
       <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-width="80px">
         <el-form-item label="手机号" prop="phone">
-          <el-input
+          <el-autocomplete
             v-model="loginForm.phone"
+            :fetch-suggestions="querySearch"
+            :trigger-on-focus="true"
+            @select="handlePhoneChange"
             placeholder="请输入手机号"
             clearable
             size="large"
@@ -159,6 +173,9 @@ const generateCaptcha = async () => {
 // 表单引用
 const loginFormRef = ref(null)
 
+// 加载动画控制
+const showLoading = ref(false)
+
 // 页面加载时生成验证码并读取保存的账号信息
 onMounted(() => {
   generateCaptcha() // 生成验证码
@@ -179,32 +196,45 @@ watch(
 const loadSavedAccounts = () => {
   const accounts = localStorage.getItem('savedAccounts')
   if (accounts) {
-    savedAccounts.value = JSON.parse(accounts)
+    // 解析并清理旧格式的数据
+    const parsedAccounts = JSON.parse(accounts)
+    // 过滤掉没有phone字段的旧数据，并将旧的username字段转换为phone字段
+    savedAccounts.value = parsedAccounts.map(account => {
+      // 如果账号有username字段但没有phone字段，将username转换为phone
+      if (account.username && !account.phone) {
+        return {
+          phone: account.username,
+          password: account.password || ''
+        }
+      }
+      // 只保留有phone字段的账号
+      return account
+    }).filter(account => account.phone)
   }
 }
 
-// 用户名搜索函数
+// 手机号搜索函数
 const querySearch = (queryString, cb) => {
-  // 根据输入的用户名过滤已保存的账号
+  // 根据输入的手机号过滤已保存的账号
   const results = queryString
     ? savedAccounts.value.filter((account) =>
-        account.username.toLowerCase().includes(queryString.toLowerCase())
+        account.phone && account.phone.includes(queryString)
       )
     : []
   // 返回处理后的结果，注意需要将结果转换为el-autocomplete需要的格式
-  cb(results.map((account) => ({ value: account.username, label: account.username })))
+  cb(results.map((account) => ({ value: account.phone, label: account.phone })))
 }
 
-// 当用户名变化时，自动填充密码
-const handleUsernameChange = (username) => {
-  // 确保username是字符串类型
-  const selectedUsername = typeof username === 'object' ? username.value : username
-  if (!selectedUsername) return
+// 当手机号变化或选择时，自动填充密码
+const handlePhoneChange = (value) => {
+  // 确保value是字符串类型
+  const selectedPhone = typeof value === 'object' ? value.value : value
+  if (!selectedPhone) return
 
-  const account = savedAccounts.value.find((acc) => acc.username === selectedUsername)
+  const account = savedAccounts.value.find((acc) => acc.phone === selectedPhone)
   if (account) {
     loginForm.password = account.password || ''
-    rememberPassword.value = true
+    rememberPassword.value = !!account.password // 如果有保存的密码，则自动勾选记住密码
   } else {
     loginForm.password = ''
     rememberPassword.value = false
@@ -238,7 +268,7 @@ const submitForm = async () => {
           // 登录成功处理
           const token = response.data.data // 后端直接返回token字符串
           // 保存用户信息到localStorage
-          localStorage.setItem('username', loginForm.username)
+          localStorage.setItem('phone', loginForm.phone) // 保存当前登录手机号
           localStorage.setItem('userId', '1') // 后端未返回userId，暂时使用默认值
           localStorage.setItem('token', token)
 
@@ -246,7 +276,7 @@ const submitForm = async () => {
           if (rememberPassword.value) {
             // 检查账号是否已经存在
             const accountIndex = savedAccounts.value.findIndex(
-              (acc) => acc.username === loginForm.username
+              (acc) => acc.phone === loginForm.phone
             )
 
             if (accountIndex !== -1) {
@@ -255,7 +285,7 @@ const submitForm = async () => {
             } else {
               // 添加新账号
               savedAccounts.value.push({
-                username: loginForm.username,
+                phone: loginForm.phone,
                 password: loginForm.password
               })
             }
@@ -265,7 +295,7 @@ const submitForm = async () => {
           } else {
             // 不记住密码，移除该账号的密码
             const accountIndex = savedAccounts.value.findIndex(
-              (acc) => acc.username === loginForm.username
+              (acc) => acc.phone === loginForm.phone
             )
             if (accountIndex !== -1) {
               savedAccounts.value[accountIndex].password = ''
@@ -273,15 +303,13 @@ const submitForm = async () => {
             }
           }
           ElMessage.success('登录成功！')
+          // 登录成功后显示加载动画
+          showLoading.value = true;
           // 登录成功后根据当前角色跳转到对应首页
           setTimeout(() => {
-            const currentRole = localStorage.getItem('currentRole') || 'user'
-            if (currentRole === 'merchant') {
-              router.push('/merchant/home')
-            } else {
-              router.push('/user/home')
-            }
-          }, 1500)
+            // 直接跳转到用户首页
+            router.push('/user/home')
+          }, 1000)
         } catch (error) {
           // console.log('登录失败:', error)
           // 登录失败处理
@@ -362,5 +390,41 @@ const thirdPartyLogin = (type) => {
   span {
     margin-right: 8px;
   }
+}
+
+// 加载动画样式
+.loading-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.loading-content {
+  text-align: center;
+  color: #fff;
+}
+
+.loading-svg {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #fff;
 }
 </style>

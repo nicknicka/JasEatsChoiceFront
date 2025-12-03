@@ -46,16 +46,16 @@
         <h3 class="module-title">📜 订单模块</h3>
         <div class="order-stats">
           <div class="order-stat-card">
-            <div class="stat-value order-in-progress">{{ userInfo.orders.inProgress }}笔</div>
+            <div class="stat-value order-in-progress">{{ userInfo.orders?.inProgress || 0 }}笔</div>
             <div class="stat-label">进行中订单</div>
           </div>
           <div class="order-stat-card">
-            <div class="stat-value order-pending">{{ userInfo.orders.pending }}笔</div>
+            <div class="stat-value order-pending">{{ userInfo.orders?.pending || 0 }}笔</div>
             <div class="stat-label">待确认订单</div>
           </div>
           <div class="order-stat-card">
             <div class="stat-value order-pending-comment">
-              {{ userInfo.orders.pendingComment }}笔
+              {{ userInfo.orders?.pendingComment || 0 }}笔
             </div>
             <div class="stat-label">待评价订单</div>
           </div>
@@ -76,7 +76,7 @@
             <div class="wallet-label">平台币余额</div>
           </div>
           <div class="wallet-balance">
-            <span class="balance-number">{{ userInfo.wallet.balance }}</span>
+            <span class="balance-number">{{ userInfo.wallet?.balance || 0 }}</span>
             <span class="balance-unit">个</span>
           </div>
           <div class="wallet-actions">

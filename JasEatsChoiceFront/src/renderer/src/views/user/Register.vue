@@ -77,7 +77,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElButton } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElButton, ElLoading } from 'element-plus';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { API_CONFIG } from '../../config';
@@ -182,8 +182,18 @@ const submitForm = async () => {
             ElMessage.success('注册成功！');
             // 清空表单
             resetForm();
-            // 注册成功后跳转到登录页面
-            router.push('/login');
+            // 跳转到登录页面过程中显示loading动画
+            const loadingInstance = ElLoading.service({
+              lock: true,
+              text: '正在跳转到登录页面...',
+              background: 'rgba(0, 0, 0, 0.7)'
+            });
+
+            // 延迟1.5秒跳转到登录页面，确保用户看到loading动画
+            setTimeout(() => {
+              loadingInstance.close();
+              router.push('/login');
+            }, 1500);
           } else {
             // 注册失败
             ElMessage.error(response.data.message || '注册失败，请稍后重试');
@@ -215,7 +225,18 @@ const resetForm = () => {
 const toLogin = () => {
   // 清空表单
   resetForm();
-  router.push('/login');
+  // 跳转到登录页面过程中显示loading动画
+  const loadingInstance = ElLoading.service({
+    lock: true,
+    text: '正在跳转到登录页面...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  });
+
+  // 延迟1秒跳转到登录页面，确保用户看到loading动画
+  setTimeout(() => {
+    loadingInstance.close();
+    router.push('/login');
+  }, 1000);
 };
 
 // 微信扫码登录
