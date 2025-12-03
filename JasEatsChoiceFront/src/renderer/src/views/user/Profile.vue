@@ -197,7 +197,7 @@ const userInfo = ref({
 // 从本地存储加载真实数据
 onMounted(() => {
   // 模拟用户ID，实际应该从登录状态中获取
-  const userId = 1
+  const userId = parseInt(localStorage.getItem('userId') || '1', 10)
 
   // 从后端API获取用户信息
   axios
@@ -412,7 +412,7 @@ const qrCodeDataUrl = ref('')
 // 分享功能
 const shareProfile = () => {
   // 生成分享链接
-  const userId = 1 // 模拟用户ID，实际应该从登录状态中获取
+  const userId = parseInt(localStorage.getItem('userId') || '1', 10) // 模拟用户ID，实际应该从登录状态中获取
   shareLink.value = `${window.location.origin}/user/profile/${userId}`
 
   // 生成二维码

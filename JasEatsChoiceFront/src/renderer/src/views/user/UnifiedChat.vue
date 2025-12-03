@@ -931,7 +931,7 @@ const sortedConversations = computed(() => {
 onMounted(async () => {
   // 从后端获取会话列表
   const token = localStorage.getItem('token');
-  let userId = 1; // 默认值
+  let userId = parseInt(localStorage.getItem('userId') || '1', 10); // 默认值
 
   if (token) {
     const decodedToken = decodeJwt(token);

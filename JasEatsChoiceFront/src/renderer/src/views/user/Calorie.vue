@@ -39,7 +39,7 @@ const customGoals = ref({});
 // 从API获取数据
 onMounted(() => {
   // 获取用户偏好设置（包含卡路里目标和营养目标）
-  const userId = 1; // 临时用户ID，实际应用中应从登录信息获取
+  const userId = parseInt(localStorage.getItem('userId') || '1', 10); // 临时用户ID，实际应用中应从登录信息获取
   axios.get(`${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`)
     .then(response => {
       if (response.data && response.data.success) {

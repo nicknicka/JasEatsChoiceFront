@@ -304,7 +304,7 @@ onMounted(() => {
   // Fetch user information from backend
   const fetchUserInfo = () => {
     const token = localStorage.getItem('token');
-    let userId = 1; // 默认值
+    let userId = parseInt(localStorage.getItem('userId') || '1', 10); // 默认值
 
     if (token) {
       const decodedToken = decodeJwt(token);

@@ -101,7 +101,7 @@ if (!listenersRegistered && window.api) {
     // Send authentication if needed
     const authMsg = {
       msgType: 'auth',
-      userId: 'test-user-123', // Replace with actual user ID
+      userId: localStorage.getItem('userId') || 'test-user-123', // Replace with actual user ID
       token: 'test-token' // Replace with actual token
     };
     sendWebSocketMessage(authMsg);

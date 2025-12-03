@@ -12,7 +12,7 @@ const orders = ref([]);
 
 // 加载用户订单数据
 const loadOrders = () => {
-  const userId = 1; // 临时使用固定用户ID
+  const userId = parseInt(localStorage.getItem('userId') || '1', 10); // 临时使用固定用户ID
   axios.get(API_CONFIG.baseURL + API_CONFIG.order.list + userId)
     .then(response => {
       if (response.data.data) {

@@ -25,7 +25,21 @@
             placeholder="请输入手机号"
             clearable
             size="large"
-          />
+          >
+            <template #default="{ item }">
+              <div class="saved-account-item">
+                <span>{{ item.label }}</span>
+                <el-button
+                  type="text"
+                  size="small"
+                  class="delete-account-btn"
+                  @click.stop="deleteSavedAccount(item.value)"
+                >
+                  x
+                </el-button>
+              </div>
+            </template>
+          </el-autocomplete>
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
@@ -131,6 +145,7 @@ import { ElMessage, ElForm, ElFormItem, ElInput, ElButton } from 'element-plus'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { API_CONFIG } from '../../config'
+import { decodeJwt } from '../../utils/api.js'
 
 const router = useRouter()
 
@@ -257,6 +272,21 @@ const handlePhoneChange = (value) => {
   }
 }
 
+// 删除保存的账号
+const deleteSavedAccount = (phone) => {
+  // 过滤掉要删除的账号
+  savedAccounts.value = savedAccounts.value.filter(account => account.phone !== phone)
+  // 更新localStorage
+  localStorage.setItem('savedAccounts', JSON.stringify(savedAccounts.value))
+  // 如果当前输入的手机号就是被删除的账号，清空密码
+  if (loginForm.phone === phone) {
+    loginForm.password = ''
+    rememberPassword.value = false
+  }
+  // 提示删除成功
+  ElMessage.success('已删除保存的账号')
+}
+
 // 提交表单
 const submitForm = async () => {
   if (loginFormRef.value) {
@@ -283,9 +313,12 @@ const submitForm = async () => {
 
           // 登录成功处理
           const token = response.data.data // 后端直接返回token字符串
+          // 解码token获取用户ID
+          const decodedToken = decodeJwt(token);
+          const userId = decodedToken?.userId || decodedToken?.sub || loginForm.phone; // 使用手机号作为备选
           // 保存用户信息到localStorage
           localStorage.setItem('phone', loginForm.phone) // 保存当前登录手机号
-          localStorage.setItem('userId', '1') // 后端未返回userId，暂时使用默认值
+          localStorage.setItem('userId', userId) // 使用后端返回的真实用户ID
           localStorage.setItem('token', token)
 
           // 保存账号信息
@@ -426,6 +459,32 @@ const thirdPartyLogin = (type) => {
     transform: rotate(360deg);
   }
 }
+
+
+.saved-account-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+
+  .delete-account-btn {
+    color: #f56c6c;
+    padding: 0;
+    margin: 0;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #ff0000;
+      text-decoration: none;
+      transform: scale(1.2);
+    }
+  }
+
+  &:hover {
+    background-color: #f5f7fa;
+  }
+}
+
 
 .loading-text {
   margin-top: 20px;
