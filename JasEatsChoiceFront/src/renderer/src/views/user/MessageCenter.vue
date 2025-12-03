@@ -1,8 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { ElMessageBox } from 'element-plus';
-import router from '../../router/index.js';
-import api, { decodeJwt } from '../../utils/api.js';
+import api from '../../utils/api.js';
 import { API_CONFIG } from '../../config/index.js';
 
 // 消息中心数据
@@ -10,65 +8,17 @@ const messages = ref([]);
 
 // 页面加载时初始化
 onMounted(() => {
-  // 从JWT令牌中获取用户ID
-  const token = localStorage.getItem('token');
-  let userId = 1; // 默认值
-
-  if (token) {
-    const decodedToken = decodeJwt(token);
-    if (decodedToken && decodedToken.userId) {
-      userId = decodedToken.userId;
-    } else {
-      // 令牌解码失败，弹出提示框要求重新登录
-      ElMessageBox.alert('身份验证失败，请重新登录', '令牌无效', {
-        confirmButtonText: '重新登录',
-        type: 'error',
-        closeOnClickModal: false,
-        closeOnPressEscape: false,
-      })
-      .then(() => {
-        // 用户点击重新登录按钮，清除本地存储并跳转到登录页面
-        localStorage.removeItem('token');
-        localStorage.removeItem('currentRole');
-        router.push('/login');
-      })
-      .catch(() => {
-        // 点击取消按钮的处理，也可以跳转到登录页面
-        localStorage.removeItem('token');
-        localStorage.removeItem('currentRole');
-        router.push('/login');
-      });
-    }
-  } else {
-    // 无法获取用户ID，弹出提示框要求重新登录
-    ElMessageBox.alert('无法获取用户ID，请重新登录', '身份验证失败', {
-      confirmButtonText: '重新登录',
-      type: 'error',
-      closeOnClickModal: false,
-      closeOnPressEscape: false,
-    })
-    .then(() => {
-      // 用户点击重新登录按钮，清除本地存储并跳转到登录页面
-      localStorage.removeItem('token');
-      localStorage.removeItem('currentRole');
-      router.push('/login');
-    })
-    .catch(() => {
-      // 点击取消按钮的处理，也可以跳转到登录页面
-      localStorage.removeItem('token');
-      localStorage.removeItem('currentRole');
-      router.push('/login');
-    });
-  }
+  // 从localStorage直接获取用户ID，避免JWT解码可能带来的问题
+  let userId = parseInt(localStorage.getItem('userId') || '1', 10);
 
   // 从后端API加载消息数据
   api.get(API_CONFIG.message.list, {
     params: { userId }
   })
     .then(response => {
-      if (response.data && response.data.success) {
+      if (response && response.success) {
         // 转换后端返回的数据格式以匹配前端期望的字段
-        const formattedMessages = response.data.data.map(message => ({
+        const formattedMessages = response.data.map(message => ({
           id: message.id,
           // 后端返回的content作为前端的title和content
           title: message.content,
@@ -86,7 +36,6 @@ onMounted(() => {
     })
     .catch(error => {
       console.error('加载消息失败:', error);
-      ElMessage.error('加载消息失败，请稍后重试');
     });
 });
 
@@ -265,7 +214,6 @@ const deleteSelected = () => {
       text-align: right;
     }
   }
-}
   /* 消息详情模态框样式 */
   .message-detail-content {
     .detail-header {
@@ -286,4 +234,5 @@ const deleteSelected = () => {
       line-height: 1.6;
     }
   }
+}
 </style>

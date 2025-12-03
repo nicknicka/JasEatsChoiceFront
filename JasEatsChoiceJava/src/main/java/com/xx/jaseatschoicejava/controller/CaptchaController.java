@@ -1,6 +1,7 @@
 package com.xx.jaseatschoicejava.controller;
 
-import com.google.code.kaptcha.impl.DefaultKaptcha;
+import cn.hutool.captcha.LineCaptcha;
+import cn.hutool.captcha.generator.MathGenerator;
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -10,11 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -24,40 +20,38 @@ import java.util.concurrent.TimeUnit;
  * 验证码控制器
  */
 @RestController
-@RequestMapping("/")
+@RequestMapping("/captcha")
 @Api(tags = "验证码接口")
 public class CaptchaController {
-
-    @Autowired
-    private DefaultKaptcha defaultKaptcha;
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
     /**
-     * 生成验证码
+     * 生成算术验证码
      */
     @GetMapping("/checkCode")
-    @ApiOperation("生成验证码")
+    @ApiOperation("生成算术验证码")
     public ResponseResult<?> generateCaptcha() {
         try {
-            // 生成验证码文本
-            String captchaText = defaultKaptcha.createText();
+            // 创建图形验证码实例，设置宽、高、字符数和干扰线数
+            LineCaptcha captcha = new LineCaptcha(150, 50, 4, 4);
 
-            // 生成验证码图片
-            BufferedImage captchaImage = defaultKaptcha.createImage(captchaText);
+            // 设置验证码生成器为算术生成器
+            MathGenerator mathGenerator = new MathGenerator();
+            captcha.setGenerator(mathGenerator);
 
-            // 将图片转换为Base64编码
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            ImageIO.write(captchaImage, "png", outputStream);
-            String captchaBase64 = Base64.getEncoder().encodeToString(outputStream.toByteArray());
-            outputStream.close();
+            // 生成验证码并获取结果
+            String captchaResult = captcha.getCode(); // 直接返回计算结果，如"12"
+
+            // 获取验证码图片的Base64编码（包含data:image/png;base64,前缀）
+            String captchaBase64 = captcha.getImageBase64();
 
             // 生成唯一key用于验证
             String checkCodeKey = UUID.randomUUID().toString().replace("-", "");
 
-            // 将验证码存入Redis，有效期5分钟
-            redisTemplate.opsForValue().set("captcha:" + checkCodeKey, captchaText, 5, TimeUnit.MINUTES);
+            // 将验证码结果存入Redis，有效期5分钟
+            redisTemplate.opsForValue().set("captcha:" + checkCodeKey, captchaResult, 5, TimeUnit.MINUTES);
 
             // 构造返回结果
             Map<String, String> result = new HashMap<>();
@@ -65,9 +59,9 @@ public class CaptchaController {
             result.put("checkCodeKey", checkCodeKey);
 
             return ResponseResult.success(result);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            return ResponseResult.fail("500", "生成验证码失败");
+            return ResponseResult.fail("500", "生成验证码失败: " + e.getMessage());
         }
     }
 }

@@ -59,6 +59,10 @@ public class User {
     @ApiModelProperty(value = "偏好标签列表（JSON格式）")
     private JsonNode preferTags; // 偏好标签列表（JSON格式）
 
+    @TableField("email")
+    @ApiModelProperty(value = "邮箱地址")
+    private String email; // 邮箱地址
+
     @TableField("disable_weather_recommend")
     @ApiModelProperty(value = "是否关闭天气推荐：true-关闭，false-开启")
     private Boolean disableWeatherRecommend; // 是否关闭天气推荐：true-关闭，false-开启

@@ -12,6 +12,7 @@
             clearable
             size="large"
             @select="handleUsernameChange"
+            @input="handleUsernameChange"
           />
         </el-form-item>
 
@@ -25,9 +26,10 @@
               v-model="loginForm.captcha"
               placeholder="请输入验证码"
               style="width: 60%; margin-right: 10px"
+              @input="loginForm.captcha = loginForm.captcha.toUpperCase()"
             />
             <img
-              :src="'data:image/png;base64,' + captchaBase64"
+              :src="captchaBase64"
               alt="验证码"
               style="width: 100px; height: 36px; background-color: #f5f7fa; cursor: pointer"
               @click="generateCaptcha"
@@ -139,9 +141,11 @@ const checkCodeKey = ref('') // 后端返回的验证码会话key
 // 从后端获取验证码
 const generateCaptcha = async () => {
   try {
-    const response = await axios.get(`${API_CONFIG.baseURL}/checkCode`)
+    const response = await axios.get(`${API_CONFIG.baseURL}/captcha/checkCode`)
+    console.log('验证码响应:', response.data.data) ;
     const result = response.data.data
-    captchaBase64.value = result.checkCode
+    // 添加base64图片前缀，否则浏览器无法识别
+    captchaBase64.value = 'data:image/png;base64,' + result.checkCode
     checkCodeKey.value = result.checkCodeKey
   } catch (error) {
     console.error('获取验证码失败:', error)

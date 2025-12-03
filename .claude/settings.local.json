@@ -140,7 +140,10 @@
       "Bash(npm ls:*)",
       "Bash(http-server:*)",
       "Bash(git restore:*)",
-      "Bash(redis-cli:*)"
+      "Bash(redis-cli:*)",
+      "Bash(mvn dependency:tree:*)",
+      "Bash(gradle clean:*)",
+      "Bash(unzip:*)"
     ],
     "deny": [],
     "ask": []

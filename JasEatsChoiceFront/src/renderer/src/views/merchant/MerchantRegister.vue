@@ -140,6 +140,7 @@ const generatedCaptcha = ref('');
 
 // 生成随机验证码
 const generateCaptcha = () => {
+
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let captcha = '';
   for (let i = 0; i < 4; i++) {

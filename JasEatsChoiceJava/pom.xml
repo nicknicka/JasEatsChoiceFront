@@ -30,6 +30,18 @@
         <java.version>21</java.version>
     </properties>
     <dependencies>
+        <!-- 算术验证码依赖 -->
+        <dependency>
+            <groupId>com.github.whvcse</groupId>
+            <artifactId>easy-captcha</artifactId>
+            <version>1.6.2</version>
+        </dependency>
+        <!-- 解决Java 11+ ScriptEngine缺失问题 -->
+        <dependency>
+            <groupId>org.openjdk.nashorn</groupId>
+            <artifactId>nashorn-core</artifactId>
+            <version>15.1.1</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -71,6 +83,13 @@
             <groupId>com.github.penggle</groupId>
             <artifactId>kaptcha</artifactId>
             <version>2.3.2</version>
+        </dependency>
+
+        <!-- Hutool工具库 - 完整包，包含验证码功能 -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.8.20</version>
         </dependency>
 
         <!-- JWT -->

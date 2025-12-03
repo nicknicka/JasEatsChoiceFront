@@ -4,6 +4,7 @@ import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.LoginRequest;
 import com.xx.jaseatschoicejava.entity.User;
 import com.xx.jaseatschoicejava.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 用户控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {
@@ -44,6 +46,7 @@ public class UserController {
     @PostMapping("/login")
     public ResponseResult<?> login(@RequestBody LoginRequest loginRequest) {
         try {
+            log.info("Received login request: {}", loginRequest);
             // 验证验证码
             if (loginRequest.getCaptcha() == null || loginRequest.getCheckCodeKey() == null) {
                 return ResponseResult.fail("400", "验证码不能为空");
@@ -55,8 +58,8 @@ public class UserController {
                 return ResponseResult.fail("400", "验证码已过期");
             }
 
-            // 比较验证码
-            if (!loginRequest.getCaptcha().equalsIgnoreCase(redisCaptcha)) {
+            // 比较验证码 - 使用严格的区分大小写比较
+            if (!loginRequest.getCaptcha().equals(redisCaptcha)) {
                 return ResponseResult.fail("400", "验证码错误");
             }
 
@@ -89,6 +92,55 @@ public class UserController {
             return ResponseResult.success(user);
         }
         return ResponseResult.fail("404", "用户不存在");
+    }
+
+    /**
+     * 更新用户信息
+     */
+    @PutMapping("/{userId}")
+    public ResponseResult<?> updateUser(@PathVariable Long userId, @RequestBody Map<String, Object> updateData) {
+        try {
+            User user = userService.getById(userId);
+            if (user == null) {
+                return ResponseResult.fail("404", "用户不存在");
+            }
+
+            // Update phone if provided
+            if (updateData.containsKey("phone")) {
+                String newPhone = (String) updateData.get("phone");
+                // TODO: Validate new phone format
+
+                // Check verification code if phone is changed
+                if (!user.getPhone().equals(newPhone)) {
+                    // TODO: Verify SMS verification code from updateData
+                }
+
+                user.setPhone(newPhone);
+            }
+
+            // Update email if provided
+            if (updateData.containsKey("email")) {
+                String newEmail = (String) updateData.get("email");
+                // TODO: Validate new email format
+
+                // Check verification code if email is changed
+                if (!user.getEmail().equals(newEmail)) {
+                    // TODO: Verify email verification code from updateData
+                }
+
+                user.setEmail(newEmail);
+            }
+
+            // Update the user
+            boolean success = userService.updateById(user);
+            if (success) {
+                return ResponseResult.success("更新成功");
+            }
+            return ResponseResult.fail("500", "更新失败");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "更新失败");
+        }
     }
 
     /**

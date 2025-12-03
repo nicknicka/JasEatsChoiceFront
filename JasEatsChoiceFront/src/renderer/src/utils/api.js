@@ -21,25 +21,11 @@ const decodeJwt = (token) => {
     const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
 
-    // 使用浏览器原生的atob方法进行Base64解码
-    // 在Electron渲染进程中，atob是可用的，但需要先将Base64Url转换为标准Base64
-    // 并确保处理Unicode字符
-    const binaryStr = atob(padded)
-
-    // 处理Unicode字符转换
-    const bytes = new Uint8Array(binaryStr.length)
-    for (let i = 0; i < binaryStr.length; i++) {
-      bytes[i] = binaryStr.charCodeAt(i)
-    }
-
-    const decoder = new TextDecoder('utf-8')
-    let decoded = decoder.decode(bytes)
-
-    // 移除所有控制字符，包括可能导致问题的Unicode控制字符
-    decoded = decoded.replace(/[\p{Cc}\p{Cs}]/gu, '')
+    // 在Electron中，可以使用Buffer直接解码Base64Url
+    const payload = Buffer.from(padded, 'base64').toString('utf-8');
 
     // 尝试解析为JSON
-    return JSON.parse(decoded)
+    return JSON.parse(payload)
   } catch (error) {
     console.error('JWT解码失败:', error)
     // 输出更多调试信息，帮助定位问题
@@ -49,16 +35,7 @@ const decodeJwt = (token) => {
         const tokenParts = token.split('.')
         const base64 = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/')
         const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
-        const binaryStr = atob(padded)
-        const bytes = new Uint8Array(binaryStr.length)
-        for (let i = 0; i < binaryStr.length; i++) {
-          bytes[i] = binaryStr.charCodeAt(i)
-        }
-
-        const decoder = new TextDecoder('utf-8')
-        let decoded = decoder.decode(bytes)
-        // 移除所有控制字符，包括可能导致问题的Unicode控制字符
-        decoded = decoded.replace(/[\p{Cc}\p{Cs}]/gu, '')
+        const decoded = Buffer.from(padded, 'base64').toString('utf-8');
         console.error('Decoded payload (before JSON parse):', decoded)
       } catch (innerError) {
         console.error('Failed to decode payload for debugging:', innerError)
