@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElButton } from 'element-plus';
 import { useRouter } from 'vue-router';
 
@@ -142,6 +142,16 @@ onMounted(() => {
   generateCaptcha();
 });
 
+// 监听路由变化，确保每次进入页面都刷新验证码
+watch(
+  () => router.currentRoute.value.path,
+  (newPath) => {
+    if (newPath === '/register') {
+      generateCaptcha();
+    }
+  }
+);
+
 // 提交表单
 const submitForm = () => {
   if (registerFormRef.value) {
@@ -157,13 +167,15 @@ const submitForm = () => {
         const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoi' + btoa(registerForm.username) + 'LCJpYXQiOjE2MjAwMDAwMDAsImV4cCI6MTYyMTAwMDAwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
         localStorage.setItem('token', mockToken);
         ElMessage.success('注册成功！');
-        // 注册成功后跳转到用户首页
+        // 注册成功后跳转到登录页面
         setTimeout(() => {
-          router.push('/user/home');
+          router.push('/login');
         }, 1500);
       } else {
         ElMessage.error('表单验证失败，请检查输入');
       }
+      // 无论成功失败，重新生成验证码
+      generateCaptcha();
     });
   }
 };
@@ -177,6 +189,8 @@ const resetForm = () => {
 
 // 跳转到登录页面
 const toLogin = () => {
+  // 清空表单
+  resetForm();
   router.push('/login');
 };
 

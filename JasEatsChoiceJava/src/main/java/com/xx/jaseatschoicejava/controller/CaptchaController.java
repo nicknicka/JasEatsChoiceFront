@@ -5,12 +5,13 @@ import cn.hutool.captcha.generator.MathGenerator;
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import cn.hutool.core.math.Calculator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 验证码控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/captcha")
 @Api(tags = "验证码接口")
@@ -35,14 +37,19 @@ public class CaptchaController {
     public ResponseResult<?> generateCaptcha() {
         try {
             // 创建图形验证码实例，设置宽、高、字符数和干扰线数
-            LineCaptcha captcha = new LineCaptcha(150, 50, 4, 4);
+            LineCaptcha captcha = new LineCaptcha(150, 50, 3, 7);
 
             // 设置验证码生成器为算术生成器
             MathGenerator mathGenerator = new MathGenerator();
             captcha.setGenerator(mathGenerator);
 
-            // 生成验证码并获取结果
-            String captchaResult = captcha.getCode(); // 直接返回计算结果，如"12"
+            // 获取验证码表达式
+            String captchaExpression = captcha.getCode(); // 如 "1 +40="
+            log.info("验证码表达式: " + captchaExpression);
+
+            // 计算表达式结果
+            String captchaResult = String.valueOf((int) Calculator.conversion(captchaExpression));
+            log.info("验证码结果: " + captchaResult);
 
             // 获取验证码图片的Base64编码（包含data:image/png;base64,前缀）
             String captchaBase64 = captcha.getImageBase64();

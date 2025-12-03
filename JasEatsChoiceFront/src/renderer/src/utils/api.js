@@ -17,12 +17,12 @@ const decodeJwt = (token) => {
     // Base64Url解码：
     // 1. 将Base64Url转换为普通Base64
     // 2. 确保长度是4的倍数
-    // 3. 使用Buffer解析（Electron环境保证Buffer可用）
+    // 3. 使用浏览器内置的atob()解码
     const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
 
-    // 在Electron中，可以使用Buffer直接解码Base64Url
-    const payload = Buffer.from(padded, 'base64').toString('utf-8');
+    // 使用浏览器兼容的解码方式
+    const payload = atob(padded);
 
     // 尝试解析为JSON
     return JSON.parse(payload)

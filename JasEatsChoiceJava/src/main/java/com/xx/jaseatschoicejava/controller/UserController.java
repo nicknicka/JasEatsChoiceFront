@@ -54,6 +54,8 @@ public class UserController {
 
             // 从Redis获取验证码
             String redisCaptcha = redisTemplate.opsForValue().get("captcha:" + loginRequest.getCheckCodeKey());
+            log.info("Redis captcha: {}", redisCaptcha);
+            log.info("Login request captcha: {}", loginRequest.getCaptcha());
             if (redisCaptcha == null) {
                 return ResponseResult.fail("400", "验证码已过期");
             }

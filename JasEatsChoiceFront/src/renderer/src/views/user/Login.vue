@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElForm, ElFormItem, ElInput, ElButton } from 'element-plus'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
@@ -165,6 +165,16 @@ onMounted(() => {
   loadSavedAccounts()
 })
 
+// 监听路由变化，确保每次进入页面都刷新验证码
+watch(
+  () => router.currentRoute.value.path,
+  (newPath) => {
+    if (newPath === '/login') {
+      generateCaptcha()
+    }
+  }
+)
+
 // 读取保存的账号信息
 const loadSavedAccounts = () => {
   const accounts = localStorage.getItem('savedAccounts')
@@ -214,6 +224,16 @@ const submitForm = async () => {
             captcha: loginForm.captcha,
             checkCodeKey: checkCodeKey.value
           })
+          console.log('登录响应:', response.data) ;
+
+          // 检查后端返回的业务码，不是200则抛出错误
+          if (response.data.code !== '200') {
+            throw {
+              response: {
+                data: response.data
+              }
+            }
+          }
 
           // 登录成功处理
           const token = response.data.data // 后端直接返回token字符串
@@ -252,7 +272,6 @@ const submitForm = async () => {
               localStorage.setItem('savedAccounts', JSON.stringify(savedAccounts.value))
             }
           }
-
           ElMessage.success('登录成功！')
           // 登录成功后根据当前角色跳转到对应首页
           setTimeout(() => {
@@ -264,14 +283,20 @@ const submitForm = async () => {
             }
           }, 1500)
         } catch (error) {
+          console.log('登录失败:', error)
           // 登录失败处理
           console.error('登录失败:', error)
           ElMessage.error(
             error.response?.data?.message || '登录失败，请检查验证码或账号密码是否正确'
           )
+        } finally {
+          // 无论成功失败，重新生成验证码
+          generateCaptcha()
         }
       } else {
         ElMessage.error('表单验证失败，请检查输入')
+        // 验证失败，重新生成验证码
+        generateCaptcha()
       }
     })
   }
@@ -279,6 +304,10 @@ const submitForm = async () => {
 
 // 跳转到注册页面
 const toRegister = () => {
+  // 重置表单
+  if (loginFormRef.value) {
+    loginFormRef.value.resetFields()
+  }
   router.push('/register')
 }
 
