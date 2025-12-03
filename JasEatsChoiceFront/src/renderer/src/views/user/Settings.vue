@@ -244,24 +244,31 @@ const userInfo = ref({
   avatarUrl: ''
 });
 
-// Display settings
-const fontSize = ref('medium');
-const theme = ref(false);
-
-// Notification settings
-const notifications = ref({
-  order: true,
-  activity: true,
-  merchantReply: true,
-  groupChat: true
+// 正式设置数据（用于保存到localStorage）
+const officialSettings = ref({
+  fontSize: 'medium',
+  theme: false,
+  notifications: {
+    order: true,
+    activity: true,
+    merchantReply: true,
+    groupChat: true
+  },
+  privacy: {
+    location: true,
+    recommendation: true,
+    weatherRecommendation: true // 添加天气推荐设置
+  }
 });
 
-// Privacy settings
-const privacy = ref({
-  location: true,
-  recommendation: true,
-  weatherRecommendation: true // 添加天气推荐设置
-});
+// 临时设置数据（用于页面实时修改）
+const tempSettings = ref({ ...officialSettings.value });
+
+// 辅助变量，方便模板中直接使用
+const fontSize = ref(tempSettings.value.fontSize);
+const theme = ref(tempSettings.value.theme);
+const notifications = ref({ ...tempSettings.value.notifications });
+const privacy = ref({ ...tempSettings.value.privacy });
 
 // User info edit dialogs
 const editPhoneDialogVisible = ref(false);
@@ -327,19 +334,30 @@ onMounted(() => {
   const savedSettings = localStorage.getItem('userSettings');
   if (savedSettings) {
     const parsed = JSON.parse(savedSettings);
-    fontSize.value = parsed.fontSize || 'medium';
-    theme.value = parsed.theme || false;
-    notifications.value = parsed.notifications || {
-      order: true,
-      activity: true,
-      merchantReply: true,
-      groupChat: true
+
+    // 更新正式设置数据
+    officialSettings.value = {
+      fontSize: parsed.fontSize || 'medium',
+      theme: parsed.theme || false,
+      notifications: parsed.notifications || {
+        order: true,
+        activity: true,
+        merchantReply: true,
+        groupChat: true
+      },
+      privacy: parsed.privacy || {
+        location: true,
+        recommendation: true,
+        weatherRecommendation: true
+      }
     };
-    privacy.value = parsed.privacy || {
-      location: true,
-      recommendation: true,
-      weatherRecommendation: true
-    };
+
+    // 更新临时设置变量
+    fontSize.value = officialSettings.value.fontSize;
+    theme.value = officialSettings.value.theme;
+    notifications.value = { ...officialSettings.value.notifications };
+    privacy.value = { ...officialSettings.value.privacy };
+
     // Update theme
     updateTheme();
   }
@@ -356,35 +374,55 @@ onMounted(() => {
 
 // Handle save settings with localStorage persistence
 const saveSettings = () => {
-  const settings = {
+  // 将临时修改的设置同步到正式设置数据中
+  const updatedSettings = {
     fontSize: fontSize.value,
     theme: theme.value,
-    notifications: notifications.value,
-    privacy: privacy.value
+    notifications: { ...notifications.value },
+    privacy: { ...privacy.value }
   };
-  localStorage.setItem('userSettings', JSON.stringify(settings));
+
+  // 更新正式设置数据
+  officialSettings.value = { ...updatedSettings };
+
+  // 保存到localStorage
+  localStorage.setItem('userSettings', JSON.stringify(officialSettings.value));
+
   ElMessage.success('设置已保存');
-  console.log('Saved settings:', settings);
+  console.log('Saved settings:', officialSettings.value);
+
+  // 更新主题
   updateTheme();
 };
 
 // Handle reset settings
 const resetSettings = () => {
-  fontSize.value = 'medium';
-  theme.value = false;
-  notifications.value = {
-    order: true,
-    activity: true,
-    merchantReply: true,
-    groupChat: true
+  // 默认设置值
+  const defaultSettings = {
+    fontSize: 'medium',
+    theme: false,
+    notifications: {
+      order: true,
+      activity: true,
+      merchantReply: true,
+      groupChat: true
+    },
+    privacy: {
+      location: true,
+      recommendation: true,
+      weatherRecommendation: true
+    }
   };
-  privacy.value = {
-    location: true,
-    recommendation: true,
-    weatherRecommendation: true
-  };
-  // Save reset settings
+
+  // 更新临时设置变量
+  fontSize.value = defaultSettings.fontSize;
+  theme.value = defaultSettings.theme;
+  notifications.value = { ...defaultSettings.notifications };
+  privacy.value = { ...defaultSettings.privacy };
+
+  // 更新正式设置数据并保存
   saveSettings();
+
   ElMessage.info('设置已重置为默认值');
 };
 

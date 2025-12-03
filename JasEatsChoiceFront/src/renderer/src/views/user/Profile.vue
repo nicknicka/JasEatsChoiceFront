@@ -7,27 +7,27 @@
       <div class="profile-header">
         <div class="avatar-container">
           <el-avatar :size="120" class="user-avatar">
-            {{ userInfo.name.charAt(0) }}
+            {{ (userInfo.name || '').charAt(0) || '?' }}
           </el-avatar>
         </div>
         <div class="user-basic-info">
-          <h3 class="user-name">{{ userInfo.name }}</h3>
+          <h3 class="user-name">{{ userInfo.name || '未设置' }}</h3>
           <div class="user-stats">
             <div class="stat-item">
               <span class="stat-label">手机号</span>
-              <span class="stat-value">{{ userInfo.phone }}</span>
+              <span class="stat-value">{{ userInfo.phone || '未绑定' }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">所在地</span>
-              <span class="stat-value">{{ userInfo.location }}</span>
+              <span class="stat-value">{{ userInfo.location || '未设置' }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">今日摄入</span>
-              <span class="stat-value calorie-highlight">{{ userInfo.todayCalorie }}</span>
+              <span class="stat-value calorie-highlight">{{ userInfo.todayCalorie || '0kcal' }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">本周均衡度</span>
-              <span class="stat-value balance-highlight">{{ userInfo.weekBalance }}</span>
+              <span class="stat-value balance-highlight">{{ userInfo.weekBalance || '0%' }}</span>
             </div>
           </div>
           <div class="action-buttons">
@@ -106,7 +106,7 @@
             <div class="module-item-icon">🎁</div>
             <div class="module-item-info">
               <div class="module-item-title">我的收藏</div>
-              <div class="module-item-desc">共{{ userInfo.collections }}个</div>
+              <div class="module-item-desc">共{{ userInfo.collections || 0 }}个</div>
             </div>
           </div>
           <el-button type="text" size="small" class="module-item-btn" @click="goToMyCollection">
@@ -120,7 +120,7 @@
             <div class="module-item-info">
               <div class="module-item-title">我的地址</div>
               <div class="module-item-desc">
-                共{{ userInfo.addresses }}个 | 默认地址：{{ userInfo.defaultAddress }}
+                共{{ userInfo.addresses || 0 }}个 | 默认地址：{{ userInfo.defaultAddress || '未设置' }}
               </div>
             </div>
           </div>

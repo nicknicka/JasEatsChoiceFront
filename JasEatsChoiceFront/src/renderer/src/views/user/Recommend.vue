@@ -97,7 +97,7 @@ const updateRecommendationsByWeatherAndTime = async () => {
       params: { city: '北京' } // 默认查询北京天气，实际应用中可以先获取定位再查询
     });
     const weatherData = response.data.data;
-    const { temperature, humidity, condition } = weatherData;
+    const { temperature, humidity } = weatherData;
     const now = new Date();
     const hour = now.getHours();
 
@@ -130,7 +130,7 @@ const updateRecommendationsByWeatherAndTime = async () => {
 
 
 // 根据天气和时间生成推荐菜品（模拟）
-const generateWeatherTimeRecommendations = (timeType, weatherTags, weatherData) => {
+const generateWeatherTimeRecommendations = (timeType, weatherTags) => {
   const rejectionHistory = loadRejectionHistory();
   // 模拟菜品数据库
   const dishes = [
@@ -364,8 +364,8 @@ const fetchRecommendationsFromBackend = async () => {
     const response = await axios.get(API_CONFIG.baseURL + API_CONFIG.recipe.recommend);
     const data = response.data;
 
-    // 假设后端返回的数据结构与前端需要的一致，如果不一致需要转换
-    recommendations.value = data;
+    // 确保推荐数据始终是一个数组
+    recommendations.value = Array.isArray(data) ? data : [];
     return data;
   } catch (error) {
     console.error('获取推荐数据失败:', error);

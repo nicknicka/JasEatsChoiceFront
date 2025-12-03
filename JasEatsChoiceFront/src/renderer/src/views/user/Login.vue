@@ -21,6 +21,7 @@
             :fetch-suggestions="querySearch"
             :trigger-on-focus="true"
             @select="handlePhoneChange"
+            @input="clearFieldError('phone')"
             placeholder="请输入手机号"
             clearable
             size="large"
@@ -28,7 +29,12 @@
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
-          <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" />
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="请输入密码"
+            @input="clearFieldError('password')"
+          />
         </el-form-item>
 
         <el-form-item label="验证码" prop="captcha">
@@ -37,7 +43,10 @@
               v-model="loginForm.captcha"
               placeholder="请输入验证码"
               style="width: 60%; margin-right: 10px"
-              @input="loginForm.captcha = loginForm.captcha.toUpperCase()"
+              @input="(val) => {
+                loginForm.captcha = val.toUpperCase();
+                clearFieldError('captcha');
+              }"
             />
             <img
               :src="captchaBase64"
@@ -173,6 +182,13 @@ const generateCaptcha = async () => {
 // 表单引用
 const loginFormRef = ref(null)
 
+// 清除单个字段的验证错误
+const clearFieldError = (fieldName) => {
+  if (loginFormRef.value) {
+    loginFormRef.value.clearValidate([fieldName]);
+  }
+}
+
 // 加载动画控制
 const showLoading = ref(false)
 
@@ -220,7 +236,7 @@ const querySearch = (queryString, cb) => {
     ? savedAccounts.value.filter((account) =>
         account.phone && account.phone.includes(queryString)
       )
-    : []
+    : savedAccounts.value // 当用户没有输入时，显示所有保存的账号
   // 返回处理后的结果，注意需要将结果转换为el-autocomplete需要的格式
   cb(results.map((account) => ({ value: account.phone, label: account.phone })))
 }
@@ -273,35 +289,24 @@ const submitForm = async () => {
           localStorage.setItem('token', token)
 
           // 保存账号信息
-          if (rememberPassword.value) {
-            // 检查账号是否已经存在
-            const accountIndex = savedAccounts.value.findIndex(
-              (acc) => acc.phone === loginForm.phone
-            )
+          // 检查账号是否已经存在
+          const accountIndex = savedAccounts.value.findIndex(
+            (acc) => acc.phone === loginForm.phone
+          )
 
-            if (accountIndex !== -1) {
-              // 更新已有账号的密码
-              savedAccounts.value[accountIndex].password = loginForm.password
-            } else {
-              // 添加新账号
-              savedAccounts.value.push({
-                phone: loginForm.phone,
-                password: loginForm.password
-              })
-            }
-
-            // 保存到localStorage
-            localStorage.setItem('savedAccounts', JSON.stringify(savedAccounts.value))
+          if (accountIndex !== -1) {
+            // 更新已有账号
+            savedAccounts.value[accountIndex].password = rememberPassword.value ? loginForm.password : ''
           } else {
-            // 不记住密码，移除该账号的密码
-            const accountIndex = savedAccounts.value.findIndex(
-              (acc) => acc.phone === loginForm.phone
-            )
-            if (accountIndex !== -1) {
-              savedAccounts.value[accountIndex].password = ''
-              localStorage.setItem('savedAccounts', JSON.stringify(savedAccounts.value))
-            }
+            // 添加新账号
+            savedAccounts.value.push({
+              phone: loginForm.phone,
+              password: rememberPassword.value ? loginForm.password : ''
+            })
           }
+
+          // 保存到localStorage
+          localStorage.setItem('savedAccounts', JSON.stringify(savedAccounts.value))
           ElMessage.success('登录成功！')
           // 登录成功后显示加载动画
           showLoading.value = true;
