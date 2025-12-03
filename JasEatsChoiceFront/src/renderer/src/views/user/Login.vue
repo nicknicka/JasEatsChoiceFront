@@ -142,7 +142,7 @@ const checkCodeKey = ref('') // 后端返回的验证码会话key
 const generateCaptcha = async () => {
   try {
     const response = await axios.get(`${API_CONFIG.baseURL}/captcha/checkCode`)
-    console.log('验证码响应:', response.data.data) ;
+    // console.log('验证码响应:', response.data.data) ;
     const result = response.data.data
     // 添加base64图片前缀，否则浏览器无法识别
     captchaBase64.value = 'data:image/png;base64,' + result.checkCode
@@ -224,7 +224,7 @@ const submitForm = async () => {
             captcha: loginForm.captcha,
             checkCodeKey: checkCodeKey.value
           })
-          console.log('登录响应:', response.data) ;
+          // console.log('登录响应:', response.data) ;
 
           // 检查后端返回的业务码，不是200则抛出错误
           if (response.data.code !== '200') {
@@ -283,7 +283,7 @@ const submitForm = async () => {
             }
           }, 1500)
         } catch (error) {
-          console.log('登录失败:', error)
+          // console.log('登录失败:', error)
           // 登录失败处理
           console.error('登录失败:', error)
           ElMessage.error(

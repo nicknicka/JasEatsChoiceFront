@@ -25,12 +25,21 @@
         </el-form-item>
 
         <el-form-item label="验证码" prop="captcha">
-          <div style="display: flex;">
-            <el-input v-model="registerForm.captcha" placeholder="请输入验证码" style="width: 60%; margin-right: 10px;" />
-            <div style="width: 100px; height: 36px; background-color: #f5f7fa; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; letter-spacing: 2px; cursor: pointer;" @click="generateCaptcha">
-              {{ generatedCaptcha }}
-            </div>
-            <el-button type="text" size="small" @click="generateCaptcha" style="margin-left: 10px;">刷新</el-button>
+          <div style="display: flex; align-items: center">
+            <el-input
+              v-model="registerForm.captcha"
+              placeholder="请输入验证码"
+              style="width: 60%; margin-right: 10px"
+            />
+            <img
+              :src="captchaBase64"
+              alt="验证码"
+              style="width: 100px; height: 36px; background-color: #f5f7fa; cursor: pointer"
+              @click="generateCaptcha"
+            />
+            <el-button type="text" size="small" style="margin-left: 10px" @click="generateCaptcha"
+              >刷新</el-button
+            >
           </div>
         </el-form-item>
 
@@ -70,6 +79,8 @@
 import { ref, reactive, onMounted, watch } from 'vue';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElButton } from 'element-plus';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { API_CONFIG } from '../../config';
 
 const router = useRouter();
 
@@ -110,28 +121,26 @@ const registerRules = reactive({
     { pattern: /^1[3456789]\d{9}$/, message: '请输入正确的手机号码', trigger: ['blur', 'change'] }
   ],
   captcha: [
-    { required: true, message: '请输入验证码', trigger: 'blur' },
-    { validator: (rule, value, callback) => {
-        if (value.toUpperCase() !== generatedCaptcha.value.toUpperCase()) {
-          callback(new Error('验证码错误'));
-        } else {
-          callback();
-        }
-      }, trigger: 'blur' }
+    { required: true, message: '请输入验证码', trigger: 'blur' }
   ]
 });
 
-// 生成的验证码
-const generatedCaptcha = ref('');
+// 验证码相关
+const captchaBase64 = ref('') // 后端返回的验证码图片Base64
+const checkCodeKey = ref('') // 后端返回的验证码会话key
 
-// 生成随机验证码
-const generateCaptcha = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let captcha = '';
-  for (let i = 0; i < 4; i++) {
-    captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+// 从后端获取算术验证码
+const generateCaptcha = async () => {
+  try {
+    const response = await axios.get(`${API_CONFIG.baseURL}/captcha/checkCode`);
+    const result = response.data.data;
+    // 添加base64图片前缀，否则浏览器无法识别
+    captchaBase64.value = 'data:image/png;base64,' + result.checkCode;
+    checkCodeKey.value = result.checkCodeKey;
+  } catch (error) {
+    console.error('获取验证码失败:', error);
+    ElMessage.error('获取验证码失败，请稍后重试');
   }
-  generatedCaptcha.value = captcha;
 };
 
 // 表单引用
