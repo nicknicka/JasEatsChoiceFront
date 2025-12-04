@@ -17,7 +17,7 @@ import java.util.Map;
  * 群订单控制器
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/v1/group-orders")
 public class GroupOrderController {
 
     private static final Logger logger = LoggerFactory.getLogger(GroupOrderController.class);

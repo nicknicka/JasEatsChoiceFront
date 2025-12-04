@@ -148,7 +148,9 @@
       "Bash(__NEW_LINE__ echo \"JWT依赖错误解决方案：已添加缺失的jjwt-jackson依赖\")",
       "Bash(__NEW_LINE__ echo \"重新编译项目...\")",
       "Bash(./mvnw dependency:tree:*)",
-      "Bash(openssl:*)"
+      "Bash(openssl:*)",
+      "Bash(tar:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

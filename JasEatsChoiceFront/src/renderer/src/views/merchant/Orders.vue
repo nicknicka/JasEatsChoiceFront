@@ -65,7 +65,7 @@ onMounted(() => {
   const merchantId = 1;
 
   // 从API获取订单数据
-  axios.get(`${API_CONFIG.baseURL}/api/v1/orders/merchant/${merchantId}`)
+  axios.get(`${API_CONFIG.baseURL}/v1/orders/merchant/${merchantId}`)
     .then(response => {
       if (response.data && response.data.success) {
         orders.value = response.data.data;

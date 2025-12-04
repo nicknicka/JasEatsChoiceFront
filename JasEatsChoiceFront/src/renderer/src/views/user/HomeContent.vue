@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useLocation } from '../../composables/useLocation.js';
 // Import Element Plus icons
-import { Sunny, Location, VideoCamera, ArrowRight } from '@element-plus/icons-vue';
+import { Sunny, Cloudy, Location, VideoCamera, ArrowRight } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import api from '../../utils/api.js';
 import { API_CONFIG } from '../../config/index.js';
@@ -13,46 +14,184 @@ const router = useRouter();
 const featuredTutorials = ref([]);
 
 // Today's recommended dishes from backend
+// 今日推荐菜品 - 从后端获取
 const recommendedDishes = ref([]);
+// Empty state message for recommendations
+// 推荐菜品空状态消息
+const recommendEmptyMessage = ref('暂无推荐菜品');
+// 今日热点 - 从后端获取
+const hotTopic = ref("");
+const hotTopicLoading = ref(false);
 
-// Mock weather data
-const weather = ref({ temp: 32, condition: '晴天' });
+// Weather and location data
+// 天气和位置数据
+const weather = ref({
+  temp: 32,
+  condition: '晴天',
+  city: '',
+  address: ''
+});
+
+// Use location composable
+// 使用位置选择组合式函数
+const {
+  cascaderLocationData,
+  locationDialogVisible,
+  manualLocation,
+  handleManualLocationSelect
+} = useLocation();
+
+
+// Get weather icon based on condition
+// 根据天气条件获取对应的图标
+const getWeatherIcon = () => {
+  const condition = weather.value.condition;
+  if (condition.includes('晴')) return Sunny;
+  if (condition.includes('云') || condition.includes('阴') || condition.includes('雨') || condition.includes('雷') || condition.includes('雪')) return Cloudy;
+  return Sunny; // Default to sunny
+};
+
+// Get recommended dishes based on weather
+// 根据天气条件获取推荐的菜品系列
+const getRecommendedDishesSeries = () => {
+  const condition = weather.value.condition;
+  const temp = weather.value.temp;
+
+  // 高温天气推荐
+  if (temp > 28 || condition.includes('晴')) {
+    return '冰饮/凉菜系列';
+  }
+  // 低温天气推荐
+  if (temp < 15 || condition.includes('雪')) {
+    return '热食/火锅系列';
+  }
+  // 雨天推荐
+  if (condition.includes('雨')) {
+    return '汤品/暖食系列';
+  }
+  // 多云阴天推荐
+  if (condition.includes('云') || condition.includes('阴')) {
+    return '均衡饮食系列';
+  }
+  // 默认推荐
+  return '特色菜品系列';
+};
 
 // Fetch recommended dishes from backend
 const fetchRecommendedDishes = () => {
   api.get(API_CONFIG.recipe.recommend)
     .then(response => {
-      if (response.data) {
+      // Check if response has a message
+      if (response.message) {
+        recommendEmptyMessage.value = response.message;
+      }
+
+      // Handle both null/undefined and empty array cases
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
         recommendedDishes.value = response.data;
+      } else {
+        // Set to empty array to show empty state
+        recommendedDishes.value = [];
       }
     })
     .catch(error => {
       console.error('加载推荐菜品失败:', error);
-      // 失败时使用模拟数据作为备份
-      recommendedDishes.value = [
-        { name: '冰镇西瓜汁', kcal: '180kcal', rating: 5, type: 'drink' },
-        { name: '泰式青木瓜沙拉', kcal: '120kcal', rating: 4, type: 'salad' },
-        { name: '凉面套餐', kcal: '320kcal', rating: 5, type: 'meal' }
-      ];
+      // Reset to default message on error
+      recommendEmptyMessage.value = '暂无推荐菜品';
     });
 };
 
-// Fetch weather data from backend
-const fetchWeather = () => {
-  // 默认查询北京天气，实际应用中可以先获取定位再查询
-  api.get(`${API_CONFIG.weather.current}?city=北京`)
+// Fetch hot topic from backend
+const fetchHotTopic = () => {
+  // 假设后端提供了获取今日热点的API
+  api.get(API_CONFIG.home.hotTopic)
     .then(response => {
       if (response.data) {
-        weather.value = {
-          temp: response.data.temperature,
-          condition: response.data.condition
-        };
+        hotTopic.value = response.data;
+      } else {
+        // 接口成功但返回空数据时，清空热点
+        hotTopic.value = "";
       }
     })
     .catch(error => {
-      console.error('加载天气失败:', error);
-      // 失败时保持现有模拟数据
+      console.error('加载今日热点失败:', error);
+      // 请求失败时使用默认文本
+      hotTopic.value = "";
     });
+};
+
+// Handle auto location
+// 处理自动定位
+const handleAutoLocation = () => {
+  // Call the existing fetchWeather function without parameters to get auto location
+  fetchWeather()
+    .then(() => {
+      // Close the dialog after successful location
+      locationDialogVisible.value = false;
+    });
+};
+
+
+// Handle location confirmation
+// 处理位置确认
+const handleConfirmLocation = () => {
+  if (manualLocation.value && manualLocation.value.length > 0) {
+    // For cascader, the value is an array, we can use the first non-empty value
+    // or join them for more precise weather fetching
+    const location = manualLocation.value.join(' ');
+    // Extract city from location string (simplified logic for demo)
+    const city = location.split('市')[0] + '市';
+    fetchWeather(city)
+      .then(() => {
+        locationDialogVisible.value = false;
+      });
+  } else {
+    // If no manual location is selected, use auto location
+    handleAutoLocation();
+  }
+};
+
+// Fetch location and weather data from backend
+// 从后端获取位置和天气数据
+const fetchWeather = (selectedCity = null) => {
+  if (selectedCity) {
+    // Fetch weather for the selected city
+    weather.value.city = selectedCity;
+    return api.get(`${API_CONFIG.weather.current}?city=${encodeURIComponent(selectedCity)}`)
+      .then(weatherResponse => {
+        if (weatherResponse?.data) {
+          const { temperature, condition } = weatherResponse.data;
+          weather.value.temp = temperature;
+          weather.value.condition = condition;
+        }
+      })
+      .catch(error => {
+        console.error('加载天气失败:', error);
+      });
+  } else {
+    // Step 1: Get current location from backend
+    return api.get(API_CONFIG.weather.location)
+      .then(locationResponse => {
+        if (locationResponse.data) {
+          const { city, address } = locationResponse.data;
+          weather.value.city = city;
+          weather.value.address = address;
+
+          // Step 2: Get weather info based on city
+          return api.get(`${API_CONFIG.weather.current}?city=${encodeURIComponent(city)}`);
+        }
+      })
+      .then(weatherResponse => {
+        if (weatherResponse?.data) {
+          const { temperature, condition } = weatherResponse.data;
+          weather.value.temp = temperature;
+          weather.value.condition = condition;
+        }
+      })
+      .catch(error => {
+        console.error('加载天气或位置失败:', error);
+      });
+  }
 };
 
 // Mock user info removed - now handled by CommonHome component
@@ -167,8 +306,11 @@ if (!listenersRegistered && window.api) {
 const fetchFeaturedTutorials = () => {
   api.get(API_CONFIG.tutorial.featured)
     .then(response => {
-      if (response.data) {
+      // Handle both null/undefined and empty array cases for consistency
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
         featuredTutorials.value = response.data;
+      } else {
+        featuredTutorials.value = [];
       }
     })
     .catch(error => {
@@ -186,6 +328,7 @@ onMounted(() => {
   fetchFeaturedTutorials();
   fetchRecommendedDishes();
   fetchWeather();
+  fetchHotTopic(); // 新增：获取今日热点
 
   if (window.api) {
     initializeWebSocket();
@@ -198,10 +341,23 @@ onMounted(() => {
         <div class="weather-section">
           <el-card shadow="hover">
             <div class="weather-content">
-              <el-icon class="weather-icon"><Sunny /></el-icon>
+              <el-icon class="weather-icon"><component :is="getWeatherIcon()" /></el-icon>
               <div class="weather-info">
+                <div class="location">
+                  <el-button
+                    type="text"
+                    size="small"
+                    @click="locationDialogVisible = true"
+                    title="选择位置"
+                    class="location-icon-button"
+                  >
+                    <el-icon><Location /></el-icon>
+                  </el-button>
+                  <span v-if="weather.city && weather.address"> {{ weather.address }}</span>
+                  <span v-else-if="weather.address">{{ weather.address }}</span>
+                </div>
                 <div class="temp">{{ weather.temp }}℃</div>
-                <div class="condition">今日推荐：冰饮/凉菜系列</div>
+                <div class="condition">今日推荐：{{ getRecommendedDishesSeries() }}</div>
               </div>
             </div>
           </el-card>
@@ -209,32 +365,45 @@ onMounted(() => {
 
         <div class="recommendation-section">
           <h3>今日推荐</h3>
-          <el-carousel :interval="3000" height="180px">
-            <el-carousel-item v-for="(dish, index) in recommendedDishes" :key="index">
-              <el-card shadow="hover" class="dish-card">
-                <div class="dish-info">
-                  <div class="dish-name">{{ dish.name }}</div>
-                  <div class="dish-kcal">{{ dish.kcal }}</div>
-                  <div class="dish-rating">
-                    <el-rate
-                      v-model="dish.rating"
-                      disabled
-                      show-score
-                      text-color="#FF6B6B"
-                      class="rating"
-                    ></el-rate>
+          <!-- When there are no recommended dishes -->
+          <div v-if="recommendedDishes.length === 0" class="empty-recommendations">
+            <el-empty
+              :description="recommendEmptyMessage"
+            >
+            <el-button type="primary" @click="fetchRecommendedDishes">重新加载</el-button>
+            </el-empty>
+          </div>
+
+          <!-- When there are recommended dishes -->
+          <div v-else>
+            <el-carousel :interval="3000" height="180px">
+              <el-carousel-item v-for="(dish, index) in recommendedDishes" :key="index">
+                <el-card shadow="hover" class="dish-card">
+                  <div class="dish-info">
+                    <div class="dish-name">{{ dish.name }}</div>
+                    <div class="dish-kcal">{{ dish.kcal }}</div>
+                    <div class="dish-rating">
+                      <el-rate
+                        v-model="dish.rating"
+                        disabled
+                        show-score
+                        text-color="#FF6B6B"
+                        class="rating"
+                      ></el-rate>
+                    </div>
                   </div>
-                </div>
-              </el-card>
-            </el-carousel-item>
-          </el-carousel>
+                </el-card>
+              </el-carousel-item>
+            </el-carousel>
+          </div>
         </div>
 
-        <div class="hot-section">
+        <!-- 今日热点 - 只有当有数据时显示 -->
+        <div class="hot-section" v-if="hotTopic">
           <el-card shadow="hover">
             <div class="hot-content">
               <el-icon class="fire-icon">🔥</el-icon>
-              <span>今日热点：立秋贴秋膘特惠套餐(仅剩10份)</span>
+              <span>今日热点：{{ hotTopic }}</span>
             </div>
           </el-card>
         </div>
@@ -248,20 +417,74 @@ onMounted(() => {
 
         <div class="tutorial-section">
           <h3>制作教程与指南</h3>
-          <div class="tutorial-grid">
-            <el-card shadow="hover" class="tutorial-card" v-for="(tutorial, index) in featuredTutorials" :key="index">
-              <el-icon :class="tutorial.type === 'video' ? 'video-icon' : 'light-icon'">
-                <VideoCamera v-if="tutorial.type === 'video'" />
-                <span v-else>💡</span>
-              </el-icon>
-              <span>{{ tutorial.name }}</span>
-            </el-card>
+
+          <!-- 当教程数据为空时显示 -->
+          <div v-if="featuredTutorials.length === 0" class="empty-tutorials">
+            <el-empty
+              description="暂无教程数据"
+            >              
+            <el-button type="primary" @click="fetchFeaturedTutorials">重新加载</el-button>
+            </el-empty>
           </div>
-          <el-button type="primary" size="large" class="more-link" @click="navigateTo('/user/home/tutorials')">
-            <el-icon><ArrowRight /></el-icon>
-            <span>查看更多教程</span>
-          </el-button>
+
+          <!-- 当教程数据不为空时显示 -->
+          <div v-else>
+            <div class="tutorial-grid">
+              <el-card shadow="hover" class="tutorial-card" v-for="(tutorial, index) in featuredTutorials" :key="index">
+                <el-icon :class="tutorial.type === 'video' ? 'video-icon' : 'light-icon'">
+                  <VideoCamera v-if="tutorial.type === 'video'" />
+                  <span v-else>💡</span>
+                </el-icon>
+                <span>{{ tutorial.name }}</span>
+              </el-card>
+            </div>
+            <el-button type="primary" size="large" class="more-link" @click="navigateTo('/user/home/tutorials')">
+              <el-icon><ArrowRight /></el-icon>
+              <span>查看更多教程</span>
+            </el-button>
+          </div>
         </div>
+
+    <!-- Location Selection Dialog -->
+    <el-dialog
+      v-model="locationDialogVisible"
+      title="选择位置"
+      width="400px"
+    >
+      <div class="location-dialog-content">
+        <!-- Auto-location button -->
+        <el-button
+          type="primary"
+          class="auto-location-btn"
+          @click="handleAutoLocation"
+        >
+          <el-icon><Location /></el-icon>
+          自动定位
+        </el-button>
+
+        <!-- Manual location selection -->
+        <div class="manual-location-section">
+          <h4>手动选择</h4>
+          <el-cascader
+            v-model="manualLocation"
+            :options="cascaderLocationData"
+            placeholder="请选择省/市/区"
+            style="width: 100%"
+            @change="handleManualLocationSelect"
+            clearable
+          />
+        </div>
+      </div>
+
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="locationDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleConfirmLocation">
+            确认
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
 </template>
 
 <style scoped lang="less">
@@ -350,6 +573,26 @@ onMounted(() => {
       .weather-info {
         font-size: 18px;
 
+        .location {
+          font-size: 14px;
+          color: #999;
+          margin-bottom: 5px;
+
+          .city-select {
+            width: 120px;
+            margin-right: 10px;
+            vertical-align: middle;
+          }
+
+          .location-icon-button {
+            margin-right: 10px;
+            vertical-align: middle;
+            color: #999;
+            padding: 0;
+          }
+
+        }
+
         .temp {
           font-size: 24px;
           font-weight: bold;
@@ -391,6 +634,16 @@ onMounted(() => {
           margin-top: 10px;
         }
       }
+    }
+
+    /* Empty recommendations styling */
+    .empty-recommendations {
+      margin-bottom: 20px;
+      text-align: center;
+      padding: 60px 0;
+      background-color: #fafafa;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.06);
     }
   }
 
@@ -460,6 +713,54 @@ onMounted(() => {
     .more-link {
       font-size: 14px;
       margin: 0;
+    }
+
+    .empty-tutorials {
+      margin-bottom: 20px;
+      text-align: center;
+      padding: 60px 0;
+      background-color: #fafafa;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    /* 美化空状态的文本 */
+    :deep(.el-empty__description) {
+      color: #909399;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+
+    /* 美化重新加载按钮 */
+    .empty-tutorials .el-button {
+      margin-top: 30px;
+      border-radius: 25px;
+      padding: 8px 32px;
+      font-size: 14px;
+    }
+  }
+
+  /* Location dialog styles */
+  .location-dialog-content {
+    padding: 20px 0;
+
+    .auto-location-btn {
+      margin-bottom: 20px;
+      width: 100%;
+    }
+
+    .manual-location-section {
+      h4 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .location-note {
+        font-size: 12px;
+        color: #909399;
+        margin-top: 5px;
+      }
     }
   }
 }

@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * 商家控制器
  */
 @RestController
-@RequestMapping("/api/v1/merchant")
+@RequestMapping("/v1/merchant")
 public class MerchantController {
 
     @Autowired

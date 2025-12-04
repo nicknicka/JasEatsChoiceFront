@@ -52,7 +52,19 @@ onMounted(() => {
       <h2>制作教程与指南</h2>
     </div>
 
-    <div class="tutorial-grid">
+    <!-- 当教程数据为空时显示 -->
+    <div v-if="tutorials.length === 0" class="empty-tutorials">
+      <el-empty
+        description="暂无教程数据"
+        image="default"
+        :image-size="140"
+      >
+        <el-button type="primary" @click="fetchTutorials">重新加载</el-button>
+      </el-empty>
+    </div>
+
+    <!-- 当教程数据不为空时显示 -->
+    <div v-else class="tutorial-grid">
       <el-card
         v-for="tutorial in tutorials"
         :key="tutorial.id"
@@ -155,6 +167,30 @@ onMounted(() => {
       color: #909399;
       font-size: 14px;
     }
+  }
+
+
+  .empty-tutorials {
+    text-align: center;
+    padding: 80px 0;
+    background-color: #fafafa;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  /* 美化空状态的文本 */
+  :deep(.el-empty__description) {
+    color: #909399;
+    font-size: 18px;
+    margin-top: 30px;
+  }
+
+  /* 美化重新加载按钮 */
+  .empty-tutorials .el-button {
+    margin-top: 40px;
+    border-radius: 25px;
+    padding: 10px 40px;
+    font-size: 16px;
   }
 }
 </style>

@@ -12,7 +12,7 @@ import java.util.List;
  * 用户地址控制器
  */
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/v1/users")
 public class AddressController {
 
     @Autowired

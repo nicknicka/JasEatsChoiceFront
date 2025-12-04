@@ -12,7 +12,7 @@ import java.util.Map;
  * 消息控制器
  */
 @RestController
-@RequestMapping("/api/v1/message")
+@RequestMapping("/v1/message")
 public class MessageController {
 
     /**

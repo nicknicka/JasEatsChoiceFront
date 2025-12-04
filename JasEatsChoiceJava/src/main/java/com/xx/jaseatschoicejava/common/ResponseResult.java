@@ -37,6 +37,17 @@ public class ResponseResult<T> {
     }
 
     /**
+     * 成功响应并返回数据和自定义消息
+     */
+    public static <T> ResponseResult<T> success(T data, String message) {
+        ResponseResult<T> result = new ResponseResult<>();
+        result.setCode("200");
+        result.setMessage(message);
+        result.setData(data);
+        return result;
+    }
+
+    /**
      * 失败响应
      */
     public static <T> ResponseResult<T> fail(String code, String message) {

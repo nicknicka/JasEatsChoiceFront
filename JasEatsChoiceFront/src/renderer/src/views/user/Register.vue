@@ -132,7 +132,7 @@ const checkCodeKey = ref('') // 后端返回的验证码会话key
 // 从后端获取算术验证码
 const generateCaptcha = async () => {
   try {
-    const response = await axios.get(`${API_CONFIG.baseURL}/captcha/checkCode`);
+    const response = await axios.get(`${API_CONFIG.baseURL}/v1/captcha/checkCode`);
     const result = response.data.data;
     // 添加base64图片前缀，否则浏览器无法识别
     captchaBase64.value = 'data:image/png;base64,' + result.checkCode;

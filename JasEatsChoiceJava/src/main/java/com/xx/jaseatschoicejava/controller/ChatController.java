@@ -22,7 +22,7 @@ import java.util.List;
  */
 @Api(tags = "聊天消息模块")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/v1/chat")
 public class ChatController {
 
     @Autowired

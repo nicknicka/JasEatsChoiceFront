@@ -11,7 +11,7 @@ import java.util.*;
  * 食谱控制器
  */
 @RestController
-@RequestMapping("/api/v1/recipe")
+@RequestMapping("/v1/recipe")
 public class RecipeController {
 
     /**

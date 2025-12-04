@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @RestController
-@RequestMapping("/captcha")
+@RequestMapping("/v1/captcha")
 @Api(tags = "验证码接口")
 public class CaptchaController {
 

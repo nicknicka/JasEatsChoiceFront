@@ -4,7 +4,11 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ---
 
+# 语言设置
+请从现在开始始终用简体中文回答，避免使用英文术语。
+
 ## 项目文档体系
+
 - **项目概述**：佳食宜选.md
 - **详细需求**：产品需求说明书（PRD）.md
 - **PRD补充**：PRD_补充完善.md（记录系统现有实现与设计的差异）

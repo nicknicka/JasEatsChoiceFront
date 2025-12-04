@@ -12,7 +12,7 @@ import java.util.Map;
  * AI能力控制器
  */
 @RestController
-@RequestMapping("/api/v1/ai")
+@RequestMapping("/v1/ai")
 public class AIController {
 
     /**

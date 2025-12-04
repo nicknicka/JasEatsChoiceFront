@@ -14,7 +14,7 @@ import java.util.List;
  * 优惠活动控制器
  */
 @RestController
-@RequestMapping("/api/v1/merchant")
+@RequestMapping("/v1/merchant")
 public class DiscountController {
 
     @Autowired

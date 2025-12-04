@@ -20,7 +20,7 @@ import java.util.Map;
  * 个性化推荐控制器
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/v1/recommend")
 public class RecommendController {
 
     @Autowired

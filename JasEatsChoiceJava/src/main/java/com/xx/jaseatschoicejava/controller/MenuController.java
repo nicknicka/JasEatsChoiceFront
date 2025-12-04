@@ -16,7 +16,7 @@ import java.util.Map;
  * 菜单控制器
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/v1/menus")
 public class MenuController {
 
     @Autowired

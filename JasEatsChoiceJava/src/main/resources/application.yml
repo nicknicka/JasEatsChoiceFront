@@ -1,7 +1,7 @@
 server:
   port: 8080
   servlet:
-    context-path: /
+    context-path: /api
 
 spring:
   # 数据库配置
@@ -52,8 +52,15 @@ netty:
     threads: 1
   workerGroup:
     threads: 8
-  maxFrameLength: 65536
+  maxFrameLength: 65536  # 从application.properties同步的配置
   lengthFieldOffset: 0
   lengthFieldLength: 4
   lengthAdjustment: 0
   initialBytesToStrip: 4
+
+# 高德地图API配置
+gaode:
+  map:
+    api:
+      key: 6bc8844103bb4416db989e613c6fd3d2
+      url: https://restapi.amap.com/v3

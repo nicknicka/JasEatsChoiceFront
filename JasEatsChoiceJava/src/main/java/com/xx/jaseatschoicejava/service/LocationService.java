@@ -1,5 +1,6 @@
 package com.xx.jaseatschoicejava.service;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -11,4 +12,10 @@ public interface LocationService {
      * @return 定位信息
      */
     Map<String, Object> getCurrentLocation();
+
+    /**
+     * 获取级联选择器地址数据
+     * @return 地址数据列表
+     */
+    List<Map<String, Object>> getCascaderLocationData();
 }
