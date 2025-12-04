@@ -209,7 +209,7 @@ const maxAttempts = 10;
 // Initialize WebSocket connection with auto-reconnect using main process WebSocket
 const initializeWebSocket = () => {
   // Replace with actual backend WebSocket URL
-  const wsUrl = 'ws://localhost:9091'; // Backend Netty server URL
+  const wsUrl = 'ws://localhost:9091/ws'; // Backend Netty server URL
 
   console.log('Connecting to WebSocket server:', wsUrl);
 
@@ -234,8 +234,8 @@ const sendWebSocketMessage = (message) => {
 const listenersRegistered = window.api?.webSocketListenersRegistered || window.webSocketListenersRegistered;
 if (!listenersRegistered && window.api) {
   // Listen for WebSocket events from main process
-  window.api?.onWebSocketOpen((event) => {
-    console.log('WebSocket connection established:', event);
+  window.api?.onWebSocketOpen(() => {
+    console.log('WebSocket connection established');
 
     // Send authentication if needed
     const authMsg = {

@@ -80,21 +80,14 @@ public class NettyServer {
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
 
-                            // 解码器：解决粘包拆包问题
-                            pipeline.addLast(new LengthFieldBasedFrameDecoder(
-                                    nettyConfig.getMaxFrameLength(),
-                                    nettyConfig.getLengthFieldOffset(),
-                                    nettyConfig.getLengthFieldLength(),
-                                    nettyConfig.getLengthAdjustment(),
-                                    nettyConfig.getInitialBytesToStrip()
-                            ));
-
-                            // 编码器：发送数据时自动添加长度字段
-                            pipeline.addLast(new LengthFieldPrepender(nettyConfig.getLengthFieldLength()));
-
+                            // HTTP请求解码器和编码器
+                            pipeline.addLast(new io.netty.handler.codec.http.HttpServerCodec());
+                            // HTTP请求聚合器
+                            pipeline.addLast(new io.netty.handler.codec.http.HttpObjectAggregator(65536));
+                            // WebSocket协议处理器，指定路径为/ws
+                            pipeline.addLast(new io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler("/ws"));
                             // 字符串解码器
                             pipeline.addLast(new StringDecoder(CharsetUtil.UTF_8));
-
                             // 字符串编码器
                             pipeline.addLast(new StringEncoder(CharsetUtil.UTF_8));
 

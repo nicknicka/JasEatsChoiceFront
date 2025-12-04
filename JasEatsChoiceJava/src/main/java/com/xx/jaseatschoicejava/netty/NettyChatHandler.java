@@ -11,6 +11,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Date 2025/11/22
  */
 @ChannelHandler.Sharable
-public class NettyChatHandler extends SimpleChannelInboundHandler<String> {
+public class NettyChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyChatHandler.class);
 
@@ -65,7 +66,9 @@ public class NettyChatHandler extends SimpleChannelInboundHandler<String> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, String message) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame frame) throws Exception {
+        // 将WebSocket帧转换为字符串消息
+        String message = frame.text();
         logger.info("Received message: {} from channel: {}", message, ctx.channel().remoteAddress());
 
         try {
@@ -136,7 +139,8 @@ public class NettyChatHandler extends SimpleChannelInboundHandler<String> {
         Channel channel = USER_CHANNEL_MAP.get(userId);
         if (channel != null && channel.isActive()) {
             try {
-                channel.writeAndFlush(message);
+                // 发送WebSocket文本帧消息
+                channel.writeAndFlush(new TextWebSocketFrame(message));
                 logger.info("Sent message: {} to user: {}", message, userId);
             } catch (Exception e) {
                 logger.error("Failed to send message to user {}: {}", userId, e.getMessage());
@@ -175,7 +179,8 @@ public class NettyChatHandler extends SimpleChannelInboundHandler<String> {
      * 发送消息给所有在线用户
      */
     private void sendMessageToAll(String message) {
-        CHANNEL_GROUP.writeAndFlush(message);
+        // 发送WebSocket文本帧消息
+        CHANNEL_GROUP.writeAndFlush(new TextWebSocketFrame(message));
         logger.info("Broadcast message: {}", message);
     }
 }
