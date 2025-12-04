@@ -122,13 +122,11 @@ const fetchHotTopic = () => {
 
 // Handle auto location
 // 处理自动定位
-const handleAutoLocation = () => {
+const handleAutoLocation = async () => {
   // Call the existing fetchWeather function without parameters to get auto location
-  fetchWeather()
-    .then(() => {
-      // Close the dialog after successful location
-      locationDialogVisible.value = false;
-    });
+  await fetchWeather();
+  // Close the dialog after successful location
+  locationDialogVisible.value = false;
 };
 
 
@@ -136,11 +134,16 @@ const handleAutoLocation = () => {
 // 处理位置确认
 const handleConfirmLocation = () => {
   if (manualLocation.value && manualLocation.value.length > 0) {
-    // For cascader, the value is an array, we can use the first non-empty value
-    // or join them for more precise weather fetching
-    const location = manualLocation.value.join(' ');
-    // Extract city from location string (simplified logic for demo)
-    const city = location.split('市')[0] + '市';
+    // For cascader, join the array to form a full address string
+    const fullAddress = manualLocation.value.join('');
+    // Extract city from location array for weather API (simplified logic)
+    const city = manualLocation.value[1] || manualLocation.value[0];
+
+    // Update address immediately on UI
+    weather.value.address = fullAddress;
+    weather.value.city = city;
+
+    // Fetch detailed weather information
     fetchWeather(city)
       .then(() => {
         locationDialogVisible.value = false;
@@ -153,44 +156,36 @@ const handleConfirmLocation = () => {
 
 // Fetch location and weather data from backend
 // 从后端获取位置和天气数据
-const fetchWeather = (selectedCity = null) => {
-  if (selectedCity) {
-    // Fetch weather for the selected city
-    weather.value.city = selectedCity;
-    return api.get(`${API_CONFIG.weather.current}?city=${encodeURIComponent(selectedCity)}`)
-      .then(weatherResponse => {
-        if (weatherResponse?.data) {
-          const { temperature, condition } = weatherResponse.data;
-          weather.value.temp = temperature;
-          weather.value.condition = condition;
-        }
-      })
-      .catch(error => {
-        console.error('加载天气失败:', error);
-      });
-  } else {
-    // Step 1: Get current location from backend
-    return api.get(API_CONFIG.weather.location)
-      .then(locationResponse => {
-        if (locationResponse.data) {
-          const { city, address } = locationResponse.data;
-          weather.value.city = city;
-          weather.value.address = address;
+const fetchWeather = async (selectedCity = null) => {
+  try {
+    if (selectedCity) {
+      // Fetch weather for the selected city
+      weather.value.city = selectedCity;
+      const weatherResponse = await api.get(`${API_CONFIG.weather.current}?city=${encodeURIComponent(selectedCity)}`);
+      if (weatherResponse?.data) {
+        const { temperature, condition } = weatherResponse.data;
+        weather.value.temp = temperature;
+        weather.value.condition = condition;
+      }
+    } else {
+      // Step 1: Get current location from backend
+      const locationResponse = await api.get(API_CONFIG.weather.location);
+      if (locationResponse.data) {
+        const { city, address } = locationResponse.data;
+        weather.value.city = city;
+        weather.value.address = address;
 
-          // Step 2: Get weather info based on city
-          return api.get(`${API_CONFIG.weather.current}?city=${encodeURIComponent(city)}`);
-        }
-      })
-      .then(weatherResponse => {
+        // Step 2: Get weather info based on city
+        const weatherResponse = await api.get(`${API_CONFIG.weather.current}?city=${encodeURIComponent(city)}`);
         if (weatherResponse?.data) {
           const { temperature, condition } = weatherResponse.data;
           weather.value.temp = temperature;
           weather.value.condition = condition;
         }
-      })
-      .catch(error => {
-        console.error('加载天气或位置失败:', error);
-      });
+      }
+    }
+  } catch (error) {
+    console.error(selectedCity ? '加载天气失败:' : '加载天气或位置失败:', error);
   }
 };
 
@@ -248,30 +243,52 @@ if (!listenersRegistered && window.api) {
 
   window.api?.onWebSocketMessage((message) => {
     console.log('WebSocket message received:', message);
-    const { msgType, content, fromId, toId } = message;
 
-    switch (msgType) {
-      case 'auth':
-        console.log('Authentication response:', content);
-        break;
+    // Handle both string and Uint8Array messages
+    let messageString;
+    if (message instanceof Uint8Array) {
+      // Decode Uint8Array to string using UTF-8
+      messageString = new TextDecoder().decode(message);
+    } else if (typeof message === 'string') {
+      messageString = message;
+    } else {
+      console.error('Unknown WebSocket message type:', typeof message);
+      return;
+    }
 
-      case 'orderUpdate':
-        console.log('Order update received:', content);
-        // Update UI with order status
-        break;
+    try {
+      // Parse JSON message
+      const parsedMessage = JSON.parse(messageString);
+      console.log('Parsed WebSocket message:', parsedMessage);
 
-      case 'chat':
-        console.log('Chat message from', fromId, 'to', toId, ':', content);
-        // Update chat UI
-        break;
+      const { msgType, content, fromId, toId } = parsedMessage;
 
-      case 'system':
-        console.log('System message:', content);
-        // Show system notification
-        break;
+      switch (msgType) {
+        case 'auth':
+          console.log('Authentication response:', content);
+          break;
 
-      default:
-        console.log('Unknown message type:', msgType);
+        case 'orderUpdate':
+          console.log('Order update received:', content);
+          // Update UI with order status
+          break;
+
+        case 'chat':
+          console.log('Chat message from', fromId, 'to', toId, ':', content);
+          // Update chat UI
+          break;
+
+        case 'system':
+          console.log('System message:', content);
+          // Show system notification
+          break;
+
+        default:
+          console.log('Unknown message type:', msgType);
+      }
+    } catch (error) {
+      console.error('Failed to parse WebSocket message:', error);
+      console.error('Message content:', messageString);
     }
   });
 

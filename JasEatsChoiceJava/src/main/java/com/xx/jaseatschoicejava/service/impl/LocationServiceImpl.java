@@ -38,9 +38,11 @@ public class LocationServiceImpl implements LocationService {
             // 从API获取原始数据
             String response = restTemplate.getForObject(url, String.class);
 
+//            logger.info("高德地图返回的response =  {}", response);
             // 使用Jackson解析JSON
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> responseMap = mapper.readValue(response, Map.class);
+
 
             // 解析定位数据
             boolean success = responseMap != null && "1".equals(responseMap.get("status"));
@@ -50,31 +52,30 @@ public class LocationServiceImpl implements LocationService {
                 location.put("city", responseMap.get("city"));
                 location.put("district", responseMap.get("district"));
                 location.put("longitude", responseMap.get("rectangle") != null ?
-                    ((String) responseMap.get("rectangle")).split(";")[0].split(",")[0] : 121.4737); // 默认经度
+                    ((String) responseMap.get("rectangle")).split(";")[0].split(",")[0] : null); // 不再返回默认值
                 location.put("latitude", responseMap.get("rectangle") != null ?
-                    ((String) responseMap.get("rectangle")).split(";")[0].split(",")[1] : 31.2304); // 默认纬度
+                    ((String) responseMap.get("rectangle")).split(";")[0].split(",")[1] : null); // 不再返回默认值
                 location.put("address",
                     (responseMap.get("province") != null ? responseMap.get("province").toString() : "") +
                     (responseMap.get("city") != null ? responseMap.get("city").toString() : "") +
                     (responseMap.get("district") != null ? responseMap.get("district").toString() : ""));
 
-                return location;
+                // 如果解析结果有效，返回真实数据，否则返回空数据
+                if (location.get("city") != null || location.get("longitude") != null) {
+                    return location;
+                } else {
+                    logger.warn("从高德地图API获取有效的定位数据失败: 所有字段都是null");
+                    return new HashMap<>();
+                }
             }
         } catch (Exception e) {
-            logger.error("Failed to fetch real location data from Gaode Map API: {}", e.getMessage());
+            logger.error("从高德地图API获取真实定位数据失败: {}", e.getMessage());
             e.printStackTrace();
+            logger.warn("由于API获取失败，返回空的定位数据");
         }
 
-        // API调用失败时返回模拟数据
-        logger.info("Using mock location data...");
-        Map<String, Object> mockLocation = new HashMap<>();
-        mockLocation.put("city", "上海");
-        mockLocation.put("district", "浦东新区");
-        mockLocation.put("longitude", 121.4737);
-        mockLocation.put("latitude", 31.2304);
-        mockLocation.put("address", "上海市浦东新区陆家嘴");
-
-        return mockLocation;
+        // API调用失败或未获取到有效数据时返回空数据
+        return new HashMap<>();
     }
 
     @Override
@@ -85,7 +86,7 @@ public class LocationServiceImpl implements LocationService {
 
             // 从API获取原始数据
             String response = restTemplate.getForObject(url, String.class);
-
+//            logger.info("高德地图返回的response =  {}", response);
             // 使用Jackson解析JSON
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> responseMap = mapper.readValue(response, Map.class);
@@ -141,80 +142,23 @@ public class LocationServiceImpl implements LocationService {
                 }
 
                 if (cascaderData.isEmpty()) {
-                    // 如果解析结果为空，返回模拟数据
-                    return getMockCascaderData();
+                    // 如果解析结果为空，返回空数据并记录日志
+                    logger.warn("从高德地图API获取并解析有效的位置数据失败: 解析结果为空数据");
+                    return new ArrayList<>();
                 }
             } else {
-                // 如果API调用成功但返回错误状态，返回模拟数据
-                return getMockCascaderData();
+                // 如果API调用成功但返回错误状态，返回空数据并记录日志
+                logger.warn("从高德地图API获取位置数据失败: API返回错误状态");
+                return new ArrayList<>();
             }
 
             return cascaderData;
         } catch (Exception e) {
-            logger.error("Failed to fetch location data from Gaode Map API: {}", e.getMessage());
+            logger.error("从高德地图API获取位置数据失败: {}", e.getMessage());
             e.printStackTrace();
-
-            // API调用失败时返回模拟数据
-            return getMockCascaderData();
+            logger.warn("由于API获取失败，返回空的位置数据");
+            return new ArrayList<>();
         }
     }
 
-    /**
-     * 获取模拟的级联选择器地址数据
-     */
-    private List<Map<String, Object>> getMockCascaderData() {
-        List<Map<String, Object>> mockData = new ArrayList<>();
-
-        // 模拟几个省份
-        String[][] provincesCitiesAreas = {
-            {"北京市", "北京市", "东城区"},
-            {"上海市", "上海市", "浦东新区"},
-            {"广东省", "广州市", "天河区"},
-            {"广东省", "深圳市", "南山区"},
-            {"江苏省", "南京市", "玄武区"},
-            {"浙江省", "杭州市", "西湖区"}
-        };
-
-        Map<String, Map<String, List<String>>> provinceCityAreaMap = new LinkedHashMap<>();
-
-        for (String[] pca : provincesCitiesAreas) {
-            String province = pca[0];
-            String city = pca[1];
-            String area = pca[2];
-
-            provinceCityAreaMap.computeIfAbsent(province, k -> new LinkedHashMap<>());
-            Map<String, List<String>> cityAreaMap = provinceCityAreaMap.get(province);
-            cityAreaMap.computeIfAbsent(city, k -> new ArrayList<>());
-            cityAreaMap.get(city).add(area);
-        }
-
-        for (Map.Entry<String, Map<String, List<String>>> provinceEntry : provinceCityAreaMap.entrySet()) {
-            Map<String, Object> provinceNode = new HashMap<>();
-            provinceNode.put("value", provinceEntry.getKey());
-            provinceNode.put("label", provinceEntry.getKey());
-
-            List<Map<String, Object>> cityNodes = new ArrayList<>();
-            for (Map.Entry<String, List<String>> cityEntry : provinceEntry.getValue().entrySet()) {
-                Map<String, Object> cityNode = new HashMap<>();
-                cityNode.put("value", cityEntry.getKey());
-                cityNode.put("label", cityEntry.getKey());
-
-                List<Map<String, Object>> areaNodes = new ArrayList<>();
-                for (String area : cityEntry.getValue()) {
-                    Map<String, Object> areaNode = new HashMap<>();
-                    areaNode.put("value", area);
-                    areaNode.put("label", area);
-                    areaNodes.add(areaNode);
-                }
-
-                cityNode.put("children", areaNodes);
-                cityNodes.add(cityNode);
-            }
-
-            provinceNode.put("children", cityNodes);
-            mockData.add(provinceNode);
-        }
-
-        return mockData;
-    }
 }

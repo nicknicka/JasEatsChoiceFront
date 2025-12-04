@@ -22,7 +22,7 @@ const decodeJwt = (token) => {
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
 
     // 使用浏览器兼容的解码方式
-    const payload = atob(padded);
+    const payload = atob(padded)
 
     // 尝试解析为JSON
     return JSON.parse(payload)
@@ -35,7 +35,7 @@ const decodeJwt = (token) => {
         const tokenParts = token.split('.')
         const base64 = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/')
         const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
-        const decoded = Buffer.from(padded, 'base64').toString('utf-8');
+        const decoded = Buffer.from(padded, 'base64').toString('utf-8')
         console.error('Decoded payload (before JSON parse):', decoded)
       } catch (innerError) {
         console.error('Failed to decode payload for debugging:', innerError)

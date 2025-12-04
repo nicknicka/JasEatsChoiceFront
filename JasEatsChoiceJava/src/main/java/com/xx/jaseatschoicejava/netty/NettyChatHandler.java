@@ -76,13 +76,13 @@ public class NettyChatHandler extends SimpleChannelInboundHandler<TextWebSocketF
             com.fasterxml.jackson.databind.JsonNode msgNode = objectMapper.readTree(message);
 
             // 获取消息类型
-            String msgType = msgNode.get("msgType").asText();
+            String msgType = msgNode.has("msgType") ? msgNode.get("msgType").asText() : "";
             // 获取发送方
-            String fromId = msgNode.get("fromId").asText();
+            String fromId = msgNode.has("fromId") ? msgNode.get("fromId").asText() : "";
             // 获取接收方
-            String toId = msgNode.get("toId").asText();
+            String toId = msgNode.has("toId") ? msgNode.get("toId").asText() : "";
             // 获取消息内容
-            String content = msgNode.get("content").asText();
+            String content = msgNode.has("content") ? msgNode.get("content").asText() : "";
 
             // 构造响应消息
             com.fasterxml.jackson.databind.node.ObjectNode responseMsg = objectMapper.createObjectNode();
@@ -117,12 +117,12 @@ public class NettyChatHandler extends SimpleChannelInboundHandler<TextWebSocketF
                 default:
                     // 未知消息类型，发送错误提示
                     responseMsg.put("content", "未知消息类型");
-                    ctx.writeAndFlush(objectMapper.writeValueAsString(responseMsg));
+                    ctx.writeAndFlush(new TextWebSocketFrame(objectMapper.writeValueAsString(responseMsg)));
                     break;
             }
         } catch (Exception e) {
             logger.error("Failed to process message: {}", message, e);
-            ctx.writeAndFlush("{\"msgType\":\"error\",\"content\":\"消息格式错误\"}");
+            ctx.writeAndFlush(new TextWebSocketFrame("{\"msgType\":\"error\",\"content\":\"消息格式错误\"}"));
         }
     }
 

@@ -155,7 +155,7 @@ ipcMain.handle('websocket:connect', async (event, url) => {
 ipcMain.handle('websocket:send', async (event, message) => {
   try {
     if (webSocketClient && webSocketClient.readyState === WebSocket.OPEN) {
-      webSocketClient.send(message)
+      webSocketClient.send(JSON.stringify(message))
       return 'Message sent successfully'
     } else {
       return { error: 'WebSocket not connected' }

@@ -62,5 +62,5 @@ netty:
 gaode:
   map:
     api:
-      key: 6bc8844103bb4416db989e613c6fd3d2
+      key: 140e4ebfe143855a4cc7440533ff27b3
       url: https://restapi.amap.com/v3
