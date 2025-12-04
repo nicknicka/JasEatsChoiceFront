@@ -150,7 +150,8 @@
       "Bash(./mvnw dependency:tree:*)",
       "Bash(openssl:*)",
       "Bash(tar:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(do sed:*)"
     ],
     "deny": [],
     "ask": []

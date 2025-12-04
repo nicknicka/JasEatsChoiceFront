@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 public class Merchant {
 
     @TableId
-    @TableField("id")
     @ApiModelProperty(value = "商家ID")
     private Long id; // 商家ID
 

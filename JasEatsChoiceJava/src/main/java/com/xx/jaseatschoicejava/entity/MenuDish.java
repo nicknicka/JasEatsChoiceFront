@@ -20,7 +20,6 @@ import lombok.AllArgsConstructor;
 public class MenuDish {
 
     @TableId
-    @TableField("id")
     @ApiModelProperty(value = "菜单菜品关联ID")
     private Long id; // 菜单菜品关联ID
 

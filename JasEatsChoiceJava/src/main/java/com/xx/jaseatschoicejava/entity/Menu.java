@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 public class Menu {
 
     @TableId
-    @TableField("id")
     @ApiModelProperty(value = "菜单ID")
     private Long id; // 菜单ID
 

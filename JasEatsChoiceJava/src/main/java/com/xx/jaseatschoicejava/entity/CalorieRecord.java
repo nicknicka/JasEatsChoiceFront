@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 public class CalorieRecord {
 
     @TableId
-    @TableField("id")
     @ApiModelProperty(value = "记录ID")
     private Long id; // 记录ID
 

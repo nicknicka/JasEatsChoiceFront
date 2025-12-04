@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 public class Notification {
 
     @TableId
-    @TableField("id")
     @ApiModelProperty(value = "通知ID")
     private Long id; // 通知ID
 

@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 public class User {
 
     @TableId
-    @TableField("id")
     @ApiModelProperty(value = "用户ID")
     private Long id; // 用户ID
 

@@ -23,7 +23,6 @@ import java.math.BigDecimal;
 public class Order {
 
     @TableId
-    @TableField("id")
     @ApiModelProperty(value = "订单ID")
     private Long id; // 订单ID
 

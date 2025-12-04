@@ -64,3 +64,4 @@ gaode:
     api:
       key: 140e4ebfe143855a4cc7440533ff27b3
       url: https://restapi.amap.com/v3
+      weatherUrl: https://restapi.amap.com/v3/weather/weatherInfo

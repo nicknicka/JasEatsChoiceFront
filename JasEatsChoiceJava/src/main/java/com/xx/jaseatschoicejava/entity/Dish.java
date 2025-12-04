@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 public class Dish {
 
     @TableId
-    @TableField("id")
     @ApiModelProperty(value = "菜品ID")
     private Long id; // 菜品ID
 

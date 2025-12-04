@@ -46,6 +46,7 @@ const {
 // 根据天气条件获取对应的图标
 const getWeatherIcon = () => {
   const condition = weather.value.condition;
+  if (!condition) return Sunny; // Default to sunny if condition is undefined or empty
   if (condition.includes('晴')) return Sunny;
   if (condition.includes('云') || condition.includes('阴') || condition.includes('雨') || condition.includes('雷') || condition.includes('雪')) return Cloudy;
   return Sunny; // Default to sunny
@@ -56,6 +57,11 @@ const getWeatherIcon = () => {
 const getRecommendedDishesSeries = () => {
   const condition = weather.value.condition;
   const temp = weather.value.temp;
+
+  // 默认值
+  if (condition === undefined) {
+    return '热门推荐';
+  }
 
   // 高温天气推荐
   if (temp > 28 || condition.includes('晴')) {
@@ -164,8 +170,13 @@ const fetchWeather = async (selectedCity = null) => {
       const weatherResponse = await api.get(`${API_CONFIG.weather.current}?city=${encodeURIComponent(selectedCity)}`);
       if (weatherResponse?.data) {
         const { temperature, condition } = weatherResponse.data;
-        weather.value.temp = temperature;
-        weather.value.condition = condition;
+        // Only update if values are defined
+        if (temperature !== undefined) {
+          weather.value.temp = temperature;
+        }
+        if (condition !== undefined) {
+          weather.value.condition = condition;
+        }
       }
     } else {
       // Step 1: Get current location from backend

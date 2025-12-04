@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 public class ChatMsg {
 
     @TableId
-    @TableField("id")
     @ApiModelProperty(value = "消息ID")
     private Long id; // 消息ID
 
