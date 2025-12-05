@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { API_CONFIG } from '../../config/index.js';
+import { ElMessage } from 'element-plus';
 
 // 卡路里统计数据
 const calorieData = ref({
@@ -39,8 +40,15 @@ const customGoals = ref({});
 
 // 从API获取数据
 onMounted(() => {
+  // 获取用户信息
+  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  if (!userInfo || !userInfo.userId) {
+    ElMessage.error('未找到用户信息，请先登录');
+    return;
+  }
+  const userId = userInfo.userId;
+
   // 获取用户偏好设置（包含卡路里目标和营养目标）
-  const userId = parseInt(localStorage.getItem('userId') || '1', 10); // 临时用户ID，实际应用中应从登录信息获取
   axios.get(`${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`)
     .then(response => {
       if (response.data && response.data.success) {
@@ -76,6 +84,19 @@ onMounted(() => {
     })
     .catch(error => {
       console.error('加载今日营养数据失败:', error);
+    });
+
+  // 直接从后端获取本周卡路里统计
+  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.diet.week}${userId}`)
+    .then(response => {
+      if (response.data && response.data.success) {
+        // 直接使用后端返回的每周数据
+        calorieData.value.weekly = response.data.data;
+      }
+    })
+    .catch(error => {
+      console.error('加载本周卡路里记录失败:', error);
+      ElMessage.error('加载本周卡路里记录失败，请稍后重试');
     });
 });
 
@@ -191,20 +212,37 @@ const getNutritionColor = (name) => {
 
 <style scoped lang="less">
 .calorie-container {
-  padding: 0 20px 20px 20px;
+  padding: 24px;
+  min-height: 100vh;
+  background: #f5f7fa;
 
   h2 {
-    font-size: 24px;
-    margin: 0 0 20px 0;
+    font-size: 28px;
+    margin: 0 0 32px 0;
+    text-align: center;
+    color: #333;
+    font-weight: 700;
   }
 
   .today-overview {
     display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
 
     .overview-card {
       flex: 1;
+      min-width: 250px;
+      background: rgba(255, 255, 255, 0.95) !important;
+      border-radius: 16px !important;
+      padding: 24px !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      }
 
       .overview-item {
         text-align: center;
@@ -212,20 +250,31 @@ const getNutritionColor = (name) => {
         .overview-label {
           font-size: 14px;
           color: #666;
-          margin-bottom: 5px;
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
 
         .overview-value {
-          font-size: 28px;
-          font-weight: bold;
-          color: #FF6B6B;
+          font-size: 32px;
+          font-weight: 700;
+          background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
 
           &.remaining {
-            color: #4CAF50;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
           }
 
           &.target {
-            color: #2196F3;
+            background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
           }
         }
       }
@@ -233,92 +282,135 @@ const getNutritionColor = (name) => {
   }
 
   .nutrition-card {
-    margin-bottom: 20px;
+    margin-bottom: 32px;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 
     .card-header {
       font-size: 18px;
-      font-weight: bold;
+      font-weight: 700;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .nutrition-chart {
-      padding: 20px 0;
+      padding: 28px;
     }
 
     .nutrition-item {
-      margin-bottom: 20px;
+      margin-bottom: 28px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
 
       .nutrition-info {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 10px;
-
-        .nutrition-name {
-          font-weight: bold;
-        }
+        margin-bottom: 12px;
+        font-size: 14px;
+        font-weight: 600;
       }
     }
   }
 
-  /* Section styles for vertical display */
+  /* Section styles */
   .today-overview-section,
   .weekly-statistics-section {
-    margin-bottom: 30px;
+    margin-bottom: 32px;
   }
 
   .today-overview-section h3,
   .weekly-statistics-section h3 {
-    font-size: 20px;
-    font-weight: bold;
-    margin: 0 0 15px 0;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 24px 0;
     color: #333;
   }
 
   .weekly-card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
     .card-header {
       font-size: 18px;
-      font-weight: bold;
+      font-weight: 700;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .weekly-chart {
-      padding: 20px 0;
+      padding: 32px;
     }
 
     .weekly-bar {
-      margin-bottom: 20px;
+      margin-bottom: 32px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
 
       .bar-label {
-        margin-bottom: 10px;
-        font-weight: bold;
+        margin-bottom: 16px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
 
       .bar-container {
         width: 100%;
-        height: 30px;
-        background-color: #E0E0E0;
-        border-radius: 4px;
+        height: 36px;
+        background-color: #f0f0f0;
+        border-radius: 18px;
         overflow: hidden;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08);
       }
 
       .bar-fill {
         height: 100%;
-        background-color: #2196F3;
+        background: linear-gradient(90deg, #2196F3 0%, #1976d2 100%);
         text-align: center;
-        line-height: 30px;
+        line-height: 36px;
         color: white;
-        font-weight: bold;
-        transition: width 0.3s;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+
+      .bar-fill:hover {
+        background: linear-gradient(90deg, #1976d2 0%, #1565c0 100%);
+        box-shadow: 0 0 12px rgba(33, 150, 243, 0.4);
       }
 
       .bar-fill.over-target {
-        background-color: #FF5252;
+        background: linear-gradient(90deg, #FF5252 0%, #f44336 100%);
+      }
+
+      .bar-fill.over-target:hover {
+        background: linear-gradient(90deg, #f44336 0%, #d32f2f 100%);
+        box-shadow: 0 0 12px rgba(244, 67, 54, 0.4);
       }
     }
   }
 }
 
-// 进度条颜色
-:deep(.el-progress-bar__inner) {
-  background-color: #FF6B6B;
+// 进度条样式
+:deep(.el-progress) {
+  .el-progress-bar__inner {
+    background: linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%);
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
+    transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
 }
 
 </style>

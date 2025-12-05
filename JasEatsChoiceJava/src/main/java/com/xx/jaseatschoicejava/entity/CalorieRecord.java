@@ -44,4 +44,12 @@ public class CalorieRecord {
     @TableField("record_time")
     @ApiModelProperty(value = "记录时间")
     private LocalDateTime recordTime; // 记录时间
+
+    @TableField("food_name")
+    @ApiModelProperty(value = "食物名称")
+    private String foodName; // 食物名称
+
+    @TableField("description")
+    @ApiModelProperty(value = "食物描述")
+    private String description; // 食物描述
 }

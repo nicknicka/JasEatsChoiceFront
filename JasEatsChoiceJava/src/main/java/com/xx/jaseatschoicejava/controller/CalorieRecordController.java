@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.List;
 
 /**
@@ -44,6 +46,51 @@ public class CalorieRecordController {
         queryWrapper.orderByDesc(CalorieRecord::getRecordTime); // 按记录时间降序排列
         List<CalorieRecord> records = calorieRecordService.list(queryWrapper);
         return ResponseResult.success(records);
+    }
+
+    /**
+     * 根据用户ID获取本周卡路里记录统计
+     */
+    @GetMapping("/user/{userId}/week")
+    public ResponseResult<?> getWeeklyRecordsByUserId(@PathVariable Long userId) {
+        LambdaQueryWrapper<CalorieRecord> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CalorieRecord::getUserId, userId);
+
+        // 计算当前周的开始和结束日期
+        LocalDate today = LocalDate.now();
+        int dayOfWeek = today.getDayOfWeek().getValue(); // 1-7，周一到周日
+        LocalDate startOfWeek = today.minusDays(dayOfWeek - 1); // 周一
+        LocalDateTime startTime = startOfWeek.atStartOfDay();
+        LocalDateTime endOfWeek = startOfWeek.plusDays(6).atTime(LocalTime.MAX); // 周日23:59:59
+
+        // 查询本周的所有记录
+        queryWrapper.between(CalorieRecord::getRecordTime, startTime, endOfWeek);
+
+        List<CalorieRecord> records = calorieRecordService.list(queryWrapper);
+
+        // 初始化每周七天的数据
+        Map<String, Map<String, Object>> weeklyDataMap = new HashMap<>();
+        String[] weekDays = {"周一", "周二", "周三", "周四", "周五", "周六", "周日"};
+
+        for (String day : weekDays) {
+            weeklyDataMap.put(day, Map.of("day", day, "consumed", 0));
+        }
+
+        // 计算每天的总卡路里
+        for (CalorieRecord record : records) {
+            int recordDayOfWeek = record.getRecordTime().getDayOfWeek().getValue();
+            String day = weekDays[recordDayOfWeek - 1];
+            Map<String, Object> dayData = (Map<String, Object>) weeklyDataMap.get(day);
+            int currentConsumed = (Integer) dayData.get("consumed");
+            weeklyDataMap.put(day, Map.of("day", day, "consumed", currentConsumed + record.getCalorie()));
+        }
+
+        // 转换为列表并按顺序返回
+        List<Map<String, Object>> weeklyDataList = Arrays.stream(weekDays)
+            .map(weeklyDataMap::get)
+            .collect(Collectors.toList());
+
+        return ResponseResult.success(weeklyDataList);
     }
 
     /**

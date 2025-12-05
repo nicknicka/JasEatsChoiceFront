@@ -265,12 +265,18 @@ onMounted(() => {
 	loadSavedAccounts();
 });
 
-// 监听路由变化，确保每次进入页面都刷新验证码
+// 监听路由变化，确保每次进入页面都刷新验证码、重置表单和清除加载状态
 watch(
 	() => router.currentRoute.value.path,
 	(newPath) => {
 		if (newPath === "/login") {
 			generateCaptcha();
+			// 清除加载状态
+			showLoading.value = false;
+			// 重置表单
+			if (loginFormRef.value) {
+				loginFormRef.value.resetFields();
+			}
 		}
 	}
 );

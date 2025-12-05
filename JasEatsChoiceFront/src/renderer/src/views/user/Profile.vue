@@ -385,9 +385,12 @@ const logout = () => {
     type: 'warning'
   })
     .then(() => {
-      // 清除本地存储
+      // 清除本地存储中的所有用户相关数据
       localStorage.removeItem('userInfo')
       localStorage.removeItem('userAvatar')
+      localStorage.removeItem('phone')
+      localStorage.removeItem('userId')
+      localStorage.removeItem('token')
 
       // 跳转到登录页面
       router.push('/login')

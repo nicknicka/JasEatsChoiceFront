@@ -23,11 +23,59 @@
               <el-icon class="calendar-suffix-icon"><CalendarIcon /></el-icon>
             </template>
           </el-date-picker>
-          <el-button type="primary" size="small" class="add-btn">
+          <el-button type="primary" size="small" class="add-btn" @click="openAddRecordDialog">
             <el-icon><Plus /></el-icon>
             添加记录
           </el-button>
         </div>
+
+        <!-- 添加记录弹窗 -->
+        <el-dialog title="添加饮食记录" v-model="addRecordDialogVisible" width="480px">
+          <el-form ref="addRecordFormRef" :model="addRecordForm" label-width="80px">
+            <el-form-item label="餐次" required>
+              <el-select v-model="addRecordForm.mealType" placeholder="请选择餐次">
+                <el-option
+                  v-for="option in mealTypeOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="时间" required>
+              <el-time-picker
+                v-model="addRecordForm.time"
+                type="time"
+                placeholder="选择时间"
+                format="HH:mm"
+                value-format="HH:mm"
+                style="width: 100%;"
+              >
+              </el-time-picker>
+            </el-form-item>
+
+            <el-form-item label="食物名称" required>
+              <el-input v-model="addRecordForm.foodName" placeholder="请输入食物名称"></el-input>
+            </el-form-item>
+
+            <el-form-item label="卡路里" required>
+              <el-input-number v-model="addRecordForm.calories" :min="0" placeholder="请输入卡路里"></el-input-number>
+            </el-form-item>
+
+            <el-form-item label="描述">
+              <el-input v-model="addRecordForm.description" type="textarea" placeholder="请输入描述" :rows="3"></el-input>
+            </el-form-item>
+          </el-form>
+
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button @click="closeAddRecordDialog">取消</el-button>
+              <el-button type="primary" @click="submitAddRecordForm">确定</el-button>
+            </div>
+          </template>
+        </el-dialog>
       </div>
     </div>
 
@@ -49,14 +97,18 @@
       <div class="meal-sections">
         <!-- 早餐 -->
         <div v-if="getMealsByType('breakfast').length > 0" class="meal-section">
-          <div class="meal-section-header breakfast">
+          <div class="meal-section-header breakfast" @click="toggleSection('breakfast')" style="cursor: pointer;">
             <el-icon class="meal-icon"><Sunrise /> </el-icon>
             <span class="meal-section-title">早餐</span>
             <el-tag size="small" type="success" class="meal-count">
               {{ getMealsByType('breakfast').length }}
             </el-tag>
+            <el-icon :class="{ 'rotate-180': !expandedSections.breakfast }" class="arrow-icon">
+              <ArrowDown />
+            </el-icon>
           </div>
-          <div class="meal-records">
+          <Transition name="collapse">
+            <div v-show="expandedSections.breakfast" class="meal-records">
             <div
               v-for="record in getMealsByType('breakfast')"
               :key="record.id"
@@ -76,103 +128,119 @@
                 <span class="calories-unit">kcal</span>
               </div>
             </div>
-          </div>
+            </div>
+          </Transition>
         </div>
 
         <!-- 午餐 -->
         <div v-if="getMealsByType('lunch').length > 0" class="meal-section">
-          <div class="meal-section-header lunch">
+          <div class="meal-section-header lunch" @click="toggleSection('lunch')" style="cursor: pointer;">
             <el-icon class="meal-icon"><Sunny /> </el-icon>
             <span class="meal-section-title">午餐</span>
             <el-tag size="small" type="warning" class="meal-count">
               {{ getMealsByType('lunch').length }}
             </el-tag>
+            <el-icon :class="{ 'rotate-180': !expandedSections.lunch }" class="arrow-icon">
+              <ArrowDown />
+            </el-icon>
           </div>
-          <div class="meal-records">
-            <div
-              v-for="record in getMealsByType('lunch')"
-              :key="record.id"
-              class="record-card"
-              @mouseenter="hoverRecord = record.id"
-              @mouseleave="hoverRecord = null"
-            >
-              <div class="record-info">
-                <div class="record-time">{{ record.time }}</div>
-                <div class="record-content">
-                  <div class="food-name">{{ record.foodName }}</div>
-                  <div class="food-description">{{ record.description }}</div>
+          <Transition name="collapse">
+            <div v-show="expandedSections.lunch" class="meal-records">
+              <div
+                v-for="record in getMealsByType('lunch')"
+                :key="record.id"
+                class="record-card"
+                @mouseenter="hoverRecord = record.id"
+                @mouseleave="hoverRecord = null"
+              >
+                <div class="record-info">
+                  <div class="record-time">{{ record.time }}</div>
+                  <div class="record-content">
+                    <div class="food-name">{{ record.foodName }}</div>
+                    <div class="food-description">{{ record.description }}</div>
+                  </div>
+                </div>
+                <div class="record-calories">
+                  <span class="calories-text">{{ record.calories }}</span>
+                  <span class="calories-unit">kcal</span>
                 </div>
               </div>
-              <div class="record-calories">
-                <span class="calories-text">{{ record.calories }}</span>
-                <span class="calories-unit">kcal</span>
-              </div>
             </div>
-          </div>
+          </Transition>
         </div>
 
         <!-- 晚餐 -->
         <div v-if="getMealsByType('dinner').length > 0" class="meal-section">
-          <div class="meal-section-header dinner">
+          <div class="meal-section-header dinner" @click="toggleSection('dinner')" style="cursor: pointer;">
             <el-icon class="meal-icon"><Moon /> </el-icon>
             <span class="meal-section-title">晚餐</span>
             <el-tag size="small" type="danger" class="meal-count">
               {{ getMealsByType('dinner').length }}
             </el-tag>
+            <el-icon :class="{ 'rotate-180': !expandedSections.dinner }" class="arrow-icon">
+              <ArrowDown />
+            </el-icon>
           </div>
-          <div class="meal-records">
-            <div
-              v-for="record in getMealsByType('dinner')"
-              :key="record.id"
-              class="record-card"
-              @mouseenter="hoverRecord = record.id"
-              @mouseleave="hoverRecord = null"
-            >
-              <div class="record-info">
-                <div class="record-time">{{ record.time }}</div>
-                <div class="record-content">
-                  <div class="food-name">{{ record.foodName }}</div>
-                  <div class="food-description">{{ record.description }}</div>
+          <Transition name="collapse">
+            <div v-show="expandedSections.dinner" class="meal-records">
+              <div
+                v-for="record in getMealsByType('dinner')"
+                :key="record.id"
+                class="record-card"
+                @mouseenter="hoverRecord = record.id"
+                @mouseleave="hoverRecord = null"
+              >
+                <div class="record-info">
+                  <div class="record-time">{{ record.time }}</div>
+                  <div class="record-content">
+                    <div class="food-name">{{ record.foodName }}</div>
+                    <div class="food-description">{{ record.description }}</div>
+                  </div>
+                </div>
+                <div class="record-calories">
+                  <span class="calories-text">{{ record.calories }}</span>
+                  <span class="calories-unit">kcal</span>
                 </div>
               </div>
-              <div class="record-calories">
-                <span class="calories-text">{{ record.calories }}</span>
-                <span class="calories-unit">kcal</span>
-              </div>
             </div>
-          </div>
+          </Transition>
         </div>
 
         <!-- 加餐 -->
         <div v-if="getMealsByType('snack').length > 0" class="meal-section">
-          <div class="meal-section-header snack">
+          <div class="meal-section-header snack" @click="toggleSection('snack')" style="cursor: pointer;">
             <el-icon class="meal-icon"><Coffee /> </el-icon>
             <span class="meal-section-title">加餐</span>
             <el-tag size="small" type="info" class="meal-count">
               {{ getMealsByType('snack').length }}
             </el-tag>
+            <el-icon :class="{ 'rotate-180': !expandedSections.snack }" class="arrow-icon">
+              <ArrowDown />
+            </el-icon>
           </div>
-          <div class="meal-records">
-            <div
-              v-for="record in getMealsByType('snack')"
-              :key="record.id"
-              class="record-card"
-              @mouseenter="hoverRecord = record.id"
-              @mouseleave="hoverRecord = null"
-            >
-              <div class="record-info">
-                <div class="record-time">{{ record.time }}</div>
-                <div class="record-content">
-                  <div class="food-name">{{ record.foodName }}</div>
-                  <div class="food-description">{{ record.description }}</div>
+          <Transition name="collapse">
+            <div v-show="expandedSections.snack" class="meal-records">
+              <div
+                v-for="record in getMealsByType('snack')"
+                :key="record.id"
+                class="record-card"
+                @mouseenter="hoverRecord = record.id"
+                @mouseleave="hoverRecord = null"
+              >
+                <div class="record-info">
+                  <div class="record-time">{{ record.time }}</div>
+                  <div class="record-content">
+                    <div class="food-name">{{ record.foodName }}</div>
+                    <div class="food-description">{{ record.description }}</div>
+                  </div>
+                </div>
+                <div class="record-calories">
+                  <span class="calories-text">{{ record.calories }}</span>
+                  <span class="calories-unit">kcal</span>
                 </div>
               </div>
-              <div class="record-calories">
-                <span class="calories-text">{{ record.calories }}</span>
-                <span class="calories-unit">kcal</span>
-              </div>
             </div>
-          </div>
+          </Transition>
         </div>
       </div>
 
@@ -202,10 +270,25 @@ import {
   Sunrise,
   Sunny,
   Moon,
-  Coffee
+  Coffee,
+  ArrowDown
 } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import api from '../../utils/api.js'
 import { API_CONFIG } from '../../config/index.js'
+
+// 展开/折叠状态
+const expandedSections = ref({
+  breakfast: true,
+  lunch: true,
+  dinner: true,
+  snack: true
+})
+
+// 切换展开/折叠
+const toggleSection = (section) => {
+  expandedSections.value[section] = !expandedSections.value[section]
+}
 
 // 日历选择的日期，默认是今天
 const selectedDate = ref(new Date().toISOString().split('T')[0])
@@ -229,56 +312,6 @@ const updateTotalCalories = () => {
   totalCalories.value = dietRecords.value.reduce((total, record) => total + (record.calories || 0), 0)
 }
 
-// 使用模拟数据
-const useMockData = () => {
-  dietRecords.value = [
-    {
-      id: 1,
-      mealType: 'breakfast',
-      mealTypeName: '早餐',
-      time: '08:30',
-      foodName: '牛奶',
-      calories: 120,
-      description: '纯牛奶250ml'
-    },
-    {
-      id: 2,
-      mealType: 'breakfast',
-      mealTypeName: '早餐',
-      time: '08:45',
-      foodName: '鸡蛋',
-      calories: 140,
-      description: '煮鸡蛋1个'
-    },
-    {
-      id: 3,
-      mealType: 'lunch',
-      mealTypeName: '午餐',
-      time: '12:30',
-      foodName: '米饭',
-      calories: 116,
-      description: '白米饭100g'
-    },
-    {
-      id: 4,
-      mealType: 'lunch',
-      mealTypeName: '午餐',
-      time: '12:45',
-      foodName: '青菜',
-      calories: 50,
-      description: '清炒青菜200g'
-    },
-    {
-      id: 5,
-      mealType: 'snack',
-      mealTypeName: '加餐',
-      time: '15:30',
-      foodName: '苹果',
-      calories: 95,
-      description: '中等大小苹果1个'
-    }
-  ]
-}
 
 // 从后端获取饮食记录
 const fetchDietRecords = async (date) => {
@@ -286,10 +319,9 @@ const fetchDietRecords = async (date) => {
     // 这里需要获取当前登录用户的ID，假设已经存储在localStorage中
     const userInfo = JSON.parse(localStorage.getItem('userInfo'))
     if (!userInfo || !userInfo.userId) {
-      console.error('未找到用户信息')
-      // 如果没有用户信息，使用模拟数据
-      useMockData()
-      updateTotalCalories()
+      // 如果没有用户信息，显示空数据状态
+      dietRecords.value = []
+      totalCalories.value = 0
       return
     }
 
@@ -312,9 +344,9 @@ const fetchDietRecords = async (date) => {
                   record.mealTime === '晚餐' ? 'dinner' : 'snack',
         mealTypeName: record.mealTime,
         time: record.recordTime ? record.recordTime.split('T')[1].substring(0, 5) : '',
-        foodName: '', // 这里需要从菜品ID获取菜品名称，暂时留空
+        foodName: record.foodName || '', // 使用直接存储的食物名称
         calories: record.calorie,
-        description: '' // 可以根据菜品信息生成描述
+        description: record.description || '' // 使用直接存储的食物描述
       }))
     }
 
@@ -322,9 +354,10 @@ const fetchDietRecords = async (date) => {
     updateTotalCalories()
   } catch (error) {
     console.error('获取饮食记录失败:', error)
-    // 失败时可以使用模拟数据
-    useMockData()
-    updateTotalCalories()
+    ElMessage.error('获取饮食记录失败，请稍后重试')
+    // 失败时清空数据，显示空数据状态
+    dietRecords.value = []
+    totalCalories.value = 0
   }
 }
 
@@ -335,8 +368,103 @@ const handleDateChange = (date) => {
   fetchDietRecords(date)
 }
 
+// 添加记录弹窗可见性
+const addRecordDialogVisible = ref(false)
+
+// 添加记录表单引用
+const addRecordFormRef = ref(null)
+
+// 添加记录表单数据
+const addRecordForm = ref({
+  mealType: 'breakfast',
+  time: '',
+  foodName: '',
+  calories: 0,
+  description: ''
+})
+
+// 餐次类型选项
+const mealTypeOptions = [
+  { value: 'breakfast', label: '早餐' },
+  { value: 'lunch', label: '午餐' },
+  { value: 'dinner', label: '晚餐' },
+  { value: 'snack', label: '加餐' }
+]
+
+// 打开添加记录弹窗
+const openAddRecordDialog = () => {
+  addRecordDialogVisible.value = true
+  // 重置表单
+  addRecordForm.value = {
+    mealType: 'breakfast',
+    time: '',
+    foodName: '',
+    calories: 0,
+    description: ''
+  }
+}
+
+// 关闭添加记录弹窗
+const closeAddRecordDialog = () => {
+  addRecordDialogVisible.value = false
+}
+
+// 提交添加记录表单
+const submitAddRecordForm = async () => {
+  try {
+    // 表单验证
+    if (!addRecordFormRef.value) return
+    await addRecordFormRef.value.validate()
+
+    // 这里需要获取当前登录用户的ID，假设已经存储在localStorage中
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+    if (!userInfo || !userInfo.userId) {
+      ElMessage.error('未找到用户信息，请先登录')
+      return
+    }
+
+    // 构建请求数据
+    // 转换餐次类型为中文
+    const mealTimeMap = {
+      breakfast: '早餐',
+      lunch: '午餐',
+      dinner: '晚餐',
+      snack: '加餐'
+    }
+    // 合并日期和时间为LocalDateTime格式
+    const recordTime = new Date(`${selectedDate.value}T${addRecordForm.value.time}`).toISOString()
+
+    const requestData = {
+      userId: userInfo.userId,
+      mealTime: mealTimeMap[addRecordForm.value.mealType],
+      foodName: addRecordForm.value.foodName,
+      calorie: addRecordForm.value.calories, // 注意后端字段是单数形式
+      description: addRecordForm.value.description,
+      recordTime: recordTime
+    }
+
+    // 调用后端API添加记录
+    await api.post(API_CONFIG.diet.add, requestData)
+
+    // 添加成功后，关闭弹窗并刷新记录
+    closeAddRecordDialog()
+    fetchDietRecords(selectedDate.value)
+  } catch (error) {
+    console.error('添加记录失败:', error)
+    ElMessage.error('添加记录失败，请稍后重试')
+  }
+}
+
 // 页面加载时初始化数据
 onMounted(() => {
+  // 添加模拟用户信息到localStorage（仅用于测试）
+  const mockUserInfo = {
+    userId: 1,
+    username: 'testuser',
+    email: 'test@example.com'
+  }
+  localStorage.setItem('userInfo', JSON.stringify(mockUserInfo))
+
   // 加载默认日期的饮食记录数据
   fetchDietRecords(selectedDate.value)
 })
@@ -501,6 +629,27 @@ onMounted(() => {
 
 .meal-count {
   margin-left: auto;
+}
+
+/* 箭头图标样式 */
+.arrow-icon {
+  transition: transform 0.3s ease;
+  font-size: 16px;
+  margin-left: 8px;
+}
+
+/* 折叠动画样式 */
+.collapse-enter-active,
+.collapse-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.collapse-enter-from,
+.collapse-leave-to {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
 }
 
 /* 记录卡片 */
