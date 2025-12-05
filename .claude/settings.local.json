@@ -154,7 +154,10 @@
       "Bash(do sed:*)",
       "Bash(npm run build:renderer:*)",
       "Bash(mvn clean compile:*)",
-      "Bash(import com.xx.jaseatschoicejava.service.NotificationService)"
+      "Bash(import com.xx.jaseatschoicejava.service.NotificationService)",
+      "Bash(__NEW_LINE__ echo \"Dialog title enhancement added to the summary file\")",
+      "Bash(__NEW_LINE__ echo \"Add dish dialog enhancement added to the summary file\")",
+      "Bash(__NEW_LINE__ echo \"Error fix documented successfully.\")"
     ],
     "deny": [],
     "ask": []

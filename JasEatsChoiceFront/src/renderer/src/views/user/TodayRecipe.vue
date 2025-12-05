@@ -650,15 +650,42 @@ const filteredRecipes = computed(() => {
 			</div>
 			<div class="detail-item">
 				<span class="detail-label">菜品:</span>
-				<div class="detail-value">
-					<el-tag
-						v-for="item in selectedRecipe.items"
-						:key="item"
-						:type="getTagType(selectedRecipe.type)"
-						style="margin-right: 10px; margin-bottom: 10px"
+				<div class="detail-value dish-list">
+					<div
+						v-for="(item, index) in selectedRecipe.items"
+						:key="index"
+						class="dish-item"
 					>
-						{{ item }}
-					</el-tag>
+						<h5 class="dish-name">
+							{{ typeof item === "object" ? item.name : item }}
+						</h5>
+						<div
+							v-if="
+								typeof item === 'object' &&
+								item.ingredients &&
+								item.ingredients.length > 0
+							"
+							class="dish-ingredients"
+						>
+							<el-tag
+								size="small"
+								type="info"
+								v-for="(ingredient, ingIndex) in item.ingredients"
+								:key="ingIndex"
+							>
+								{{ ingredient }}
+							</el-tag>
+						</div>
+						<div
+							v-else-if="
+								typeof item === 'object' &&
+								(!item.ingredients || item.ingredients.length === 0)
+							"
+							class="no-ingredients"
+						>
+							<el-tag size="small" type="warning">无食材信息</el-tag>
+						</div>
+					</div>
 				</div>
 			</div>
 			<div class="detail-item">
@@ -755,19 +782,22 @@ const filteredRecipes = computed(() => {
 	>
 		<div v-if="selectedRecipe" class="add-dish-form">
 			<el-form class="form-container" ref="dishForm">
-				<el-form-item
-					label="菜品名称"
-					prop="name"
-					class="is-required"
-				>
+				<el-form-item label="菜品名称" prop="name" class="is-required">
 					<el-input
 						v-model="newDish.name"
 						placeholder="请输入新菜品名称"
-						@blur="() => {
-							if (newDish.name.trim() && !isValidDishName(newDish.name)) {
-								ElMessage.error('菜品名称只能包含中文、英文、数字和常见符号');
+						@blur="
+							() => {
+								if (
+									newDish.name.trim() &&
+									!isValidDishName(newDish.name)
+								) {
+									ElMessage.error(
+										'菜品名称只能包含中文、英文、数字和常见符号'
+									);
+								}
 							}
-						}"
+						"
 					/>
 				</el-form-item>
 
@@ -846,6 +876,55 @@ const filteredRecipes = computed(() => {
 			<el-button @click="importMerchantDishVisible = false">取消</el-button>
 			<el-button type="primary" @click="confirmImportMerchantDishes">
 				导入选中菜品
+			</el-button>
+		</template>
+	</el-dialog>
+
+	<!-- 导入订单对话框 -->
+	<el-dialog
+		v-model="importOrderVisible"
+		title="从订单导入食谱"
+		width="600px"
+		top="10%"
+	>
+		<div class="import-merchant-dish-container">
+			<!-- 订单列表 -->
+			<el-select
+				v-model="selectedOrder"
+				placeholder="请选择要导入的订单"
+				style="width: 100%"
+			>
+				<el-option
+					v-for="order in orders"
+					:key="order.id"
+					:label="`订单号: ${order.orderNo} - 总价: ${order.totalPrice}元`"
+					:value="order"
+				>
+					<template #default="{ data }">
+						<div>
+							<div class="order-option-header">
+								<span>{{ data.label }}</span>
+							</div>
+							<div class="order-option-dishes" style="margin-top: 8px">
+								<el-tag
+									size="small"
+									type="info"
+									v-for="dish in data.dishes"
+									:key="dish.name"
+								>
+									{{ dish.name }}
+								</el-tag>
+							</div>
+						</div>
+					</template>
+				</el-option>
+			</el-select>
+		</div>
+
+		<template #footer>
+			<el-button @click="importOrderVisible = false">取消</el-button>
+			<el-button type="primary" @click="confirmImportOrder">
+				导入为新食谱
 			</el-button>
 		</template>
 	</el-dialog>
@@ -1199,16 +1278,40 @@ const filteredRecipes = computed(() => {
 	width: 100%;
 }
 
+// 所有对话框标题样式
+.el-dialog__header {
+	.el-dialog__title {
+		font-size: 24px !important;
+		font-weight: 700 !important;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+		background-clip: text !important;
+		-webkit-background-clip: text !important;
+		color: transparent !important;
+		text-shadow: 2px 2px 6px rgba(102, 126, 234, 0.3) !important;
+		letter-spacing: 1px !important;
+		padding: 6px 0 !important;
+		font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+	}
+}
+
 // 食谱详情对话框样式
 .recipe-details {
 	.detail-item {
 		margin-bottom: 20px;
 
 		.detail-label {
-			font-weight: bold;
-			font-size: 14px;
-			color: #333;
-			margin-right: 10px;
+			font-weight: 700;
+			font-size: 16px;
+			color: #2c3e50;
+			margin-right: 12px;
+			padding: 8px 16px;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border-radius: 24px;
+			box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+			letter-spacing: 0.5px;
+			margin-bottom: 12px;
+			display: inline-block;
 		}
 
 		.detail-value {
@@ -1216,24 +1319,305 @@ const filteredRecipes = computed(() => {
 			color: #666;
 		}
 
+		// 餐型值样式
+		.detail-item:first-child .detail-value {
+			font-size: 20px;
+			font-weight: 700;
+			color: #2196f3;
+			margin-left: 8px;
+			text-shadow: 1px 1px 3px rgba(33, 150, 243, 0.2);
+		}
+
 		.nutrition-info {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+			gap: 16px;
+			padding: 20px;
+			background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+			border-radius: 12px;
+			border: 1px solid #ffebee;
+			margin-top: 12px;
+		}
+
+		.nutrition-item {
+			margin-bottom: 0;
+			padding: 12px 16px;
+			background: white;
+			border-radius: 8px;
+			text-align: center;
+			border: 1px solid #ffcdd2;
+			transition: all 0.3s ease;
+
+			&:hover {
+				box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
+				transform: translateY(-1px);
+			}
+
+			.nutrition-label {
+				font-weight: 600;
+				font-size: 14px;
+				color: #757575;
+				display: block;
+				margin-bottom: 4px;
+			}
+
+			.nutrition-value {
+				color: #ff5252;
+				font-weight: 700;
+				font-size: 20px;
+				margin-left: 0;
+			}
+		}
+
+		// 菜品列表样式
+		.dish-list {
+			display: flex;
+			flex-direction: column;
+			gap: 24px;
+			margin-top: 16px;
+		}
+
+		.dish-item {
+			padding: 20px;
+			background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
+			border-radius: 12px;
+			border-left: 5px solid #2196f3;
+			border: 1px solid #e3f2fd;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+			&:hover {
+				box-shadow: 0 8px 24px rgba(33, 150, 243, 0.15);
+				transform: translateY(-2px);
+				border-color: #1976d2;
+			}
+		}
+
+		.dish-name {
+			font-size: 18px;
+			font-weight: 700;
+			margin: 0 0 14px 0;
+			color: #2c3e50;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+
+			&::before {
+				content: "🍽️";
+				font-size: 22px;
+			}
+		}
+
+		.dish-ingredients {
 			display: flex;
 			flex-wrap: wrap;
-			gap: 20px;
+			gap: 10px;
+			margin-top: 8px;
+		}
 
-			.nutrition-item {
-				margin-bottom: 10px;
+		.dish-ingredients .el-tag {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			border: none;
+			color: white;
+			font-weight: 500;
+			opacity: 0.9;
+			transition: all 0.2s ease;
 
-				.nutrition-label {
-					font-weight: bold;
-				}
-
-				.nutrition-value {
-					color: #ff6b6b;
-					font-weight: bold;
-					margin-left: 5px;
-				}
+			&:hover {
+				opacity: 1;
+				transform: translateY(-1px);
+				box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
 			}
+		}
+
+		.no-ingredients {
+			margin-top: 12px;
+		}
+
+		.no-ingredients .el-tag {
+			background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+			border: none;
+			color: white;
+		}
+	}
+}
+
+// 添加菜品对话框样式
+.add-dish-form {
+	.form-container {
+		background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+		padding: 24px;
+		border-radius: 12px;
+		border: 1px solid #e3f2fd;
+	}
+
+	// 表单标签样式
+	.el-form-item__label {
+		font-weight: 700 !important;
+		font-size: 14px !important;
+		color: #2c3e50 !important;
+	}
+
+	// 必填项红色星号
+	.el-form-item.is-required > .el-form-item__label::before {
+		color: #ff4d4f;
+		font-weight: 700;
+	}
+
+	// 输入框样式
+	.el-input__wrapper {
+		border-radius: 8px !important;
+		border: 1px solid #d9d9d9 !important;
+		transition: all 0.3s ease !important;
+
+		&:focus-within {
+			border-color: #667eea !important;
+			box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1) !important;
+		}
+	}
+
+	// 食材输入区域样式
+	.ingredients-input {
+		display: flex;
+		gap: 12px;
+		align-items: center;
+	}
+
+	// 添加食材按钮样式
+	.ingredients-input .el-button {
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		border: none;
+		color: white;
+		border-radius: 8px;
+		transition: all 0.3s ease;
+
+		&:hover {
+			background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+			box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+			transform: translateY(-2px);
+		}
+	}
+
+	// 食材列表样式
+	.ingredients-list {
+		.el-tag {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			border: none;
+			color: white;
+			opacity: 0.9;
+			transition: all 0.2s ease;
+
+			&:hover {
+				opacity: 1;
+				transform: translateY(-1px);
+				box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
+			}
+		}
+	}
+}
+
+// 所有对话框按钮样式
+:deep(.el-dialog__footer) {
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+	padding: 16px 24px;
+
+	.el-button {
+		padding: 8px 20px;
+		border-radius: 8px;
+		font-weight: 600;
+		transition: all 0.3s ease;
+	}
+
+	// 取消按钮
+	.el-button--default {
+		border-color: #d9d9d9;
+
+		&:hover {
+			border-color: #667eea;
+			color: #667eea;
+			box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+		}
+	}
+
+	// 确定/主按钮
+	.el-button--primary {
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		border: none;
+
+		&:hover {
+			background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+			box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+			transform: translateY(-2px);
+		}
+	}
+}
+
+// 导入商家菜品对话框样式
+.import-merchant-dish-container {
+	background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+	padding: 24px;
+	border-radius: 12px;
+	border: 1px solid #e3f2fd;
+
+	// 表单标签
+	.el-form-item__label {
+		font-weight: 700 !important;
+		font-size: 14px !important;
+		color: #2c3e50 !important;
+	}
+
+	// 下拉选择框
+	.el-select__wrapper {
+		border-radius: 8px !important;
+		border: 1px solid #d9d9d9 !important;
+		transition: all 0.3s ease !important;
+
+		&:focus-within {
+			border-color: #667eea !important;
+			box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1) !important;
+		}
+	}
+
+	// 菜品列表
+	.merchant-dishes-list {
+		margin-top: 20px;
+		padding: 16px;
+		background: white;
+		border-radius: 8px;
+		border: 1px solid #e0e0e0;
+
+		h4 {
+			color: #2c3e50;
+			margin-bottom: 16px;
+			font-size: 16px;
+			font-weight: 700;
+		}
+	}
+
+	// 菜品项
+	.dish-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 8px 0;
+		border-bottom: 1px solid #f5f5f5;
+
+		&:last-child {
+			border-bottom: none;
+		}
+
+		// 复选框
+		:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+			background-color: #667eea;
+			border-color: #667eea;
+		}
+
+		// 营养信息
+		.dish-nutrition {
+			font-size: 14px;
+			color: #999;
 		}
 	}
 }
