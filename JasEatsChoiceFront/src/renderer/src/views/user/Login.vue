@@ -386,6 +386,13 @@ const submitForm = async () => {
 					localStorage.setItem("phone", loginForm.phone); // 保存当前登录手机号
 					localStorage.setItem("userId", userId); // 使用后端返回的真实用户ID
 					localStorage.setItem("token", token);
+					// 同时保存为userInfo对象，以与其他页面保持一致
+					const userInfo = {
+						phone: loginForm.phone,
+						userId: userId,
+						token: token
+					};
+					localStorage.setItem("userInfo", JSON.stringify(userInfo));
 
 					// 保存账号信息
 					// 检查账号是否已经存在

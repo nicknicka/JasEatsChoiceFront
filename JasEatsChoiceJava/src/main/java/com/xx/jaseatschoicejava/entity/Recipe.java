@@ -1,0 +1,62 @@
+package com.xx.jaseatschoicejava.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+/**
+ * 食谱实体
+ */
+@Data
+@TableName("t_recipe")
+@ApiModel(description = "食谱实体")
+public class Recipe {
+
+    @TableId(value = "id", type = IdType.AUTO)
+    @ApiModelProperty(value = "食谱ID")
+    private Long id;
+
+    @ApiModelProperty(value = "用户ID")
+    private Long userId;
+
+    @ApiModelProperty(value = "食谱名称")
+    private String name;
+
+    @ApiModelProperty(value = "食谱类型: breakfast/lunch/dinner/snack")
+    private String type;
+
+    @ApiModelProperty(value = "食谱内容")
+    private String content;
+
+    @ApiModelProperty(value = "卡路里")
+    private Integer calories;
+
+    @ApiModelProperty(value = "蛋白质")
+    private Integer protein;
+
+    @ApiModelProperty(value = "碳水化合物")
+    private Integer carbs;
+
+    @ApiModelProperty(value = "脂肪")
+    private Integer fat;
+
+    @ApiModelProperty(value = "烹饪时间")
+    private String cookTime;
+
+    @ApiModelProperty(value = "是否收藏")
+    private Boolean isFavorite;
+
+    @ApiModelProperty(value = "是否为今日食谱")
+    private Boolean isToday;
+
+    @ApiModelProperty(value = "创建时间")
+    private LocalDateTime createTime;
+
+    @ApiModelProperty(value = "更新时间")
+    private LocalDateTime updateTime;
+}

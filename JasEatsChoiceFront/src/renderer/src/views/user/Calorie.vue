@@ -12,13 +12,6 @@ const calorieData = ref({
     target: 2000 // 默认值，将从API获取
   },
   weekly: [
-    { day: '周一', consumed: 1850 },
-    { day: '周二', consumed: 1920 },
-    { day: '周三', consumed: 1780 },
-    { day: '周四', consumed: 1950 },
-    { day: '周五', consumed: 1680 },
-    { day: '周六', consumed: 2150 },
-    { day: '周日', consumed: 2080 }
   ],
   nutrition: [
     { name: '蛋白质', value: 0, unit: 'g' },
@@ -40,19 +33,33 @@ const customGoals = ref({});
 
 // 从API获取数据
 onMounted(() => {
-  // 添加模拟用户信息到localStorage（仅用于测试）
+  // 获取用户信息 - 兼容新旧两种localStorage格式
   let userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  let userId = null;
+
+  // 如果userInfo对象不存在，尝试从旧格式中读取
   if (!userInfo || !userInfo.userId) {
-    userInfo = {
-      userId: 1,
-      username: 'testuser',
-      email: 'test@example.com'
-    };
-    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+    // 从旧格式中读取
+    const storedUserId = localStorage.getItem('userId');
+    const storedPhone = localStorage.getItem('phone');
+
+    if (storedUserId && storedPhone) {
+      // 创建userInfo对象并保存为新格式
+      userInfo = {
+        userId: storedUserId,
+        phone: storedPhone,
+        token: localStorage.getItem('token')
+      };
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      userId = storedUserId;
+    } else {
+      // 用户未登录或没有保存用户信息
+      ElMessage.error('未找到用户信息，请先登录');
+      return;
+    }
+  } else {
+    userId = userInfo.userId;
   }
-  // 获取用户信息
-  userInfo = JSON.parse(localStorage.getItem('userInfo'));
-  const userId = userInfo.userId;
 
   // 获取用户偏好设置（包含卡路里目标和营养目标）
   axios.get(`${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`)

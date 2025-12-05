@@ -16,4 +16,6 @@ public class MybatisPlusConfig {
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
         return interceptor;
     }
+
+    // 自定义ID生成器已经通过@Component注解自动注册
 }

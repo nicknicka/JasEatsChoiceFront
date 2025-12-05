@@ -17,35 +17,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     /**
-     * Register user with password encryption
-     * @param user User object
-     * @return true if successful, false otherwise
+     * 注册用户并对密码进行加密
+     * @param user 用户对象
+     * @return 注册成功返回true，否则返回false
      */
     @Override
     public boolean register(User user) {
-        // Encrypt the password
+        // 对密码进行加密
         String encryptedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encryptedPassword);
         return save(user);
     }
 
     /**
-     * User login, return JWT token if successful
-     * @param account Login account (phone number)
-     * @param password Password
-     * @return JWT token if successful, null otherwise
+     * 用户登录，如果成功则返回JWT令牌
+     * @param account 登录账号（手机号码）
+     * @param password 密码
+     * @return 登录成功返回JWT令牌，否则返回null
      */
     @Override
     public String login(String account, String password) {
-        // In our system, login account is always phone number
+        // 在我们的系统中，登录账号始终是手机号码
         User user = lambdaQuery()
                 .eq(User::getPhone, account)
                 .one();
 
-        // Check if user exists and password is correct
+        // 检查用户是否存在并验证密码是否正确
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            // Generate JWT token
-            return JwtUtil.generateToken(user.getId(), user.getPhone());
+            // 生成JWT令牌
+            return JwtUtil.generateToken(user.getUserId(), user.getPhone());
         }
         return null;
     }

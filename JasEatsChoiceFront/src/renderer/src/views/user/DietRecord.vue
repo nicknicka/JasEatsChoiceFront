@@ -457,14 +457,6 @@ const submitAddRecordForm = async () => {
 
 // 页面加载时初始化数据
 onMounted(() => {
-  // 添加模拟用户信息到localStorage（仅用于测试）
-  const mockUserInfo = {
-    userId: 1,
-    username: 'testuser',
-    email: 'test@example.com'
-  }
-  localStorage.setItem('userInfo', JSON.stringify(mockUserInfo))
-
   // 加载默认日期的饮食记录数据
   fetchDietRecords(selectedDate.value)
 })

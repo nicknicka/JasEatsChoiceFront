@@ -22,9 +22,9 @@ import java.time.LocalDateTime;
 @ApiModel(description = "用户实体")
 public class User {
 
-    @TableId
-    @ApiModelProperty(value = "用户ID")
-    private Long id; // 用户ID
+    @TableId(value = "user_id", type = com.baomidou.mybatisplus.annotation.IdType.INPUT)
+    @ApiModelProperty(value = "用户ID (11位数字)")
+    private Long userId; // 用户ID (11位数字)
 
     @TableField("phone")
     @ApiModelProperty(value = "手机号码（登录账号）")

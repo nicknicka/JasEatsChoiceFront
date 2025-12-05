@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.CalorieRecord;
 import com.xx.jaseatschoicejava.service.CalorieRecordService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * 卡路里记录控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/calorie-records")
 public class CalorieRecordController {
@@ -90,6 +92,7 @@ public class CalorieRecordController {
             .map(weeklyDataMap::get)
             .collect(Collectors.toList());
 
+        log.info("每周卡路里数据: {}", weeklyDataList);
         return ResponseResult.success(weeklyDataList);
     }
 

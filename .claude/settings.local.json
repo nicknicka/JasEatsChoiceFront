@@ -152,7 +152,8 @@
       "Bash(tar:*)",
       "Bash(grep:*)",
       "Bash(do sed:*)",
-      "Bash(npm run build:renderer:*)"
+      "Bash(npm run build:renderer:*)",
+      "Bash(mvn clean compile:*)"
     ],
     "deny": [],
     "ask": []
