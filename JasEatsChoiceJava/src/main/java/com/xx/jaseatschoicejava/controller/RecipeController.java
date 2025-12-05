@@ -1,10 +1,12 @@
 package com.xx.jaseatschoicejava.controller;
 
 import com.xx.jaseatschoicejava.common.ResponseResult;
+import com.xx.jaseatschoicejava.entity.Recipe;
 import com.xx.jaseatschoicejava.service.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -24,8 +26,8 @@ public class RecipeController {
      * 获取今日食谱
      */
     @GetMapping("/today")
-    public ResponseResult<?> getTodayRecipes() {
-        Map<String, Object> result = recipeService.getTodayRecipes();
+    public ResponseResult<?> getTodayRecipes(@RequestParam(value = "userId", required = false) Long userId) {
+        Map<String, Object> result = recipeService.getTodayRecipes(userId);
         return ResponseResult.success(result);
     }
 
@@ -33,8 +35,8 @@ public class RecipeController {
      * 获取我的食谱
      */
     @GetMapping("/favorite")
-    public ResponseResult<?> getFavoriteRecipes() {
-        List recipes = recipeService.getFavoriteRecipes();
+    public ResponseResult<?> getFavoriteRecipes(@RequestParam(value = "userId", required = false) Long userId) {
+        List<Recipe> recipes = recipeService.getFavoriteRecipes(userId);
         return ResponseResult.success(recipes);
     }
 
