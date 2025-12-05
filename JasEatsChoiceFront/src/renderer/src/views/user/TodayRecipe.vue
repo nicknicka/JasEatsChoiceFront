@@ -49,8 +49,8 @@ onMounted(() => {
   loadTodayRecipes();
 });
 
-// 布局设置
-const layoutType = ref('two-column'); // 'one-column' 或 'two-column'
+// 默认使用一列布局
+const layoutType = ref('one-column');
 
 // 获取标签类型
 const getTagType = (type) => {
@@ -296,25 +296,6 @@ const filteredRecipes = computed(() => {
     <div class="add-menu-section" >
       
 
-      <!-- 布局切换按钮 -->
-      <el-button-group>
-        <el-button
-          type="primary"
-          :plain="layoutType !== 'one-column'"
-          @click="layoutType = 'one-column'"
-          size="small"
-        >
-          一列布局
-        </el-button>
-        <el-button
-          type="primary"
-          :plain="layoutType !== 'two-column'"
-          @click="layoutType = 'two-column'"
-          size="small"
-        >
-          两列布局
-        </el-button>
-      </el-button-group>
 
       <el-button
         type="primary"
@@ -641,53 +622,16 @@ const filteredRecipes = computed(() => {
 
   .recipe-list {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    width: 100%;
     gap: 20px;
 
-    &.one-column {
-      flex-direction: column;
-      width: 100%; /* 容器宽度100% */
-
-      .recipe-card {
-        flex: 1 1 100% !important; /* 单列时宽度100% */
-        max-width: 100% !important; /* 确保宽度充满容器 */
-        min-width: 280px; /* 最小宽度 */
-        width: 100% !important; /* 明确设置宽度为100% */
-        box-sizing: border-box; /* 确保padding和border不会增加总宽度 */
-        margin: 0; /* 去除外边距 */
-      }
-    }
-
-    &.two-column {
-      flex-direction: row;
-
-      .recipe-card {
-        flex: 1 1 calc(50% - 10px); /* 精确计算两列宽度，减去间距 */
-        max-width: calc(50% - 10px); /* 确保两列总和为100% */
-        min-width: 280px; /* 最小宽度 */
-      }
-    }
-
-    /* 响应式处理 - 增加断点 */
-    @media (max-width: 768px) { /* 在平板设备上自动转为单列 */
-      .recipe-card {
-        flex: 1 1 100% !important;
-        max-width: 100% !important;
-      }
-    }
-
-    @media (min-width: 769px) and (max-width: 992px) { /* 在中大屏设备上两列 */
-      .recipe-card {
-        flex: 1 1 45% !important;
-        max-width: 45% !important;
-      }
-    }
-
-    @media (min-width: 993px) { /* 在大屏设备上可以考虑更宽 */
-      .recipe-card {
-        flex: 1 1 42% !important;
-        max-width: 42% !important;
-      }
+    .recipe-card {
+      flex: 1 1 100%;
+      max-width: 100%;
+      min-width: 280px;
+      box-sizing: border-box;
+      margin: 0;
     }
   }
 

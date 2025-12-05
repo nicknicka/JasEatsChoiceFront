@@ -1,5 +1,13 @@
 <template>
   <div class="consume-history-container">
+    <el-button
+      type="default"
+      size="small"
+      @click="goBack"
+      style="margin-bottom: 20px;"
+    >
+      <el-icon><Back /></el-icon> 返回
+    </el-button>
     <h2>消费记录</h2>
 
     <div class="filter-bar">
@@ -75,8 +83,17 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Search, Refresh } from '@element-plus/icons-vue';
+import { useRouter } from 'vue-router';
+import { Search, Refresh, Back } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+
+// 路由实例
+const router = useRouter();
+
+// 返回个人中心
+const goBack = () => {
+  router.push('/user/home/profile');
+};
 
 // 模拟交易历史数据
 const history = ref([

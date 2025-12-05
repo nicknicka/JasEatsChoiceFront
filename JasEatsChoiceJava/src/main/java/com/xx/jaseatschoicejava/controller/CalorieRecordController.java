@@ -7,6 +7,9 @@ import com.xx.jaseatschoicejava.service.CalorieRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -39,6 +42,25 @@ public class CalorieRecordController {
         LambdaQueryWrapper<CalorieRecord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CalorieRecord::getUserId, userId);
         queryWrapper.orderByDesc(CalorieRecord::getRecordTime); // 按记录时间降序排列
+        List<CalorieRecord> records = calorieRecordService.list(queryWrapper);
+        return ResponseResult.success(records);
+    }
+
+    /**
+     * 根据用户ID和日期获取卡路里记录
+     */
+    @GetMapping("/user/{userId}/date/{date}")
+    public ResponseResult<?> getRecordsByUserIdAndDate(@PathVariable Long userId, @PathVariable String date) {
+        LambdaQueryWrapper<CalorieRecord> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CalorieRecord::getUserId, userId);
+
+        // 解析日期并查询该日期范围内的记录
+        LocalDate localDate = LocalDate.parse(date);
+        LocalDateTime startTime = localDate.atStartOfDay(); // 当天00:00:00
+        LocalDateTime endTime = localDate.atTime(LocalTime.MAX); // 当天23:59:59
+
+        queryWrapper.between(CalorieRecord::getRecordTime, startTime, endTime);
+        queryWrapper.orderByAsc(CalorieRecord::getRecordTime); // 按记录时间升序排列
         List<CalorieRecord> records = calorieRecordService.list(queryWrapper);
         return ResponseResult.success(records);
     }

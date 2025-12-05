@@ -36,6 +36,7 @@ const recommendedGoals = ref({
 // 自定义营养目标（用户设置）
 const customGoals = ref({});
 
+
 // 从API获取数据
 onMounted(() => {
   // 获取用户偏好设置（包含卡路里目标和营养目标）
@@ -108,78 +109,84 @@ const getNutritionColor = (name) => {
     <h2>卡路里统计</h2>
 
     <!-- 今日概览 -->
-    <div class="today-overview">
-      <el-card class="overview-card">
-        <div class="overview-item">
-          <div class="overview-label">今日已摄入</div>
-          <div class="overview-value">{{ calorieData.today.consumed }} kcal</div>
-        </div>
-      </el-card>
+    <div class="today-overview-section">
+      <h3>今日概览</h3>
+      <div class="today-overview">
+        <el-card class="overview-card">
+          <div class="overview-item">
+            <div class="overview-label">今日已摄入</div>
+            <div class="overview-value">{{ calorieData.today.consumed }} kcal</div>
+          </div>
+        </el-card>
 
-      <el-card class="overview-card">
-        <div class="overview-item">
-          <div class="overview-label">今日剩余</div>
-          <div class="overview-value remaining">{{ calorieData.today.remaining }} kcal</div>
-        </div>
-      </el-card>
+        <el-card class="overview-card">
+          <div class="overview-item">
+            <div class="overview-label">今日剩余</div>
+            <div class="overview-value remaining">{{ calorieData.today.remaining }} kcal</div>
+          </div>
+        </el-card>
 
-      <el-card class="overview-card">
-        <div class="overview-item">
-          <div class="overview-label">今日目标</div>
-          <div class="overview-value target">{{ calorieData.today.target }} kcal</div>
+        <el-card class="overview-card">
+          <div class="overview-item">
+            <div class="overview-label">今日目标</div>
+            <div class="overview-value target">{{ calorieData.today.target }} kcal</div>
+          </div>
+        </el-card>
+      </div>
+
+      <!-- 营养比例 -->
+      <el-card class="nutrition-card">
+        <template #header>
+          <div class="card-header">营养摄入比例</div>
+        </template>
+        <div class="nutrition-chart">
+          <div
+            v-for="item in calorieData.nutrition"
+            :key="item.name"
+            class="nutrition-item"
+          >
+            <div class="nutrition-info">
+              <div class="nutrition-name">{{ item.name }}</div>
+              <div class="nutrition-value">{{ item.value }}{{ item.unit }}</div>
+            </div>
+            <el-progress
+              :percentage="getNutritionPercentage(item.value, item.name)"
+              :color="getNutritionColor(item.name)"
+              :format="() => getNutritionPercentage(item.value, item.name) + '%'"
+            />
+          </div>
         </div>
       </el-card>
     </div>
 
-    <!-- 营养比例 -->
-    <el-card class="nutrition-card">
-      <template #header>
-        <div class="card-header">营养摄入比例</div>
-      </template>
-      <div class="nutrition-chart">
-        <div
-          v-for="item in calorieData.nutrition"
-          :key="item.name"
-          class="nutrition-item"
-        >
-          <div class="nutrition-info">
-            <div class="nutrition-name">{{ item.name }}</div>
-            <div class="nutrition-value">{{ item.value }}{{ item.unit }}</div>
-          </div>
-          <el-progress
-            :percentage="getNutritionPercentage(item.value, item.name)"
-            :color="getNutritionColor(item.name)"
-            :format="() => getNutritionPercentage(item.value, item.name) + '%'"
-          />
-        </div>
-      </div>
-    </el-card>
-
     <!-- 周统计 -->
-    <el-card class="weekly-card">
-      <template #header>
-        <div class="card-header">本周卡路里摄入</div>
-      </template>
-      <div class="weekly-chart">
-        <div
-          v-for="item in calorieData.weekly"
-          :key="item.day"
-          class="weekly-bar"
-        >
-          <div class="bar-label">{{ item.day }}</div>
-          <div class="bar-container">
-            <div
-              class="bar-fill"
-              :style="{ width: (item.consumed / calorieData.today.target * 100).toFixed(2) + '%' }"
-              :class="{ 'over-target': item.consumed > calorieData.today.target }"
-            >
-              {{ item.consumed }}
+    <div class="weekly-statistics-section">
+      <h3>本周统计</h3>
+      <el-card class="weekly-card">
+        <template #header>
+          <div class="card-header">本周卡路里摄入</div>
+        </template>
+        <div class="weekly-chart">
+          <div
+            v-for="item in calorieData.weekly"
+            :key="item.day"
+            class="weekly-bar"
+          >
+            <div class="bar-label">{{ item.day }}</div>
+            <div class="bar-container">
+              <div
+                class="bar-fill"
+                :style="{ width: (item.consumed / calorieData.today.target * 100).toFixed(2) + '%' }"
+                :class="{ 'over-target': item.consumed > calorieData.today.target }"
+              >
+                {{ item.consumed }}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </el-card>
-  </div>
+      </el-card>
+    </div>
+</div>
 </template>
 
 <style scoped lang="less">
@@ -252,6 +259,20 @@ const getNutritionColor = (name) => {
     }
   }
 
+  /* Section styles for vertical display */
+  .today-overview-section,
+  .weekly-statistics-section {
+    margin-bottom: 30px;
+  }
+
+  .today-overview-section h3,
+  .weekly-statistics-section h3 {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0 0 15px 0;
+    color: #333;
+  }
+
   .weekly-card {
     .card-header {
       font-size: 18px;
@@ -299,4 +320,5 @@ const getNutritionColor = (name) => {
 :deep(.el-progress-bar__inner) {
   background-color: #FF6B6B;
 }
+
 </style>

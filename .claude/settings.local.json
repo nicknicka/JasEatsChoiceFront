@@ -151,7 +151,8 @@
       "Bash(openssl:*)",
       "Bash(tar:*)",
       "Bash(grep:*)",
-      "Bash(do sed:*)"
+      "Bash(do sed:*)",
+      "Bash(npm run build:renderer:*)"
     ],
     "deny": [],
     "ask": []

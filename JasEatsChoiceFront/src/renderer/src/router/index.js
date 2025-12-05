@@ -13,6 +13,7 @@ const UserMerchantDetail = () => import('../views/user/MerchantDetail.vue') // �
 const UserTodayRecipe = () => import('../views/user/TodayRecipe.vue') // 今日食谱
 const UserCalorie = () => import('../views/user/Calorie.vue') // 卡路里统计
 const UserMyRecipe = () => import('../views/user/MyRecipe.vue') // 我的食谱
+const UserDietRecord = () => import('../views/user/DietRecord.vue') // 饮食记录
 const UserOrders = () => import('../views/user/Orders.vue') // 我的订单
 const UserOrderDetail = () => import('../views/user/OrderDetail.vue') // 订单详情
 const UserConsumeHistory = () => import('../views/user/ConsumeHistory.vue') // 消费记录
@@ -136,6 +137,12 @@ const router = createRouter({
           name: 'user-my-recipe',
           component: UserMyRecipe,
           meta: { title: '佳食宜选-我的食谱' }
+        },
+        {
+          path: 'diet-record',
+          name: 'user-diet-record',
+          component: UserDietRecord,
+          meta: { title: '佳食宜选-饮食记录' }
         },
         {
           path: 'orders',

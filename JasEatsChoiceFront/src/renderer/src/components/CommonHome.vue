@@ -52,6 +52,7 @@ const menuData = {
 			path: "/user/home/calorie",
 		},
 		{ index: "6", name: "我的食谱", icon: Document, path: "/user/home/my-recipe" },
+		{ index: "61", name: "饮食记录", icon: Calendar, path: "/user/home/diet-record" },
 		{ index: "2", name: "我的推荐", icon: Menu, path: "/user/home/recommend" }, // 推荐查找模块
 		{ index: "3", name: "商家查找", icon: Shop, path: "/user/home/merchants" },
 		{ index: "7", name: "用户中心", icon: User, path: "/user/home/profile" }, // 个人中心模块

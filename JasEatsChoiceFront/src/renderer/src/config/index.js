@@ -78,6 +78,13 @@ export const API_CONFIG = {
   order: {
     list: '/v1/orders/user/', // 获取用户订单列表接口
     detail: '/v1/orders/' // 获取订单详情接口
+  },
+
+  // 饮食记录API端点
+  diet: {
+    list: '/calorie-records', // 饮食记录接口
+    user: '/calorie-records/user/', // 根据用户ID获取记录
+    date: '/calorie-records/user/{userId}/date/' // 根据用户ID和日期获取记录
   }
 }
 
