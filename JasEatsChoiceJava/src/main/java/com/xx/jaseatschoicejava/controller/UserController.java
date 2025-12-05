@@ -4,14 +4,14 @@ import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.LoginRequest;
 import com.xx.jaseatschoicejava.entity.RegisterRequest;
 import com.xx.jaseatschoicejava.entity.User;
+import com.xx.jaseatschoicejava.entity.UserPreference;
 import com.xx.jaseatschoicejava.service.UserService;
+import com.xx.jaseatschoicejava.service.UserPreferenceService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +25,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserPreferenceService userPreferenceService;
 
     /**
      * 用户注册
@@ -183,15 +186,11 @@ public class UserController {
      */
     @GetMapping("/{userId}/preferences")
     public ResponseResult<?> getPreferences(@PathVariable Long userId) {
-        // TODO: Implement preference retrieval from the database
-        // For now, return mock data
-        Map<String, Object> preferences = new HashMap<>();
-        preferences.put("dietaryRestrictions", "无");
-        preferences.put("calorieTarget", 2000);
-        preferences.put("preferredCuisine", "中式");
-        preferences.put("allergies", new ArrayList<>());
-
-        return ResponseResult.success(preferences);
+        UserPreference userPreference = userPreferenceService.getByUserId(userId);
+        if (userPreference != null) {
+            return ResponseResult.success(userPreference);
+        }
+        return ResponseResult.fail("404", "用户偏好设置不存在");
     }
 
     /**
@@ -238,9 +237,27 @@ public class UserController {
      * 更新用户偏好设置
      */
     @PutMapping("/{userId}/preferences")
-    public ResponseResult<?> updatePreferences(@PathVariable Long userId, @RequestBody Map<String, Object> preferences) {
-        // TODO: Implement preference update in the database
-        // For now, return success
-        return ResponseResult.success("用户偏好设置已更新");
+    public ResponseResult<?> updatePreferences(@PathVariable Long userId, @RequestBody UserPreference preferences) {
+        try {
+            UserPreference existingPreference = userPreferenceService.getByUserId(userId);
+
+            if (existingPreference != null) {
+                // 更新现有偏好
+                preferences.setId(existingPreference.getId());
+                preferences.setUserId(userId);
+            } else {
+                // 新增偏好
+                preferences.setUserId(userId);
+            }
+
+            boolean success = userPreferenceService.updatePreference(preferences);
+            if (success) {
+                return ResponseResult.success("用户偏好设置已更新");
+            }
+            return ResponseResult.fail("500", "用户偏好设置更新失败");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "用户偏好设置更新失败");
+        }
     }
 }

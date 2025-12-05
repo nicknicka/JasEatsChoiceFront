@@ -309,9 +309,6 @@ const filteredRecipes = computed(() => {
     
     <!-- 添加菜单按钮和布局切换 -->
     <div class="add-menu-section" >
-      
-
-
       <el-button
         type="primary"
         size="small"

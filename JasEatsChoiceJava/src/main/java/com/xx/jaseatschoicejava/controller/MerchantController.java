@@ -11,7 +11,9 @@ import com.xx.jaseatschoicejava.entity.Order;
 import com.xx.jaseatschoicejava.entity.OrderDish;
 import com.xx.jaseatschoicejava.service.OrderDishService;
 import com.xx.jaseatschoicejava.entity.Dish;
+import com.xx.jaseatschoicejava.entity.Review;
 import com.xx.jaseatschoicejava.service.DishService;
+import com.xx.jaseatschoicejava.service.ReviewService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
@@ -51,6 +53,9 @@ public class MerchantController {
 
     @Autowired
     private DishService dishService;
+
+    @Autowired
+    private ReviewService reviewService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final Logger logger = LoggerFactory.getLogger(MerchantController.class);
@@ -392,8 +397,16 @@ public class MerchantController {
             overview.put("sales", totalSales.doubleValue());  // 营业额
             overview.put("orders", totalOrders);               // 订单数
 
-            // 新增评价和未读消息功能暂未实现，这里使用模拟数据
-            overview.put("newComments", 5);                   // 新增评价
+            // 新增评价数量（使用真实数据，过去7天内的评价）
+            LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+            LambdaQueryWrapper<Review> reviewQueryWrapper = new LambdaQueryWrapper<>();
+            reviewQueryWrapper.eq(Review::getMerchantId, merchantId)
+                           .eq(Review::getStatus, 0) // 正常状态
+                           .ge(Review::getCreateTime, oneWeekAgo);
+            long newCommentsCount = reviewService.count(reviewQueryWrapper);
+            overview.put("newComments", newCommentsCount);  // 新增评价
+
+            // 未读消息功能暂未实现，这里使用模拟数据
             overview.put("unreadMessages", 3);                // 未读消息
 
             return ResponseResult.success(overview);

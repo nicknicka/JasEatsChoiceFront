@@ -3,7 +3,10 @@
 This file provides guidance to Claude Code when working with code in this repository.
 
 ---
-
+# 数据库账号 
+root
+# 数据库密码
+123456
 # 语言设置
 请从现在开始始终用简体中文回答，避免使用英文术语。
 

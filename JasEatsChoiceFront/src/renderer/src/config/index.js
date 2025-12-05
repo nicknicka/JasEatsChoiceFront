@@ -85,7 +85,7 @@ export const API_CONFIG = {
     list: '/calorie-records', // 饮食记录接口
     user: '/calorie-records/user/', // 根据用户ID获取记录
     date: '/calorie-records/user/{userId}/date/', // 根据用户ID和日期获取记录
-    week: '/calorie-records/user/{userId}/week/', // 根据用户ID获取本周记录
+    week: '/calorie-records/user/{userId}/week', // 根据用户ID获取本周记录
     add: '/calorie-records' // 添加饮食记录接口
   }
 }

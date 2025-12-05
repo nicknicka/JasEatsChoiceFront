@@ -12,6 +12,14 @@ const calorieData = ref({
     target: 2000 // 默认值，将从API获取
   },
   weekly: [
+    // 默认模拟数据（API加载前显示）
+    { day: '周一', consumed: 850 },
+    { day: '周二', consumed: 1200 },
+    { day: '周三', consumed: 950 },
+    { day: '周四', consumed: 1500 },
+    { day: '周五', consumed: 800 },
+    { day: '周六', consumed: 1800 },
+    { day: '周日', consumed: 1100 }
   ],
   nutrition: [
     { name: '蛋白质', value: 0, unit: 'g' },
@@ -64,7 +72,7 @@ onMounted(() => {
   // 获取用户偏好设置（包含卡路里目标和营养目标）
   axios.get(`${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`)
     .then(response => {
-      if (response.data && response.data.success) {
+      if (response.data && response.data.code === "200") {
         // 设置卡路里目标
         if (response.data.data.calorieTarget) {
           calorieData.value.today.target = response.data.data.calorieTarget;
@@ -83,7 +91,7 @@ onMounted(() => {
   // 获取今日食谱和营养数据
   axios.get(`${API_CONFIG.baseURL}${API_CONFIG.recipe.today}`)
     .then(response => {
-      if (response.data && response.data.success && response.data.data.nutrition) {
+      if (response.data && response.data.code === "200" && response.data.data.nutrition) {
         const nutrition = response.data.data.nutrition;
         // 更新今日卡路里消耗
         calorieData.value.today.consumed = nutrition.calories;
@@ -102,7 +110,7 @@ onMounted(() => {
   // 直接从后端获取本周卡路里统计
   axios.get(`${API_CONFIG.baseURL}${API_CONFIG.diet.week.replace('{userId}', userId)}`)
     .then(response => {
-      if (response.data && response.data.success) {
+      if (response.data && response.data.code === "200") {
         // 直接使用后端返回的每周数据
         calorieData.value.weekly = response.data.data;
       }
@@ -196,9 +204,38 @@ const getNutritionColor = (name) => {
     <!-- 周统计 -->
     <div class="weekly-statistics-section">
       <h3>本周统计</h3>
+
+      <!-- 周统计概览 -->
+      <div class="weekly-overview">
+        <el-card class="overview-card">
+          <div class="overview-item">
+            <div class="overview-label">本周总摄入</div>
+            <div class="overview-value total">
+              {{ calorieData.weekly.reduce((sum, item) => sum + item.consumed, 0) }} kcal
+            </div>
+          </div>
+        </el-card>
+
+        <el-card class="overview-card">
+          <div class="overview-item">
+            <div class="overview-label">本周日均</div>
+            <div class="overview-value average">
+              {{ Math.round(calorieData.weekly.reduce((sum, item) => sum + item.consumed, 0) / Math.max(calorieData.weekly.length, 1)) }} kcal
+            </div>
+          </div>
+        </el-card>
+
+        <el-card class="overview-card">
+          <div class="overview-item">
+            <div class="overview-label">每日目标</div>
+            <div class="overview-value target">{{ calorieData.today.target }} kcal</div>
+          </div>
+        </el-card>
+      </div>
+
       <el-card class="weekly-card">
         <template #header>
-          <div class="card-header">本周卡路里摄入</div>
+          <div class="card-header">每日卡路里摄入</div>
         </template>
         <div class="weekly-chart">
           <div
@@ -208,13 +245,26 @@ const getNutritionColor = (name) => {
           >
             <div class="bar-label">{{ item.day }}</div>
             <div class="bar-container">
+              <!-- 目标线指示器 -->
+              <div class="bar-target-line"
+                   :style="{ left: `100%` }"
+                   :title="`目标: ${calorieData.today.target} kcal`"></div>
+
               <div
                 class="bar-fill"
-                :style="{ width: (item.consumed / calorieData.today.target * 100).toFixed(2) + '%' }"
+                :style="{
+                  // 确保目标值不为0以避免NaN，同时当进度为0时设置min-width为24px以显示进度条
+                  width: ((calorieData.today.target > 0 ? (item.consumed / calorieData.today.target * 100) : 0) || 0).toFixed(2) + '%',
+                  minWidth: '24px'
+                }"
                 :class="{ 'over-target': item.consumed > calorieData.today.target }"
+                :title="`已摄入: ${item.consumed} kcal`"
               >
-                {{ item.consumed }}
+                <span class="bar-value">{{ item.consumed }}</span>
               </div>
+
+              <!-- 显示具体数值，无论进度条长度 -->
+              <div class="bar-text">{{ item.consumed }} kcal</div>
             </div>
           </div>
         </div>
@@ -345,6 +395,64 @@ const getNutritionColor = (name) => {
     color: #333;
   }
 
+  // 周统计概览样式
+  .weekly-overview {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+
+    .overview-card {
+      flex: 1;
+      min-width: 250px;
+      background: rgba(255, 255, 255, 0.95) !important;
+      border-radius: 16px !important;
+      padding: 24px !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .overview-item {
+        text-align: center;
+
+        .overview-label {
+          font-size: 14px;
+          color: #666;
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .overview-value {
+          font-size: 32px;
+          font-weight: 700;
+          background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+
+          &.total {
+            background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          }
+
+          &.average {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          }
+        }
+      }
+    }
+  }
+
   .weekly-card {
     background: rgba(255, 255, 255, 0.95) !important;
     border-radius: 16px !important;
@@ -366,6 +474,7 @@ const getNutritionColor = (name) => {
 
     .weekly-bar {
       margin-bottom: 32px;
+      position: relative;
 
       &:last-child {
         margin-bottom: 0;
@@ -387,6 +496,18 @@ const getNutritionColor = (name) => {
         border-radius: 18px;
         overflow: hidden;
         box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08);
+        position: relative;
+      }
+
+      // 目标线指示器
+      .bar-target-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-left: 2px dashed #FF6B6B;
+        z-index: 10;
       }
 
       .bar-fill {
@@ -398,6 +519,39 @@ const getNutritionColor = (name) => {
         font-weight: 700;
         font-size: 14px;
         transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        z-index: 5;
+      }
+
+      // 进度条内部的数值，在窄进度条上隐藏
+      .bar-value {
+        display: inline-block;
+        visibility: hidden;
+      }
+
+      // 窄进度条时隐藏内部数值
+      .bar-fill {
+        min-width: 24px;
+
+        &:hover .bar-value {
+          visibility: visible;
+        }
+      }
+
+      // 显示在容器外部的具体数值
+      .bar-text {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-weight: 700;
+        font-size: 14px;
+        color: #333;
+        background-color: white;
+        padding: 0 8px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        z-index: 15;
       }
 
       .bar-fill:hover {
@@ -407,6 +561,10 @@ const getNutritionColor = (name) => {
 
       .bar-fill.over-target {
         background: linear-gradient(90deg, #FF5252 0%, #f44336 100%);
+
+        & + .bar-text {
+          color: #FF5252;
+        }
       }
 
       .bar-fill.over-target:hover {
