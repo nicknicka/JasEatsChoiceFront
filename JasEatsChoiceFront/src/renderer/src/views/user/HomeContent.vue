@@ -142,11 +142,11 @@ const handleConfirmLocation = () => {
     // 对于级联选择器，将数组拼接成完整地址字符串
     const fullAddress = manualLocation.value.join('');
     // 从位置数组中提取城市用于天气API (简化逻辑)
-    const city = manualLocation.value[1] || manualLocation.value[0];
+    const city = manualLocation.value[1] || manualLocation.value[0] || '';
 
-    // 立即在UI上更新地址
-    weather.value.address = fullAddress;
-    weather.value.city = city;
+    // 立即在UI上更新地址 - 确保不是数组或空数组
+    weather.value.address = Array.isArray(fullAddress) ? '未获取到详细地址' : fullAddress || '未获取到详细地址';
+    weather.value.city = Array.isArray(city) ? city.join('') : city || '未知城市';
 
     // 获取详细天气信息
     fetchWeather(city)
@@ -181,7 +181,16 @@ const fetchWeather = async (selectedCity = null) => {
       // 步骤1: 从后端获取当前位置
       const locationResponse = await api.get(API_CONFIG.weather.location);
       if (locationResponse.data) {
-        const { city, address } = locationResponse.data;
+        let { city, address } = locationResponse.data;
+
+        // 处理异常数据格式
+        if (Array.isArray(city)) {
+          city = city.join('');
+        }
+        if (Array.isArray(address) || address === '[][]') {
+          address = '未获取到详细地址';
+        }
+
         weather.value.city = city;
         weather.value.address = address;
 
@@ -357,10 +366,10 @@ const fetchFeaturedTutorials = () => {
 };
 
 // 在挂载时初始化WebSocket
-onMounted(() => {
+onMounted(async () => {
   fetchFeaturedTutorials();
   fetchRecommendedDishes();
-  fetchWeather();
+  await fetchWeather();
   fetchHotTopic(); // 新增：获取今日热点
 
   if (window.api) {

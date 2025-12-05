@@ -215,7 +215,14 @@ const filteredRecipes = computed(() => {
 
   // 餐型筛选
   if (filters.value.mealType !== 'all') {
-    filtered = filtered.filter(recipe => recipe.type === filters.value.mealType);
+    if (filters.value.mealType === 'snack') {
+      // 加餐包含所有零食类餐型
+      filtered = filtered.filter(recipe =>
+        ['snack', 'night_snack', 'morning_snack', 'afternoon_tea', 'tea', 'brunch', 'midnight_snack'].includes(recipe.type)
+      );
+    } else {
+      filtered = filtered.filter(recipe => recipe.type === filters.value.mealType);
+    }
   }
 
   return filtered;
@@ -260,6 +267,14 @@ const filteredRecipes = computed(() => {
             size="small"
           >
             晚餐
+          </el-button>
+          <el-button
+            type="primary"
+            :plain="filters.mealType !== 'snack'"
+            @click="filters.mealType = 'snack'"
+            size="small"
+          >
+            加餐
           </el-button>
         </div>
       </div>

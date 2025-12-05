@@ -51,10 +51,30 @@ public class LocationServiceImpl implements LocationService {
                 Map<String, Object> location = new HashMap<>();
                 location.put("city", responseMap.get("city"));
                 location.put("district", responseMap.get("district"));
-                location.put("longitude", responseMap.get("rectangle") != null ?
-                    ((String) responseMap.get("rectangle")).split(";")[0].split(",")[0] : null); // 不再返回默认值
-                location.put("latitude", responseMap.get("rectangle") != null ?
-                    ((String) responseMap.get("rectangle")).split(";")[0].split(",")[1] : null); // 不再返回默认值
+                // 解析经纬度坐标
+                Object rectangle = responseMap.get("rectangle");
+                String longitude = null;
+                String latitude = null;
+
+                if (rectangle != null) {
+                    try {
+                        String rectangleStr = rectangle.toString();
+                        // 处理格式："longitude1,latitude1;longitude2,latitude2"
+                        String[] points = rectangleStr.split(";");
+                        if (points.length > 0) {
+                            String[] coords = points[0].split(",");
+                            if (coords.length == 2) {
+                                longitude = coords[0];
+                                latitude = coords[1];
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.error("解析rectangle字段失败: {}", e.getMessage());
+                    }
+                }
+
+                location.put("longitude", longitude);
+                location.put("latitude", latitude);
                 location.put("address",
                     (responseMap.get("province") != null ? responseMap.get("province").toString() : "") +
                     (responseMap.get("city") != null ? responseMap.get("city").toString() : "") +

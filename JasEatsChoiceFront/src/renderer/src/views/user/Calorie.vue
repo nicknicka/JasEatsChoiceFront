@@ -40,12 +40,18 @@ const customGoals = ref({});
 
 // 从API获取数据
 onMounted(() => {
-  // 获取用户信息
-  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  // 添加模拟用户信息到localStorage（仅用于测试）
+  let userInfo = JSON.parse(localStorage.getItem('userInfo'));
   if (!userInfo || !userInfo.userId) {
-    ElMessage.error('未找到用户信息，请先登录');
-    return;
+    userInfo = {
+      userId: 1,
+      username: 'testuser',
+      email: 'test@example.com'
+    };
+    localStorage.setItem('userInfo', JSON.stringify(userInfo));
   }
+  // 获取用户信息
+  userInfo = JSON.parse(localStorage.getItem('userInfo'));
   const userId = userInfo.userId;
 
   // 获取用户偏好设置（包含卡路里目标和营养目标）
@@ -87,7 +93,7 @@ onMounted(() => {
     });
 
   // 直接从后端获取本周卡路里统计
-  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.diet.week}${userId}`)
+  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.diet.week.replace('{userId}', userId)}`)
     .then(response => {
       if (response.data && response.data.success) {
         // 直接使用后端返回的每周数据

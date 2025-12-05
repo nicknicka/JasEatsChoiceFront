@@ -81,7 +81,11 @@ const newRecipe = ref({
   type: '早餐',
   calories: '',
   time: '',
-  favorite: false
+  favorite: false,
+  details: '',
+  ingredients: '',
+  steps: '',
+  dishComposition: []
 });
 
 // 打开添加食谱对话框
@@ -93,7 +97,11 @@ const openAddDialog = () => {
     type: '早餐',
     calories: '',
     time: '',
-    favorite: false
+    favorite: false,
+    details: '',
+    ingredients: '',
+    steps: '',
+    dishComposition: []
   };
 };
 
@@ -122,7 +130,11 @@ const saveNewRecipe = () => {
     type: newRecipe.value.type,
     calories: Number(newRecipe.value.calories),
     time: newRecipe.value.time,
-    favorite: newRecipe.value.favorite
+    favorite: newRecipe.value.favorite,
+    details: newRecipe.value.details,
+    ingredients: newRecipe.value.ingredients.split('\n').filter(item => item.trim()),
+    steps: newRecipe.value.steps.split('\n').filter(item => item.trim()),
+    dishComposition: newRecipe.value.dishComposition
   };
 
   // 添加到食谱列表
@@ -244,24 +256,19 @@ const deleteRecipe = (id) => {
     <div v-if="selectedRecipe" class="recipe-detail-container">
       <!-- 头部信息 -->
       <div class="detail-header">
-        <div class="header-left">
-          <h3 class="recipe-title">{{ selectedRecipe.name }}</h3>
-          <el-tag
-            :type="selectedRecipe.type === '早餐' ? 'warning' : selectedRecipe.type === '午餐' ? 'success' : selectedRecipe.type === '晚餐' ? 'primary' : 'info'"
-            size="large"
-          >
-            {{ selectedRecipe.type }}
-          </el-tag>
-        </div>
-        <div class="header-right">
-          <span
-            :style="{ color: selectedRecipe.favorite ? '#FFD700' : '#C0C4CC', fontSize: '32px', cursor: 'pointer' }"
-            @click="toggleFavorite(selectedRecipe)"
-            title="点击切换收藏状态"
-          >
-            {{ selectedRecipe.favorite ? '⭐' : '☆' }}
-          </span>
-        </div>
+        <el-tag
+          :type="selectedRecipe.type === '早餐' ? 'warning' : selectedRecipe.type === '午餐' ? 'success' : selectedRecipe.type === '晚餐' ? 'primary' : 'info'"
+          size="large"
+        >
+          {{ selectedRecipe.type }}
+        </el-tag>
+        <span
+          :style="{ color: selectedRecipe.favorite ? '#FFD700' : '#C0C4CC', fontSize: '32px', cursor: 'pointer', marginLeft: '10px' }"
+          @click="toggleFavorite(selectedRecipe)"
+          title="点击切换收藏状态"
+        >
+          {{ selectedRecipe.favorite ? '⭐' : '☆' }}
+        </span>
       </div>
 
       <!-- 核心信息卡片 -->
@@ -269,16 +276,20 @@ const deleteRecipe = (id) => {
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon">🔥</div>
-            <div class="stat-value">{{ selectedRecipe.calories }} kcal</div>
-            <div class="stat-label">卡路里</div>
+            <div class="stat-text">
+              <div class="stat-value">{{ selectedRecipe.calories }} kcal</div>
+              <div class="stat-label">卡路里</div>
+            </div>
           </div>
         </el-card>
 
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon">⏰</div>
-            <div class="stat-value">{{ selectedRecipe.time }}</div>
-            <div class="stat-label">准备时间</div>
+            <div class="stat-text">
+              <div class="stat-value">{{ selectedRecipe.time }}</div>
+              <div class="stat-label">准备时间</div>
+            </div>
           </div>
         </el-card>
       </div>
@@ -287,36 +298,71 @@ const deleteRecipe = (id) => {
       <div class="detail-section">
         <h4 class="section-title">食谱详情</h4>
         <div class="detail-content">
-          <p>这是一个健康美味的{{ selectedRecipe.type }}食谱</p>
-          <p>热量适中，营养均衡，适合日常食用</p>
+          <p>{{ selectedRecipe.details || '这是一个健康美味的' + selectedRecipe.type + '食谱' }}</p>
         </div>
       </div>
 
-      <!-- 食材列表 -->
+      <!-- 菜品组成 -->
+      <div class="detail-section">
+        <h4 class="section-title">菜品组成</h4>
+        <div class="dish-composition">
+          <div v-for="(dish, index) in (selectedRecipe.dishComposition || [
+            { name: '燕麦粥', ingredients: ['燕麦', '牛奶', '蜂蜜'] },
+            { name: '煮鸡蛋', ingredients: ['鸡蛋', '水'] },
+            { name: '新鲜水果', ingredients: ['苹果', '香蕉'] }
+          ])" :key="index" class="dish-item">
+            <h5 class="dish-name">{{ dish.name }}</h5>
+            <div class="dish-ingredients">
+              <el-tag
+                v-for="(ingredient, ingIdx) in dish.ingredients"
+                :key="ingIdx"
+                type="primary"
+                effect="plain"
+              >
+                {{ ingredient }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 主要食材 -->
       <div class="detail-section">
         <h4 class="section-title">主要食材</h4>
-        <el-space direction="vertical" size="medium" class="ingredient-list">
-          <el-tag v-for="ingredient in ['鸡蛋', '牛奶', '燕麦', '水果']" :key="ingredient" type="info">
+        <div class="ingredient-grid">
+          <el-tag
+            v-for="(ingredient, index) in (selectedRecipe.ingredients || ['鸡蛋', '牛奶', '燕麦', '水果', '蜂蜜', '苹果', '香蕉'])"
+            :key="index"
+            type="info"
+            effect="light"
+            size="large"
+          >
             {{ ingredient }}
           </el-tag>
-        </el-space>
+        </div>
       </div>
 
       <!-- 烹饪步骤 -->
       <div class="detail-section">
         <h4 class="section-title">烹饪步骤</h4>
         <ol class="cooking-steps">
-          <li>准备好所需食材</li>
-          <li>按照说明进行烹饪</li>
-          <li>享受美味的{{ selectedRecipe.name }}</li>
+          <li v-for="(step, index) in (selectedRecipe.steps || [
+            '准备好所需食材',
+            '按照说明进行烹饪',
+            '享受美味的' + selectedRecipe.name
+          ])" :key="index">
+            {{ step }}
+          </li>
         </ol>
       </div>
     </div>
 
     <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-      </span>
+      <div class="dialog-footer">
+        <el-button type="primary" @click="detailDialogVisible = false" style="width: 100%;">
+          关闭
+        </el-button>
+      </div>
     </template>
   </el-dialog>
 
@@ -346,8 +392,20 @@ const deleteRecipe = (id) => {
           <el-input v-model="newRecipe.calories" type="number" placeholder="请输入卡路里" />
         </el-form-item>
 
-        <el-form-item label="时间" prop="time" required>
+        <el-form-item label="准备时间" prop="time" required>
           <el-input v-model="newRecipe.time" placeholder="请输入准备时间" />
+        </el-form-item>
+
+        <el-form-item label="食谱详情" prop="details">
+          <el-input v-model="newRecipe.details" type="textarea" :rows="3" placeholder="请输入食谱详情" />
+        </el-form-item>
+
+        <el-form-item label="食谱组成" prop="ingredients">
+          <el-input v-model="newRecipe.ingredients" type="textarea" :rows="3" placeholder="请输入主要食材，每行一个" />
+        </el-form-item>
+
+        <el-form-item label="烹饪步骤" prop="steps">
+          <el-input v-model="newRecipe.steps" type="textarea" :rows="4" placeholder="请输入烹饪步骤，每行一个" />
         </el-form-item>
 
         <el-form-item label="收藏">
@@ -456,17 +514,14 @@ const deleteRecipe = (id) => {
 
     .detail-header {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: center;
       margin-bottom: 30px;
       padding-bottom: 15px;
       border-bottom: 2px solid #eee;
-
-      .recipe-title {
-        font-size: 24px;
-        margin: 0 0 10px 0;
-        color: #303133;
-      }
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+      padding: 20px;
+      border-radius: 8px;
 
       .header-right {
         padding-top: 10px;
@@ -489,21 +544,35 @@ const deleteRecipe = (id) => {
         }
 
         .stat-content {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: row; 
+          gap: 10px;
+
           .stat-icon {
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 48px;
+          }
+
+          .stat-text {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
           }
 
           .stat-value {
             font-size: 24px;
             font-weight: bold;
             color: #303133;
-            margin-bottom: 5px;
+            margin-bottom: 0;
           }
 
           .stat-label {
-            font-size: 14px;
+            font-size: 16px;
             color: #909399;
+            font-weight: normal;
           }
         }
       }
@@ -521,7 +590,11 @@ const deleteRecipe = (id) => {
 
       .detail-content {
         color: #606266;
-        line-height: 1.8;
+        line-height: 2;
+        padding: 20px;
+        background-color: #f5f7fa;
+        border-radius: 10px;
+        margin-bottom: 10px;
       }
 
       .ingredient-list {
@@ -533,13 +606,87 @@ const deleteRecipe = (id) => {
         }
       }
 
+      .ingredient-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-left: 0;
+
+        .el-tag {
+          padding: 10px 20px;
+          font-size: 14px;
+          border-radius: 20px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          }
+        }
+      }
+
+      /* 菜品组成 */
+      .dish-composition {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .dish-item {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+
+        &:hover {
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+      }
+
+      .dish-name {
+        font-size: 16px;
+        font-weight: bold;
+        color: #303133;
+        margin-bottom: 15px;
+      }
+
+      .dish-ingredients {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
       .cooking-steps {
-        padding-left: 20px;
+        padding-left: 0;
         color: #606266;
         line-height: 2;
+        list-style: none;
+        counter-reset: step;
 
         li {
-          margin-bottom: 10px;
+          margin-bottom: 20px;
+          padding-left: 35px;
+          position: relative;
+
+          &::before {
+            content: counter(step);
+            counter-increment: step;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            background-color: #409eff;
+            color: white;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 4px;
+          }
         }
       }
     }
