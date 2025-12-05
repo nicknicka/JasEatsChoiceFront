@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useLocation } from '../../composables/useLocation.js';
-// Import Element Plus icons
+// 导入 Element Plus 图标
 import { Sunny, Cloudy, Location, VideoCamera, ArrowRight } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import api from '../../utils/api.js';
@@ -13,17 +13,16 @@ const router = useRouter();
 // 教程数据 - 从后端获取
 const featuredTutorials = ref([]);
 
-// Today's recommended dishes from backend
+// 今日推荐菜品 - 来自后端
 // 今日推荐菜品 - 从后端获取
 const recommendedDishes = ref([]);
-// Empty state message for recommendations
+// 推荐菜品空状态消息
 // 推荐菜品空状态消息
 const recommendEmptyMessage = ref('暂无推荐菜品');
 // 今日热点 - 从后端获取
 const hotTopic = ref("");
-const hotTopicLoading = ref(false);
 
-// Weather and location data
+// 天气和位置数据
 // 天气和位置数据
 const weather = ref({
   temp: 32,
@@ -32,7 +31,7 @@ const weather = ref({
   address: ''
 });
 
-// Use location composable
+// 使用位置选择组合式函数
 // 使用位置选择组合式函数
 const {
   cascaderLocationData,
@@ -42,17 +41,17 @@ const {
 } = useLocation();
 
 
-// Get weather icon based on condition
+// 根据天气条件获取对应的图标
 // 根据天气条件获取对应的图标
 const getWeatherIcon = () => {
   const condition = weather.value.condition;
-  if (!condition) return Sunny; // Default to sunny if condition is undefined or empty
+  if (!condition) return Sunny; // 如果天气条件为空或未定义，默认显示晴天图标
   if (condition.includes('晴')) return Sunny;
   if (condition.includes('云') || condition.includes('阴') || condition.includes('雨') || condition.includes('雷') || condition.includes('雪')) return Cloudy;
-  return Sunny; // Default to sunny
+  return Sunny; // 默认显示晴天图标
 };
 
-// Get recommended dishes based on weather
+// 根据天气条件获取推荐的菜品系列
 // 根据天气条件获取推荐的菜品系列
 const getRecommendedDishesSeries = () => {
   const condition = weather.value.condition;
@@ -83,7 +82,7 @@ const getRecommendedDishesSeries = () => {
   return '特色菜品系列';
 };
 
-// Fetch recommended dishes from backend
+// 从后端获取推荐菜品
 const fetchRecommendedDishes = () => {
   api.get(API_CONFIG.recipe.recommend)
     .then(response => {
@@ -107,7 +106,7 @@ const fetchRecommendedDishes = () => {
     });
 };
 
-// Fetch hot topic from backend
+// 从后端获取今日热点
 const fetchHotTopic = () => {
   // 假设后端提供了获取今日热点的API
   api.get(API_CONFIG.home.hotTopic)
@@ -126,51 +125,51 @@ const fetchHotTopic = () => {
     });
 };
 
-// Handle auto location
+// 处理自动定位
 // 处理自动定位
 const handleAutoLocation = async () => {
-  // Call the existing fetchWeather function without parameters to get auto location
+  // 调用现有 fetchWeather 函数（无参数）获取自动定位
   await fetchWeather();
-  // Close the dialog after successful location
+  // 定位成功后关闭对话框
   locationDialogVisible.value = false;
 };
 
 
-// Handle location confirmation
+// 处理位置确认
 // 处理位置确认
 const handleConfirmLocation = () => {
   if (manualLocation.value && manualLocation.value.length > 0) {
-    // For cascader, join the array to form a full address string
+    // 对于级联选择器，将数组拼接成完整地址字符串
     const fullAddress = manualLocation.value.join('');
-    // Extract city from location array for weather API (simplified logic)
+    // 从位置数组中提取城市用于天气API (简化逻辑)
     const city = manualLocation.value[1] || manualLocation.value[0];
 
-    // Update address immediately on UI
+    // 立即在UI上更新地址
     weather.value.address = fullAddress;
     weather.value.city = city;
 
-    // Fetch detailed weather information
+    // 获取详细天气信息
     fetchWeather(city)
       .then(() => {
         locationDialogVisible.value = false;
       });
   } else {
-    // If no manual location is selected, use auto location
+    // 如果未选择手动位置，则使用自动定位
     handleAutoLocation();
   }
 };
 
-// Fetch location and weather data from backend
+// 从后端获取位置和天气数据
 // 从后端获取位置和天气数据
 const fetchWeather = async (selectedCity = null) => {
   try {
     if (selectedCity) {
-      // Fetch weather for the selected city
+      // 为选择的城市获取天气信息
       weather.value.city = selectedCity;
       const weatherResponse = await api.get(`${API_CONFIG.weather.current}?city=${encodeURIComponent(selectedCity)}`);
       if (weatherResponse?.data) {
         const { temperature, condition } = weatherResponse.data;
-        // Only update if values are defined
+        // 仅当值已定义时才更新
         if (temperature !== undefined) {
           weather.value.temp = temperature;
         }
@@ -179,47 +178,53 @@ const fetchWeather = async (selectedCity = null) => {
         }
       }
     } else {
-      // Step 1: Get current location from backend
+      // 步骤1: 从后端获取当前位置
       const locationResponse = await api.get(API_CONFIG.weather.location);
       if (locationResponse.data) {
         const { city, address } = locationResponse.data;
         weather.value.city = city;
         weather.value.address = address;
 
-        // Step 2: Get weather info based on city
+        // 步骤2: 根据城市获取天气信息
         const weatherResponse = await api.get(`${API_CONFIG.weather.current}?city=${encodeURIComponent(city)}`);
         if (weatherResponse?.data) {
           const { temperature, condition } = weatherResponse.data;
-          weather.value.temp = temperature;
-          weather.value.condition = condition;
+          // 仅当值已定义时才更新
+          if (temperature !== undefined) {
+            weather.value.temp = temperature;
+          }
+          if (condition !== undefined) {
+            weather.value.condition = condition;
+          }
         }
       }
     }
   } catch (error) {
     console.error(selectedCity ? '加载天气失败:' : '加载天气或位置失败:', error);
   }
+  console.log('获取天气数据:', weather.value);
 };
 
-// Mock user info removed - now handled by CommonHome component
-// Search functionality removed - now handled by CommonHome component
+// 模拟用户信息已移除 - 现在由 CommonHome 组件处理
+// 搜索功能已移除 - 现在由 CommonHome 组件处理
 
-// Handle menu navigation
+// 处理菜单导航
 const navigateTo = (path) => {
   router.push(path);
 };
 
-// WebSocket connection
+// WebSocket 连接
 let wsAttempts = 0;
 const maxAttempts = 10;
 
-// Initialize WebSocket connection with auto-reconnect using main process WebSocket
+// 使用主进程 WebSocket 初始化带有自动重连功能的 WebSocket 连接
 const initializeWebSocket = () => {
-  // Replace with actual backend WebSocket URL
-  const wsUrl = 'ws://localhost:9091/ws'; // Backend Netty server URL
+  // 替换为实际的后端 WebSocket URL
+  const wsUrl = 'ws://localhost:9091/ws'; // 后端 Netty 服务器 URL
 
   console.log('Connecting to WebSocket server:', wsUrl);
 
-  // Use WebSocket from main process via IPC
+  // 通过 IPC 使用主进程的 WebSocket
   if (window.api) {
     window.api.connectWebSocket(wsUrl);
   } else {
@@ -227,7 +232,7 @@ const initializeWebSocket = () => {
   }
 };
 
-// Send WebSocket message
+// 发送 WebSocket 消息
 const sendWebSocketMessage = (message) => {
   if (window.api) {
     window.api.sendWebSocketMessage(message);
@@ -236,18 +241,18 @@ const sendWebSocketMessage = (message) => {
   }
 };
 
-// WebSocket event handlers setup
+// WebSocket 事件处理器设置
 const listenersRegistered = window.api?.webSocketListenersRegistered || window.webSocketListenersRegistered;
 if (!listenersRegistered && window.api) {
-  // Listen for WebSocket events from main process
+  // 监听来自主进程的 WebSocket 事件
   window.api?.onWebSocketOpen(() => {
     console.log('WebSocket connection established');
 
-    // Send authentication if needed
+    // 必要时发送身份验证
     const authMsg = {
       msgType: 'auth',
-      userId: localStorage.getItem('userId') || 'test-user-123', // Replace with actual user ID
-      token: 'test-token' // Replace with actual token
+      userId: localStorage.getItem('userId') || 'test-user-123', // 替换为实际用户 ID
+      token: 'test-token' // 替换为实际令牌
     };
     sendWebSocketMessage(authMsg);
   });
@@ -255,10 +260,10 @@ if (!listenersRegistered && window.api) {
   window.api?.onWebSocketMessage((message) => {
     console.log('WebSocket message received:', message);
 
-    // Handle both string and Uint8Array messages
+    // 处理字符串和 Uint8Array 类型的消息
     let messageString;
     if (message instanceof Uint8Array) {
-      // Decode Uint8Array to string using UTF-8
+      // 使用 UTF-8 将 Uint8Array 解码为字符串
       messageString = new TextDecoder().decode(message);
     } else if (typeof message === 'string') {
       messageString = message;
@@ -268,7 +273,7 @@ if (!listenersRegistered && window.api) {
     }
 
     try {
-      // Parse JSON message
+      // 解析 JSON 消息
       const parsedMessage = JSON.parse(messageString);
       console.log('Parsed WebSocket message:', parsedMessage);
 
@@ -281,17 +286,17 @@ if (!listenersRegistered && window.api) {
 
         case 'orderUpdate':
           console.log('Order update received:', content);
-          // Update UI with order status
+          // 更新订单状态的UI
           break;
 
         case 'chat':
           console.log('Chat message from', fromId, 'to', toId, ':', content);
-          // Update chat UI
+          // 更新聊天UI
           break;
 
         case 'system':
           console.log('System message:', content);
-          // Show system notification
+          // 显示系统通知
           break;
 
         default:
@@ -306,10 +311,10 @@ if (!listenersRegistered && window.api) {
   window.api?.onWebSocketClose((code, reason) => {
     console.log('WebSocket connection closed:', code, reason);
 
-    // Auto-reconnect if not reached max attempts
+    // 如果未达到最大尝试次数则自动重连
     if (wsAttempts < maxAttempts) {
       wsAttempts++;
-      const delay = Math.min(3000 * wsAttempts, 30000); // Exponential backoff
+      const delay = Math.min(3000 * wsAttempts, 30000); // 指数退避
       setTimeout(() => {
         console.log(`Reconnecting WebSocket... Attempt ${wsAttempts}/${maxAttempts}`);
         initializeWebSocket();
@@ -321,11 +326,11 @@ if (!listenersRegistered && window.api) {
     console.error('WebSocket error:', error);
   });
 
-  // Check if api is extensible before adding property
+  // 在添加属性之前检查 api 是否可扩展
   if (window.api && Object.isExtensible(window.api)) {
     window.api.webSocketListenersRegistered = true;
   } else {
-    // Use a separate variable if api object is not extensible
+    // 如果api对象不可扩展，则使用一个单独的变量
     window.webSocketListenersRegistered = true;
   }
 }
@@ -351,7 +356,7 @@ const fetchFeaturedTutorials = () => {
     });
 };
 
-// Initialize WebSocket on mount
+// 在挂载时初始化WebSocket
 onMounted(() => {
   fetchFeaturedTutorials();
   fetchRecommendedDishes();
@@ -380,9 +385,9 @@ onMounted(() => {
                     class="location-icon-button"
                   >
                     <el-icon><Location /></el-icon>
+                  <span v-if="weather.address"> {{ weather.address }}</span>
+                  <span v-else-if="weather.city">{{ weather.city }}</span>
                   </el-button>
-                  <span v-if="weather.city && weather.address"> {{ weather.address }}</span>
-                  <span v-else-if="weather.address">{{ weather.address }}</span>
                 </div>
                 <div class="temp">{{ weather.temp }}℃</div>
                 <div class="condition">今日推荐：{{ getRecommendedDishesSeries() }}</div>
