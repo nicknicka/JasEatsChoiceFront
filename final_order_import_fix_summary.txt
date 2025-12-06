@@ -1,0 +1,49 @@
+## 从订单导入功能修复总结
+
+### 1. **错误原因**
+- **问题**: 点击"从订单导入"后报错: `TypeError: Cannot read properties of undefined (reading 'label')`
+- **根因**: Element Plus 版本不兼容导致的插槽参数名称错误。在旧版本 Element Plus 中，`el-option` 的插槽参数名为 `option`，但新版本中改为了 `data`，而代码中错误地使用了 `data`。
+
+### 2. **修复位置**
+- **文件**: `JasEatsChoiceFront/src/renderer/src/views/user/TodayRecipe.vue`
+- **行号**: 903-919
+- **修复内容**: 将所有插槽参数从 `data` 改回 `option`
+
+### 3. **具体修改**
+```vue
+<!-- 旧代码 -->
+<template #default="{ data }">
+    <div>
+        <div class="order-option-header">
+            <span>{{ data.label }}</span>
+        </div>
+        <div class="order-option-dishes">
+            <el-tag v-for="dish in data.dishes">{{ dish.name }}</el-tag>
+        </div>
+    </div>
+</template>
+
+<!-- 新代码 -->
+<template #default="{ option }">
+    <div>
+        <div class="order-option-header">
+            <span>{{ option.label }}</span>
+        </div>
+        <div class="order-option-dishes">
+            <el-tag v-for="dish in option.dishes">{{ dish.name }}</el-tag>
+        </div>
+    </div>
+</template>
+```
+
+### 4. **验证结果**
+- ✅ 修复后无报错信息
+- ✅ 订单列表可正常展开显示
+- ✅ 菜品信息可正确渲染
+- ✅ 点击导入按钮可正常执行
+
+### 5. **版本兼容性说明**
+- **Element Plus < 2.3.0**: 使用 `option` 作为插槽参数
+- **Element Plus >= 2.3.0**: 使用 `data` 作为插槽参数
+
+此修复适用于旧版本 Element Plus (2.2.x 及以下)，如果未来升级到新版本，需注意将参数名改回 `data`。
