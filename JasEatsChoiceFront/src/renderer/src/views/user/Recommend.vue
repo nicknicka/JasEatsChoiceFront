@@ -45,8 +45,9 @@ const handleLocationError = (error) => {
   let errorMessage = '定位失败';
   switch (error.code) {
     case error.PERMISSION_DENIED:
-      errorMessage = '用户拒绝定位请求';
-      break;
+      // 用户拒绝定位请求，不显示错误信息，避免重复打扰
+      locationError.value = true;
+      return;
     case error.POSITION_UNAVAILABLE:
       errorMessage = '定位信息不可用';
       break;
