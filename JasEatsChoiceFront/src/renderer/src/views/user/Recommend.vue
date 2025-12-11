@@ -362,15 +362,43 @@ const rejectRecommendation = (item) => {
 // 从后端获取推荐数据
 const fetchRecommendationsFromBackend = async () => {
   try {
-    const response = await axios.get(API_CONFIG.baseURL + API_CONFIG.recipe.recommend);
-    const data = response.data;
+    // 获取用户ID（从localStorage中获取，与其他页面保持一致）
+    const userId = parseInt(localStorage.getItem('userId') || '1', 10);
 
-    // 确保推荐数据始终是一个数组
-    recommendations.value = Array.isArray(data) ? data : [];
-    return data;
+    // 调用后端个性化推荐接口
+    const response = await axios.get(`${API_CONFIG.baseURL}/v1/recommend/recommend/${userId}`);
+
+    // 检查响应结构并提取推荐菜品
+    const data = response.data.data;
+    if (data && data.dishes) {
+      recommendations.value = data.dishes;
+
+      // 添加推荐理由等信息
+      recommendations.value.forEach(dish => {
+        // 根据菜品信息生成推荐理由
+        if (!dish.reason) {
+          dish.reason = "基于您的饮食偏好推荐";
+        }
+        // 确保每个菜品有必要的字段
+        dish.rating = dish.rating || 4.5;
+        dish.image = dish.image || '🍱';
+      });
+
+      return data.dishes;
+    } else {
+      recommendations.value = [];
+      return [];
+    }
   } catch (error) {
     console.error('获取推荐数据失败:', error);
-    ElMessage.error('获取推荐数据失败');
+
+    // 后端接口失败时，继续使用mock数据作为后备
+    ElMessage.warning('个性化推荐服务暂时不可用，将为您提供基于节日和天气的推荐');
+
+    // 保持现有的mock数据生成逻辑
+    addFestivalRecommendations();
+    updateRecommendationsByWeatherAndTime();
+
     return null;
   }
 };
@@ -437,7 +465,7 @@ const recommendations = ref([]);
               show-text
             />
           </div>
-          <el-button type="primary" size="small" @click="router.push('/user/home/merchants')">立即查看</el-button>
+          <el-button type="primary" size="small" @click="router.push({ path: '/user/home/merchants', query: { search: item.name.replace(/(.*推荐:|.*特色:)/, '').trim() } })">立即查看</el-button>
           <el-button type="text" size="small" @click="rejectRecommendation(item)">不感兴趣</el-button>
         </div>
       </el-card>

@@ -42,7 +42,9 @@ const loadMerchants = () => {
   isLoading.value = true;
 
   // 调用后端API获取商家列表
-  axios.get(API_CONFIG.baseURL + API_CONFIG.merchant.list)
+  axios.get(API_CONFIG.baseURL + API_CONFIG.merchant.list, {
+    params: { search: searchKeyword.value }
+  })
     .then(response => {
       // 假设后端返回的数据结构与前端期望的一致
       // 如果结构不同，需要在这里进行转换
