@@ -298,9 +298,10 @@ const deleteRecipe = (id) => {
 	<el-dialog
 		v-model="detailDialogVisible"
 		:title="selectedRecipe ? selectedRecipe.name : '食谱详情'"
-		width="90%"
+		width="70%"
+		:style="{ minWidth: '600px' }"
 		top="8%"
-		class="recipe-detail-dialog"
+		body-class="recipe-detail-dialog"
 		draggable
 	>
 		<div v-if="selectedRecipe" class="recipe-detail-container">
@@ -321,9 +322,7 @@ const deleteRecipe = (id) => {
 				>
 					{{ selectedRecipe.type }}
 				</el-tag>
-				<div class="recipe-title-container">
-					<h2 class="recipe-name">{{ selectedRecipe.name }}</h2>
-					<el-icon
+        <el-icon
 						:class="
 							selectedRecipe.favorite
 								? 'favorite-icon active'
@@ -333,28 +332,39 @@ const deleteRecipe = (id) => {
 						title="点击切换收藏状态"
 					>
 						<Star />
-					</el-icon>
-				</div>
+        </el-icon>
 			</div>
 
-			<!-- 核心信息卡片 -->
-			<div class="detail-cards-section">
-				<el-card shadow="hover" class="stat-card" :body-style="{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '24px 32px'}">
+      <el-card shadow="hover" class="stat-card" :body-style="{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '24px 32px', background: '#f8f9fa', borderRadius: '8px'}">
 					<div class="stat-label">🔥🔥 总卡路里</div>
 					<div class="stat-text">
 						<div class="stat-value">{{ selectedRecipe.calories }} kcal</div>
 					</div>
 				</el-card>
-        <el-card shadow="hover" class="stat-card" :body-style="{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '24px 32px'}">
+        <el-card shadow="hover" class="stat-card" :body-style="{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '24px 32px', background: '#f8f9fa', borderRadius: '8px'}">
 					<div class="stat-label">⏰ 准备时间</div>
 					<div class="stat-text">
 						<div class="stat-value">{{ selectedRecipe.time || '00:00:00' }}</div>
 					</div>
 				</el-card>
-			</div>
+			<!-- 核心信息卡片 -->
+			<!-- <div class="detail-cards-section">
+				<el-card shadow="hover" class="stat-card" :body-style="{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '24px 32px', background: '#f8f9fa', borderRadius: '8px'}">
+					<div class="stat-label">🔥🔥 总卡路里</div>
+					<div class="stat-text">
+						<div class="stat-value">{{ selectedRecipe.calories }} kcal</div>
+					</div>
+				</el-card>
+        <el-card shadow="hover" class="stat-card" :body-style="{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '24px 32px', background: '#f8f9fa', borderRadius: '8px'}">
+					<div class="stat-label">⏰ 准备时间</div>
+					<div class="stat-text">
+						<div class="stat-value">{{ selectedRecipe.time || '00:00:00' }}</div>
+					</div>
+				</el-card>
+			</div> -->
 
 			<!-- 食谱详情 -->
-			<el-card shadow="hover" class="detail-card">
+			<el-card shadow="hover" :body-style="{ padding: '28px 32px', background: '#f8f9fa', borderRadius: '8px', marginTop: '24px' }">
 				<h4 class="section-title">
 					<el-icon class="section-icon">📝</el-icon>
 					食谱详情
@@ -370,7 +380,7 @@ const deleteRecipe = (id) => {
 			</el-card>
 
 			<!-- 菜品组成 -->
-			<el-card shadow="hover" class="detail-card">
+			<el-card shadow="hover" :body-style="{ padding: '28px 32px', background: '#f8f9fa', borderRadius: '8px', marginTop: '24px' }">
 				<h4 class="section-title">
 					<el-icon class="section-icon">🍽️</el-icon>
 					菜品组成
@@ -402,7 +412,7 @@ const deleteRecipe = (id) => {
 			</el-card>
 
 			<!-- 主要食材 -->
-			<el-card shadow="hover" class="detail-card">
+			<el-card shadow="hover" :body-style="{ padding: '28px 32px', background: '#f8f9fa', borderRadius: '8px', marginTop: '24px' }">
 				<h4 class="section-title">
 					<el-icon class="section-icon">🥬</el-icon>
 					主要食材
@@ -430,7 +440,7 @@ const deleteRecipe = (id) => {
 			</el-card>
 
 			<!-- 烹饪步骤 -->
-			<el-card shadow="hover" class="detail-card">
+			<el-card shadow="hover" :body-style="{ padding: '28px 32px', background: '#f8f9fa', borderRadius: '8px', marginTop: '24px' }">
 				<h4 class="section-title">
 					<el-icon class="section-icon">📋</el-icon>
 					烹饪步骤
@@ -539,7 +549,7 @@ const deleteRecipe = (id) => {
 	</el-dialog>
 </template>
 
-<style scoped lang="less">
+<style lang="less">
 .my-recipe-container {
 	padding: 24px;
 	min-height: 100vh;
@@ -711,332 +721,41 @@ const deleteRecipe = (id) => {
 		color: #1565c0;
 	}
 
-	/* 自定义食谱详情对话框样式 - 不依赖Element Plus */
-	.recipe-detail-dialog {
-		/* 模态框容器样式 */
-		.recipe-detail-container {
-			padding: 0;
-			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-				"Helvetica Neue", Arial, sans-serif;
-			color: #333;
-			max-width: 1200px; /* 设置最大宽度防止在超大屏幕上内容过宽 */
-			margin: 0 auto; /* 居中显示 */
-			background-color: #ffffff;
-			border-radius: 16px;
-			overflow: hidden;
-			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-		}
+  .recipe-detail-dialog {
+    padding: 24px;
+    background-color: #f5f7fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+  }
 
-		/* 头部信息区 */
-		.detail-header-section {
-			padding: 24px 40px; /* 增加左右边距 */
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-			color: white;
-			border-radius: 8px 8px 0 0;
-		}
+  .detail-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
 
-		/* 食谱类型标签 */
-		.type-tag {
-			padding: 8px 16px;
-			background-color: rgba(255, 255, 255, 0.2);
-			color: white;
-			border: none;
-			border-radius: 4px;
-			font-size: 14px;
-			font-weight: 500;
-		}
+  .favorite-icon {
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #C0C4CC;
+  }
 
-		/* 食谱标题容器 */
-		.recipe-title-container {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			margin-top: 12px;
-		}
+  .favorite-icon.active {
+    color: #FFD700;
+    animation: pulse 0.5s ease;
+  }
 
-		/* 食谱名称 */
-		.recipe-name {
-			font-size: 28px;
-			font-weight: 700;
-			color: white;
-			margin: 0;
-			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-		}
+  .favorite-icon:hover {
+    transform: scale(1.1);
+  }
 
-		/* 收藏按钮 */
-		.favorite-icon {
-			font-size: 32px;
-			cursor: pointer;
-			transition: all 0.3s ease;
-			color: rgba(255, 255, 255, 0.6);
-		}
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
 
-		.favorite-icon.active {
-			color: #ffd700;
-			animation: pulse 0.5s ease;
-		}
-
-		.favorite-icon:hover {
-			transform: scale(1.1);
-			color: #ffd700;
-		}
-
-		@keyframes pulse {
-			0% {
-				transform: scale(1);
-			}
-			50% {
-				transform: scale(1.2);
-			}
-			100% {
-				transform: scale(1);
-			}
-		}
-
-		/* 核心信息卡片区 - 强制一行显示 */
-		.detail-cards-section {
-			display: flex !important;
-			flex-direction: row !important;
-			justify-content: center !important; /* 居中显示 */
-			align-items: stretch !important; /* 让卡片高度一致 */
-			gap: 20px !important;
-			padding: 24px 40px !important; /* 增加左右边距 */
-			background-color: #f8f9fa !important;
-			flex-wrap: nowrap !important; /* 禁止换行，确保在一行显示 */
-		}
-
-		/* 详情卡片 */
-		.detail-card {
-			margin: 12px 40px; /* 增加左右边距 */
-			border-radius: 8px;
-		}
-
-		.stat-card:hover {
-			transform: translateY(-4px);
-			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-		}
-
-		/* 信息卡片内容 */
-		.stat-content {
-      border: 5px solid red;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-      flex-direction: row;
-			gap: 10px;
-		}
-
-		/* 针对Element Plus卡片组件内部的样式穿透 */
-		.stat-card:deep(.el-card__body) {
-			padding: 28px 32px;
-			background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-			border-radius: 12px;
-			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-			text-align: center;
-			border: 1px solid rgba(255, 255, 255, 0.8);
-			transition: all 0.3s ease;
-		}
-
-		.stat-icon {
-			font-size: 40px;
-		}
-
-
-		.stat-value {
-			font-size: 32px;
-			font-weight: 700;
-			color: #4a5568;
-			letter-spacing: -0.5px;
-		}
-
-		.stat-label {
-			font-size: 14px;
-			color: #9ca3af;
-			text-transform: uppercase;
-			letter-spacing: 0.5px;
-		}
-
-		/* 通用区块样式 */
-		.detail-section {
-			padding: 24px;
-			background-color: white;
-			border-bottom: 1px solid #eee;
-		}
-
-		/* 区块标题 */
-		.section-title {
-			font-size: 18px;
-			font-weight: 600;
-			color: #333;
-			margin-bottom: 16px;
-			display: flex;
-			align-items: center;
-			gap: 8px;
-		}
-
-		.section-icon {
-			font-size: 22px;
-			color: #667eea;
-		}
-
-		/* 食谱详情文本 */
-		.detail-content {
-			line-height: 1.8;
-			color: #555;
-		}
-
-		/* 菜品组成 */
-		.dish-composition {
-			padding: 8px 0;
-		}
-
-		/* 折叠面板样式 */
-		.dish-collapse {
-			.el-collapse-item__header {
-				font-size: 16px;
-				font-weight: 600;
-				padding: 12px 0;
-				border-bottom: 1px solid #f0f0f0;
-			}
-
-			.el-collapse-item__content {
-				padding: 16px 0;
-			}
-		}
-
-		.dish-ingredients {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 8px;
-		}
-
-		.dish-ingredients .el-tag {
-			padding: 6px 12px;
-			background-color: #e3f2fd;
-			color: #1976d2;
-			border: none;
-			border-radius: 20px;
-			font-size: 12px;
-		}
-
-		/* 主要食材 */
-		.ingredient-grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-			gap: 16px; /* 增加食材标签之间的间距 */
-			padding: 10px 0; /* 增加上下内边距 */
-		}
-
-		.ingredient-tag {
-			padding: 10px 16px;
-			background-color: #e0e0e0;
-			color: #333;
-			border: none;
-			border-radius: 24px;
-			font-size: 14px;
-			text-align: center;
-			cursor: pointer;
-			transition: all 0.3s ease;
-		}
-
-		.ingredient-tag:hover {
-			background-color: #667eea;
-			color: white;
-			transform: translateY(-2px);
-		}
-
-		/* 烹饪步骤 */
-		.cooking-steps {
-			padding: 16px 0;
-		}
-
-		.cooking-steps .el-timeline-item {
-			padding: 16px 0;
-		}
-
-		.cooking-steps .el-timeline-item__content {
-			padding-left: 24px;
-			padding-top: 0;
-		}
-
-		/* 时间线卡片 */
-		.cooking-steps .el-card {
-			background-color: #fafafa;
-			border: 1px solid #e8e8e8;
-			border-radius: 8px;
-			padding: 16px;
-			transition: all 0.3s ease;
-		}
-
-		.cooking-steps .el-card:hover {
-			background-color: #fff;
-			border-color: #1976d2;
-			box-shadow: 0 2px 12px rgba(25, 118, 210, 0.2);
-		}
-
-		/* 对话框底部 */
-		.dialog-footer {
-			display: flex;
-			gap: 12px;
-			justify-content: flex-end;
-			padding: 16px;
-			background-color: #f8f9fa;
-			border-radius: 0 0 8px 8px;
-		}
-
-		.dialog-footer .el-button {
-			padding: 10px 24px;
-			border-radius: 4px;
-			font-size: 14px;
-			cursor: pointer;
-			transition: background-color 0.3s ease, color 0.3s ease;
-		}
-
-		/* 主要按钮 */
-		.dialog-footer .el-button--primary {
-			background-color: #667eea;
-			border-color: #667eea;
-			color: white;
-		}
-
-		.dialog-footer .el-button--primary:hover {
-			background-color: #5568d3;
-			border-color: #5568d3;
-		}
-
-		/* 默认按钮 */
-		.dialog-footer .el-button--default {
-			background-color: #fff;
-			border-color: #dcdfe6;
-			color: #606266;
-		}
-
-		.dialog-footer .el-button--default:hover {
-			background-color: #f5f7fa;
-			border-color: #c6e2ff;
-			color: #409eff;
-		}
-
-		/* 响应式设计 */
-		@media (max-width: 500px) {
-			.detail-header-section {
-				padding: 24px 20px; /* 小屏幕上减少边距 */
-			}
-
-			.detail-cards-section {
-				padding: 24px 20px !important; /* 小屏幕上减少边距 */
-				flex-wrap: wrap !important; /* 小屏幕上允许换行 */
-			}
-
-			.stat-card {
-				flex: 1 0 100% !important; /* 小屏幕上卡片占满宽度 */
-				width: 100% !important;
-			}
-
-			.detail-card {
-				margin: 12px 20px; /* 小屏幕上减少边距 */
-			}
-		}
-	}
 }
 </style>
