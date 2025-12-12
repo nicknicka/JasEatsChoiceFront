@@ -45,15 +45,15 @@
       <div class="order-module">
         <h3 class="module-title">📜 订单模块</h3>
         <div class="order-stats">
-          <div class="order-stat-card">
+          <div class="order-stat-card" @click="goToOrdersByStatus('processing')">
             <div class="stat-value order-in-progress">{{ userInfo.orders?.inProgress || 0 }}笔</div>
             <div class="stat-label">进行中订单</div>
           </div>
-          <div class="order-stat-card">
+          <div class="order-stat-card" @click="goToOrdersByStatus('pending')">
             <div class="stat-value order-pending">{{ userInfo.orders?.pending || 0 }}笔</div>
             <div class="stat-label">待确认订单</div>
           </div>
-          <div class="order-stat-card">
+          <div class="order-stat-card" @click="goToOrdersByStatus('pendingComment')">
             <div class="stat-value order-pending-comment">
               {{ userInfo.orders?.pendingComment || 0 }}笔
             </div>
@@ -235,6 +235,14 @@ onMounted(() => {
 // 跳转到所有订单页面
 const goToAllOrders = () => {
   router.push('/user/home/orders')
+}
+
+// 跳转到指定状态的订单
+const goToOrdersByStatus = (status) => {
+  router.push({
+    path: '/user/home/orders',
+    query: { status }
+  })
 }
 
 // 跳转到消费记录页面

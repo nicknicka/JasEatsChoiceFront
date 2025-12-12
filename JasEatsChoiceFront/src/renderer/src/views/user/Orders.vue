@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import { API_CONFIG } from '../../config';
 import { ElMessage } from 'element-plus';
 
 const router = useRouter();
+const route = useRoute();
 
 // 用户订单数据
 const orders = ref([]);
@@ -70,7 +71,9 @@ const activeStatus = ref('all');
 // 订单状态映射
 const orderStatusMap = {
   'all': '全部订单',
-  'processing': '处理中',
+  'processing': '进行中',
+  'pending': '待确认',
+  'pendingComment': '待评价',
   'delivered': '已送达',
   'completed': '已完成',
   'cancelled': '已取消'
@@ -78,8 +81,22 @@ const orderStatusMap = {
 
 // 组件挂载时加载数据
 onMounted(() => {
+  // 检查是否有传递的状态参数
+  if (route.query.status) {
+    activeStatus.value = route.query.status;
+  }
   loadOrders();
 });
+
+// 监听路由参数变化
+watch(
+  () => route.query.status,
+  (newStatus) => {
+    if (newStatus) {
+      activeStatus.value = newStatus;
+    }
+  }
+);
 
 // 筛选后的订单
 const filteredOrders = computed(() => {
