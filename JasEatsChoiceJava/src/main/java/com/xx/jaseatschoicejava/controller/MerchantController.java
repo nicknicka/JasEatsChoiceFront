@@ -83,7 +83,21 @@ public class MerchantController {
             queryWrapper.eq(Merchant::getCategory, category);
         }
         if (keyword != null) {
-            queryWrapper.like(Merchant::getName, keyword);
+            // 1. 首先查询包含关键词的菜品对应的商家ID
+            LambdaQueryWrapper<Dish> dishQuery = new LambdaQueryWrapper<>();
+            dishQuery.like(Dish::getName, keyword);
+            List<Long> merchantIdsWithMatchingDishes = dishService.list(dishQuery)
+                    .stream()
+                    .map(Dish::getMerchantId)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // 2. 构建查询条件：商家名称包含关键词 或 商家有包含关键词的菜品
+            queryWrapper.and(wrapper ->
+                wrapper.like(Merchant::getName, keyword)
+                .or()
+                .in(!merchantIdsWithMatchingDishes.isEmpty(), Merchant::getId, merchantIdsWithMatchingDishes)
+            );
         }
         // 只显示营业的商家
         queryWrapper.eq(Merchant::getStatus, true);
