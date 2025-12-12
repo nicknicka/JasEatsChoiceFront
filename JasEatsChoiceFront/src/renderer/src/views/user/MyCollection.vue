@@ -1,6 +1,17 @@
 <template>
   <div class="my-collection-container">
-    <h2>我的收藏</h2>
+    <div class="header">
+      <el-button
+        type="text"
+        size="large"
+        @click="router.go(-1)"
+        class="back-btn"
+      >
+        <el-icon><ArrowLeft /></el-icon>
+        返回
+      </el-button>
+      <h2>我的收藏</h2>
+    </div>
 
     <div class="filter-bar">
       <el-select v-model="filterType" placeholder="筛选类型" style="width: 150px; margin-right: 10px;">
@@ -99,7 +110,8 @@ import {
   Calendar,
   View,
   Star,
-  House
+  House,
+  ArrowLeft
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
@@ -311,9 +323,24 @@ onMounted(() => {
 .my-collection-container {
   padding: 0 20px 20px 20px;
 
-  h2 {
-    font-size: 24px;
-    margin: 0 0 20px 0;
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .back-btn {
+      margin-right: 20px;
+      font-size: 16px;
+
+      :deep(.el-button__text) {
+        margin-left: 5px;
+      }
+    }
+
+    h2 {
+      font-size: 24px;
+      margin: 0;
+    }
   }
 
   .filter-bar {
