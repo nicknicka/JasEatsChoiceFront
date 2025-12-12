@@ -59,6 +59,24 @@ const loadOrders = () => {
           total: 35.0,
           time: '2023-11-21 19:30',
           items: ['健身餐套餐']
+        },
+        {
+          id: 5,
+          orderNo: 'JD20231124001',
+          status: 'pending',
+          merchant: '中式快餐',
+          total: 32.0,
+          time: '2023-11-24 12:00',
+          items: ['红烧肉盖饭', '青菜豆腐汤']
+        },
+        {
+          id: 6,
+          orderNo: 'JD20231124002',
+          status: 'pendingComment',
+          merchant: '西式餐厅',
+          total: 68.0,
+          time: '2023-11-24 18:30',
+          items: ['牛排套餐', '柠檬红茶']
         }
       ];
       ElMessage.error('加载订单失败，将显示默认数据');
@@ -136,7 +154,7 @@ const cancelOrder = (order) => {
     <!-- 订单筛选 -->
     <div class="order-filters">
       <el-button
-        v-for="status in ['all', 'processing', 'delivered', 'completed', 'cancelled']"
+        v-for="status in ['all', 'processing', 'pending', 'pendingComment', 'delivered', 'completed', 'cancelled']"
         :key="status"
         type="primary"
         :plain="activeStatus !== status"
@@ -162,7 +180,13 @@ const cancelOrder = (order) => {
           </div>
           <div class="order-status">
             <el-tag
-              :type="order.status === 'processing' ? 'warning' : order.status === 'delivered' ? 'success' : order.status === 'completed' ? 'info' : 'danger'"
+              :type="
+                order.status === 'processing' ? 'warning' :
+                order.status === 'pending' ? 'primary' :
+                order.status === 'pendingComment' ? 'info' :
+                order.status === 'delivered' ? 'success' :
+                order.status === 'completed' ? 'info' : 'danger'
+              "
             >
               {{ orderStatusMap[order.status] }}
             </el-tag>
