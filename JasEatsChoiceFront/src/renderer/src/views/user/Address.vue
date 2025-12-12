@@ -1,6 +1,17 @@
 <template>
   <div class="address-container">
-    <h2>管理地址</h2>
+    <div class="header">
+      <el-button
+        type="text"
+        size="large"
+        @click="router.back()"
+        class="back-btn"
+      >
+        <el-icon><ArrowLeft /></el-icon>
+        返回
+      </el-button>
+      <h2>管理地址</h2>
+    </div>
 
     <el-button type="primary" style="margin-bottom: 20px;" @click="showAddDialog = true">
       <el-icon><Plus /></el-icon>
@@ -122,8 +133,11 @@
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue';
-import { Edit, Delete, Plus } from '@element-plus/icons-vue';
+import { useRouter } from 'vue-router';
+import { Edit, Delete, Plus, ArrowLeft } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+
+const router = useRouter();
 
 // 地址列表
 const addresses = ref([]);
@@ -299,9 +313,24 @@ const setDefault = (address) => {
 .address-container {
   padding: 0 20px 20px 20px;
 
-  h2 {
-    font-size: 24px;
-    margin: 0 0 20px 0;
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .back-btn {
+      margin-right: 20px;
+      font-size: 16px;
+
+      :deep(.el-button__text) {
+        margin-left: 5px;
+      }
+    }
+
+    h2 {
+      font-size: 24px;
+      margin: 0;
+    }
   }
 
   .address-list {
