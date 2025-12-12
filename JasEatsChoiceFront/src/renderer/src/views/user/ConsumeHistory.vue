@@ -212,7 +212,7 @@ onMounted(() => {
   const savedUserInfo = localStorage.getItem('userInfo');
   if (savedUserInfo) {
     const userInfo = JSON.parse(savedUserInfo);
-    currentBalance.value = userInfo.wallet.balance;
+    currentBalance.value = userInfo.wallet ? userInfo.wallet.balance : '177';
   }
 
   const savedHistory = localStorage.getItem('consumeHistory');
