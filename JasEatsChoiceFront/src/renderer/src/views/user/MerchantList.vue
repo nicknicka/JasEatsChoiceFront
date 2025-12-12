@@ -112,7 +112,7 @@ const filteredMerchants = computed(() => {
     const keyword = searchKeyword.value.toLowerCase();
     result = result.filter(merchant =>
       merchant.name.toLowerCase().includes(keyword) ||
-      merchant.tags.some(tag => tag.toLowerCase().includes(keyword))
+      (merchant.tags && merchant.tags.some(tag => tag.toLowerCase().includes(keyword)))
     );
   }
 
