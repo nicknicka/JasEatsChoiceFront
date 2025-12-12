@@ -1,0 +1,71 @@
+package com.xx.jaseatschoicejava.service.impl;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xx.jaseatschoicejava.entity.MessageRecord;
+import com.xx.jaseatschoicejava.mapper.MessageRecordMapper;
+import com.xx.jaseatschoicejava.service.MessageRecordService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * 消息记录Service实现
+ *
+ * @author xx
+ * @date 2025-01-26
+ */
+@Service
+public class MessageRecordServiceImpl extends ServiceImpl<MessageRecordMapper, MessageRecord> implements MessageRecordService {
+
+    @Autowired
+    private MessageRecordMapper messageRecordMapper;
+
+    @Override
+    public List<MessageRecord> getMessageRecordsByUserId(Long userId, Integer pageSize, Integer pageNum) {
+        // 计算分页起始索引
+        int startIndex = (pageNum - 1) * pageSize;
+        return messageRecordMapper.getMessageRecordsByUserId(userId, pageSize, startIndex);
+    }
+
+    @Override
+    public Integer getUnreadMessageCountByUserId(Long userId) {
+        return messageRecordMapper.getUnreadMessageCountByUserId(userId);
+    }
+
+    @Override
+    public Boolean sendMessage(Long senderId, Long receiverId, String content, String messageType) {
+        // 创建消息记录对象
+        MessageRecord messageRecord = new MessageRecord();
+        messageRecord.setSenderId(senderId);
+        messageRecord.setReceiverId(receiverId);
+        messageRecord.setContent(content);
+        messageRecord.setMessageType(messageType);
+        messageRecord.setSendTime(LocalDateTime.now());
+        messageRecord.setReadStatus(0); // 默认未读
+
+        // 保存到数据库
+        return this.save(messageRecord);
+    }
+
+    @Override
+    public Boolean markMessageAsRead(Long messageId) {
+        // 创建更新对象
+        MessageRecord messageRecord = new MessageRecord();
+        messageRecord.setId(messageId);
+        messageRecord.setReadStatus(1); // 已读状态
+
+        // 更新到数据库
+        return this.updateById(messageRecord);
+    }
+
+    @Override
+    public Boolean markAllMessagesAsRead(Long userId) {
+        // 更新所有接收者为当前用户的消息为已读
+        return lambdaUpdate()
+                .eq(MessageRecord::getReceiverId, userId)
+                .set(MessageRecord::getReadStatus, 1)
+                .update();
+    }
+}

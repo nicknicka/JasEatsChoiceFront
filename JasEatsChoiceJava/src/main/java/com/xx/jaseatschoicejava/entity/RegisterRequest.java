@@ -31,4 +31,9 @@ public class RegisterRequest {
      * 昵称
      */
     private String nickname;
+
+    /**
+     * 邮箱
+     */
+    private String email;
 }

@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { VideoCamera, Document, ArrowLeft } from '@element-plus/icons-vue';
+import { VideoCamera, Document } from '@element-plus/icons-vue';
 import { useRouter, useRoute } from 'vue-router';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -91,9 +92,7 @@ onMounted(() => {
 <template>
   <div class="tutorial-detail-container">
     <div class="page-header">
-      <el-button type="primary" :icon="ArrowLeft" size="small" @click="goBackToList">
-        返回列表
-      </el-button>
+      <common-back-button type="primary" size="small" text="返回列表" @click="goBackToList" :use-router-back="false" />
     </div>
 
     <el-card v-if="currentTutorial" class="tutorial-detail-card" shadow="hover">

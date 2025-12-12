@@ -3,13 +3,7 @@
     <el-card class="merchant-detail-card">
       <!-- 返回按钮 -->
       <div class="back-button-container">
-        <el-button
-          type="text"
-          @click="router.back()"
-          class="back-button"
-        >
-          ↩️ 返回
-        </el-button>
+        <common-back-button/>
       </div>
 
       <!-- 商家头部信息 -->
@@ -454,6 +448,7 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 // 引入API配置
 import { API_CONFIG } from '../../config/index.js';

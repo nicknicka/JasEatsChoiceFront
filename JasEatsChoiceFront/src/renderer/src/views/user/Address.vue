@@ -1,15 +1,7 @@
 <template>
   <div class="address-container">
     <div class="header">
-      <el-button
-        type="text"
-        size="large"
-        @click="router.back()"
-        class="back-btn"
-      >
-        <el-icon><ArrowLeft /></el-icon>
-        返回
-      </el-button>
+      <common-back-button />
       <h2>管理地址</h2>
     </div>
 
@@ -134,8 +126,9 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { Edit, Delete, Plus, ArrowLeft } from '@element-plus/icons-vue';
+import { Edit, Delete, Plus } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const router = useRouter();
 
@@ -318,14 +311,7 @@ const setDefault = (address) => {
     align-items: center;
     margin-bottom: 20px;
 
-    .back-btn {
-      margin-right: 20px;
-      font-size: 16px;
-
-      :deep(.el-button__text) {
-        margin-left: 5px;
-      }
-    }
+    /* 移除自定义返回按钮样式，使用组件默认样式 */
 
     h2 {
       font-size: 24px;

@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import { API_CONFIG } from '../../config';
 import { ElMessage } from 'element-plus';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -145,9 +146,7 @@ const cancelOrder = (order) => {
 <template>
   <div class="orders-container">
     <div class="page-header">
-      <el-button type="primary" size="small" @click="router.go(-1)">
-        ← 返回
-      </el-button>
+      <common-back-button />
       <h2 style="margin-left: 15px;">查看订单</h2>
     </div>
 

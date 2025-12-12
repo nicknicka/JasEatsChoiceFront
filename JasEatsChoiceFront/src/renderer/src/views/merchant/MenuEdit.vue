@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElDatePicker, ElSelect, ElOption, ElInput } from 'element-plus';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -193,7 +194,7 @@ const batchAssociateDishes = () => {
     <div class="menu-edit-header">
       <div class="header-left">
         <h3 class="page-title">【菜单编辑】</h3>
-        <el-button type="text" class="back-btn" @click="$router.back()">↩ 返回</el-button>
+        <common-back-button type="text" class="back-btn" />
       </div>
     </div>
 

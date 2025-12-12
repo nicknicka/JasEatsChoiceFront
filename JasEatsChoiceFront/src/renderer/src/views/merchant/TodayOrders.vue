@@ -1,6 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { useRouter } from 'vue-router';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
+
+const router = useRouter();
 
 // 订单状态映射
 const orderStatusMap = {
@@ -233,7 +237,7 @@ updateFilter();
         <h3 class="page-title">【今日订单】</h3>
       </div>
       <div class="header-right">
-        <el-button type="default" @click="$router.back()">🔙 返回</el-button>
+        <common-back-button type="default" />
       </div>
     </div>
 

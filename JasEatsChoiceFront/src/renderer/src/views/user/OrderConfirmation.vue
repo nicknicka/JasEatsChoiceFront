@@ -2,14 +2,7 @@
   <div class="order-confirmation-container">
     <div class="main-content">
       <div class="page-header">
-        <el-button
-          type="text"
-          size="small"
-          @click="router.back()"
-          class="back-button"
-        >
-          ↩️ 返回
-        </el-button>
+        <common-back-button type="text" size="small" />
         <h2 class="page-title">
           <template v-if="fromChat">
             <span class="chat-indicator">{{ fromSingleChat ? '👤 ' : '👥 ' }}</span>
@@ -408,6 +401,7 @@
 import { ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter } from 'vue-router';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const router = useRouter();
 

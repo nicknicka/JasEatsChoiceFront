@@ -103,18 +103,16 @@ watch(() => props.city, (newCity) => {
   }
 });
 
+// 计算属性：天气推荐标签
+const weatherTags = computed(() => generateWeatherTags());
+
 // 暴露方法给父组件
 defineExpose({
   getCurrentWeather,
   generateWeatherTags,
   weatherData,
   weatherRecommendationEnabled,
-  loadWeatherSettings
-});
-
-// 计算属性：天气推荐标签
-const weatherTags = computed(() => generateWeatherTags());
-defineExpose({
+  loadWeatherSettings,
   weatherTags
 });
 </script>

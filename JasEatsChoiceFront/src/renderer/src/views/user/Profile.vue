@@ -7,11 +7,11 @@
       <div class="profile-header">
         <div class="avatar-container">
           <el-avatar :size="120" class="user-avatar">
-            {{ (userInfo.name || '').charAt(0) || '?' }}
+            {{ (userInfo.nickname || '').charAt(0) || '?' }}
           </el-avatar>
         </div>
         <div class="user-basic-info">
-          <h3 class="user-name">{{ userInfo.name || '未设置' }}</h3>
+          <h3 class="user-name">{{ userInfo.nickname || '未设置' }}</h3>
           <div class="user-stats">
             <div class="stat-item">
               <span class="stat-label">手机号</span>
@@ -33,6 +33,9 @@
           <div class="action-buttons">
             <el-button type="primary" size="small" class="share-btn" @click="shareProfile"
               >📤 分享</el-button
+            >
+            <el-button type="primary" size="small" class="edit-btn" @click="editProfile"
+              >✏️ 编辑资料</el-button
             >
           </div>
         </div>
@@ -162,6 +165,50 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 编辑资料对话框 -->
+    <el-dialog v-model="editProfileDialogVisible" title="编辑资料" width="400px" center>
+      <el-form ref="editFormRef" :model="editForm" :rules="editFormRules" label-width="80px" style="margin-top: 20px">
+        <el-form-item label="昵称" prop="nickname">
+          <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
+        </el-form-item>
+
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="editForm.phone" placeholder="请输入手机号" disabled />
+        </el-form-item>
+
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="editForm.email" placeholder="请输入邮箱" type="email" />
+        </el-form-item>
+
+        <el-form-item label="所在地" prop="location">
+          <el-input v-model="editForm.location" placeholder="请输入所在地" />
+        </el-form-item>
+
+        <el-form-item label="身高 (cm)" prop="height">
+          <el-input v-model.number="editForm.height" placeholder="请输入身高" type="number" />
+        </el-form-item>
+
+        <el-form-item label="体重 (kg)" prop="weight">
+          <el-input v-model.number="editForm.weight" placeholder="请输入体重" type="number" />
+        </el-form-item>
+
+        <el-form-item label="饮食目标" prop="dietGoal">
+          <el-select v-model="editForm.dietGoal" placeholder="请选择饮食目标">
+            <el-option label="减肥" value="减肥" />
+            <el-option label="增肌" value="增肌" />
+            <el-option label="保持健康" value="保持健康" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="editProfileDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveEditProfile">保存</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -169,7 +216,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import axios from 'axios'
+import api from '../../utils/api'
 import { API_CONFIG } from '../../config'
 
 const router = useRouter()
@@ -196,41 +243,27 @@ const userInfo = ref({
 
 // 从本地存储加载真实数据
 onMounted(() => {
-  // 模拟用户ID，实际应该从登录状态中获取
-  const userId = parseInt(localStorage.getItem('userId') || '1', 10)
+  const userId = parseInt(localStorage.getItem('userId') , 10)
 
   // 从后端API获取用户信息
-  axios
-    .get(`${API_CONFIG.baseURL}${API_CONFIG.user.profile.replace('{userId}', userId)}`)
+  api
+    .get(API_CONFIG.user.profile.replace('{userId}', userId))
     .then((response) => {
-      if (response.data.data) {
-        userInfo.value = response.data.data
+      console.log('response:', response)
+      if (response?.data) {
+        userInfo.value = response.data
       }
     })
     .catch((error) => {
       console.error('加载用户信息失败:', error)
       // 使用默认数据作为 fallback
-      userInfo.value = {
-        name: '张三',
-        phone: '138xxxx8888',
-        location: '北京朝阳',
-        todayCalorie: '620kcal',
-        weekBalance: '85%',
-        orders: {
-          inProgress: '2',
-          pending: '1',
-          pendingComment: '3'
-        },
-        wallet: {
-          balance: '177'
-        },
-        collections: '8',
-        addresses: '5',
-        defaultAddress: '公司'
-      }
       ElMessage.error('加载用户信息失败，将显示默认数据')
     })
+
+  console.log('userInfo:', userInfo.value) ;
+
 })
+
 
 // 跳转到所有订单页面
 const goToAllOrders = () => {
@@ -384,6 +417,52 @@ const submitFeedback = () => {
   ElMessage.success('反馈已提交，我们会尽快处理')
 }
 
+// 编辑资料
+const editProfile = () => {
+  // 将当前用户信息填充到编辑表单
+  editForm.value = {
+    nickname: userInfo.value.nickname || '',
+    phone: userInfo.value.phone || '',
+    email: userInfo.value.email || '',
+    location: userInfo.value.location || '',
+    height: userInfo.value.height || null,
+    weight: userInfo.value.weight || null,
+    dietGoal: userInfo.value.dietGoal || ''
+  }
+  // 打开编辑资料对话框
+  editProfileDialogVisible.value = true
+}
+
+// 保存编辑的资料
+const saveEditProfile = () => {
+  if (editFormRef.value) {
+    editFormRef.value.validate(async (valid) => {
+      if (valid) {
+        try {
+          const userId = parseInt(localStorage.getItem('userId'), 10)
+          // 发送PUT请求更新用户资料
+          const response = await api.put(API_CONFIG.user.update.replace('{userId}', userId), editForm.value)
+
+          if (response.success) {
+            // 更新本地用户信息
+            userInfo.value = { ...userInfo.value, ...editForm.value }
+            // 关闭对话框
+            editProfileDialogVisible.value = false
+            ElMessage.success('资料更新成功')
+          } else {
+            ElMessage.error('资料更新失败: ' + (response.message || '未知错误'))
+          }
+        } catch (error) {
+          console.error('更新资料失败:', error)
+          ElMessage.error('网络请求失败，请稍后重试')
+        }
+      } else {
+        ElMessage.error('表单验证失败，请检查输入')
+      }
+    })
+  }
+}
+
 // 退出登录
 const logout = () => {
   // 弹出确认对话框
@@ -419,6 +498,39 @@ const shareDialogVisible = ref(false)
 const shareLink = ref('')
 // 二维码数据URL
 const qrCodeDataUrl = ref('')
+
+// 编辑资料对话框可见性
+const editProfileDialogVisible = ref(false)
+// 编辑资料表单
+const editForm = ref({
+  nickname: '',
+  phone: '',
+  email: '',
+  location: '',
+  height: null,
+  weight: null,
+  dietGoal: ''
+})
+// 编辑资料表单验证规则
+const editFormRules = ref({
+  nickname: [
+    { required: true, message: '请输入昵称', trigger: 'blur' },
+    { min: 2, max: 20, message: '昵称长度在 2 到 20 个字符', trigger: 'blur' }
+  ],
+  email: [
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+  ],
+  height: [
+    { type: 'number', message: '请输入有效的身高数值', trigger: ['blur', 'change'] },
+    { min: 100, max: 250, message: '身高范围在 100 到 250 cm', trigger: ['blur', 'change'] }
+  ],
+  weight: [
+    { type: 'number', message: '请输入有效的体重数值', trigger: ['blur', 'change'] },
+    { min: 30, max: 200, message: '体重范围在 30 到 200 kg', trigger: ['blur', 'change'] }
+  ]
+})
+// 编辑表单引用
+const editFormRef = ref(null)
 
 // 分享功能
 const shareProfile = () => {

@@ -425,7 +425,7 @@ const submitForm = async () => {
 					setTimeout(() => {
 						// 直接跳转到用户首页
 						router.push("/user/home");
-					}, 1000);
+					}, 270);
 				} catch (error) {
 					// console.log('登录失败:', error)
 					// 登录失败处理

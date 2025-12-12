@@ -16,6 +16,7 @@ export const API_CONFIG = {
     login: '/v1/users/login', // 登录接口
     register: '/v1/users/register', // 注册接口
     profile: '/v1/users/{userId}', // 用户信息接口
+    update: '/v1/users/{userId}', // 更新用户信息接口
     preferences: '/v1/users/{userId}/preferences', // 用户偏好接口
     sendSmsCode: '/v1/users/send-sms-code', // 发送手机验证码接口
     sendEmailCode: '/v1/users/send-email-code' // 发送邮箱验证码接口

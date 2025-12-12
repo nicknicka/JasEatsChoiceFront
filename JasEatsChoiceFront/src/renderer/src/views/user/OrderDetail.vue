@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { API_CONFIG } from '../../config/index.js';
 import { ElMessage } from 'element-plus';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -43,7 +44,7 @@ const backToOrders = () => {
 <template>
   <div class="order-detail-container">
     <div class="page-header">
-      <el-button type="text" size="small" @click="backToOrders">← 返回订单列表</el-button>
+      <common-back-button type="text" size="small" text="返回订单列表" @click="backToOrders" :use-router-back="false" />
       <h3 class="page-title">订单详情</h3>
     </div>
 

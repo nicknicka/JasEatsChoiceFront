@@ -60,6 +60,7 @@ public class UserController {
             user.setPhone(registerRequest.getPhone());
             user.setPassword(registerRequest.getPassword());
             user.setNickname(registerRequest.getNickname());
+            user.setEmail(registerRequest.getEmail());
 
             // 调用注册服务
             boolean success = userService.register(user);
@@ -67,6 +68,10 @@ public class UserController {
                 return ResponseResult.success("注册成功");
             }
             return ResponseResult.fail("500", "注册失败");
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // 处理手机号重复的情况
+            e.printStackTrace();
+            return ResponseResult.fail("400", "该手机号已被注册，请更换其他手机号");
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseResult.fail("500", "注册失败");

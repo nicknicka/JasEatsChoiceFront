@@ -1,15 +1,7 @@
 <template>
   <div class="my-collection-container">
     <div class="header">
-      <el-button
-        type="text"
-        size="large"
-        @click="router.go(-1)"
-        class="back-btn"
-      >
-        <el-icon><ArrowLeft /></el-icon>
-        返回
-      </el-button>
+      <common-back-button />
       <h2>我的收藏</h2>
     </div>
 
@@ -110,10 +102,10 @@ import {
   Calendar,
   View,
   Star,
-  House,
-  ArrowLeft
+  House
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const router = useRouter();
 
@@ -328,14 +320,7 @@ onMounted(() => {
     align-items: center;
     margin-bottom: 20px;
 
-    .back-btn {
-      margin-right: 20px;
-      font-size: 16px;
-
-      :deep(.el-button__text) {
-        margin-left: 5px;
-      }
-    }
+    /* 移除自定义返回按钮样式，使用组件默认样式 */
 
     h2 {
       font-size: 24px;
@@ -414,6 +399,7 @@ onMounted(() => {
           text-overflow: ellipsis;
           display: -webkit-box;
           -webkit-line-clamp: 2;
+          line-clamp: 2;
           -webkit-box-orient: vertical;
         }
 

@@ -11,7 +11,7 @@ import java.util.Map;
  * 消息控制器
  */
 @RestController
-@RequestMapping("/v1/message")
+@RequestMapping("/v1/legacy/message")
 public class MessageController {
 
     /**

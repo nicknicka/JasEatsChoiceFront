@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const route = useRoute();
 const orderId = ref(null);
@@ -39,7 +40,7 @@ onMounted(() => {
   <div class="order-detail-container">
     <div class="order-detail-header">
       <h3 class="page-title">【订单详情】</h3>
-      <el-button type="text" class="back-btn" @click="$router.back()">↩ 返回</el-button>
+      <common-back-button type="text" class="back-btn" />
     </div>
 
     <!-- 订单基本信息 -->

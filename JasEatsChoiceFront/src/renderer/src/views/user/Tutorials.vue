@@ -1,9 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { VideoCamera, Document, ArrowLeft } from '@element-plus/icons-vue';
+import { VideoCamera, Document } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import api from '../../utils/api.js';
 import { API_CONFIG } from '../../config/index.js';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const router = useRouter();
 
@@ -46,9 +47,7 @@ onMounted(() => {
 <template>
   <div class="tutorials-container">
     <div class="page-header">
-      <el-button type="primary" :icon="ArrowLeft" size="small" @click="goBackToHome">
-        返回首页
-      </el-button>
+      <common-back-button type="primary" size="small" text="返回首页" @click="goBackToHome" :use-router-back="false" />
       <h2>制作教程与指南</h2>
     </div>
 

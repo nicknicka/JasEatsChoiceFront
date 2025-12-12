@@ -147,7 +147,7 @@ const selectCity = async (city) => {
 
 // 组件挂载时自动定位
 onMounted(() => {
-  if (autoLocate.value) {
+  if (props.autoLocate) {
     getCurrentLocation();
   }
 });
