@@ -363,18 +363,22 @@
       </template>
     </el-dialog>
 
-    <!-- 加好友对话框 -->
     <el-dialog
       v-model="addFriendDialogVisible"
       title="添加好友"
       :width="selectedUser ? '800px' : '400px'"
     >
       <div style="display: flex; height: 500px;">
-        <!-- 左侧搜索结果区域 -->
-        <div style="flex: 1; border-right: 1px solid #eee; padding-right: 15px; overflow-y: auto;">
-          <!-- 搜索区域 -->
+        <div
+          :style="{
+            flex: selectedUser ? '1' : 'auto',
+            width: selectedUser ? '50%' : '100%',
+            borderRight: selectedUser ? '1px solid #eee' : 'none',
+            paddingRight: selectedUser ? '15px' : '0',
+            overflowY: 'auto'
+          }">
+
           <div style="display: flex; align-items: center; margin-bottom: 15px;">
-            <!-- 搜索类型按钮 -->
             <el-dropdown trigger="click" style="margin-right: 8px;" @command="handleSearchTypeChange">
               <el-button size="small">
                 {{ searchType === 'phone' ? '手机号' : searchType === 'email' ? '邮箱' : '用户名/昵称' }}
@@ -389,11 +393,11 @@
               </template>
             </el-dropdown>
 
-            <!-- 搜索输入框和搜索按钮 -->
             <el-input
               v-model="friendSearchQuery"
               placeholder="搜索内容"
               style="flex: 1;"
+              @keyup.enter="searchUsersForAdd"
             >
               <template #append>
                 <el-button :icon="Search" type="primary" size="small" @click="searchUsersForAdd"></el-button>
@@ -401,38 +405,41 @@
             </el-input>
           </div>
 
-          <div class="user-list">
-            <div
-              v-for="user in paginatedUsers"
-              :key="user.id"
-              class="user-item"
-              :class="{ selected: selectedUser?.id === user.id }"
-              @click="showUserDetails(user)"
-            >
-              <div class="user-avatar">{{ user.avatar }}</div>
-              <div class="user-info">
-                <div class="user-name">
-                  {{ searchType === 'email' ? user.email : searchType === 'phone' ? user.phone : user.nickname || user.username }}
-                </div>
-                <!-- 根据搜索类型显示不同信息 -->
-                <div class="user-detail" v-if="searchType !== 'email' && user.email">
-                  {{ user.email }}
-                </div>
-                <div class="user-detail" v-if="searchType !== 'phone' && user.phone">
-                  {{ user.phone }}
-                </div>
-              </div>
-              <el-button
-                type="primary"
-                size="small"
-                @click.stop="sendFriendRequest(user)"
+          <div v-if="addFriendResults.length === 0" style="margin: 20px 0; text-align: center; color: #999;">
+            暂无搜索结果
+          </div>
+          <div class="user-list" v-else>
+            <transition-group name="slide-down" tag="div">
+              <div
+                v-for="user in paginatedUsers"
+                :key="user.id"
+                class="user-item"
+                :class="{ selected: selectedUser?.id === user.id }"
+                @click="showUserDetails(user)"
               >
-                加好友
-              </el-button>
-            </div>
+                <div class="user-avatar">{{ user.avatar }}</div>
+                <div class="user-info">
+                  <div class="user-name">
+                    {{ searchType === 'email' ? user.email : searchType === 'phone' ? user.phone : user.nickname || user.username }}
+                  </div>
+                  <div class="user-detail" v-if="searchType !== 'email' && user.email">
+                    <span class="detail-label">邮箱: </span>{{ user.email }}
+                  </div>
+                  <div class="user-detail" v-if="searchType !== 'phone' && user.phone">
+                    <span class="detail-label">手机号: </span>{{ user.phone }}
+                  </div>
+                </div>
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click.stop="sendFriendRequest(user)"
+                >
+                  加好友
+                </el-button>
+              </div>
+            </transition-group>
           </div>
 
-          <!-- 分页组件 -->
           <div v-if="addFriendResults.length > pageSize" style="text-align: center; margin-top: 15px;">
             <el-pagination
               v-model:current-page="currentPage"
@@ -444,9 +451,8 @@
           </div>
         </div>
 
-        <!-- 右侧用户详情区域 -->
         <div v-if="selectedUser" style="flex: 1; padding-left: 15px;">
-          <div class="user-detail-header">
+            <div class="user-detail-header">
             <div class="detail-avatar">{{ selectedUser.avatar }}</div>
             <div class="detail-name">
               {{ selectedUser.nickname || selectedUser.username }}
@@ -469,7 +475,6 @@
               <label>邮箱:</label>
               <span>{{ selectedUser.email || '未绑定' }}</span>
             </div>
-            <!-- 可以根据需要添加更多用户信息字段 -->
           </div>
         </div>
       </div>
@@ -1328,11 +1333,12 @@ const paginatedUsers = computed(() => {
 
 // 打开加好友对话框
 const openAddFriendDialog = () => {
-  addFriendDialogVisible.value = true;
+  selectedUser.value = null; // 重置选中用户
   addFriendResults.value = [];
   friendSearchQuery.value = '';
   searchType.value = 'nickname'; // 默认搜索类型：用户名/昵称
   currentPage.value = 1; // 重置页码
+  addFriendDialogVisible.value = true;
 };
 
 // 处理搜索类型变更
@@ -1407,7 +1413,9 @@ const sendFriendRequest = async (user) => {
     });
 
     if (response.code === '200') {
-      ElMessage.success(`已向 ${user.name} 发送好友请求`);
+      // 使用用户的昵称或用户名，若都没有则使用邮箱或手机号
+      const userName = user.nickname || user.username || user.email || user.phone || '未知用户';
+      ElMessage.success(`已向 ${userName} 发送好友请求`);
       addFriendDialogVisible.value = false;
       addFriendResults.value = [];
       friendSearchQuery.value = '';
@@ -2498,6 +2506,41 @@ const goToOrderConfirmation = () => {
     font-weight: 500;
   }
 
+  /* 对话框宽度变化动画 - 向右展开 */
+  .el-dialog {
+    transition: width 0.8s ease-in-out; /* 大幅增加动画时间，确保收缩效果清晰可见 */
+  }
+
+  /* 用户详情区域过渡动画 - 优化收缩效果 */
+  .fade-slide-enter-active {
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* 展开时弹性效果 */
+    overflow: hidden;
+  }
+
+  /* 收缩时使用更慢的动画，让效果更明显 */
+  .fade-slide-leave-active {
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* 与对话框宽度变化动画同步，确保效果清晰可见 */
+    overflow: hidden;
+  }
+
+  /* 展开动画：从宽度0开始 */
+  .fade-slide-enter-from {
+    opacity: 0;
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-left: none;
+  }
+
+  /* 收缩动画：到宽度0结束 */
+  .fade-slide-leave-to {
+    opacity: 0;
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-left: none;
+  }
+
   /* 加好友对话框样式 */
   .user-item {
     display: flex;
@@ -2542,6 +2585,35 @@ const goToOrderConfirmation = () => {
   .user-detail {
     font-size: 12px;
     color: #666;
+  }
+
+  .detail-label {
+    font-weight: bold;
+    color: #999;
+  }
+
+  /* 搜索结果向下展示动画 */
+  .slide-down-enter-active,
+  .slide-down-leave-active {
+    transition: all 0.3s ease;
+  }
+
+  .slide-down-enter-from {
+    opacity: 0;
+    transform: translateY(-10px); /* 从上方10px位置进入 */
+  }
+
+  .slide-down-leave-to {
+    opacity: 0;
+    transform: translateY(10px); /* 向下方10px位置离开 */
+  }
+
+  /* 单个搜索结果的动画延迟 */
+  .slide-down-enter-active > .user-item {
+    transition-delay: calc(0.1s * var(--el-index));
+  }
+  .slide-down-leave-active > .user-item {
+    transition-delay: calc(0.1s * (var(--el-total-index) - var(--el-index)));
   }
 
   /* 用户详情区域样式 */

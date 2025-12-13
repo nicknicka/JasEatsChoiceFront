@@ -10,37 +10,53 @@
           <div class="form-content">
             <el-avatar :size="60" class="user-avatar" :src="userInfo.avatarUrl">👤</el-avatar>
             <input
+              id="avatar-upload"
               type="file"
               accept="image/*"
-              style="display: none;"
-              id="avatar-upload"
+              style="display: none"
               @change="handleAvatarUpload"
             />
-            <el-button type="primary" size="small" style="margin-left: 10px;" @click="handleAvatarClick">更换头像</el-button>
+            <el-button
+              type="primary"
+              size="small"
+              style="margin-left: 10px"
+              @click="handleAvatarClick"
+              >更换头像</el-button
+            >
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-label">手机号</div>
           <div class="form-content">
-            <el-input v-model="userInfo.phone" readonly style="width: 200px;" />
-            <el-button type="text" size="small" style="margin-left: 10px;" @click="handleEditPhone">修改</el-button>
+            <el-input v-model="userInfo.phone" readonly style="width: 200px" />
+            <el-button type="text" size="small" style="margin-left: 10px" @click="handleEditPhone"
+              >修改</el-button
+            >
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-label">邮箱</div>
           <div class="form-content">
-            <el-input v-model="userInfo.email" readonly style="width: 200px;" />
-            <el-button type="text" size="small" style="margin-left: 10px;" @click="handleEditEmail">修改</el-button>
+            <el-input v-model="userInfo.email" readonly style="width: 200px" />
+            <el-button type="text" size="small" style="margin-left: 10px" @click="handleEditEmail"
+              >修改</el-button
+            >
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-label">密码</div>
           <div class="form-content">
-            <el-input type="password" placeholder="********" readonly style="width: 200px;" />
-            <el-button type="text" size="small" style="margin-left: 10px;" @click="handleEditPassword">修改</el-button>
+            <el-input type="password" placeholder="********" readonly style="width: 200px" />
+            <el-button
+              type="text"
+              size="small"
+              style="margin-left: 10px"
+              @click="handleEditPassword"
+              >修改</el-button
+            >
           </div>
         </div>
       </div>
@@ -53,7 +69,7 @@
         <div class="form-row">
           <div class="form-label">字体大小</div>
           <div class="form-content">
-            <el-radio-group v-model="fontSize" style="margin-right: 20px;">
+            <el-radio-group v-model="fontSize" style="margin-right: 20px">
               <el-radio label="small">小</el-radio>
               <el-radio label="medium">中</el-radio>
               <el-radio label="large">大</el-radio>
@@ -132,7 +148,9 @@
 
         <div class="form-row">
           <div class="form-content">
-            <el-button type="warning" size="small" style="margin-right: 10px;" @click="clearCache">清除缓存</el-button>
+            <el-button type="warning" size="small" style="margin-right: 10px" @click="clearCache"
+              >清除缓存</el-button
+            >
             <el-button type="primary" size="small" @click="exportData">数据导出</el-button>
           </div>
         </div>
@@ -150,7 +168,9 @@
 
         <div class="form-row">
           <div class="form-content">
-            <el-button type="text" size="small" style="margin-right: 10px;" @click="checkUpdate">检查更新</el-button>
+            <el-button type="text" size="small" style="margin-right: 10px" @click="checkUpdate"
+              >检查更新</el-button
+            >
             <el-button type="text" size="small" @click="submitFeedback">反馈建议</el-button>
           </div>
         </div>
@@ -158,20 +178,26 @@
 
       <div class="settings-actions">
         <el-button type="primary" @click="saveSettings">保存设置</el-button>
-        <el-button type="warning" style="margin-left: 10px;" @click="resetSettings">重置默认</el-button>
+        <el-button type="warning" style="margin-left: 10px" @click="resetSettings"
+          >重置默认</el-button
+        >
       </div>
     </el-card>
 
     <!-- Edit Phone Dialog -->
-    <el-dialog title="修改手机号" v-model="editPhoneDialogVisible" width="30%">
+    <el-dialog v-model="editPhoneDialogVisible" title="修改手机号" width="30%">
       <el-form ref="phoneFormRef" :model="phoneForm" label-width="80px">
         <el-form-item label="手机号">
           <el-input v-model="phoneForm.phone" placeholder="请输入新手机号" />
         </el-form-item>
         <el-form-item label="验证码">
-          <div style="display: flex;">
-            <el-input v-model="phoneForm.verificationCode" placeholder="请输入验证码" style="margin-right: 10px;" />
-            <el-button type="primary" @click="sendSmsCode" :disabled="smsCodeCountdown > 0">
+          <div style="display: flex">
+            <el-input
+              v-model="phoneForm.verificationCode"
+              placeholder="请输入验证码"
+              style="margin-right: 10px"
+            />
+            <el-button type="primary" :disabled="smsCodeCountdown > 0" @click="sendSmsCode">
               {{ smsCodeCountdown > 0 ? `${smsCodeCountdown}秒后重新发送` : '获取验证码' }}
             </el-button>
           </div>
@@ -186,15 +212,19 @@
     </el-dialog>
 
     <!-- Edit Email Dialog -->
-    <el-dialog title="修改邮箱" v-model="editEmailDialogVisible" width="30%">
+    <el-dialog v-model="editEmailDialogVisible" title="修改邮箱" width="30%">
       <el-form ref="emailFormRef" :model="emailForm" label-width="80px">
         <el-form-item label="邮箱">
           <el-input v-model="emailForm.email" placeholder="请输入新邮箱" />
         </el-form-item>
         <el-form-item label="验证码">
-          <div style="display: flex;">
-            <el-input v-model="emailForm.verificationCode" placeholder="请输入验证码" style="margin-right: 10px;" />
-            <el-button type="primary" @click="sendEmailCode" :disabled="emailCodeCountdown > 0">
+          <div style="display: flex">
+            <el-input
+              v-model="emailForm.verificationCode"
+              placeholder="请输入验证码"
+              style="margin-right: 10px"
+            />
+            <el-button type="primary" :disabled="emailCodeCountdown > 0" @click="sendEmailCode">
               {{ emailCodeCountdown > 0 ? `${emailCodeCountdown}秒后重新发送` : '获取验证码' }}
             </el-button>
           </div>
@@ -209,16 +239,20 @@
     </el-dialog>
 
     <!-- Edit Password Dialog -->
-    <el-dialog title="修改密码" v-model="editPasswordDialogVisible" width="30%">
+    <el-dialog v-model="editPasswordDialogVisible" title="修改密码" width="30%">
       <el-form ref="passwordFormRef" :model="passwordForm" label-width="80px">
         <el-form-item label="旧密码">
-          <el-input type="password" v-model="passwordForm.oldPassword" placeholder="请输入旧密码" />
+          <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入旧密码" />
         </el-form-item>
         <el-form-item label="新密码">
-          <el-input type="password" v-model="passwordForm.newPassword" placeholder="请输入新密码" />
+          <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
         </el-form-item>
         <el-form-item label="确认密码">
-          <el-input type="password" v-model="passwordForm.confirmPassword" placeholder="请确认新密码" />
+          <el-input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            placeholder="请确认新密码"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -232,17 +266,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject } from 'vue';
-import { ElMessage, ElDialog, ElInput, ElForm, ElFormItem } from 'element-plus';
-import api, { decodeJwt } from '../../utils/api.js';
-import { API_CONFIG } from '../../config/index.js';
+import { ref, onMounted, inject } from 'vue'
+import { ElMessage, ElDialog, ElInput, ElForm, ElFormItem } from 'element-plus'
+import api, { decodeJwt } from '../../utils/api.js'
+import { API_CONFIG } from '../../config/index.js'
 
 // User information
 const userInfo = ref({
   phone: '',
   email: '',
   avatarUrl: ''
-});
+})
 
 // 正式设置数据（用于保存到localStorage）
 const officialSettings = ref({
@@ -259,81 +293,81 @@ const officialSettings = ref({
     recommendation: true,
     weatherRecommendation: true // 添加天气推荐设置
   }
-});
+})
 
 // 临时设置数据（用于页面实时修改）
-const tempSettings = ref({ ...officialSettings.value });
+const tempSettings = ref({ ...officialSettings.value })
 
 // 辅助变量，方便模板中直接使用
-const fontSize = ref(tempSettings.value.fontSize);
-const theme = ref(tempSettings.value.theme);
-const notifications = ref({ ...tempSettings.value.notifications });
-const privacy = ref({ ...tempSettings.value.privacy });
+const fontSize = ref(tempSettings.value.fontSize)
+const theme = ref(tempSettings.value.theme)
+const notifications = ref({ ...tempSettings.value.notifications })
+const privacy = ref({ ...tempSettings.value.privacy })
 
 // User info edit dialogs
-const editPhoneDialogVisible = ref(false);
-const editEmailDialogVisible = ref(false);
-const editPasswordDialogVisible = ref(false);
+const editPhoneDialogVisible = ref(false)
+const editEmailDialogVisible = ref(false)
+const editPasswordDialogVisible = ref(false)
 
 // Form data
 const phoneForm = ref({
   phone: '',
   verificationCode: ''
-});
+})
 
 const emailForm = ref({
   email: '',
   verificationCode: ''
-});
+})
 
 // Verification code countdowns
-const smsCodeCountdown = ref(0);
-const emailCodeCountdown = ref(0);
+const smsCodeCountdown = ref(0)
+const emailCodeCountdown = ref(0)
 
 const passwordForm = ref({
   oldPassword: '',
   newPassword: '',
   confirmPassword: ''
-});
+})
 
 // Avatar upload
-const avatarUploadInput = ref(null);
 
 // Load saved settings from localStorage on mount and fetch user info from backend
 onMounted(() => {
   // Fetch user information from backend
   const fetchUserInfo = () => {
-    const token = localStorage.getItem('token');
-    let userId = parseInt(localStorage.getItem('userId') || '1', 10); // 默认值
+    const token = localStorage.getItem('token')
+    let userId = parseInt(localStorage.getItem('userId') || '1', 10) // 默认值
 
     if (token) {
-      const decodedToken = decodeJwt(token);
+      const decodedToken = decodeJwt(token)
       if (decodedToken && decodedToken.userId) {
-        userId = decodedToken.userId;
+        userId = decodedToken.userId
       }
     }
 
     // 调用后端API获取用户信息
-    api.get(API_CONFIG.user.profile.replace('{userId}', userId))
-      .then(response => {
-        if (response.data && response.data.success) {
-          userInfo.value = response.data.data;
+    api
+      .get(API_CONFIG.user.profile.replace('{userId}', userId))
+      .then((response) => {
+        if (response && response.code === '200') {
+          userInfo.value = response.data
 
           // Load avatar from backend or use default
           if (userInfo.value.avatar) {
-            userInfo.value.avatarUrl = userInfo.value.avatar;
+            userInfo.value.avatarUrl = userInfo.value.avatar
           }
         }
       })
-      .catch(error => {
-        console.error('加载用户信息失败:', error);
-      });
-  };
+      .catch((error) => {
+        console.error('加载用户信息失败:', error)
+      })
+  }
 
   // Load saved settings
-  const savedSettings = localStorage.getItem('userSettings');
+  const savedSettings = localStorage.getItem('userSettings')
   if (savedSettings) {
-    const parsed = JSON.parse(savedSettings);
+    const parsed = JSON.parse(savedSettings)
 
     // 更新正式设置数据
     officialSettings.value = {
@@ -350,27 +384,27 @@ onMounted(() => {
         recommendation: true,
         weatherRecommendation: true
       }
-    };
+    }
 
     // 更新临时设置变量
-    fontSize.value = officialSettings.value.fontSize;
-    theme.value = officialSettings.value.theme;
-    notifications.value = { ...officialSettings.value.notifications };
-    privacy.value = { ...officialSettings.value.privacy };
+    fontSize.value = officialSettings.value.fontSize
+    theme.value = officialSettings.value.theme
+    notifications.value = { ...officialSettings.value.notifications }
+    privacy.value = { ...officialSettings.value.privacy }
 
     // Update theme
-    updateTheme();
+    updateTheme()
   }
 
   // Fetch user info from backend
-  fetchUserInfo();
+  fetchUserInfo()
 
   // Load avatar from localStorage as fallback
-  const savedAvatar = localStorage.getItem('userAvatar');
+  const savedAvatar = localStorage.getItem('userAvatar')
   if (savedAvatar) {
-    userInfo.value.avatarUrl = savedAvatar;
+    userInfo.value.avatarUrl = savedAvatar
   }
-});
+})
 
 // Handle save settings with localStorage persistence
 const saveSettings = () => {
@@ -380,20 +414,20 @@ const saveSettings = () => {
     theme: theme.value,
     notifications: { ...notifications.value },
     privacy: { ...privacy.value }
-  };
+  }
 
   // 更新正式设置数据
-  officialSettings.value = { ...updatedSettings };
+  officialSettings.value = { ...updatedSettings }
 
   // 保存到localStorage
-  localStorage.setItem('userSettings', JSON.stringify(officialSettings.value));
+  localStorage.setItem('userSettings', JSON.stringify(officialSettings.value))
 
-  ElMessage.success('设置已保存');
-  console.log('Saved settings:', officialSettings.value);
+  ElMessage.success('设置已保存')
+  console.log('Saved settings:', officialSettings.value)
 
   // 更新主题
-  updateTheme();
-};
+  updateTheme()
+}
 
 // Handle reset settings
 const resetSettings = () => {
@@ -412,223 +446,277 @@ const resetSettings = () => {
       recommendation: true,
       weatherRecommendation: true
     }
-  };
+  }
 
   // 更新临时设置变量
-  fontSize.value = defaultSettings.fontSize;
-  theme.value = defaultSettings.theme;
-  notifications.value = { ...defaultSettings.notifications };
-  privacy.value = { ...defaultSettings.privacy };
+  fontSize.value = defaultSettings.fontSize
+  theme.value = defaultSettings.theme
+  notifications.value = { ...defaultSettings.notifications }
+  privacy.value = { ...defaultSettings.privacy }
 
   // 更新正式设置数据并保存
-  saveSettings();
+  saveSettings()
 
-  ElMessage.info('设置已重置为默认值');
-};
+  ElMessage.info('设置已重置为默认值')
+}
 
 // Update theme
 const updateTheme = () => {
   if (theme.value) {
-    document.body.classList.add('dark-theme');
-    document.body.classList.remove('light-theme');
+    document.body.classList.add('dark-theme')
+    document.body.classList.remove('light-theme')
   } else {
-    document.body.classList.add('light-theme');
-    document.body.classList.remove('dark-theme');
+    document.body.classList.add('light-theme')
+    document.body.classList.remove('dark-theme')
   }
-};
+}
 
 // Avatar upload functionality
 // Get the update function from CommonHome.vue
-const updateSidebarAvatar = inject('updateSidebarAvatar');
+const updateSidebarAvatar = inject('updateSidebarAvatar')
 
 const handleAvatarClick = () => {
-  document.getElementById('avatar-upload').click();
-};
+  document.getElementById('avatar-upload').click()
+}
 
 const handleAvatarUpload = (event) => {
-  const file = event.target.files[0];
+  const file = event.target.files[0]
   if (file) {
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onload = (e) => {
-      const newAvatarUrl = e.target.result;
+      const newAvatarUrl = e.target.result
 
       // Update local user info
-      userInfo.value.avatarUrl = newAvatarUrl;
+      userInfo.value.avatarUrl = newAvatarUrl
 
       // Update sidebar avatar
       if (updateSidebarAvatar) {
-        updateSidebarAvatar(newAvatarUrl);
+        updateSidebarAvatar(newAvatarUrl)
       }
 
       // Save to localStorage
-      localStorage.setItem('userAvatar', newAvatarUrl);
+      localStorage.setItem('userAvatar', newAvatarUrl)
 
-      ElMessage.success('头像已更换');
-    };
-    reader.readAsDataURL(file);
+      ElMessage.success('头像已更换')
+    }
+    reader.readAsDataURL(file)
   }
-};
+}
 
 // Handle send SMS verification code
 const sendSmsCode = () => {
-  const phone = phoneForm.value.phone;
+  const phone = phoneForm.value.phone
   if (!phone) {
-    ElMessage.warning('请输入手机号');
-    return;
+    ElMessage.warning('请输入手机号')
+    return
+  }
+
+  // 手机号格式验证
+  const phoneRegex = /^1[3-9]\d{9}$/
+  if (!phoneRegex.test(phone)) {
+    ElMessage.warning('请输入有效的手机号')
+    return
   }
 
   // Call backend API to send SMS code
-  api.post(`${API_CONFIG.user.sendSmsCode}`, { phone })
-    .then(response => {
-      if (response.success) {
-        ElMessage.success('验证码已发送');
+  api
+    .post(API_CONFIG.user.sendSmsCode, { phone })
+    .then((response) => {
+      // 统一响应处理
+      const isSuccess = response.code === '200' || response.success
+      if (isSuccess) {
+        ElMessage.success('验证码已发送')
         // Start countdown
-        smsCodeCountdown.value = 60;
+        smsCodeCountdown.value = 60
         const timer = setInterval(() => {
-          smsCodeCountdown.value--;
+          smsCodeCountdown.value--
           if (smsCodeCountdown.value <= 0) {
-            clearInterval(timer);
+            clearInterval(timer)
           }
-        }, 1000);
+        }, 1000)
       } else {
-        ElMessage.error(response.message || '发送失败');
+        ElMessage.error(response.message || '发送失败')
       }
     })
-    .catch(error => {
-      ElMessage.error(error.message || '发送失败');
-    });
-};
+    .catch((error) => {
+      ElMessage.error(error.message || '发送失败')
+    })
+}
 
 // Handle edit phone
 const handleEditPhone = () => {
-  editPhoneDialogVisible.value = true;
+  editPhoneDialogVisible.value = true
   // Auto-fill current phone number
-  phoneForm.value.phone = userInfo.value.phone;
-};
+  phoneForm.value.phone = userInfo.value.phone
+}
 
 const submitPhoneEdit = () => {
   if (phoneForm.value.phone && phoneForm.value.verificationCode) {
+    // 手机号格式验证
+    const phoneRegex = /^1[3-9]\d{9}$/
+    if (!phoneRegex.test(phoneForm.value.phone)) {
+      ElMessage.warning('请输入有效的手机号')
+      return
+    }
+
+    // 验证码长度验证
+    if (phoneForm.value.verificationCode.length !== 6) {
+      ElMessage.warning('请输入6位验证码')
+      return
+    }
+
     // Call backend API to update phone number
-    api.put(`${API_CONFIG.user.profile.replace('{userId}', userInfo.value.id)}`, {
-      phone: phoneForm.value.phone,
-      verificationCode: phoneForm.value.verificationCode
-    })
-    .then(response => {
-      if (response.success) {
-        ElMessage.success('手机号已修改');
-        // Update local user info
-        userInfo.value.phone = phoneForm.value.phone;
-        editPhoneDialogVisible.value = false;
-        phoneForm.value = { phone: '', verificationCode: '' };
-      } else {
-        ElMessage.error(response.message || '手机号修改失败');
-      }
-    })
-    .catch(error => {
-      ElMessage.error(error.message || '手机号修改失败');
-    });
+    api
+      .put(API_CONFIG.user.update.replace('{userId}', userInfo.value.id), {
+        phone: phoneForm.value.phone,
+        verificationCode: phoneForm.value.verificationCode
+      })
+      .then((response) => {
+        const isSuccess = response.code === '200' || response.success
+        if (isSuccess) {
+          ElMessage.success('手机号已修改')
+          // Update local user info
+          userInfo.value.phone = phoneForm.value.phone
+          editPhoneDialogVisible.value = false
+          phoneForm.value = { phone: '', verificationCode: '' }
+        } else {
+          ElMessage.error(response.message || '手机号修改失败')
+        }
+      })
+      .catch((error) => {
+        ElMessage.error(error.message || '手机号修改失败')
+      })
   } else {
-    ElMessage.warning('请填写完整信息');
+    ElMessage.warning('请填写完整信息')
   }
-};
+}
 
 // Handle send email verification code
 const sendEmailCode = () => {
-  const email = emailForm.value.email;
+  const email = emailForm.value.email
   if (!email) {
-    ElMessage.warning('请输入邮箱地址');
-    return;
+    ElMessage.warning('请输入邮箱地址')
+    return
+  }
+
+  // 邮箱格式验证
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  if (!emailRegex.test(email)) {
+    ElMessage.warning('请输入有效的邮箱地址')
+    return
   }
 
   // Call backend API to send email code
-  api.post(`${API_CONFIG.user.sendEmailCode}`, { email })
-    .then(response => {
-      if (response.success) {
-        ElMessage.success('验证码已发送');
+  api
+    .post(API_CONFIG.user.sendEmailCode, { email })
+    .then((response) => {
+      // 统一响应处理
+      const isSuccess = response.code === '200' || response.success
+      if (isSuccess) {
+        ElMessage.success('验证码已发送')
         // Start countdown
-        emailCodeCountdown.value = 60;
+        emailCodeCountdown.value = 60
         const timer = setInterval(() => {
-          emailCodeCountdown.value--;
+          emailCodeCountdown.value--
           if (emailCodeCountdown.value <= 0) {
-            clearInterval(timer);
+            clearInterval(timer)
           }
-        }, 1000);
+        }, 1000)
       } else {
-        ElMessage.error(response.message || '发送失败');
+        ElMessage.error(response.message || '发送失败')
       }
     })
-    .catch(error => {
-      ElMessage.error(error.message || '发送失败');
-    });
-};
+    .catch((error) => {
+      ElMessage.error(error.message || '发送失败')
+    })
+}
 
 // Handle edit email
 const handleEditEmail = () => {
-  editEmailDialogVisible.value = true;
+  editEmailDialogVisible.value = true
   // Auto-fill current email
-  emailForm.value.email = userInfo.value.email;
-};
+  emailForm.value.email = userInfo.value.email
+}
 
 const submitEmailEdit = () => {
   if (emailForm.value.email && emailForm.value.verificationCode) {
+    // 邮箱格式验证
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(emailForm.value.email)) {
+      ElMessage.warning('请输入有效的邮箱地址')
+      return
+    }
+
+    // 验证码长度验证
+    if (emailForm.value.verificationCode.length !== 6) {
+      ElMessage.warning('请输入6位验证码')
+      return
+    }
+
     // Call backend API to update email
-    api.put(`${API_CONFIG.user.profile.replace('{userId}', userInfo.value.id)}`, {
-      email: emailForm.value.email,
-      verificationCode: emailForm.value.verificationCode
-    })
-    .then(response => {
-      if (response.success) {
-        ElMessage.success('邮箱已修改');
-        // Update local user info
-        userInfo.value.email = emailForm.value.email;
-        editEmailDialogVisible.value = false;
-        emailForm.value = { email: '', verificationCode: '' };
-      } else {
-        ElMessage.error(response.message || '邮箱修改失败');
-      }
-    })
-    .catch(error => {
-      ElMessage.error(error.message || '邮箱修改失败');
-    });
+    api
+      .put(API_CONFIG.user.update.replace('{userId}', userInfo.value.id), {
+        email: emailForm.value.email,
+        verificationCode: emailForm.value.verificationCode
+      })
+      .then((response) => {
+        const isSuccess = response.code === '200' || response.success
+        if (isSuccess) {
+          ElMessage.success('邮箱已修改')
+          // Update local user info
+          userInfo.value.email = emailForm.value.email
+          editEmailDialogVisible.value = false
+          emailForm.value = { email: '', verificationCode: '' }
+        } else {
+          ElMessage.error(response.message || '邮箱修改失败')
+        }
+      })
+      .catch((error) => {
+        ElMessage.error(error.message || '邮箱修改失败')
+      })
   } else {
-    ElMessage.warning('请填写完整信息');
+    ElMessage.warning('请填写完整信息')
   }
-};
+}
 
 // Handle edit password
 const handleEditPassword = () => {
-  editPasswordDialogVisible.value = true;
-};
+  editPasswordDialogVisible.value = true
+}
 
 const submitPasswordEdit = () => {
-  if (passwordForm.value.oldPassword && passwordForm.value.newPassword && passwordForm.value.confirmPassword) {
+  if (
+    passwordForm.value.oldPassword &&
+    passwordForm.value.newPassword &&
+    passwordForm.value.confirmPassword
+  ) {
     if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-      ElMessage.warning('新密码和确认密码不一致');
-      return;
+      ElMessage.warning('新密码和确认密码不一致')
+      return
     }
     // In real app: call API to update password
-    ElMessage.success('密码已修改');
-    editPasswordDialogVisible.value = false;
-    passwordForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' };
+    ElMessage.success('密码已修改')
+    editPasswordDialogVisible.value = false
+    passwordForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
   } else {
-    ElMessage.warning('请填写完整信息');
+    ElMessage.warning('请填写完整信息')
   }
-};
+}
 
 // Handle clear cache
 const clearCache = () => {
   // Clear localStorage except for user settings and avatar
-  const userSettings = localStorage.getItem('userSettings');
-  const userAvatar = localStorage.getItem('userAvatar');
+  const userSettings = localStorage.getItem('userSettings')
+  const userAvatar = localStorage.getItem('userAvatar')
 
-  localStorage.clear();
+  localStorage.clear()
 
-  if (userSettings) localStorage.setItem('userSettings', userSettings);
-  if (userAvatar) localStorage.setItem('userAvatar', userAvatar);
+  if (userSettings) localStorage.setItem('userSettings', userSettings)
+  if (userAvatar) localStorage.setItem('userAvatar', userAvatar)
 
-  ElMessage.success('缓存已清除');
-  console.log('Cache cleared');
-};
+  ElMessage.success('缓存已清除')
+  console.log('Cache cleared')
+}
 
 // Handle data export
 const exportData = () => {
@@ -636,42 +724,42 @@ const exportData = () => {
   const userData = {
     profile: {
       phone: userInfo.value.phone || '未设置',
-      email: userInfo.value.email || '未设置',
+      email: userInfo.value.email || '未设置'
     },
     settings: JSON.parse(localStorage.getItem('userSettings') || '{}'),
     exportDate: new Date().toISOString()
-  };
+  }
 
   // Convert to JSON and download
-  const dataStr = JSON.stringify(userData, null, 2);
-  const dataBlob = new Blob([dataStr], { type: 'application/json' });
-  const dataUrl = URL.createObjectURL(dataBlob);
+  const dataStr = JSON.stringify(userData, null, 2)
+  const dataBlob = new Blob([dataStr], { type: 'application/json' })
+  const dataUrl = URL.createObjectURL(dataBlob)
 
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = '用户数据导出.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(dataUrl);
+  const a = document.createElement('a')
+  a.href = dataUrl
+  a.download = '用户数据导出.json'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(dataUrl)
 
-  ElMessage.success('数据导出成功');
-  console.log('Data export completed:', userData);
-};
+  ElMessage.success('数据导出成功')
+  console.log('Data export completed:', userData)
+}
 
 // Handle check for updates
 const checkUpdate = () => {
   // In real app: call API to check for updates
-  ElMessage.info('当前已是最新版本');
-  console.log('Checked for updates');
-};
+  ElMessage.info('当前已是最新版本')
+  console.log('Checked for updates')
+}
 
 // Handle feedback
 const submitFeedback = () => {
   // In real app: call API to submit feedback
-  ElMessage.success('反馈已提交');
-  console.log('Feedback submitted');
-};
+  ElMessage.success('反馈已提交')
+  console.log('Feedback submitted')
+}
 </script>
 
 <style scoped>

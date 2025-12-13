@@ -209,7 +209,9 @@
       "Bash(__NEW_LINE__ echo -e \"\\n测试API可用性：\")",
       "Bash(npm run dev:front:user:*)",
       "Bash(npm run dev:frontend:user:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run --scripts-version)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": []
