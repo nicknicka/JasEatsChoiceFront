@@ -2,6 +2,7 @@ package com.xx.jaseatschoicejava.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xx.jaseatschoicejava.entity.User;
+import java.util.List;
 
 /**
  * 用户服务接口
@@ -22,4 +23,12 @@ public interface UserService extends IService<User> {
      * @return JWT token if successful, null otherwise
      */
     String login(String phone, String password);
+
+    /**
+     * Search users by keyword
+     * @param keyword Keyword to search
+     * @param searchType Search type: nickname, phone, email; if null or empty, search all three fields
+     * @return List of matching users
+     */
+    List<User> searchUsers(String keyword, String searchType);
 }

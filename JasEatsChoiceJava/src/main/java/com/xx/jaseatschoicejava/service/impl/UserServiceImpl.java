@@ -8,6 +8,8 @@ import com.xx.jaseatschoicejava.util.JwtUtil;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * 用户服务实现
  */
@@ -48,5 +50,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return JwtUtil.generateToken(user.getUserId(), user.getPhone());
         }
         return null;
+    }
+
+    /**
+     * Search users by keyword
+     * @param keyword Keyword to search
+     * @return List of matching users
+     */
+    @Override
+    public List<User> searchUsers(String keyword, String searchType) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return List.of(); // Return empty list if keyword is empty
+        }
+
+        String likeKeyword = "%" + keyword.trim() + "%";
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<User> queryWrapper = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+
+        // 根据搜索类型进行搜索
+        if ("nickname".equals(searchType)) {
+            // 仅搜索昵称
+            queryWrapper.like("nickname", likeKeyword);
+        } else if ("phone".equals(searchType)) {
+            // 仅搜索手机号
+            queryWrapper.like("phone", likeKeyword);
+        } else if ("email".equals(searchType)) {
+            // 仅搜索邮箱
+            queryWrapper.like("email", likeKeyword);
+        } else {
+            // 默认同时搜索昵称、手机号和邮箱
+            queryWrapper.like("nickname", likeKeyword)
+                    .or()
+                    .like("phone", likeKeyword)
+                    .or()
+                    .like("email", likeKeyword);
+        }
+
+        return getBaseMapper().selectList(queryWrapper);
     }
 }

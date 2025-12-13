@@ -124,6 +124,13 @@ const updateActiveMenuIndex = () => {
 		return;
 	}
 
+	// 特殊处理地址管理和联系客服页面 - 激活用户中心菜单
+	if (currentPath.startsWith("/user/home/address") || currentPath.startsWith("/user/home/contact")) {
+		activeMenuIndex.value = "7"; // "用户中心"的索引是7
+		console.log("匹配到用户中心相关页面，激活用户中心菜单");
+		return;
+	}
+
 	// 查找当前路由对应的菜单项 - 按路径长度降序排序，确保更长的路径优先匹配
 	const sortedMenuItems = [...currentMenu.value].sort((a, b) => b.path.length - a.path.length);
 

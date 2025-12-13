@@ -223,16 +223,16 @@
             :key="message.id"
             class="message-item"
             :class="{
-              'others-message': message.sender !== '我',
-              'my-message': message.sender === '我'
+              'others-message': message.fromId !== userId.toString(),
+              'my-message': message.fromId === userId.toString()
             }"
           >
             <div class="message-header">
-              <span class="sender-name">{{ message.sender }}</span>
+              <span class="sender-name">{{ message.fromId === userId.toString() ? '我' : message.fromId }}</span>
             </div>
             <div class="message-content">
               {{ message.content }}
-              <div class="message-time">{{ message.time }}</div>
+              <div class="message-time">{{ new Date(message.createTime).toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}</div>
             </div>
           </div>
         </div>
@@ -274,18 +274,52 @@
           <el-input v-model="groupForm.name" placeholder="请输入群名称" />
         </el-form-item>
         <el-form-item label="成员列表">
-          <el-input
-            v-model="groupForm.members"
-            type="textarea"
-            placeholder="请输入成员名称，用逗号分隔"
-            :rows="2"
-          />
+          <div class="member-list-container">
+            <el-input
+              v-model="groupForm.members"
+              type="textarea"
+              placeholder="请输入成员名称，用逗号分隔"
+              :rows="2"
+              readonly
+            />
+            <el-button
+              type="primary"
+              size="default"
+              @click="showFriendSelectionDialog"
+            >+</el-button>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="cancelCreateGroup">取消</el-button>
           <el-button type="primary" @click="handleCreateGroup">创建</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 好友选择对话框 -->
+    <el-dialog
+      v-model="friendSelectionDialogVisible"
+      title="选择好友"
+      width="600px"
+    >
+      <div class="friend-grid">
+        <div
+          v-for="friend in friends"
+          :key="friend.id"
+          class="friend-item"
+          :class="{ 'selected': selectedGroupMembers.includes(friend.id) }"
+          @click="toggleFriendSelection(friend)"
+        >
+          <div class="friend-avatar">{{ friend.avatar }}</div>
+          <div class="friend-name">{{ friend.name }}</div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="friendSelectionDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmFriendSelection">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -312,8 +346,8 @@
           v-for="friend in searchResults"
           :key="friend.id"
           class="friend-item"
-          :class="{ 'disabled': conversations.value.some(conv => conv.id === friend.id && conv.type === 'friend' || conv.type === 'private') }"
-          @click="!conversations.value.some(conv => conv.id === friend.id && conv.type === 'friend' || conv.type === 'private') && selectFriendForChat(friend)"
+          :class="{ 'disabled': conversations.value && conversations.value.some(conv => conv.id === friend.id && conv.type === 'friend' || conv.type === 'private') }"
+          @click="!(conversations.value && conversations.value.some(conv => conv.id === friend.id && conv.type === 'friend' || conv.type === 'private')) && selectFriendForChat(friend)"
         >
           <div class="friend-avatar">{{ friend.avatar }}</div>
           <div class="friend-info">
@@ -333,36 +367,110 @@
     <el-dialog
       v-model="addFriendDialogVisible"
       title="添加好友"
-      width="400px"
+      :width="selectedUser ? '800px' : '400px'"
     >
-      <el-input
-        v-model="friendSearchQuery"
-        placeholder="搜索用户名"
-        @input="searchUsersForAdd"
-        style="margin-bottom: 15px;"
-      >
-        <template #append>
-          <el-button :icon="Search" @click="searchUsersForAdd"></el-button>
-        </template>
-      </el-input>
+      <div style="display: flex; height: 500px;">
+        <!-- 左侧搜索结果区域 -->
+        <div style="flex: 1; border-right: 1px solid #eee; padding-right: 15px; overflow-y: auto;">
+          <!-- 搜索区域 -->
+          <div style="display: flex; align-items: center; margin-bottom: 15px;">
+            <!-- 搜索类型按钮 -->
+            <el-dropdown trigger="click" style="margin-right: 8px;" @command="handleSearchTypeChange">
+              <el-button size="small">
+                {{ searchType === 'phone' ? '手机号' : searchType === 'email' ? '邮箱' : '用户名/昵称' }}
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="nickname">用户名/昵称</el-dropdown-item>
+                  <el-dropdown-item command="phone">手机号</el-dropdown-item>
+                  <el-dropdown-item command="email">邮箱</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
 
-      <div class="user-list">
-        <div
-          v-for="user in addFriendResults"
-          :key="user.id"
-          class="user-item"
-        >
-          <div class="user-avatar">{{ user.avatar }}</div>
-          <div class="user-info">
-            <div class="user-name">{{ user.name }}</div>
+            <!-- 搜索输入框和搜索按钮 -->
+            <el-input
+              v-model="friendSearchQuery"
+              placeholder="搜索内容"
+              style="flex: 1;"
+            >
+              <template #append>
+                <el-button :icon="Search" type="primary" size="small" @click="searchUsersForAdd"></el-button>
+              </template>
+            </el-input>
           </div>
-          <el-button
-            type="primary"
-            size="small"
-            @click="sendFriendRequest(user)"
-          >
-            加好友
-          </el-button>
+
+          <div class="user-list">
+            <div
+              v-for="user in paginatedUsers"
+              :key="user.id"
+              class="user-item"
+              :class="{ selected: selectedUser?.id === user.id }"
+              @click="showUserDetails(user)"
+            >
+              <div class="user-avatar">{{ user.avatar }}</div>
+              <div class="user-info">
+                <div class="user-name">
+                  {{ searchType === 'email' ? user.email : searchType === 'phone' ? user.phone : user.nickname || user.username }}
+                </div>
+                <!-- 根据搜索类型显示不同信息 -->
+                <div class="user-detail" v-if="searchType !== 'email' && user.email">
+                  {{ user.email }}
+                </div>
+                <div class="user-detail" v-if="searchType !== 'phone' && user.phone">
+                  {{ user.phone }}
+                </div>
+              </div>
+              <el-button
+                type="primary"
+                size="small"
+                @click.stop="sendFriendRequest(user)"
+              >
+                加好友
+              </el-button>
+            </div>
+          </div>
+
+          <!-- 分页组件 -->
+          <div v-if="addFriendResults.length > pageSize" style="text-align: center; margin-top: 15px;">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[7, 14, 21]"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="addFriendResults.length"
+            />
+          </div>
+        </div>
+
+        <!-- 右侧用户详情区域 -->
+        <div v-if="selectedUser" style="flex: 1; padding-left: 15px;">
+          <div class="user-detail-header">
+            <div class="detail-avatar">{{ selectedUser.avatar }}</div>
+            <div class="detail-name">
+              {{ selectedUser.nickname || selectedUser.username }}
+            </div>
+            <el-button type="primary" size="small" @click="sendFriendRequest(selectedUser)">
+              加好友
+            </el-button>
+          </div>
+
+          <div class="detail-info">
+            <div class="detail-item">
+              <label>用户名/昵称:</label>
+              <span>{{ selectedUser.nickname || '未设置' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>手机号:</label>
+              <span>{{ selectedUser.phone || '未绑定' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>邮箱:</label>
+              <span>{{ selectedUser.email || '未绑定' }}</span>
+            </div>
+            <!-- 可以根据需要添加更多用户信息字段 -->
+          </div>
         </div>
       </div>
 
@@ -531,11 +639,21 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ShoppingCart, Search } from '@element-plus/icons-vue';
+import { ShoppingCart, Search, ArrowDown } from '@element-plus/icons-vue';
 import api from '../../utils/api.js';
 import { decodeJwt } from '../../utils/api.js';
 
 const router = useRouter();
+
+// 当前登录用户ID
+const userId = ref(parseInt(localStorage.getItem('userId') || '1', 10));
+const token = localStorage.getItem('token');
+if (token) {
+  const decodedToken = decodeJwt(token);
+  if (decodedToken && decodedToken.userId) {
+    userId.value = decodedToken.userId;
+  }
+}
 
 // Context menu state
 const contextMenuVisible = ref(false);
@@ -929,23 +1047,20 @@ const sortedConversations = computed(() => {
 
 // 页面加载
 onMounted(async () => {
-  // 从后端获取会话列表
-  const token = localStorage.getItem('token');
-  let userId = parseInt(localStorage.getItem('userId') || '1', 10); // 默认值
-
-  if (token) {
-    const decodedToken = decodeJwt(token);
-    if (decodedToken && decodedToken.userId) {
-      userId = decodedToken.userId;
-    }
-  }
-
+  // 从后端获取会话列表、好友列表和群列表
   try {
-    // 假设获取会话列表的API路径为 /api/v1/users/{userId}/chat-sessions
-    const response = await api.get(`/api/v1/users/${userId}/chat-sessions`);
+    // 1. 获取会话列表
+    const conversationsResponse = await api.get(`/v1/chat/users/${userId.value}/chat-sessions`);
 
-    if (response.data && response.data.success) {
-      conversations.value = response.data.data;
+    // 2. 获取好友列表
+    await fetchFriends();
+
+    // 3. 获取群列表
+    await fetchGroups();
+
+    // 处理会话列表数据
+    if (conversationsResponse.code === '200') {
+      conversations.value = conversationsResponse.data;
 
       // 默认选中第一个会话并加载聊天记录
       if (sortedConversations.value.length > 0) {
@@ -955,8 +1070,8 @@ onMounted(async () => {
       }
     }
   } catch (error) {
-    console.error('加载会话列表失败:', error);
-    ElMessage.error('加载会话列表失败，请稍后重试');
+    console.error('加载数据失败:', error);
+    ElMessage.error('加载数据失败，请稍后重试');
   }
 });
 
@@ -980,19 +1095,23 @@ onBeforeUnmount(() => {
 const loadChatMessages = async (sessionId) => {
   // 如果聊天记录已经存在，直接使用
   if (chatHistory.value[sessionId]) {
-    chatMessages.value = chatHistory.value[sessionId];
+    chatMessages.value = Array.isArray(chatHistory.value[sessionId])
+      ? chatHistory.value[sessionId]
+      : chatHistory.value[sessionId].records;
     return;
   }
 
   // 从后端获取聊天记录
   try {
     // 假设获取聊天记录的API路径为 /api/v1/chat/{sessionId}/messages
-    const response = await api.get(`/api/v1/chat/${sessionId}/messages`);
+    const response = await api.get(`/v1/chat/${sessionId}/messages`);
 
-    if (response.data && response.data.success) {
-      const messages = response.data.data;
-      chatHistory.value[sessionId] = messages;
-      chatMessages.value = messages;
+    if (response.code === '200') {
+      const messages = response.data;
+      // 检查是否是分页对象，如果是则取records属性
+      const messagesArray = messages.records || messages;
+      chatHistory.value[sessionId] = messagesArray;
+      chatMessages.value = messagesArray;
     }
   } catch (error) {
     console.error('加载聊天记录失败:', error);
@@ -1090,13 +1209,51 @@ const selectConversation = async (conversation) => {
   }
 };
 
-// 模拟好友列表数据
-const friends = ref([
-  { id: 101, name: '张三', avatar: '👨‍💼', lastMessage: '', time: '', unreadCount: 0, type: 'friend' },
-  { id: 102, name: '李四', avatar: '👩‍💼', lastMessage: '', time: '', unreadCount: 0, type: 'friend' },
-  { id: 103, name: '王五', avatar: '👨‍🍳', lastMessage: '', time: '', unreadCount: 0, type: 'friend' },
-  { id: 104, name: '赵六', avatar: '👩‍🔧', lastMessage: '', time: '', unreadCount: 0, type: 'friend' }
-]);
+// 好友列表数据 - 从后端获取
+const friends = ref([]);
+
+// 群列表数据 - 从后端获取
+const groups = ref([]);
+
+// 从后端获取好友列表
+const fetchFriends = async () => {
+  try {
+    const response = await api.get(`/v1/contacts/friends?userId=${userId.value}`);
+    if (response.code === '200') {
+      friends.value = response.data.map(contact => ({
+        id: contact.targetId,
+        name: '好友', // 需要从用户信息接口获取真实名称
+        avatar: '👤', // 需要从用户信息接口获取真实头像
+        lastMessage: '',
+        time: '',
+        unreadCount: 0,
+        type: 'friend'
+      }));
+    }
+  } catch (error) {
+    console.error('获取好友列表失败:', error);
+  }
+};
+
+// 从后端获取群列表
+const fetchGroups = async () => {
+  try {
+    const response = await api.get(`/v1/groups/my?userId=${userId.value}`);
+    if (response.code === '200') {
+      groups.value = response.data.map(group => ({
+        id: group.id,
+        name: group.groupName,
+        avatar: '👥',
+        lastMessage: '',
+        time: '',
+        unreadCount: 0,
+        type: 'group'
+      }));
+    }
+  } catch (error) {
+    console.error('获取群列表失败:', error);
+  }
+};
 
 // 好友搜索相关
 const searchQuery = ref('');
@@ -1156,37 +1313,111 @@ const selectFriendForChat = (friend) => {
 // 加好友相关
 const addFriendDialogVisible = ref(false);
 const friendSearchQuery = ref('');
-const addFriendResults = ref([]);
+const addFriendResults = ref([]); // 所有搜索结果
+const searchType = ref('nickname'); // 默认搜索类型：用户名/昵称
+const currentPage = ref(1); // 当前页码
+const pageSize = ref(7); // 每页最多显示7个
+const selectedUser = ref(null); // 选中的用户详情 // 搜索类型：nickname, phone, email
+
+// 分页后的用户列表
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return addFriendResults.value.slice(start, end);
+});
 
 // 打开加好友对话框
 const openAddFriendDialog = () => {
   addFriendDialogVisible.value = true;
   addFriendResults.value = [];
   friendSearchQuery.value = '';
+  searchType.value = 'nickname'; // 默认搜索类型：用户名/昵称
+  currentPage.value = 1; // 重置页码
+};
+
+// 处理搜索类型变更
+const handleSearchTypeChange = (command) => {
+  searchType.value = command;
+  searchUsersForAdd(); // 切换类型后自动搜索
+};
+
+// 显示用户详情
+const showUserDetails = (user) => {
+  // 如果点击的是已经选中的用户，则取消选中
+  if (selectedUser.value && selectedUser.value.id === user.id) {
+    selectedUser.value = null;
+  } else {
+    selectedUser.value = user;
+  }
+};
+
+// 关闭用户详情
+const closeUserDetails = () => {
+  selectedUser.value = null;
 };
 
 // 搜索用户（用于加好友）
-const searchUsersForAdd = () => {
+const searchUsersForAdd = async () => {
   if (!friendSearchQuery.value) {
     addFriendResults.value = [];
     return;
   }
 
-  // 模拟搜索结果
-  const mockUsers = [
-    { id: 201, name: friendSearchQuery.value, avatar: '👨‍💻', isFriend: false },
-    { id: 202, name: friendSearchQuery.value + '同学', avatar: '👩‍🎓', isFriend: false }
-  ];
+  try {
+    // 构建搜索参数
+    let searchParams = new URLSearchParams();
+    searchParams.append('keyword', encodeURIComponent(friendSearchQuery.value));
+    if (searchType.value) {
+      searchParams.append('searchType', searchType.value);
+    }
 
-  addFriendResults.value = mockUsers.filter(user =>
-    user.name.includes(friendSearchQuery.value)
-  );
+    // 从后端搜索用户
+    const response = await api.get(`/v1/users/search?${searchParams.toString()}`);
+
+    if (response.code === '200') {
+      // 将后端返回的用户数据转换为前端需要的格式
+      addFriendResults.value = response.data.map(user => ({
+        id: user.userId,
+        nickname: user.nickname,
+        username: user.username,
+        phone: user.phone,
+        email: user.email,
+        avatar: '👤', // 默认头像，实际项目中可使用用户头像字段
+        isFriend: false // 默认设为非好友，可根据实际情况优化
+      }));
+      currentPage.value = 1; // 搜索后重置到第一页
+    } else {
+      ElMessage.error('搜索用户失败');
+      addFriendResults.value = [];
+    }
+  } catch (error) {
+    console.error('搜索用户失败:', error);
+    ElMessage.error('搜索用户失败');
+    addFriendResults.value = [];
+  }
 };
 
 // 发送好友请求
-const sendFriendRequest = (user) => {
-  ElMessage.success(`已向 ${user.name} 发送好友请求`);
-  // 这里可以添加实际的API请求逻辑
+const sendFriendRequest = async (user) => {
+  try {
+    // 向后端发送好友请求
+    const response = await api.post(`/v1/contacts/friends/request`, {
+      userId: userId.value, // 当前登录用户ID
+      targetId: user.id, // 目标用户ID
+    });
+
+    if (response.code === '200') {
+      ElMessage.success(`已向 ${user.name} 发送好友请求`);
+      addFriendDialogVisible.value = false;
+      addFriendResults.value = [];
+      friendSearchQuery.value = '';
+    } else {
+      ElMessage.error('发送好友请求失败: ' + response.message);
+    }
+  } catch (error) {
+    console.error('发送好友请求失败:', error);
+    ElMessage.error('发送好友请求失败');
+  }
 };
 
 // 群详情相关
@@ -1216,12 +1447,46 @@ const groupDialogVisible = ref(false);
 // 新建群聊表单数据
 const groupForm = ref({
   name: '',
-  members: '' // 用逗号分隔的成员列表
+  members: '' // 选中的成员名称，用逗号分隔
 });
+
+// 好友选择对话框可见性
+const friendSelectionDialogVisible = ref(false);
+// 选中的群成员ID数组
+const selectedGroupMembers = ref([]);
 
 // 新建群聊
 const createNewGroup = () => {
   groupDialogVisible.value = true;
+  // 重置选择
+  selectedGroupMembers.value = [];
+  groupForm.value.members = '';
+};
+
+// 显示好友选择对话框
+const showFriendSelectionDialog = () => {
+  friendSelectionDialogVisible.value = true;
+};
+
+// 切换好友选择状态
+const toggleFriendSelection = (friend) => {
+  const index = selectedGroupMembers.value.indexOf(friend.id);
+  if (index === -1) {
+    selectedGroupMembers.value.push(friend.id);
+  } else {
+    selectedGroupMembers.value.splice(index, 1);
+  }
+};
+
+// 确认好友选择
+const confirmFriendSelection = () => {
+  // 将选中的好友ID转换为好友名称，用逗号分隔
+  const selectedFriendNames = friends.value
+    .filter(friend => selectedGroupMembers.value.includes(friend.id))
+    .map(friend => friend.name);
+
+  groupForm.value.members = selectedFriendNames.join(', ');
+  friendSelectionDialogVisible.value = false;
 };
 
 // 创建群聊
@@ -1234,6 +1499,12 @@ const handleCreateGroup = () => {
   // 生成唯一ID
   const newGroupId = Date.now();
 
+  // 计算成员数量，去除空格并过滤空字符串
+  const memberNames = groupForm.value.members
+    .split(',')
+    .map(name => name.trim())
+    .filter(name => name);
+
   // 创建新群聊
   const newGroup = {
     id: newGroupId,
@@ -1243,7 +1514,7 @@ const handleCreateGroup = () => {
     lastMessage: '暂无消息',
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     unreadCount: 0,
-    memberCount: (groupForm.value.members ? groupForm.value.members.split(',').length + 1 : 1), // 包括创建者
+    memberCount: memberNames.length + 1, // 包括创建者
     pinned: false
   };
 
@@ -1285,6 +1556,10 @@ const cancelCreateGroup = () => {
     name: '',
     members: ''
   };
+  // 重置选中的成员
+  selectedGroupMembers.value = [];
+  // 关闭好友选择对话框（如果打开的话）
+  friendSelectionDialogVisible.value = false;
 };
 
 // 发送消息
@@ -1295,26 +1570,26 @@ const sendMessage = async () => {
 
   // 创建新消息对象
   const messageData = {
-    sessionId: selectedConversation.value.id,
-    content: newMessage.value.trim(),
-    messageType: 'text', // 可以根据实际情况设置不同的消息类型，如图片、语音等
-    sender: '我' // 可以根据实际情况从登录信息中获取
+    fromId: userId.value.toString(), // 当前登录用户ID作为发送者
+    toId: selectedConversation.value.id, // 会话ID作为接收者
+    msgType: selectedConversation.value.type || 'single', // 消息类型，默认single
+    content: newMessage.value.trim() // 消息内容
   };
 
   try {
     // 发送消息到后端
-    const response = await api.post('/api/v1/chat/messages', messageData);
+    const response = await api.post('/v1/chat/messages', messageData);
 
-    if (response.data && response.data.success) {
+    if (response.code === '200') {
       // 如果后端返回消息对象，使用后端返回的消息
-      const newMessage = response.data.data;
+      const sentMessage = response.data;
 
       // 添加到聊天记录
-      chatMessages.value.push(newMessage);
+      chatMessages.value.push(sentMessage);
 
       // 更新会话列表的最后一条消息
-      selectedConversation.value.lastMessage = newMessage.content;
-      selectedConversation.value.time = newMessage.time;
+      selectedConversation.value.lastMessage = sentMessage.content;
+      selectedConversation.value.time = sentMessage.time;
 
       // 将消息保存到对应的聊天历史中
       chatHistory.value[selectedConversation.value.id] = chatMessages.value;
@@ -2170,6 +2445,150 @@ const goToOrderConfirmation = () => {
         font-size: 14px;
       }
     }
+  }
+
+  /* 成员列表容器样式 */
+  .member-list-container {
+    display: flex;
+    gap: 10px;
+    align-items: stretch; /* 让按钮与输入框高度一致 */
+  }
+
+  /* 好友选择网格样式 */
+  .friend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 20px 0;
+  }
+
+  /* 好友项样式 */
+  .friend-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #e4e7ed;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      border-color: #409eff;
+      background-color: #ecf5ff;
+    }
+
+    &.selected {
+      border-color: #67c23a;
+      background-color: #f0f9eb;
+    }
+  }
+
+  /* 好友头像样式 */
+  .friend-avatar {
+    font-size: 40px;
+    margin-bottom: 10px;
+  }
+
+  /* 好友名称样式 */
+  .friend-name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* 加好友对话框样式 */
+  .user-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: background-color 0.2s;
+  }
+
+  .user-item:hover {
+    background-color: #f5f7fa;
+  }
+
+  .user-item.selected {
+    background-color: #e4f7ff;
+    border: 1px solid #90caf9;
+  }
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-right: 10px;
+  }
+
+  .user-info {
+    flex: 1;
+  }
+
+  .user-name {
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+
+  .user-detail {
+    font-size: 12px;
+    color: #666;
+  }
+
+  /* 用户详情区域样式 */
+  .user-detail-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .detail-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin-right: 15px;
+  }
+
+  .detail-name {
+    flex: 1;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .detail-info {
+    padding: 0 10px;
+  }
+
+  .detail-item {
+    display: flex;
+    margin-bottom: 15px;
+  }
+
+  .detail-item label {
+    width: 100px;
+    font-weight: bold;
+    color: #666;
+  }
+
+  .detail-item span {
+    flex: 1;
+    color: #333;
   }
 }
 </style>

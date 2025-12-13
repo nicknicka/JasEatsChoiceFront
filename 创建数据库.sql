@@ -254,5 +254,36 @@ CREATE TABLE IF NOT EXISTS `t_address` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户地址表';
 
 -- --------------------------------------------------------
+-- 创建表: 群信息表(t_group)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `t_group` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '群ID',
+  `group_name` varchar(100) NOT NULL COMMENT '群名称',
+  `creator_id` bigint(20) NOT NULL COMMENT '创建者ID',
+  `description` varchar(500) DEFAULT NULL COMMENT '群描述',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_creator_id` (`creator_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='群信息表';
+
+-- --------------------------------------------------------
+-- 创建表: 联系人关系表(t_contact)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `t_contact` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '联系人ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `target_id` bigint(20) NOT NULL COMMENT '目标ID（好友ID或群ID）',
+  `relation_type` varchar(20) NOT NULL COMMENT '关系类型：friend(好友)、group(群成员)',
+  `status` varchar(20) NOT NULL COMMENT '关系状态：normal(正常)、pending(待验证)、blocked(已拉黑)',
+  `role` varchar(20) DEFAULT NULL COMMENT '群角色：creator(创建者)、admin(管理员)、member(普通成员)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_target` (`user_id`, `target_id`, `relation_type`),
+  KEY `idx_target` (`target_id`, `relation_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='联系人关系表';
+
+-- --------------------------------------------------------
 -- 数据库创建完成
 -- --------------------------------------------------------

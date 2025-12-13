@@ -47,7 +47,7 @@ jwt:
 
 # Netty配置
 netty:
-  port: 9091  # 更改为未被使用的端口号
+  port: 9092  # 更改为未被使用的端口号
   bossGroup:
     threads: 1
   workerGroup:

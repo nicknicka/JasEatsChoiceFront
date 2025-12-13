@@ -12,7 +12,7 @@ import javax.annotation.PreDestroy;
  * @Author nickxiao
  * @Date 2025/11/22
  */
-@Configuration
+// @Configuration // 暂时注释掉，不自动启动Netty服务器
 public class NettySpringConfig {
 
     private final NettyServer nettyServer;

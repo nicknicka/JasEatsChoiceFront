@@ -85,6 +85,14 @@
 					</el-tag>
 				</template>
 			</el-table-column>
+
+			<!-- 无数据显示 -->
+			<template #empty>
+				<div class="empty-state">
+					<el-icon class="empty-icon"><Money /></el-icon>
+					<p>您还没有任何消费记录</p>
+				</div>
+			</template>
 		</el-table>
 
 		<div class="pagination">
@@ -104,7 +112,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
-import { Search, Refresh } from "@element-plus/icons-vue";
+import { Search, Refresh, Money } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import CommonBackButton from '../../components/common/CommonBackButton.vue';
 import axios from "axios";
@@ -192,7 +200,7 @@ const fetchConsumeHistory = async () => {
 		});
 
 		// 处理响应数据
-		if (response.data && response.data.success) {
+		if (response.data && response.data.code === "200") {
 			// 确保每条记录都有唯一id
 			history.value = response.data.data.records.map((item, index) => ({
 				...item,
@@ -201,7 +209,7 @@ const fetchConsumeHistory = async () => {
 			total.value = response.data.data.total;
 			ElMessage.success("消费记录加载成功");
 		} else {
-			ElMessage.error("消费记录加载失败：" + response.data.message);
+			ElMessage.error("消费记录加载失败：" + (response.data?.message || "未知错误"));
 		}
 	} catch (error) {
 		console.error("获取消费记录失败:", error);

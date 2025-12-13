@@ -21,8 +21,8 @@ export function useLocation() {
     api
       .get(API_CONFIG.location.cascaderData)
       .then((response) => {
-        if (response.data) {
-          cascaderLocationData.value = response.data
+        if (response.data && response.data.data) {
+          cascaderLocationData.value = response.data.data // API返回的是对象，需要提取其中的data数组
         }
       })
       .catch((error) => {

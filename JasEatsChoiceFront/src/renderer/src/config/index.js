@@ -49,7 +49,7 @@ export const API_CONFIG = {
 
   // 消息API端点
   message: {
-    list: '/v1/message/list', // 消息列表接口
+    list: '/v1/message/records', // 消息列表接口
     send: '/v1/message/send' // 发送消息接口
   },
 
@@ -88,6 +88,13 @@ export const API_CONFIG = {
     date: '/calorie-records/user/{userId}/date/', // 根据用户ID和日期获取记录
     week: '/calorie-records/user/{userId}/week', // 根据用户ID获取本周记录
     add: '/calorie-records' // 添加饮食记录接口
+  },
+
+  // 收藏API端点
+  collection: {
+    list: '/v1/collections/user/{userId}', // 获取用户收藏列表
+    remove: '/v1/collections/{id}', // 移除单个收藏
+    clear: '/v1/collections/user/{userId}' // 清空用户所有收藏
   }
 }
 

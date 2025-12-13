@@ -265,4 +265,21 @@ public class UserController {
             return ResponseResult.fail("500", "用户偏好设置更新失败");
         }
     }
+
+    /**
+     * 搜索用户
+     * @param keyword 搜索关键词
+     * @param searchType 搜索类型：nickname(昵称), phone(手机号), email(邮箱)
+     * @return 匹配的用户列表
+     */
+    @GetMapping("/search")
+    public ResponseResult<?> searchUsers(@RequestParam String keyword,
+                                        @RequestParam(required = false) String searchType) {
+        try {
+            return ResponseResult.success(userService.searchUsers(keyword, searchType));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "用户搜索失败");
+        }
+    }
 }

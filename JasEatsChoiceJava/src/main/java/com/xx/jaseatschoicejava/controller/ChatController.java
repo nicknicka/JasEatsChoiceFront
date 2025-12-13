@@ -78,7 +78,7 @@ public class ChatController {
      *                  2. 群聊：群组ID，如"group123"
      */
     @ApiOperation("获取聊天记录")
-    @GetMapping("/chat/{sessionId}/messages")
+    @GetMapping("/{sessionId}/messages")
     public ResponseResult<?> getChatMessages(
             @PathVariable String sessionId,
             @RequestParam(defaultValue = "1") Integer page,
@@ -114,7 +114,7 @@ public class ChatController {
      * 发送消息
      */
     @ApiOperation("发送消息")
-    @PostMapping("/chat/messages")
+    @PostMapping("/messages")
     public ResponseResult<?> sendMessage(@RequestBody ChatMsg chatMsg) {
         // 设置默认值
         chatMsg.setReadStatus(false);
@@ -123,7 +123,7 @@ public class ChatController {
         // 保存消息
         boolean success = chatMsgService.save(chatMsg);
         if (success) {
-            return ResponseResult.success("消息发送成功");
+            return ResponseResult.success(chatMsg);
         } else {
             return ResponseResult.fail("500", "消息发送失败");
         }
@@ -133,7 +133,7 @@ public class ChatController {
      * 标记消息已读
      */
     @ApiOperation("标记消息已读")
-    @PutMapping("/chat/messages/{messageId}/read")
+    @PutMapping("/messages/{messageId}/read")
     public ResponseResult<?> markMessageAsRead(@PathVariable Long messageId) {
         ChatMsg chatMsg = new ChatMsg();
         chatMsg.setId(messageId);

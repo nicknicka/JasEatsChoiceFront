@@ -16,16 +16,16 @@ onMounted(() => {
     params: { userId }
   })
     .then(response => {
-      if (response && response.success) {
+      if (response && response.code === '200') {
         // 转换后端返回的数据格式以匹配前端期望的字段
         const formattedMessages = response.data.map(message => ({
           id: message.id,
           // 后端返回的content作为前端的title和content
           title: message.content,
           content: message.content,
-          // 后端返回的createTime作为前端的time
-          time: message.createTime,
-          // 后端返回的readStatus作为前端的read
+          // 后端返回的sendTime作为前端的time
+          time: message.sendTime,
+          // 后端返回的readStatus作为前端的read (0: 未读, 1: 已读)
           read: message.readStatus,
           // 暂时默认所有消息类型为system，实际应用中应根据后端返回类型映射
           type: message.type || 'system'

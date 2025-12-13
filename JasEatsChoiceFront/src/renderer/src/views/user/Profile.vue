@@ -520,6 +520,9 @@ const editFormRules = ref({
   email: [
     { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
   ],
+  location: [
+    { max: 50, message: '所在地长度不超过 50 个字符', trigger: ['blur', 'change'] }
+  ],
   height: [
     { type: 'number', message: '请输入有效的身高数值', trigger: ['blur', 'change'] },
     { min: 100, max: 250, message: '身高范围在 100 到 250 cm', trigger: ['blur', 'change'] }
@@ -527,6 +530,9 @@ const editFormRules = ref({
   weight: [
     { type: 'number', message: '请输入有效的体重数值', trigger: ['blur', 'change'] },
     { min: 30, max: 200, message: '体重范围在 30 到 200 kg', trigger: ['blur', 'change'] }
+  ],
+  dietGoal: [
+    { required: true, message: '请选择饮食目标', trigger: 'change' }
   ]
 })
 // 编辑表单引用
