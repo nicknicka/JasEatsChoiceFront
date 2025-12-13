@@ -7,6 +7,7 @@ import com.xx.jaseatschoicejava.entity.User;
 import com.xx.jaseatschoicejava.entity.UserPreference;
 import com.xx.jaseatschoicejava.service.UserService;
 import com.xx.jaseatschoicejava.service.UserPreferenceService;
+import com.xx.jaseatschoicejava.service.AliyunSMSService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -83,6 +84,12 @@ public class UserController {
      */
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Autowired
+    private AliyunSMSService aliyunSMSService;
+
+    // 短信服务配置
+    private static final Integer DEFAULT_SMS_EXPIRATION_MINUTES = 5;
 
     @PostMapping("/login")
     public ResponseResult<?> login(@RequestBody LoginRequest loginRequest) {
@@ -208,12 +215,20 @@ public class UserController {
             return ResponseResult.fail("400", "手机号不能为空");
         }
 
-        // TODO: Implement actual SMS sending logic here
-        // For demonstration, generate a random 6-digit code
+        // Generate a random 6-digit code
         String code = String.format("%06d", (int)(Math.random() * 1000000));
 
+        try {
+            // 使用阿里云短信服务发送验证码
+            aliyunSMSService.sendSmsVerifyCode(phone, code);
+            System.out.println("阿里云短信发送成功！手机号：" + phone + "，验证码：" + code);
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Return success even if SMS sending fails to prevent brute force attacks
+        }
+
         // Store code in Redis with 5 minutes expiration
-        redisTemplate.opsForValue().set("sms-code:" + phone, code, 5, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set("sms-code:" + phone, code, DEFAULT_SMS_EXPIRATION_MINUTES, TimeUnit.MINUTES);
 
         return ResponseResult.success("手机验证码已发送");
     }
