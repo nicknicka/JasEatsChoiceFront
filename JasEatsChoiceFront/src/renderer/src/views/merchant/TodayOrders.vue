@@ -1,17 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { useRouter } from 'vue-router';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
-const router = useRouter();
+const router = useRouter()
 
 // 订单状态映射
 const orderStatusMap = {
-  'pending': { text: '待处理', icon: '🔴', type: 'danger' },
-  'preparing': { text: '准备中', icon: '🟡', type: 'warning' },
-  'completed': { text: '已完成', icon: '✅', type: 'success' }
-};
+  pending: { text: '待处理', icon: '🔴', type: 'danger' },
+  preparing: { text: '准备中', icon: '🟡', type: 'warning' },
+  completed: { text: '已完成', icon: '✅', type: 'success' }
+}
 
 // 模拟全部订单数据
 const orders = ref([
@@ -22,7 +22,7 @@ const orders = ref([
     user: '小明',
     phone: '138XXXX8888',
     address: '公司地址',
-    total: 78.00,
+    total: 78.0,
     time: '2024-11-21 10:30',
     unread: true
   },
@@ -33,7 +33,7 @@ const orders = ref([
     user: '小红',
     phone: '139XXXX9999',
     address: '家庭地址',
-    total: 45.00,
+    total: 45.0,
     time: '2024-11-21 10:35',
     unread: false
   },
@@ -44,7 +44,7 @@ const orders = ref([
     user: '小刚',
     phone: '137XXXX7777',
     address: '学校地址',
-    total: 62.00,
+    total: 62.0,
     time: '2024-11-21 10:40',
     unread: false
   },
@@ -55,7 +55,7 @@ const orders = ref([
     user: '小李',
     phone: '136XXXX6666',
     address: '酒店地址',
-    total: 128.00,
+    total: 128.0,
     time: '2024-11-21 11:00',
     unread: true
   },
@@ -66,7 +66,7 @@ const orders = ref([
     user: '小王',
     phone: '135XXXX5555',
     address: '公园地址',
-    total: 96.00,
+    total: 96.0,
     time: '2024-11-21 11:15',
     unread: false
   },
@@ -77,7 +77,7 @@ const orders = ref([
     user: '小张',
     phone: '134XXXX4444',
     address: '医院地址',
-    total: 58.50,
+    total: 58.5,
     time: '2024-11-21 11:30',
     unread: true
   },
@@ -88,7 +88,7 @@ const orders = ref([
     user: '小赵',
     phone: '133XXXX3333',
     address: '车站地址',
-    total: 156.00,
+    total: 156.0,
     time: '2024-11-21 10:25',
     unread: false
   },
@@ -99,7 +99,7 @@ const orders = ref([
     user: '小钱',
     phone: '132XXXX2222',
     address: '商场地址',
-    total: 32.80,
+    total: 32.8,
     time: '2024-11-21 11:45',
     unread: true
   },
@@ -110,33 +110,33 @@ const orders = ref([
     user: '小孙',
     phone: '131XXXX1111',
     address: '工厂地址',
-    total: 89.00,
+    total: 89.0,
     time: '2024-11-21 12:00',
     unread: false
   }
-]);
+])
 
 // 当前选中的状态筛选
-const activeStatusFilter = ref('all');
+const activeStatusFilter = ref('all')
 
 // 搜索关键词
-const searchKeyword = ref('');
+const searchKeyword = ref('')
 
 // 获取今天的日期（格式：YYYY-MM-DD）
-const today = new Date().toISOString().split('T')[0];
+const today = new Date().toISOString().split('T')[0]
 
 // 筛选后的订单
-const filteredOrders = ref([]);
+const filteredOrders = ref([])
 // 初始只显示今天的订单
-filteredOrders.value = orders.value.filter(order => order.time.startsWith(today));
+filteredOrders.value = orders.value.filter((order) => order.time.startsWith(today))
 
 // 订单概览统计
 const orderOverview = computed(() => {
-  const total = filteredOrders.value.length;
-  const totalAmount = filteredOrders.value.reduce((sum, order) => sum + order.total, 0);
-  const pendingCount = filteredOrders.value.filter(order => order.status === 'pending').length;
-  const preparingCount = filteredOrders.value.filter(order => order.status === 'preparing').length;
-  const completedCount = filteredOrders.value.filter(order => order.status === 'completed').length;
+  const total = filteredOrders.value.length
+  const totalAmount = filteredOrders.value.reduce((sum, order) => sum + order.total, 0)
+  const pendingCount = filteredOrders.value.filter((order) => order.status === 'pending').length
+  const preparingCount = filteredOrders.value.filter((order) => order.status === 'preparing').length
+  const completedCount = filteredOrders.value.filter((order) => order.status === 'completed').length
 
   return {
     total,
@@ -144,90 +144,90 @@ const orderOverview = computed(() => {
     pendingCount,
     preparingCount,
     completedCount
-  };
-});
+  }
+})
 
 // 更新筛选
 const updateFilter = () => {
-  filteredOrders.value = orders.value.filter(order => {
+  filteredOrders.value = orders.value.filter((order) => {
     // 日期筛选：仅今天
-    const dateMatch = order.time.startsWith(today);
+    const dateMatch = order.time.startsWith(today)
 
     // 状态筛选
-    const statusMatch = activeStatusFilter.value === 'all' || order.status === activeStatusFilter.value;
+    const statusMatch =
+      activeStatusFilter.value === 'all' || order.status === activeStatusFilter.value
 
     // 搜索筛选
-    const searchMatch = !searchKeyword.value ||
+    const searchMatch =
+      !searchKeyword.value ||
       order.orderNo.includes(searchKeyword.value) ||
-      order.user.includes(searchKeyword.value);
+      order.user.includes(searchKeyword.value)
 
-    return dateMatch && statusMatch && searchMatch;
-  });
-};
+    return dateMatch && statusMatch && searchMatch
+  })
+}
 
 // 查看订单详情
-import { useRouter } from 'vue-router';
-const router = useRouter();
 
 const viewOrderDetails = (order) => {
   // 标记为已读
   if (order.unread) {
-    order.unread = false;
-    updateFilter();
-    ElMessage.success('订单已标记为已读');
+    order.unread = false
+    updateFilter()
+    ElMessage.success('订单已标记为已读')
   }
 
   // 导航到订单详情页
-  router.push(`/merchant/home/order-detail/${order.id}`);
-};
+  router.push(`/merchant/home/order-detail/${order.id}`)
+}
 
 // 更新订单状态
 const updateOrderStatus = (order, newStatus) => {
-  order.status = newStatus;
-  updateFilter();
-  ElMessage.success(`订单状态已更新为${orderStatusMap[newStatus].text}`);
-};
+  order.status = newStatus
+  updateFilter()
+  ElMessage.success(`订单状态已更新为${orderStatusMap[newStatus].text}`)
+}
 
 // 取消订单前添加确认
 const cancelOrder = (order) => {
   ElMessageBox.confirm('确定要取消此订单吗?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning',
+    type: 'warning'
   })
-  .then(() => {
-    // 假设取消订单后状态变为'cancelled'，如果需要其他状态请修改
-    updateOrderStatus(order, 'completed'); // 当前代码中取消订单也设置为已完成，保持一致
-    ElMessage.success('订单已取消');
-  })
-  .catch(() => {
-    ElMessage.info('已取消订单取消操作');
-  });
-};
+    .then(() => {
+      // 假设取消订单后状态变为'cancelled'，如果需要其他状态请修改
+      updateOrderStatus(order, 'completed') // 当前代码中取消订单也设置为已完成，保持一致
+      ElMessage.success('订单已取消')
+    })
+    .catch(() => {
+      ElMessage.info('已取消订单取消操作')
+    })
+}
 
 // 删除订单前添加确认
 const deleteOrder = (order) => {
   ElMessageBox.confirm('确定要删除此订单吗?', '删除确认', {
     confirmButtonText: '确定删除',
     cancelButtonText: '取消',
-    type: 'error',
+    type: 'error'
   })
-  .then(() => {
-    // 从订单列表中删除
-    const index = orders.value.findIndex(item => item.id === order.id);
-    if (index !== -1) {
-      orders.value.splice(index, 1);
-      updateFilter();
-      ElMessage.success('订单已删除');
-    }
-  })
-  .catch(() => {
-    ElMessage.info('已取消订单删除操作');
-  });
-};
+    .then(() => {
+      // 从订单列表中删除
+      const index = orders.value.findIndex((item) => item.id === order.id)
+      if (index !== -1) {
+        orders.value.splice(index, 1)
+        updateFilter()
+        ElMessage.success('订单已删除')
+      }
+    })
+    .catch(() => {
+      ElMessage.info('已取消订单删除操作')
+    })
+}
 
 // 页面加载时初始化筛选
-updateFilter();
+updateFilter()
 </script>
 
 <template>
@@ -262,7 +262,7 @@ updateFilter();
         <el-input
           v-model="searchKeyword"
           placeholder="输入订单号/用户名称..."
-          style="width: 300px;"
+          style="width: 300px"
           @input="updateFilter"
         />
       </div>
@@ -277,8 +277,11 @@ updateFilter();
           :key="status"
           :type="activeStatusFilter === status ? 'primary' : 'info'"
           effect="plain"
-          @click="activeStatusFilter = status; updateFilter()"
           class="status-tag"
+          @click="
+            activeStatusFilter = status
+            updateFilter()
+          "
         >
           {{ status === 'all' ? '全部' : orderStatusMap[status].text }}
         </el-tag>
@@ -286,11 +289,7 @@ updateFilter();
       </div>
 
       <div class="orders-list">
-        <div
-          v-for="order in filteredOrders"
-          :key="order.id"
-          class="order-item"
-        >
+        <div v-for="order in filteredOrders" :key="order.id" class="order-item">
           <div class="order-left">
             <div class="order-basic-info">
               <div class="order-no">订单号：{{ order.orderNo }}</div>
@@ -314,11 +313,7 @@ updateFilter();
             </div>
 
             <div class="order-actions">
-              <el-button
-                type="primary"
-                size="small"
-                @click="viewOrderDetails(order)"
-              >
+              <el-button type="primary" size="small" @click="viewOrderDetails(order)">
                 📝 查看详情
               </el-button>
 
@@ -349,11 +344,7 @@ updateFilter();
               >
                 🗑️ 取消订单
               </el-button>
-              <el-button
-                type="danger"
-                size="small"
-                @click="deleteOrder(order)"
-              >
+              <el-button type="danger" size="small" @click="deleteOrder(order)">
                 🗑️ 删除订单
               </el-button>
             </div>
@@ -407,19 +398,22 @@ updateFilter();
         margin-bottom: 16px;
       }
 
-      .overview-stats, .status-stats {
+      .overview-stats,
+      .status-stats {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(30%, 1fr));  // 网格布局，每行自动填充，最小宽度200px
+        grid-template-columns: repeat(
+          auto-fill,
+          minmax(30%, 1fr)
+        ); // 网格布局，每行自动填充，最小宽度200px
         gap: 24px;
         font-size: 14px;
         margin-bottom: 16px;
       }
 
-      
       .stat-item {
-        display: block;  // 重置为块级元素以适应网格布局
-        margin-right: 0;  // 清除之前的右边距
-        margin-bottom: 0;  // 清除之前的下边距
+        display: block; // 重置为块级元素以适应网格布局
+        margin-right: 0; // 清除之前的右边距
+        margin-bottom: 0; // 清除之前的下边距
       }
     }
   }

@@ -47,7 +47,7 @@
           <div style="display: flex;">
             <el-input v-model="registerForm.captcha" placeholder="请输入验证码" style="width: 60%; margin-right: 10px;" />
             <div style="width: 120px; height: 36px; background-color: #f5f7fa; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; letter-spacing: 2px; cursor: pointer;" @click="generateCaptcha">
-              {{ generatedCaptcha }}
+              {{ captchaExpression }} = ?
             </div>
             <el-button type="text" size="small" @click="generateCaptcha" style="margin-left: 10px;">刷新</el-button>
           </div>
@@ -71,6 +71,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption } from 'element-plus';
 import { useRouter } from 'vue-router';
 import api from '../../utils/api';
+import { API_CONFIG } from '../../config/index.js';
 
 const router = useRouter();
 
@@ -104,14 +105,17 @@ const registerRules = reactive({
     { required: true, message: '请输入联系人姓名', trigger: 'blur' }
   ],
   contactPhone: [
+    { required: true, message: '请输入联系人电话', trigger: ['blur', 'change'] },
     { pattern: /^1[3456789]\d{9}$/, message: '请输入正确的手机号码', trigger: ['blur', 'change'] }
   ],
   email: [
+    { required: true, message: '请输入邮箱', trigger: ['blur', 'change'] },
     { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 32, message: '密码长度在 6 到 32 个字符', trigger: 'blur' }
+    { min: 6, max: 32, message: '密码长度在 6 到 32 个字符', trigger: 'blur' },
+    { pattern: /^(?=.*[a-zA-Z])(?=.*\d)/, message: '密码必须包含字母和数字', trigger: 'blur' }
   ],
   confirmPassword: [
     { required: true, message: '请确认密码', trigger: 'blur' },
@@ -126,7 +130,7 @@ const registerRules = reactive({
   captcha: [
     { required: true, message: '请输入验证码', trigger: 'blur' },
     { validator: (rule, value, callback) => {
-        if (value.toUpperCase() !== generatedCaptcha.value.toUpperCase()) {
+        if (Number(value) !== captchaResult.value) {
           callback(new Error('验证码错误'));
         } else {
           callback();
@@ -135,18 +139,40 @@ const registerRules = reactive({
   ]
 });
 
-// 生成的验证码
-const generatedCaptcha = ref('');
+// 生成的验证码表达式和结果
+const captchaExpression = ref('');
+const captchaResult = ref(0);
 
-// 生成随机验证码
+// 生成算术验证码
 const generateCaptcha = () => {
+  const num1 = Math.floor(Math.random() * 20) + 1; // 1-20
+  const num2 = Math.floor(Math.random() * 10) + 1;  // 1-10
+  const operators = ['+', '-', '*'];
+  const operator = operators[Math.floor(Math.random() * operators.length)];
 
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let captcha = '';
-  for (let i = 0; i < 4; i++) {
-    captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+  // 计算结果，确保结果为正整数
+  let result;
+  switch (operator) {
+    case '+':
+      result = num1 + num2;
+      break;
+    case '-':
+      // 确保减法结果为正
+      const maxNum = Math.max(num1, num2);
+      const minNum = Math.min(num1, num2);
+      captchaExpression.value = `${maxNum} - ${minNum}`;
+      result = maxNum - minNum;
+      return;
+    case '*':
+      result = num1 * num2;
+      break;
+    default:
+      result = num1 + num2;
+      operator = '+';
   }
-  generatedCaptcha.value = captcha;
+
+  captchaExpression.value = `${num1} ${operator} ${num2}`;
+  captchaResult.value = result;
 };
 
 // 表单引用
@@ -170,25 +196,33 @@ const submitForm = () => {
           password: registerForm.password,
           // 其他字段暂时保留，等待后端实体更新后启用
           businessLicense: registerForm.businessLicense,
-          businessScope: registerForm.businessScope,
+          businessScope: registerForm.businessScope.join(','), // 将数组转换为逗号分隔字符串
           contactName: registerForm.contactName,
           email: registerForm.email
         };
 
         // 调用商家注册API
-        api.post('/api/v1/merchant/register', merchantData)
+        api.post(API_CONFIG.merchant.register, merchantData)
           .then(response => {
             ElMessage.success('注册成功！');
             // 保存用户信息和角色
-            localStorage.setItem('userInfo', JSON.stringify({
+            const merchantInfo = {
               ...registerForm,
               role: 'merchant',
-              userId: '1' // 默认用户ID为1
-            }));
+              userId: response.data.data.id, // 使用后端返回的真实ID
+              id: response.data.data.id, // 商家ID
+              name: registerForm.merchantName,
+              avatar: response.data.data.avatar || '', // 使用后端返回的头像或空
+              rating: response.data.data.rating || '4.5/5.0'
+            };
+
+            localStorage.setItem('userInfo', JSON.stringify(merchantInfo));
             localStorage.setItem('currentRole', 'merchant');
+
             // 创建一个模拟的JWT令牌，包含用户ID信息
             const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoi' + btoa(registerForm.merchantName) + 'LCJyb2xlIjoibWVyY2hhbnQiLCJpYXQiOjE2MjAwMDAwMDAsImV4cCI6MTYyMTAwMDAwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
             localStorage.setItem('token', mockToken);
+
             // 注册成功后跳转到商家首页
             setTimeout(() => {
               router.push('/merchant/home');

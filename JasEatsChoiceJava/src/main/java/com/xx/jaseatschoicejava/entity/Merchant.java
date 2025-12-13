@@ -65,7 +65,7 @@ public class Merchant {
 
     @TableField("business_scope")
     @ApiModelProperty(value = "经营范围")
-    private String businessScope; // 经营范围
+    private String businessScope; // 经营范围 (前端传数组，后端自动转换为逗号分隔字符串)
 
     @TableField("contact_name")
     @ApiModelProperty(value = "联系人姓名")

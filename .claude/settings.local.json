@@ -211,7 +211,9 @@
       "Bash(npm run dev:frontend:user:*)",
       "Bash(ls:*)",
       "Bash(npm run --scripts-version)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(./mvn dependency:tree:*)",
+      "Bash(sh mvnw:*)"
     ],
     "deny": [],
     "ask": []

@@ -279,7 +279,7 @@ const todayMenus = ref([]);
 
 // 从后端获取今日菜单数据
 const fetchTodayMenus = () => {
-	api.get(`/api/v1/merchants/${merchantId}/menu`)
+	api.get(`/v1/menus/merchants/${merchantId}/menu`)
 		.then(response => {
 			if (response.code === '200' && response.data) {
 				// 假设后端返回的菜单数据结构与我们需要的基本一致
@@ -402,7 +402,7 @@ onMounted(() => {
 	// 调用后端API获取今日营业概览数据
 
 	// 获取营业概览
-	api.get(`/api/v1/merchant/${merchantId}/business-overview`)
+	api.get(`/v1/merchant/${merchantId}/business-overview`)
 		.then((response) => {
 			if (response.code === "200" && response.data) {
 				businessOverview.value = response.data;
@@ -414,7 +414,7 @@ onMounted(() => {
 		});
 
 	// 获取订单列表
-	api.get(`/api/v1/orders/merchant/${merchantId}`)
+	api.get(`/v1/orders/merchant/${merchantId}`)
 		.then((response) => {
 			if (response.code === "200" && response.data) {
 				allOrders.value = response.data;

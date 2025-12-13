@@ -105,7 +105,7 @@ const updateSalesData = () => {
 // 从后端获取统计数据
 const fetchStatisticsData = () => {
   const merchantId = 1; // 假设商家ID为1，可以根据实际情况从登录信息或路由参数中获取
-  api.get(`/api/v1/merchant/${merchantId}/statistics`, { params: { timeRange: activeTimeRange.value } })
+  api.get(`/v1/merchant/${merchantId}/statistics`, { params: { timeRange: activeTimeRange.value } })
     .then(response => {
       if (response.code === '200' && response.data) {
         // 更新基本统计数据

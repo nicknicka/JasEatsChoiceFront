@@ -43,7 +43,7 @@ onMounted(() => {
   }
 
   // 从后端API获取会话列表
-  api.get(`/api/v1/users/${userId}/chat-sessions`)
+  api.get(`/v1/users/${userId}/chat-sessions`)
     .then(response => {
       if (response.data && response.data.success) {
         // 转换后端返回的数据格式以匹配前端期望的字段
@@ -158,7 +158,7 @@ const selectConversation = (conversation) => {
   }
 
   // 从后端API获取聊天记录
-  api.get(`/api/v1/chat/${sessionId}/messages`)
+  api.get(`/v1/chat/${sessionId}/messages`)
     .then(response => {
       if (response.data && response.data.success) {
         // 转换后端返回的数据格式以匹配前端期望的字段

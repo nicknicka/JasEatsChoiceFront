@@ -158,11 +158,24 @@ public class UserController {
             // Update phone if provided
             if (updateData.containsKey("phone")) {
                 String newPhone = (String) updateData.get("phone");
-                // TODO: Validate new phone format
+                // Validate new phone format
+                if (!newPhone.matches("^1[3-9]\\d{9}$")) {
+                    return ResponseResult.fail("400", "手机号格式错误");
+                }
 
                 // Check verification code if phone is changed
                 if (!user.getPhone().equals(newPhone)) {
-                    // TODO: Verify SMS verification code from updateData
+                    // Verify SMS verification code from updateData
+                    String smsCode = (String) updateData.get("smsCode");
+                    if (smsCode == null || smsCode.isEmpty()) {
+                        return ResponseResult.fail("400", "短信验证码不能为空");
+                    }
+
+                    // Get the stored code from Redis
+                    String storedCode = redisTemplate.opsForValue().get("sms-code:" + newPhone);
+                    if (storedCode == null || !storedCode.equals(smsCode)) {
+                        return ResponseResult.fail("400", "短信验证码错误或已过期");
+                    }
                 }
 
                 user.setPhone(newPhone);
@@ -171,11 +184,24 @@ public class UserController {
             // Update email if provided
             if (updateData.containsKey("email")) {
                 String newEmail = (String) updateData.get("email");
-                // TODO: Validate new email format
+                // Validate new email format
+                if (!newEmail.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+                    return ResponseResult.fail("400", "邮箱格式错误");
+                }
 
                 // Check verification code if email is changed
                 if (!user.getEmail().equals(newEmail)) {
-                    // TODO: Verify email verification code from updateData
+                    // Verify email verification code from updateData
+                    String emailCode = (String) updateData.get("emailCode");
+                    if (emailCode == null || emailCode.isEmpty()) {
+                        return ResponseResult.fail("400", "邮箱验证码不能为空");
+                    }
+
+                    // Get the stored code from Redis
+                    String storedCode = redisTemplate.opsForValue().get("email-code:" + newEmail);
+                    if (storedCode == null || !storedCode.equals(emailCode)) {
+                        return ResponseResult.fail("400", "邮箱验证码错误或已过期");
+                    }
                 }
 
                 user.setEmail(newEmail);

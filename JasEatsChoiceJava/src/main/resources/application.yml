@@ -65,3 +65,15 @@ gaode:
       key: 140e4ebfe143855a4cc7440533ff27b3
       url: https://restapi.amap.com/v3
       weatherUrl: https://restapi.amap.com/v3/weather/weatherInfo
+
+
+aliyun:
+  sms:
+    # 接入点地址（固定值，无需改）
+    endpoint: dypnsapi.aliyuncs.com
+    # 签名（从阿里云号码认证控制台→短信认证→签名管理获取）
+    signName: 速通互联验证码
+    # 模板CODE（从控制台→模板管理获取，如：SMS_XXXXXX）
+    templateCode: 100001
+    # 验证码有效期（可选，默认5分钟）
+    codeExpireMinutes: 5

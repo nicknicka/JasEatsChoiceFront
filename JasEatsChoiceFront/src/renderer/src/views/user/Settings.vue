@@ -185,7 +185,7 @@
     </el-card>
 
     <!-- Edit Phone Dialog -->
-    <el-dialog v-model="editPhoneDialogVisible" title="修改手机号" width="30%">
+    <el-dialog v-model="editPhoneDialogVisible" title="修改手机号" width="400px">
       <el-form ref="phoneFormRef" :model="phoneForm" label-width="80px">
         <el-form-item label="手机号">
           <el-input v-model="phoneForm.phone" placeholder="请输入新手机号" />
@@ -195,7 +195,7 @@
             <el-input
               v-model="phoneForm.verificationCode"
               placeholder="请输入验证码"
-              style="margin-right: 10px"
+              style="width: 150px; margin-right: 10px"
             />
             <el-button type="primary" :disabled="smsCodeCountdown > 0" @click="sendSmsCode">
               {{ smsCodeCountdown > 0 ? `${smsCodeCountdown}秒后重新发送` : '获取验证码' }}
@@ -212,7 +212,7 @@
     </el-dialog>
 
     <!-- Edit Email Dialog -->
-    <el-dialog v-model="editEmailDialogVisible" title="修改邮箱" width="30%">
+    <el-dialog v-model="editEmailDialogVisible" title="修改邮箱" width="400px">
       <el-form ref="emailFormRef" :model="emailForm" label-width="80px">
         <el-form-item label="邮箱">
           <el-input v-model="emailForm.email" placeholder="请输入新邮箱" />
@@ -222,7 +222,7 @@
             <el-input
               v-model="emailForm.verificationCode"
               placeholder="请输入验证码"
-              style="margin-right: 10px"
+              style="width: 150px; margin-right: 10px"
             />
             <el-button type="primary" :disabled="emailCodeCountdown > 0" @click="sendEmailCode">
               {{ emailCodeCountdown > 0 ? `${emailCodeCountdown}秒后重新发送` : '获取验证码' }}
@@ -239,7 +239,7 @@
     </el-dialog>
 
     <!-- Edit Password Dialog -->
-    <el-dialog v-model="editPasswordDialogVisible" title="修改密码" width="30%">
+    <el-dialog v-model="editPasswordDialogVisible" title="修改密码" width="400px">
       <el-form ref="passwordFormRef" :model="passwordForm" label-width="80px">
         <el-form-item label="旧密码">
           <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入旧密码" />
