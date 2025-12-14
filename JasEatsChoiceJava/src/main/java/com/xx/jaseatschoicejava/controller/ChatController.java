@@ -52,10 +52,10 @@ public class ChatController {
             String sessionId = "";
             if ("group".equals(message.getMsgType())) {
                 // 群聊：会话ID是toId
-                sessionId = message.getToId();
+                sessionId = message.getToId().toString();
             } else {
                 // 单聊：会话ID是对方用户ID
-                sessionId = message.getFromId().equals(userId) ? message.getToId() : message.getFromId();
+                sessionId = message.getFromId().equals(userId) ? message.getToId().toString() : message.getFromId().toString();
             }
 
             // 如果会话不存在，则将当前消息加入

@@ -43,7 +43,7 @@ onMounted(() => {
   }
 
   // 从后端API获取会话列表
-  api.get(`/v1/users/${userId}/chat-sessions`)
+  api.get(`/v1/chat/users/${userId}/chat-sessions`)
     .then(response => {
       if (response.data && response.data.success) {
         // 转换后端返回的数据格式以匹配前端期望的字段

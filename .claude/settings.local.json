@@ -213,7 +213,9 @@
       "Bash(npm run --scripts-version)",
       "Bash(npx eslint:*)",
       "Bash(./mvn dependency:tree:*)",
-      "Bash(sh mvnw:*)"
+      "Bash(sh mvnw:*)",
+      "Bash(do cat \"$file\")",
+      "Bash(ss:*)"
     ],
     "deny": [],
     "ask": []

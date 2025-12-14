@@ -42,9 +42,9 @@ public class Order {
     @ApiModelProperty(value = "订单状态：0-待支付、1-待接单、2-备菜中、3-烹饪中、4-待上菜、5-已完成、6-已取消")
     private Integer status; // 订单状态：0-待支付、1-待接单、2-备菜中、3-烹饪中、4-待上菜、5-已完成、6-已取消
 
-    @TableField("address")
-    @ApiModelProperty(value = "配送地址")
-    private String address; // 配送地址
+    @TableField("address_id")
+    @ApiModelProperty(value = "配送地址ID")
+    private Long addressId; // 配送地址ID
 
     @TableField("remark")
     @ApiModelProperty(value = "订单备注")

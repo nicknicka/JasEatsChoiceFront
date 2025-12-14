@@ -66,6 +66,7 @@ public class User {
     @ApiModelProperty(value = "是否关闭天气推荐：true-关闭，false-开启")
     private Boolean disableWeatherRecommend; // 是否关闭天气推荐：true-关闭，false-开启
 
+
     @TableField("create_time")
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime; // 创建时间

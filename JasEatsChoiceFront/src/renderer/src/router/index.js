@@ -33,7 +33,6 @@ const MerchantOrders = () => import('../views/merchant/Orders.vue') // 商家订
 const MerchantTodayOrders = () => import('../views/merchant/TodayOrders.vue') // 商家今日订单
 const MerchantMenu = () => import('../views/merchant/Menu.vue') // 商家菜单管理
 const MerchantMessages = () => import('../views/merchant/Messages.vue') // 商家消息管理
-const MerchantMyShop = () => import('../views/merchant/MyShop.vue') // 我的店铺
 const MerchantMenuEdit = () => import('../views/merchant/MenuEdit.vue') // 菜单编辑
 const MerchantDishManagement = () => import('../views/merchant/DishManagement.vue') // 菜品管理
 const MerchantDishEdit = () => import('../views/merchant/DishEdit.vue') // 菜品编辑
@@ -177,7 +176,7 @@ const router = createRouter({
         {
           path: 'chat',
           name: 'user-chat',
-          component: () => import('../views/user/UnifiedChat.vue'),
+          component: () => import('../views/user/Chat.vue'),
           meta: { title: '佳食宜选-消息中心' }
         },
         {
@@ -267,12 +266,6 @@ const router = createRouter({
           name: 'merchant-messages',
           component: MerchantMessages,
           meta: { title: '佳食宜选-商家消息管理' }
-        },
-        {
-          path: 'my-shop', // 相对路径，继承自 /merchant/home
-          name: 'merchant-my-shop',
-          component: MerchantMyShop,
-          meta: { title: '佳食宜选-我的店铺' }
         },
         {
           path: 'menu-edit', // 相对路径，继承自 /merchant/home

@@ -76,7 +76,7 @@ const menuData = {
 	// 商家端菜单
 	// 商家端菜单 - 按功能模块重新排序：首页 → 核心业务 → 店铺管理 → 客户沟通 → 经营分析
 	merchant: [
-		{ index: "1", name: "商家首页", icon: HomeFilled, path: "/merchant/home" }, // 首页入口
+		{ index: "1", name: "我的店铺", icon: HomeFilled, path: "/merchant/home" }, // 首页入口
 		{ index: "2", name: "今日订单", icon: List, path: "/merchant/home/today-orders" }, // 核心业务模块
 		{ index: "3", name: "菜单管理", icon: Shop, path: "/merchant/home/menu" }, // 店铺管理模块
 		{
@@ -85,7 +85,6 @@ const menuData = {
 			icon: Document,
 			path: "/merchant/home/dish-management",
 		},
-		{ index: "5", name: "我的店铺", icon: Shop, path: "/merchant/home/my-shop" },
 		{ index: "6", name: "商家聊天", icon: ChatDotRound, path: "/merchant/home/chat" }, // 客户沟通模块
 		{ index: "9", name: "消息管理", icon: Message, path: "/merchant/home/messages" },
 		{
@@ -180,8 +179,7 @@ const toggleRole = () => {
 			navigateTo("/merchant/home");
 		}
 
-		// 保存当前角色到localStorage
-		localStorage.setItem("currentRole", userRole.value);
+		// Don't save role to localStorage - always default to user
 
 		console.log("角色切换成功:", userRole.value);
 	} catch (error) {
@@ -189,11 +187,11 @@ const toggleRole = () => {
 	}
 };
 
-// 页面加载时从localStorage或当前路由恢复角色
+// 页面加载时从当前路由恢复角色，默认进入用户角色
 onMounted(() => {
 	try {
 		// 1. First check current route to determine role
-		let detectedRole = "user"; // Default to user
+		let detectedRole = "user"; // Always default to user
 
 		if (router.currentRoute.value?.path?.startsWith("/merchant/")) {
 			detectedRole = "merchant";
@@ -209,12 +207,8 @@ onMounted(() => {
 			isMerchantRegistered.value = userInfoData?.role === "merchant" || savedRole === "merchant";
 		}
 
-		// 3. Use detected role from route if route is for merchant, otherwise use saved or default
-		if (savedRole && (detectedRole === "user" || router.currentRoute.path === "/")) {
-			userRole.value = savedRole;
-		} else {
-			userRole.value = detectedRole;
-		}
+		// 3. Always use detected role from route or default to user, ignore saved role
+		userRole.value = detectedRole;
 
 		// Update user info
 		if (userRole.value === "merchant") {
@@ -244,8 +238,7 @@ onMounted(() => {
 			};
 		}
 
-		// Save the final role to localStorage
-		localStorage.setItem("currentRole", userRole.value);
+		// Don't save role to localStorage - always default to user
 
 
 		console.log("恢复角色成功:", userRole.value);

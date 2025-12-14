@@ -73,6 +73,10 @@ public class Merchant {
     @TableField("avatar")
     private String avatar; // 商家头像
 
+    @TableField("rating")
+    @ApiModelProperty(value = "商家评分")
+    private BigDecimal rating; // 商家评分
+
     @TableField("business_hours")
     @ApiModelProperty(value = "营业时间")
     private String businessHours; // 营业时间

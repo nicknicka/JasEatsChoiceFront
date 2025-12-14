@@ -27,11 +27,11 @@ public class ChatMsg {
 
     @TableField("from_id")
     @ApiModelProperty(value = "发送者ID")
-    private String fromId; // 发送者ID
+    private Long fromId; // 发送者ID
 
     @TableField("to_id")
     @ApiModelProperty(value = "接收者ID")
-    private String toId; // 接收者ID
+    private Long toId; // 接收者ID
 
     @TableField("msg_type")
     @ApiModelProperty(value = "消息类型（single/group/order_sync/order_status）")
