@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @ApiModel(description = "群信息实体")
 public class Group {
 
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.INPUT)
     @JsonSerialize(using = ToStringSerializer.class)
     @ApiModelProperty(value = "群ID")
     private Long id; // 群ID

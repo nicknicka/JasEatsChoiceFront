@@ -5,6 +5,7 @@ import com.xx.jaseatschoicejava.entity.User;
 import com.xx.jaseatschoicejava.mapper.UserMapper;
 import com.xx.jaseatschoicejava.service.UserService;
 import com.xx.jaseatschoicejava.util.JwtUtil;
+import com.xx.jaseatschoicejava.util.IdGenerator;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean register(User user) {
+        // 生成用户ID
+        Long userId = IdGenerator.generateId();
+        user.setUserId(userId);
         // 对密码进行加密
         String encryptedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encryptedPassword);

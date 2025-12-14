@@ -15,7 +15,9 @@ import {
 	HomeFilled,
 	User,
 } from "@element-plus/icons-vue";
-import { decodeJwt } from '../utils/api.js';
+import { decodeJwt } from "../utils/api.js";
+import { useAuthStore } from "../store/authStore";
+import { useUserStore } from "../store/userStore";
 
 const router = useRouter();
 
@@ -24,20 +26,21 @@ const navigateTo = (path) => {
 	router.push(path);
 };
 
-// 用户信息
-const userInfo = ref({ name: "用户端", avatar: "👤", realAvatar: "https://picsum.photos/id/1005/150/150" });
+// 获取 Pinia 存储
+const authStore = useAuthStore();
+const userStore = useUserStore();
+
+// 用户信息 - 从 Pinia 中获取
+// 注释：使用计算属性直接从 userStore 获取 userInfo
 
 // 用户角色
 const userRole = ref("user"); // 'user' 或 'merchant'
 
-// 是否已经注册商家端
-const isMerchantRegistered = ref(false);
-
 // 提供更新用户信息的方法给子组件
 const updateSidebarAvatar = (avatarUrl) => {
-	userInfo.value.realAvatar = avatarUrl;
+	userStore.userInfo.realAvatar = avatarUrl;
 };
-provide('updateSidebarAvatar', updateSidebarAvatar);
+provide("updateSidebarAvatar", updateSidebarAvatar);
 
 // 预定义菜单数据
 const menuData = {
@@ -124,14 +127,19 @@ const updateActiveMenuIndex = () => {
 	}
 
 	// 特殊处理地址管理和联系客服页面 - 激活用户中心菜单
-	if (currentPath.startsWith("/user/home/address") || currentPath.startsWith("/user/home/contact")) {
+	if (
+		currentPath.startsWith("/user/home/address") ||
+		currentPath.startsWith("/user/home/contact")
+	) {
 		activeMenuIndex.value = "7"; // "用户中心"的索引是7
 		console.log("匹配到用户中心相关页面，激活用户中心菜单");
 		return;
 	}
 
 	// 查找当前路由对应的菜单项 - 按路径长度降序排序，确保更长的路径优先匹配
-	const sortedMenuItems = [...currentMenu.value].sort((a, b) => b.path.length - a.path.length);
+	const sortedMenuItems = [...currentMenu.value].sort(
+		(a, b) => b.path.length - a.path.length
+	);
 
 	for (const menuItem of sortedMenuItems) {
 		// 检查当前路由是否以菜单项的path开头
@@ -172,10 +180,18 @@ const toggleRole = () => {
 
 		// 更新用户信息和跳转
 		if (userRole.value === "user") {
-			userInfo.value = { name: "用户端", avatar: "👤", realAvatar: "https://picsum.photos/id/1005/150/150" };
+			userInfo.value = {
+				name: "用户端",
+				avatar: "👤",
+				realAvatar: "https://picsum.photos/id/1005/150/150",
+			};
 			navigateTo("/user/home");
 		} else {
-			userInfo.value = { name: "商户端", avatar: "🏪", realAvatar: "https://picsum.photos/id/200/150/150" };
+			userInfo.value = {
+				name: "商户端",
+				avatar: "🏪",
+				realAvatar: "https://picsum.photos/id/200/150/150",
+			};
 			navigateTo("/merchant/home");
 		}
 
@@ -197,49 +213,23 @@ onMounted(() => {
 			detectedRole = "merchant";
 		}
 
-		// 2. Then check localStorage
-		const savedRole = localStorage.getItem("currentRole");
-		const userInfoStr = localStorage.getItem("userInfo");
-
-		// Check if user has registered as merchant
-		if (userInfoStr) {
-			const userInfoData = JSON.parse(userInfoStr);
-			isMerchantRegistered.value = userInfoData?.role === "merchant" || savedRole === "merchant";
-		}
+		// 2. Check if user has registered as merchant (from Pinia store)
+		isMerchantRegistered = userStore.isMerchantRegistered;
 
 		// 3. Always use detected role from route or default to user, ignore saved role
 		userRole.value = detectedRole;
 
-		// Update user info
-		if (userRole.value === "merchant") {
-			// 从localStorage获取商家头像，如果没有则使用默认
-			const savedMerchantAvatar = localStorage.getItem('merchantAvatar');
-			userInfo.value = {
-				name: "商户端",
-				avatar: "🏪",
-				realAvatar: savedMerchantAvatar || "https://picsum.photos/id/200/150/150"
-			};
-		} else if (userRole.value === "user") {
-			// 从JWT令牌获取实际用户名
-			const token = localStorage.getItem('token');
-			let username = "用户端";
-
-			if (token) {
-				const decodedToken = decodeJwt(token);
-				if (decodedToken && decodedToken.username) {
-					username = decodedToken.username;
-				}
+		// User info is now managed through Pinia - no need to initialize it here
+		// 从JWT令牌获取实际用户名（仅作参考，实际应用应将用户信息存储在userStore中）
+		if (userRole.value === "user" && authStore.token) {
+			const decodedToken = decodeJwt(authStore.token);
+			if (decodedToken && decodedToken.username && userStore.userInfo) {
+				userStore.userInfo.name = decodedToken.username;
 			}
-
-			userInfo.value = {
-				name: username,
-				avatar: "👤",
-				realAvatar: "https://picsum.photos/id/1005/150/150"
-			};
 		}
 
-		// Don't save role to localStorage - always default to user
 
+		// Don't save role to localStorage - always default to user
 
 		console.log("恢复角色成功:", userRole.value);
 
@@ -263,7 +253,8 @@ watch(
 	currentMenu,
 	() => {
 		updateActiveMenuIndex();
-	}, { deep: true }
+	},
+	{ deep: true }
 );
 
 // Watch for route changes to update role automatically
@@ -280,38 +271,32 @@ watch(
 		if (userRole.value !== newRole) {
 			userRole.value = newRole;
 
-			// Update user info
+			// Update user info based on role (using Pinia store)
 			if (userRole.value === "merchant") {
-				// 从localStorage获取商家头像，如果没有则使用默认
-				const savedMerchantAvatar = localStorage.getItem('merchantAvatar');
-				userInfo.value = {
+				// 商户端信息从userStore.merchantInfo获取
+				userStore.userInfo = {
 					name: "商户端",
 					avatar: "🏪",
-					realAvatar: savedMerchantAvatar || "https://picsum.photos/id/200/150/150"
+					realAvatar: userStore.merchantInfo?.avatar || "https://picsum.photos/id/200/150/150",
 				};
 			} else if (userRole.value === "user") {
-				// 从JWT令牌获取实际用户名
-				const token = localStorage.getItem('token');
+				// 从authStore获取token并解码用户名
 				let username = "用户端";
-
-				if (token) {
-					const decodedToken = decodeJwt(token);
+				if (authStore.token) {
+					const decodedToken = decodeJwt(authStore.token);
 					if (decodedToken && decodedToken.username) {
 						username = decodedToken.username;
 					}
 				}
-
-				// 从localStorage获取用户头像
-				const savedUserAvatar = localStorage.getItem('userAvatar');
-				userInfo.value = {
+				// 使用userStore管理用户信息
+				userStore.userInfo = {
+					...userStore.userInfo,
 					name: username,
-					avatar: "👤",
-					realAvatar: savedUserAvatar || "https://picsum.photos/id/1005/150/150"
+					avatar: "👤"
 				};
 			}
 
-			// Save the new role to localStorage
-			localStorage.setItem("currentRole", userRole.value);
+			// Role is now managed through Pinia - no need to save to localStorage
 			console.log("路由变化自动更新角色:", userRole.value);
 			// 更新角色后，重新计算激活的菜单项索引
 			updateActiveMenuIndex();
@@ -356,7 +341,17 @@ const handleSearch = (value) => {
 	<div class="app-container">
 		<!-- 顶部导航栏 -->
 		<el-header class="top-nav-bar">
-			<div class="logo" @click="() => navigateTo(userRole === 'merchant' ? '/merchant/home' : '/user/home')">🎨 佳食宜选</div>
+			<div
+				class="logo"
+				@click="
+					() =>
+						navigateTo(
+							userRole === 'merchant' ? '/merchant/home' : '/user/home'
+						)
+				"
+			>
+				🎨 佳食宜选
+			</div>
 			<el-input
 				v-model="searchQuery"
 				placeholder="🔍 搜索框(支持菜品/商家搜索)"
@@ -374,7 +369,12 @@ const handleSearch = (value) => {
 			</el-input>
 			<div class="user-info">
 				<!-- 商家端已注册：显示角色切换按钮 -->
-				<el-button v-if="isMerchantRegistered" type="text" class="identity-switch" @click="toggleRole">
+				<el-button
+					v-if="userStore.isMerchantRegistered"
+					type="text"
+					class="identity-switch"
+					@click="toggleRole"
+				>
 					<span
 						:class="['user-icon', userRole === 'user' ? 'icon-enlarged' : '']"
 						>👤</span
@@ -399,13 +399,22 @@ const handleSearch = (value) => {
 			<!-- 左侧菜单栏 -->
 			<el-aside width="168px" class="sidebar-menu">
 				<div class="avatar-section" @click="handleAvatarClick">
-					<el-avatar :size="80" class="user-avatar" style="cursor: pointer" :src="userInfo.realAvatar">
+					<el-avatar
+						:size="80"
+						class="user-avatar"
+						style="cursor: pointer"
+						:src="userStore.userInfo?.realAvatar"
+					>
 						{{ userRole === "merchant" ? "🏪" : "👤" }}
 					</el-avatar>
-					<div class="username">{{ userInfo.name }}</div>
+					<div class="username">{{ userStore.userInfo?.name || userRole === "merchant" ? "商户端" : "用户端" }}</div>
 				</div>
 
-				<el-menu v-model:default-active="activeMenuIndex" class="menu-list" @select="handleMenuSelect">
+				<el-menu
+					v-model:default-active="activeMenuIndex"
+					class="menu-list"
+					@select="handleMenuSelect"
+				>
 					<el-menu-item
 						v-for="menuItem in currentMenu"
 						:key="menuItem.index"
@@ -429,7 +438,7 @@ const handleSearch = (value) => {
 		<!-- 头像放大对话框 -->
 		<el-dialog v-model="showLargeAvatar" title="个人头像" width="300px" top="20%">
 			<div style="text-align: center; padding: 20px 0">
-				<el-avatar :size="200" class="user-avatar" :src="userInfo.realAvatar">
+				<el-avatar :size="200" class="user-avatar" :src="userStore.userInfo?.realAvatar">
 					{{ userRole === "merchant" ? "🏪" : "👤" }}
 				</el-avatar>
 			</div>

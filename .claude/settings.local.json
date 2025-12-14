@@ -215,7 +215,10 @@
       "Bash(./mvn dependency:tree:*)",
       "Bash(sh mvnw:*)",
       "Bash(do cat \"$file\")",
-      "Bash(ss:*)"
+      "Bash(ss:*)",
+      "Bash(./mvnw test:*)",
+      "Bash(javac:*)",
+      "Bash(./mvnw dependency:resolve:*)"
     ],
     "deny": [],
     "ask": []

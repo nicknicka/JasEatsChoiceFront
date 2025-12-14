@@ -194,6 +194,8 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import { API_CONFIG } from "../../config";
 import { decodeJwt } from "../../utils/api.js";
+import { useAuthStore } from "../../store/authStore";
+import { useUserStore } from "../../store/userStore";
 
 const router = useRouter();
 
@@ -344,6 +346,24 @@ const deleteSavedAccount = (phone) => {
 	if (loginForm.phone === phone) {
 		loginForm.password = "";
 		rememberPassword.value = false;
+		// 清空输入框，触发自动完成组件更新
+		loginForm.phone = "";
+	} else {
+		// 如果输入框不是被删除的账号，强制刷新
+		const currentPhone = loginForm.phone;
+		if (currentPhone === "") {
+			// 输入框为空时，设置一个临时值再清空，强制触发组件更新
+			loginForm.phone = " ";
+			setTimeout(() => {
+				loginForm.phone = "";
+			}, 0);
+		} else {
+			// 输入框有内容时，清空再恢复
+			loginForm.phone = "";
+			setTimeout(() => {
+				loginForm.phone = currentPhone;
+			}, 0);
+		}
 	}
 	// 提示删除成功
 	ElMessage.success("已删除保存的账号");
@@ -382,17 +402,23 @@ const submitForm = async () => {
 					const decodedToken = decodeJwt(token);
 					const userId =
 						decodedToken?.userId || decodedToken?.sub || loginForm.phone; // 使用手机号作为备选
-					// 保存用户信息到localStorage
-					localStorage.setItem("phone", loginForm.phone); // 保存当前登录手机号
-					localStorage.setItem("userId", userId); // 使用后端返回的真实用户ID
-					localStorage.setItem("token", token);
-					// 同时保存为userInfo对象，以与其他页面保持一致
+
+					// 使用 Pinia 存储认证信息和用户信息
+					const authStore = useAuthStore();
+					const userStore = useUserStore();
+
+					// 保存认证信息
+					authStore.setToken(token);
+					authStore.setUserId(userId);
+
+					// 保存用户基本信息
 					const userInfo = {
-						phone: loginForm.phone,
 						userId: userId,
-						token: token
+						phone: loginForm.phone
 					};
-					localStorage.setItem("userInfo", JSON.stringify(userInfo));
+					userStore.setUserInfo(userInfo);
+					// 用户信息和认证信息已通过Pinia store保存到localStorage，无需重复操作
+					// 同时保存为userInfo对象，以与其他页面保持一致
 
 					// 保存账号信息
 					// 检查账号是否已经存在

@@ -26,8 +26,13 @@ const filteredMenus = ref([]);
 // 页面加载时初始化
 onMounted(() => {
   loading.value = true;
-  // 模拟商家ID，实际应用中应从登录信息获取
-  const merchantId = 1;
+  // 从localStorage获取商家ID
+  const merchantId = localStorage.getItem('merchantId');
+  if (!merchantId) {
+    ElMessage.error('未检测到商家ID，请重新登录');
+    router.push('/merchant/login');
+    return;
+  }
   // 从API获取菜单数据
   axios.get(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}`)
     .then(response => {
@@ -205,22 +210,41 @@ const saveNewMenu = () => {
     return;
   }
 
-  // 创建新菜单对象
-  const newMenuObj = {
-    id: Date.now(),
+  // 从localStorage获取商家ID
+  const merchantId = localStorage.getItem('merchantId');
+  if (!merchantId) {
+    ElMessage.error('未检测到商家ID，请重新登录');
+    router.push('/merchant/login');
+    return;
+  }
+
+  // 准备请求参数
+  const menuData = {
     name: newMenu.value.name,
-    dishes: 0,
+    category: newMenu.value.category,
     status: newMenu.value.status,
-    updateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-    autoOnline: newMenu.value.autoOnline ? newMenu.value.autoOnline.toISOString().slice(0, 19).replace('T', ' ') : '',
-    autoOffline: newMenu.value.autoOffline ? newMenu.value.autoOffline.toISOString().slice(0, 19).replace('T', ' ') : ''
+    autoOnline: newMenu.value.autoOnline,
+    autoOffline: newMenu.value.autoOffline
   };
 
-  // 添加到菜单列表
-  menuList.value.push(newMenuObj);
-  updateFilter();
-  addMenuDialogVisible.value = false;
-  ElMessage.success('菜单已添加');
+  // 发送POST请求到后端保存菜单
+  axios.post(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}`, menuData)
+    .then(response => {
+      if (response.data && response.data.success) {
+        // 从响应中获取完整的菜单对象
+        const savedMenu = response.data.data;
+
+        // 添加到菜单列表
+        menuList.value.push(savedMenu);
+        updateFilter();
+        addMenuDialogVisible.value = false;
+        ElMessage.success('菜单已添加');
+      }
+    })
+    .catch(error => {
+      console.error('保存菜单失败:', error);
+      ElMessage.error('保存菜单失败');
+    });
 };
 
 // 检查全选状态：0=未选择，1=部分选择，2=全选

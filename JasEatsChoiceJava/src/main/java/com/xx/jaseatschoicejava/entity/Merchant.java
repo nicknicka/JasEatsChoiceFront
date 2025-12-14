@@ -23,7 +23,7 @@ import java.math.BigDecimal;
 @ApiModel(description = "商家实体")
 public class Merchant {
 
-    @TableId
+    @TableId(type = com.baomidou.mybatisplus.annotation.IdType.INPUT)
     @ApiModelProperty(value = "商家ID")
     private Long id; // 商家ID
 

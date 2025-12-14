@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xx.jaseatschoicejava.entity.Merchant;
 import com.xx.jaseatschoicejava.mapper.MerchantMapper;
 import com.xx.jaseatschoicejava.service.MerchantService;
+import com.xx.jaseatschoicejava.util.IdGenerator;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,9 @@ public class MerchantServiceImpl extends ServiceImpl<MerchantMapper, Merchant> i
 
     @Override
     public boolean register(Merchant merchant) {
+        // 生成商家ID
+        Long merchantId = IdGenerator.generateId();
+        merchant.setId(merchantId);
         // 加密密码
         String encryptedPassword = passwordEncoder.encode(merchant.getPassword());
         merchant.setPassword(encryptedPassword);

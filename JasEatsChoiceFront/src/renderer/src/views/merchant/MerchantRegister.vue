@@ -72,6 +72,8 @@ import { ElMessage, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption } 
 import { useRouter } from 'vue-router';
 import api from '../../utils/api';
 import { API_CONFIG } from '../../config/index.js';
+import { useAuthStore } from '../../store/authStore';
+import { useUserStore } from '../../store/userStore';
 
 const router = useRouter();
 
@@ -205,23 +207,39 @@ const submitForm = () => {
         api.post(API_CONFIG.merchant.register, merchantData)
           .then(response => {
             ElMessage.success('注册成功！');
+
+            // 获取 Pinia 存储实例
+            const authStore = useAuthStore();
+            const userStore = useUserStore();
+
             // 保存用户信息和角色
             const merchantInfo = {
-              ...registerForm,
-              role: 'merchant',
-              userId: response.data.data.id, // 使用后端返回的真实ID
-              id: response.data.data.id, // 商家ID
+              merchantId: response.data.data.id, // 商家ID
               name: registerForm.merchantName,
+              phone: registerForm.contactPhone,
+              email: registerForm.email,
+              businessLicense: registerForm.businessLicense,
+              businessScope: registerForm.businessScope,
+              contactName: registerForm.contactName,
               avatar: response.data.data.avatar || '', // 使用后端返回的头像或空
-              rating: response.data.data.rating || '4.5/5.0'
+              rating: response.data.data.rating || '4.5/5.0',
+              status: 1
             };
 
-            localStorage.setItem('userInfo', JSON.stringify(merchantInfo));
-            localStorage.setItem('currentRole', 'merchant');
+            // 使用 Pinia 存储商家信息
+            userStore.setMerchantInfo(merchantInfo);
 
-            // 创建一个模拟的JWT令牌，包含用户ID信息
-            const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoi' + btoa(registerForm.merchantName) + 'LCJyb2xlIjoibWVyY2hhbnQiLCJpYXQiOjE2MjAwMDAwMDAsImV4cCI6MTYyMTAwMDAwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
-            localStorage.setItem('token', mockToken);
+            // 使用 Pinia 存储商家ID到认证信息
+            authStore.setMerchantId(merchantInfo.merchantId);
+
+            // 假设商家注册成功后，后端会返回一个真实的 token
+            // const token = response.data.data;
+            // authStore.setToken(token);
+
+            // 注意：目前后端可能还没有实现返回 token 的功能，等后端实现后再替换
+            // 临时使用模拟token
+            const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoi' + btoa(registerForm.merchantName) + 'LCJyb2xlIjoibWVyY2hhbnQiLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTYyMTAwMDAwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+            authStore.setToken(mockToken);
 
             // 注册成功后跳转到商家首页
             setTimeout(() => {

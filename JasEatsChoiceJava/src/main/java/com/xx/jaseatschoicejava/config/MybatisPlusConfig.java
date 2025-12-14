@@ -6,16 +6,19 @@ import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerIntercept
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * MyBatis-Plus配置类
+ */
 @Configuration
-public class MybatisPlusConfig {
+public class MyBatisPlusConfig {
 
+    /**
+     * 分页插件
+     */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        // 分页插件
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
         return interceptor;
     }
-
-    // 自定义ID生成器已经通过@Component注解自动注册
 }

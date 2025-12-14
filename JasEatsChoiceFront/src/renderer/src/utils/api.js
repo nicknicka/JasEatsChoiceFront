@@ -57,10 +57,14 @@ const DEFAULT_RETRIES = 2
 const RETRY_DELAY = 1000
 
 // 请求拦截器
+import pinia from '../store'
+import { useAuthStore } from '../store/authStore'
+
 api.interceptors.request.use(
   (config) => {
     // 添加请求头，如token等
-    const token = localStorage.getItem('token')
+    const authStore = useAuthStore(pinia) // 使用 Pinia store 获取 token
+    const token = authStore.token
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
