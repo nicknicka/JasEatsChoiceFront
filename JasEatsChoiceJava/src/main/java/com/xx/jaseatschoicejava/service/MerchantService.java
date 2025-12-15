@@ -12,6 +12,6 @@ public interface MerchantService extends IService<Merchant> {
      * @param merchant 商家信息
      * @return 是否成功
      */
-    boolean register(Merchant merchant);
+    Merchant register(Merchant merchant);
 
 }

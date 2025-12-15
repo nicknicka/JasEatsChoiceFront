@@ -36,25 +36,16 @@ public class UserController {
     @PostMapping("/register")
     public ResponseResult<?> register(@RequestBody RegisterRequest registerRequest) {
         try {
-            log.info("Received register request: {}", registerRequest.toString());
             // 验证验证码
             if (registerRequest.getCaptcha() == null || registerRequest.getCheckCodeKey() == null) {
                 return ResponseResult.fail("400", "验证码不能为空");
             }
 
-            // 从Redis获取验证码
-            String redisCaptcha = redisTemplate.opsForValue().get("captcha:" + registerRequest.getCheckCodeKey());
-            if (redisCaptcha == null) {
-                return ResponseResult.fail("400", "验证码已过期");
+            // 使用验证码工具类验证验证码
+            boolean isValidCaptcha = captchaUtil.validateCaptchaAndDelete(registerRequest.getCaptcha(), registerRequest.getCheckCodeKey());
+            if (!isValidCaptcha) {
+                return ResponseResult.fail("400", "验证码错误或已过期");
             }
-
-            // 比较验证码 - 使用严格的区分大小写比较
-            if (!registerRequest.getCaptcha().equals(redisCaptcha)) {
-                return ResponseResult.fail("400", "验证码错误");
-            }
-
-            // 验证码验证通过后，删除Redis中的验证码
-            redisTemplate.delete("captcha:" + registerRequest.getCheckCodeKey());
 
             // 创建User对象并设置属性
             User user = new User();
@@ -86,6 +77,9 @@ public class UserController {
     private RedisTemplate<String, String> redisTemplate;
 
     @Autowired
+    private com.xx.jaseatschoicejava.util.CaptchaUtil captchaUtil;
+
+    @Autowired
     private AliyunSMSService aliyunSMSService;
 
     // 短信服务配置
@@ -94,27 +88,16 @@ public class UserController {
     @PostMapping("/login")
     public ResponseResult<?> login(@RequestBody LoginRequest loginRequest) {
         try {
-            log.info("Received login request: {}", loginRequest.toString());
             // 验证验证码
             if (loginRequest.getCaptcha() == null || loginRequest.getCheckCodeKey() == null) {
                 return ResponseResult.fail("400", "验证码不能为空");
             }
 
-            // 从Redis获取验证码
-            String redisCaptcha = redisTemplate.opsForValue().get("captcha:" + loginRequest.getCheckCodeKey());
-            log.info("Redis captcha: {}", redisCaptcha);
-            log.info("Login request captcha: {}", loginRequest.getCaptcha());
-            if (redisCaptcha == null) {
-                return ResponseResult.fail("400", "验证码已过期");
+            // 使用验证码工具类验证验证码
+            boolean isValidCaptcha = captchaUtil.validateCaptchaAndDelete(loginRequest.getCaptcha(), loginRequest.getCheckCodeKey());
+            if (!isValidCaptcha) {
+                return ResponseResult.fail("400", "验证码错误或已过期");
             }
-
-            // 比较验证码 - 使用严格的区分大小写比较
-            if (!loginRequest.getCaptcha().equals(redisCaptcha)) {
-                return ResponseResult.fail("400", "验证码错误");
-            }
-
-            // 验证码验证通过后，删除Redis中的验证码
-            redisTemplate.delete("captcha:" + loginRequest.getCheckCodeKey());
 
             // 处理登录账号：前端传phone或username（统一作为手机号处理，因为User实体没有username字段）
             String account = loginRequest.getPhone();

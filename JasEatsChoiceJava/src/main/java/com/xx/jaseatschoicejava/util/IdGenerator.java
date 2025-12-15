@@ -1,12 +1,15 @@
 package com.xx.jaseatschoicejava.util;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 /**
  * 统一ID生成器
  * 1. 生成16位数字的ID
- * 2. 结合时间戳和随机数，确保ID的唯一性
- * 3. 提供ID类型转换功能
+ * 2. 使用SHA-256哈希算法结合时间戳和随机数
+ * 3. 生成后进行随机打乱以确保无序性
+ * 4. 提供ID类型转换功能
  */
 public class IdGenerator {
 
@@ -21,63 +24,103 @@ public class IdGenerator {
     // ID长度
     public static final int ID_LENGTH = 16;
 
-    // 时间戳开始时间（2025-01-01 00:00:00）
-    private static final long START_TIMESTAMP = 1735689600000L;
+    // 哈希算法
+    private static final String HASH_ALGORITHM = "SHA-256";
 
     /**
      * 生成16位数字的ID
-     * 结构：时间戳偏移量（10位） + 递增序列号（6位）
-     * 时间戳部分确保了ID的大致递增顺序
-     * 序列号部分确保了在同一毫秒内生成的ID不会重复
+     * 流程：
+     * 1. 组合当前时间戳和随机数
+     * 2. 使用SHA-256哈希算法生成哈希值
+     * 3. 从哈希值中提取数字部分
+     * 4. 截取16位数字
+     * 5. 对16位数字进行随机打乱
+     * 6. 返回最终的16位数字ID
      */
-
-    // 上次生成ID的时间戳
-    private static long lastTimestamp = -1L;
-
-    // 同一毫秒内的序列号
-    private static long sequence = 0L;
-
-    // 序列号的最大值（6位数字）
-    private static final long MAX_SEQUENCE = 999999L;
-
     public static synchronized Long generateId() {
-        // 获取当前时间戳
-        long currentTimestamp = System.currentTimeMillis() - START_TIMESTAMP;
+        try {
+            MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
 
-        // 如果当前时间戳与上次相同
-        if (currentTimestamp == lastTimestamp) {
-            // 序列号自增
-            sequence = (sequence + 1) & MAX_SEQUENCE;
+            // 1. 生成组合字符串：时间戳 + 随机数
+            String input = System.currentTimeMillis() + "-" + RANDOM.nextLong();
 
-            // 如果序列号超出范围，等待下一毫秒
-            if (sequence == 0) {
-                // 循环等待直到时间戳变化
-                while (System.currentTimeMillis() - START_TIMESTAMP <= lastTimestamp) {
-                    // 空循环
+            // 2. 计算哈希值
+            byte[] hashBytes = digest.digest(input.getBytes());
+
+            // 3. 从哈希值中提取数字部分
+            StringBuilder digitsBuilder = new StringBuilder();
+            for (byte b : hashBytes) {
+                // 将字节转换为无符号整数并取后两位
+                String byteStr = String.format("%02X", b & 0xFF);
+                for (char c : byteStr.toCharArray()) {
+                    if (Character.isDigit(c)) {
+                        digitsBuilder.append(c);
+                        if (digitsBuilder.length() >= ID_LENGTH * 2) { // 获取足够多的数字
+                            break;
+                        }
+                    }
                 }
-                currentTimestamp = System.currentTimeMillis() - START_TIMESTAMP;
+                if (digitsBuilder.length() >= ID_LENGTH * 2) {
+                    break;
+                }
             }
-        } else {
-            // 如果时间戳不同，重置序列号
-            sequence = 0L;
+
+            // 4. 确保至少有16位数字，如果不够则继续循环
+            while (digitsBuilder.length() < ID_LENGTH) {
+                // 生成更多数字
+                input = System.currentTimeMillis() + "-" + RANDOM.nextLong() + "-" + RANDOM.nextLong();
+                hashBytes = digest.digest(input.getBytes());
+
+                for (byte b : hashBytes) {
+                    String byteStr = String.format("%02X", b & 0xFF);
+                    for (char c : byteStr.toCharArray()) {
+                        if (Character.isDigit(c)) {
+                            digitsBuilder.append(c);
+                            if (digitsBuilder.length() >= ID_LENGTH) {
+                                break;
+                            }
+                        }
+                    }
+                    if (digitsBuilder.length() >= ID_LENGTH) {
+                        break;
+                    }
+                }
+            }
+
+            // 截取16位数字
+            String digits = digitsBuilder.substring(0, ID_LENGTH);
+
+            // 5. 随机打乱字符串
+            String shuffled = shuffleString(digits);
+
+            // 6. 转换为Long并返回
+            return Long.parseLong(shuffled);
+
+        } catch (NoSuchAlgorithmException e) {
+            // 如果SHA-256不可用，回退到基于时间戳的方式
+            e.printStackTrace();
+            // 回退实现，确保系统可用性
+            long timestamp = System.currentTimeMillis();
+            long random = RANDOM.nextLong() % 10000000000000000L;
+            return Math.abs(timestamp * 10000000000L + random % 10000000000L);
         }
+    }
 
-        // 更新上次时间戳
-        lastTimestamp = currentTimestamp;
-
-        // 将时间戳转换为字符串，取后10位，确保10位长度
-        String timestampStr = String.valueOf(currentTimestamp);
-        if (timestampStr.length() > 10) {
-            timestampStr = timestampStr.substring(timestampStr.length() - 10);
+    /**
+     * 随机打乱字符串
+     * @param str 要打乱的字符串
+     * @return 打乱后的字符串
+     */
+    private static String shuffleString(String str) {
+        char[] chars = str.toCharArray();
+        for (int i = chars.length - 1; i > 0; i--) {
+            int j = RANDOM.nextInt(i + 1);
+            // 交换字符
+            char temp = chars[i];
+            chars[i] = chars[j];
+            chars[j] = temp;
         }
-        // 格式化为10位，不足则补前导0
-        timestampStr = String.format("%010d", Long.parseLong(timestampStr));
-
-        // 将序列号转换为6位字符串
-        String sequenceStr = String.format("%06d", sequence);
-
-        // 拼接并转换为Long
-        return Long.parseLong(timestampStr + sequenceStr);
+        return new String(chars);
     }
 
     /**

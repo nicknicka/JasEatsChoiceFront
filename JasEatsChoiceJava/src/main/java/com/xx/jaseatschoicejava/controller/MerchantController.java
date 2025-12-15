@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.xx.jaseatschoicejava.entity.MerchantRegisterRequest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -63,13 +65,57 @@ public class MerchantController {
     /**
      * 商家注册
      */
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Autowired
+    private com.xx.jaseatschoicejava.util.CaptchaUtil captchaUtil;
+
     @PostMapping("/register")
-    public ResponseResult<?> register(@RequestBody Merchant merchant) {
-        boolean success = merchantService.register(merchant);
-        if (success) {
-            return ResponseResult.success("注册成功");
+    public ResponseResult<?> register(@RequestBody MerchantRegisterRequest registerRequest) {
+        try {
+            // 验证验证码
+            if (registerRequest.getCaptcha() == null || registerRequest.getCaptchaKey() == null) {
+                return ResponseResult.fail("400", "验证码不能为空");
+            }
+
+            // 使用验证码工具类验证验证码
+            boolean isValidCaptcha = captchaUtil.validateCaptchaAndDelete(registerRequest.getCaptcha(), registerRequest.getCaptchaKey());
+            if (!isValidCaptcha) {
+                return ResponseResult.fail("400", "验证码错误或已过期");
+            }
+
+            // 创建Merchant对象并设置属性
+            Merchant merchant = new Merchant();
+            merchant.setName(registerRequest.getName());
+            merchant.setBusinessLicense(registerRequest.getBusinessLicense());
+            try {
+                // 将经营范围数组转换为JSON字符串
+                ObjectMapper objectMapper = new ObjectMapper();
+                merchant.setBusinessScope(objectMapper.writeValueAsString(registerRequest.getBusinessScope()));
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ResponseResult.fail("400", "经营范围格式错误");
+            }
+            merchant.setContactName(registerRequest.getContactName());
+            merchant.setPhone(registerRequest.getPhone());
+            merchant.setEmail(registerRequest.getEmail());
+            merchant.setPassword(registerRequest.getPassword());
+
+            Merchant savedMerchant = merchantService.register(merchant);
+            if (savedMerchant != null) {
+                // 可以选择在返回前清除密码等敏感信息
+                savedMerchant.setPassword(null);
+                return ResponseResult.success(savedMerchant);
+            }
+            return ResponseResult.fail("500", "注册失败");
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // 处理手机号或邮箱重复的情况
+            return ResponseResult.fail("400", "该手机号或邮箱已被注册，请更换其他账号");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "注册失败");
         }
-        return ResponseResult.fail("500", "注册失败");
     }
 
     /**

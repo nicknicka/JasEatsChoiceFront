@@ -66,6 +66,9 @@ public class User {
     @ApiModelProperty(value = "是否关闭天气推荐：true-关闭，false-开启")
     private Boolean disableWeatherRecommend; // 是否关闭天气推荐：true-关闭，false-开启
 
+    @TableField("merchant_id")
+    @ApiModelProperty(value = "商家ID")
+    private Long merchantId; // 商家ID，如果不为空表示用户已注册为商家
 
     @TableField("create_time")
     @ApiModelProperty(value = "创建时间")
@@ -178,5 +181,13 @@ public class User {
 
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public Long getMerchantId() {
+        return merchantId;
+    }
+
+    public void setMerchantId(Long merchantId) {
+        this.merchantId = merchantId;
     }
 }

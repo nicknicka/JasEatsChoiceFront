@@ -14,17 +14,25 @@ export interface UserInfo {
   location: string
   createdAt: string
   updatedAt: string
+  merchantId?: string // 商家ID，如果不为空表示用户已注册为商家
   // 其他用户信息字段
 }
 
 export interface MerchantInfo {
   merchantId: string
   name: string
-  address: string
+  address?: string
   phone: string
-  status: number
-  createdAt: string
-  updatedAt: string
+  status: boolean
+  createTime?: string
+  updateTime?: string
+  businessLicense: string
+  businessScope: string[]
+  contactName: string
+  avatar?: string
+  rating?: number
+  businessHours?: string
+  email?: string
   // 其他商家信息字段
 }
 
@@ -37,7 +45,7 @@ export const useUserStore = defineStore('user', {
 
   // Getters (计算属性)
   getters: {
-    isMerchantRegistered: (state) => !!state.merchantInfo
+    isMerchantRegistered: (state) => !!state.userInfo?.merchantId || !!state.merchantInfo
   },
 
   // Actions (方法)
@@ -55,6 +63,13 @@ export const useUserStore = defineStore('user', {
 
         if (response.data.code === '200') {
           this.userInfo = response.data.data
+
+          // 如果用户有注册商家ID，保存到authStore并获取商家信息
+          if (this.userInfo && this.userInfo.merchantId) {
+            authStore.setMerchantId(this.userInfo.merchantId)
+            await this.fetchMerchantInfo() // 自动获取商家信息
+          }
+
           return response.data.data
         } else {
           throw new Error(response.data.message || '获取用户信息失败')
@@ -67,6 +82,12 @@ export const useUserStore = defineStore('user', {
 
     setUserInfo(info: UserInfo) {
       this.userInfo = info
+
+      // 如果用户有注册商家ID，保存到authStore
+      if (info.merchantId) {
+        const authStore = useAuthStore()
+        authStore.setMerchantId(info.merchantId)
+      }
     },
 
     async fetchMerchantInfo() {

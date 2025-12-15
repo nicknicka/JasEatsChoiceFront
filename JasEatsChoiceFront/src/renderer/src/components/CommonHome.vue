@@ -35,6 +35,8 @@ const userStore = useUserStore();
 
 // 用户角色
 const userRole = ref("user"); // 'user' 或 'merchant'
+// 是否已注册商家
+const isMerchantRegistered = ref(false);
 
 // 提供更新用户信息的方法给子组件
 const updateSidebarAvatar = (avatarUrl) => {
@@ -214,7 +216,7 @@ onMounted(() => {
 		}
 
 		// 2. Check if user has registered as merchant (from Pinia store)
-		isMerchantRegistered = userStore.isMerchantRegistered;
+		isMerchantRegistered.value = userStore.isMerchantRegistered;
 
 		// 3. Always use detected role from route or default to user, ignore saved role
 		userRole.value = detectedRole;
@@ -255,6 +257,14 @@ watch(
 		updateActiveMenuIndex();
 	},
 	{ deep: true }
+);
+
+// 监听商家注册状态变化
+watch(
+	() => userStore.isMerchantRegistered,
+	(newValue) => {
+		isMerchantRegistered.value = newValue;
+	}
 );
 
 // Watch for route changes to update role automatically
@@ -370,7 +380,7 @@ const handleSearch = (value) => {
 			<div class="user-info">
 				<!-- 商家端已注册：显示角色切换按钮 -->
 				<el-button
-					v-if="userStore.isMerchantRegistered"
+					v-if="isMerchantRegistered"
 					type="text"
 					class="identity-switch"
 					@click="toggleRole"

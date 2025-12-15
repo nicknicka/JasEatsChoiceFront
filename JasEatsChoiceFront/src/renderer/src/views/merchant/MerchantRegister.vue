@@ -13,14 +13,21 @@
         </el-form-item>
 
         <el-form-item label="经营范围" prop="businessScope">
-          <el-select v-model="registerForm.businessScope" placeholder="请选择经营范围" multiple style="width: 100%;">
+          <el-select v-model="registerForm.businessScope" placeholder="请选择经营范围" multiple style="width: 100%;" @change="handleBusinessScopeChange">
             <el-option label="中餐" value="中餐" />
             <el-option label="西餐" value="西餐" />
             <el-option label="快餐" value="快餐" />
             <el-option label="甜点" value="甜点" />
             <el-option label="饮品" value="饮品" />
             <el-option label="其他" value="其他" />
+            <el-option label="自定义" value="自定义" />
           </el-select>
+
+          <!-- 自定义经营范围输入框 -->
+          <div v-if="showCustomBusinessScope" style="display: flex; gap: 10px; margin-top: 10px;">
+            <el-input v-model="customBusinessScope" placeholder="请输入自定义经营范围" style="flex: 1;" />
+            <el-button type="primary" @click="addCustomBusinessScope">确定</el-button>
+          </div>
         </el-form-item>
 
         <el-form-item label="联系人姓名" prop="contactName">
@@ -44,12 +51,16 @@
         </el-form-item>
 
         <el-form-item label="验证码" prop="captcha">
-          <div style="display: flex;">
-            <el-input v-model="registerForm.captcha" placeholder="请输入验证码" style="width: 60%; margin-right: 10px;" />
-            <div style="width: 120px; height: 36px; background-color: #f5f7fa; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; letter-spacing: 2px; cursor: pointer;" @click="generateCaptcha">
-              {{ captchaExpression }} = ?
-            </div>
-            <el-button type="text" size="small" @click="generateCaptcha" style="margin-left: 10px;">刷新</el-button>
+          <div style="display: flex; align-items: center;">
+            <el-input v-model="registerForm.captcha" placeholder="请输入验证码" style="width: 40%; margin-right: 10px;" />
+            <img
+              v-if="captchaImage"
+              :src="captchaImage"
+              style="width: 120px; height: 36px; cursor: pointer; margin-right: 10px;"
+              @click="getCaptcha"
+              alt="验证码"
+            />
+            <el-button type="text" size="small" @click="getCaptcha" style="margin-left: 0;">刷新</el-button>
           </div>
         </el-form-item>
 
@@ -89,6 +100,39 @@ const registerForm = reactive({
   confirmPassword: '',
   captcha: ''
 });
+
+// 自定义经营范围相关
+const showCustomBusinessScope = ref(false);
+const customBusinessScope = ref('');
+
+// 自定义经营范围变化处理
+const handleBusinessScopeChange = (value) => {
+  // 检查是否选择了"自定义"选项
+  showCustomBusinessScope.value = value.includes('自定义');
+
+  // 如果取消选择"自定义"，则清空输入框
+  if (!showCustomBusinessScope.value) {
+    customBusinessScope.value = '';
+  }
+};
+
+// 添加自定义经营范围
+const addCustomBusinessScope = () => {
+  if (customBusinessScope.value.trim()) {
+    // 如果"自定义"选项还在列表中，先移除它
+    const index = registerForm.businessScope.indexOf('自定义');
+    if (index !== -1) {
+      registerForm.businessScope.splice(index, 1);
+    }
+
+    // 添加自定义经营范围
+    registerForm.businessScope.push(customBusinessScope.value.trim());
+
+    // 清空输入框并隐藏自定义选项区域
+    customBusinessScope.value = '';
+    showCustomBusinessScope.value = false;
+  }
+};
 
 // 表单验证规则
 const registerRules = reactive({
@@ -130,59 +174,41 @@ const registerRules = reactive({
       }, trigger: 'blur' }
   ],
   captcha: [
-    { required: true, message: '请输入验证码', trigger: 'blur' },
-    { validator: (rule, value, callback) => {
-        if (Number(value) !== captchaResult.value) {
-          callback(new Error('验证码错误'));
-        } else {
-          callback();
-        }
-      }, trigger: 'blur' }
+    { required: true, message: '请输入验证码', trigger: 'blur' }
   ]
 });
 
-// 生成的验证码表达式和结果
-const captchaExpression = ref('');
-const captchaResult = ref(0);
+// 验证码相关
+const captchaImage = ref(''); // 验证码图片
+const captchaKey = ref('');   // 验证码Key（用于后端验证）
 
-// 生成算术验证码
-const generateCaptcha = () => {
-  const num1 = Math.floor(Math.random() * 20) + 1; // 1-20
-  const num2 = Math.floor(Math.random() * 10) + 1;  // 1-10
-  const operators = ['+', '-', '*'];
-  const operator = operators[Math.floor(Math.random() * operators.length)];
+// 从后端获取验证码
+const getCaptcha = async () => {
+  try {
+    const response = await api.get('/v1/captcha/checkCode'); // 调用后端验证码接口
+    // 添加调试信息，查看响应结构
+    // console.log('验证码接口完整响应:', response);
+    // console.log('验证码接口响应data:', response.data);
 
-  // 计算结果，确保结果为正整数
-  let result;
-  switch (operator) {
-    case '+':
-      result = num1 + num2;
-      break;
-    case '-':
-      // 确保减法结果为正
-      const maxNum = Math.max(num1, num2);
-      const minNum = Math.min(num1, num2);
-      captchaExpression.value = `${maxNum} - ${minNum}`;
-      result = maxNum - minNum;
-      return;
-    case '*':
-      result = num1 * num2;
-      break;
-    default:
-      result = num1 + num2;
-      operator = '+';
+    // 智能判断响应结构
+    const captchaData = response.data;
+    if (captchaData) {
+      // Base64图片需要添加前缀才能正确显示
+      captchaImage.value = 'data:image/png;base64,' + captchaData.checkCode;
+      captchaKey.value = captchaData.checkCodeKey;     // 验证码唯一标识
+    }
+  } catch (error) {
+    console.error('获取验证码失败:', error);
+    ElMessage.error('获取验证码失败，请稍后重试');
   }
-
-  captchaExpression.value = `${num1} ${operator} ${num2}`;
-  captchaResult.value = result;
 };
 
 // 表单引用
 const registerFormRef = ref(null);
 
-// 页面加载时生成验证码
+// 页面加载时获取验证码
 onMounted(() => {
-  generateCaptcha();
+  getCaptcha();
 });
 
 // 提交表单
@@ -198,32 +224,43 @@ const submitForm = () => {
           password: registerForm.password,
           // 其他字段暂时保留，等待后端实体更新后启用
           businessLicense: registerForm.businessLicense,
-          businessScope: registerForm.businessScope.join(','), // 将数组转换为逗号分隔字符串
+          businessScope: registerForm.businessScope, // 直接发送数组
           contactName: registerForm.contactName,
-          email: registerForm.email
+          email: registerForm.email,
+          captcha: registerForm.captcha,
+          captchaKey: captchaKey.value
         };
 
         // 调用商家注册API
         api.post(API_CONFIG.merchant.register, merchantData)
-          .then(response => {
+          .then(apiResponse => {
+            // 严格检查响应是否有效（注意：响应拦截器已将 response.data 直接返回）
+            if (!apiResponse || !apiResponse.id) { // 检查商家ID是否存在
+              console.error('注册失败: 无效的API响应', apiResponse);
+              ElMessage.error('注册失败: 服务器返回无效响应');
+              return;
+            }
+
             ElMessage.success('注册成功！');
 
             // 获取 Pinia 存储实例
             const authStore = useAuthStore();
             const userStore = useUserStore();
 
+            console.log('商家注册响应:', apiResponse);
             // 保存用户信息和角色
             const merchantInfo = {
-              merchantId: response.data.data.id, // 商家ID
-              name: registerForm.merchantName,
-              phone: registerForm.contactPhone,
-              email: registerForm.email,
-              businessLicense: registerForm.businessLicense,
-              businessScope: registerForm.businessScope,
-              contactName: registerForm.contactName,
-              avatar: response.data.data.avatar || '', // 使用后端返回的头像或空
-              rating: response.data.data.rating || '4.5/5.0',
-              status: 1
+              merchantId: apiResponse.id, // 商家ID
+              name: apiResponse.name,
+              phone: apiResponse.phone,
+              email: apiResponse.email,
+              businessLicense: apiResponse.businessLicense,
+              businessScope: apiResponse.businessScope,
+              contactName: apiResponse.contactName,
+              avatar: apiResponse.avatar,
+              rating: apiResponse.rating,
+              status: apiResponse.status,
+              businessHours: apiResponse.businessHours
             };
 
             // 使用 Pinia 存储商家信息
@@ -235,11 +272,6 @@ const submitForm = () => {
             // 假设商家注册成功后，后端会返回一个真实的 token
             // const token = response.data.data;
             // authStore.setToken(token);
-
-            // 注意：目前后端可能还没有实现返回 token 的功能，等后端实现后再替换
-            // 临时使用模拟token
-            const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoi' + btoa(registerForm.merchantName) + 'LCJyb2xlIjoibWVyY2hhbnQiLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTYyMTAwMDAwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
-            authStore.setToken(mockToken);
 
             // 注册成功后跳转到商家首页
             setTimeout(() => {

@@ -7,7 +7,6 @@ import com.xx.jaseatschoicejava.service.MerchantService;
 import com.xx.jaseatschoicejava.util.IdGenerator;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 
 /**
@@ -19,7 +18,7 @@ public class MerchantServiceImpl extends ServiceImpl<MerchantMapper, Merchant> i
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
-    public boolean register(Merchant merchant) {
+    public Merchant register(Merchant merchant) {
         // 生成商家ID
         Long merchantId = IdGenerator.generateId();
         merchant.setId(merchantId);
@@ -31,6 +30,9 @@ public class MerchantServiceImpl extends ServiceImpl<MerchantMapper, Merchant> i
         // 设置创建时间
         merchant.setCreateTime(LocalDateTime.now());
         merchant.setUpdateTime(LocalDateTime.now());
-        return save(merchant);
+        // 地址、经纬度等字段可以为空，无需默认值
+        // 数据库已修改为允许这些字段为空
+        boolean success = save(merchant);
+        return success ? merchant : null;
     }
 }

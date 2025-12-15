@@ -218,7 +218,22 @@
       "Bash(ss:*)",
       "Bash(./mvnw test:*)",
       "Bash(javac:*)",
-      "Bash(./mvnw dependency:resolve:*)"
+      "Bash(./mvnw dependency:resolve:*)",
+      "Bash(mvn compile:*)",
+      "Bash(__NEW_LINE__ echo -e \"\\n===== 优化建议 =====\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n===== 补充说明 =====\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n前端层面：\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n前端实现（示例）：\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n状态切换：\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n前端状态：未找到实现\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n建议实现：\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n**前端实现状态：未实现**\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n**实现建议**\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n**具体实现建议**\")",
+      "Bash(__NEW_LINE__ echo -e \"\\n=== 解决方案 ===\")",
+      "Bash({)",
+      "Bash(__NEW_LINE__ javac -cp /Users/nickxiao/JasEatsChoice/JasEatsChoiceJava/target/classes /tmp/TestNewIdGen.java)",
+      "Bash(__NEW_LINE__ })"
     ],
     "deny": [],
     "ask": []
