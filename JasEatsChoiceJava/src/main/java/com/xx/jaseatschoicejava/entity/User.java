@@ -78,6 +78,10 @@ public class User {
     @ApiModelProperty(value = "更新时间")
     private LocalDateTime updateTime; // 更新时间
 
+    @TableField("avatar")
+    @ApiModelProperty(value = "用户头像URL")
+    private String avatar; // 用户头像URL
+
     // Getters and Setters
     public Long getUserId() {
         return userId;
@@ -189,5 +193,13 @@ public class User {
 
     public void setMerchantId(Long merchantId) {
         this.merchantId = merchantId;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 }

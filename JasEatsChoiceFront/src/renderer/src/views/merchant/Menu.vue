@@ -4,6 +4,8 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { API_CONFIG } from '../../config/index.js';
+// 导入authStore
+import { useAuthStore } from '../../store/authStore';
 
 const router = useRouter();
 // 菜单状态映射
@@ -26,11 +28,11 @@ const filteredMenus = ref([]);
 // 页面加载时初始化
 onMounted(() => {
   loading.value = true;
-  // 从localStorage获取商家ID
-  const merchantId = localStorage.getItem('merchantId');
+  // 从authStore获取商家ID
+  const authStore = useAuthStore();
+  const merchantId = authStore.merchantId;
   if (!merchantId) {
     ElMessage.error('未检测到商家ID，请重新登录');
-    router.push('/merchant/login');
     return;
   }
   // 从API获取菜单数据
@@ -210,8 +212,9 @@ const saveNewMenu = () => {
     return;
   }
 
-  // 从localStorage获取商家ID
-  const merchantId = localStorage.getItem('merchantId');
+  // 从authStore获取商家ID
+  const authStore = useAuthStore();
+  const merchantId = authStore.merchantId;
   if (!merchantId) {
     ElMessage.error('未检测到商家ID，请重新登录');
     router.push('/merchant/login');

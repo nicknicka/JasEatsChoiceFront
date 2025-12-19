@@ -218,6 +218,8 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '../../utils/api'
 import { API_CONFIG } from '../../config'
+// 导入authStore
+import { useAuthStore } from '../../store/authStore'
 
 const router = useRouter()
 
@@ -243,7 +245,19 @@ const userInfo = ref({
 
 // 从本地存储加载真实数据
 onMounted(() => {
-  const userId = parseInt(localStorage.getItem('userId') , 10)
+
+  // 从authStore获取userId
+  const authStore = useAuthStore()
+  const userId = parseInt(authStore.userId || '0', 10)
+
+  console.log('userId:', userId) ;
+
+  // 检查userId是否有效
+  if (isNaN(userId) || userId <= 0) {
+    ElMessage.error('用户未登录或登录信息无效，请重新登录')
+    router.push('/login')
+    return
+  }
 
   // 从后端API获取用户信息
   api

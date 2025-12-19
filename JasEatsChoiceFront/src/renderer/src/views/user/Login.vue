@@ -397,11 +397,9 @@ const submitForm = async () => {
 					}
 
 					// 登录成功处理
-					const token = response.data.data; // 后端直接返回token字符串
-					// 解码token获取用户ID
-					const decodedToken = decodeJwt(token);
-					const userId =
-						decodedToken?.userId || decodedToken?.sub || loginForm.phone; // 使用手机号作为备选
+					const responseData = response.data.data; // 后端返回对象包含token和user
+					const token = responseData.token; // 提取token
+					const userData = responseData.user; // 提取用户信息
 
 					// 使用 Pinia 存储认证信息和用户信息
 					const authStore = useAuthStore();
@@ -409,14 +407,10 @@ const submitForm = async () => {
 
 					// 保存认证信息
 					authStore.setToken(token);
-					authStore.setUserId(userId);
+					authStore.setUserId(userData.userId);
 
-					// 保存用户基本信息
-					const userInfo = {
-						userId: userId,
-						phone: loginForm.phone
-					};
-					userStore.setUserInfo(userInfo);
+					// 保存用户完整信息
+					userStore.setUserInfo(userData);
 					// 用户信息和认证信息已通过Pinia store保存到localStorage，无需重复操作
 					// 同时保存为userInfo对象，以与其他页面保持一致
 

@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { API_CONFIG } from '../../config/index.js';
 import { ElMessage } from 'element-plus';
+import { useAuthStore } from './../../store/authStore';
+import { useUserStore } from './../../store/userStore';
 
 // 卡路里统计数据
 const calorieData = ref({
@@ -13,13 +15,13 @@ const calorieData = ref({
   },
   weekly: [
     // 默认模拟数据（API加载前显示）
-    { day: '周一', consumed: 850 },
-    { day: '周二', consumed: 1200 },
-    { day: '周三', consumed: 950 },
-    { day: '周四', consumed: 1500 },
-    { day: '周五', consumed: 800 },
-    { day: '周六', consumed: 1800 },
-    { day: '周日', consumed: 1100 }
+    { day: '周一', consumed: 0 },
+    { day: '周二', consumed: 0 },
+    { day: '周三', consumed: 0 },
+    { day: '周四', consumed: 0 },
+    { day: '周五', consumed: 0 },
+    { day: '周六', consumed: 0 },
+    { day: '周日', consumed: 0 }
   ],
   nutrition: [
     { name: '蛋白质', value: 0, unit: 'g' },
@@ -41,32 +43,21 @@ const customGoals = ref({});
 
 // 从API获取数据
 onMounted(() => {
-  // 获取用户信息 - 兼容新旧两种localStorage格式
-  let userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  // 获取用户信息 - 从Pinia store获取
+  const authStore = useAuthStore();
+  const userStore = useUserStore();
+
   let userId = null;
 
-  // 如果userInfo对象不存在，尝试从旧格式中读取
-  if (!userInfo || !userInfo.userId) {
-    // 从旧格式中读取
-    const storedUserId = localStorage.getItem('userId');
-    const storedPhone = localStorage.getItem('phone');
-
-    if (storedUserId && storedPhone) {
-      // 创建userInfo对象并保存为新格式
-      userInfo = {
-        userId: storedUserId,
-        phone: storedPhone,
-        token: localStorage.getItem('token')
-      };
-      localStorage.setItem('userInfo', JSON.stringify(userInfo));
-      userId = storedUserId;
-    } else {
-      // 用户未登录或没有保存用户信息
-      ElMessage.error('未找到用户信息，请先登录');
-      return;
-    }
+  // 从authStore获取userId，如果authStore中没有则从userStore的userInfo中获取
+  if (authStore.userId) {
+    userId = authStore.userId;
+  } else if (userStore.userInfo?.userId) {
+    userId = userStore.userInfo.userId;
   } else {
-    userId = userInfo.userId;
+    // 用户未登录或没有保存用户信息
+    ElMessage.error('未找到用户信息，请先登录');
+    return;
   }
 
   // 获取用户偏好设置（包含卡路里目标和营养目标）

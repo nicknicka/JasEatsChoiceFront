@@ -45,10 +45,10 @@ public class GlobalExceptionHandler {
         logger.error("MethodArgumentTypeMismatchException: Parameter={}, ExpectedType={}, Value={}",
             e.getPropertyName(), e.getRequiredType().getSimpleName(), e.getValue());
 
-        // 处理"undefined"字符串的特殊情况
+        // 处理"undefined"字符串和"NaN"字符串的特殊情况
         String value = String.valueOf(e.getValue());
-        if ("undefined".equals(value)) {
-            return ResponseResult.fail("400", "参数错误：商家ID不能为空或无效");
+        if ("undefined".equals(value) || "NaN".equals(value)) {
+            return ResponseResult.fail("400", "参数错误：ID不能为空或无效");
         }
 
         // 处理其他类型不匹配情况

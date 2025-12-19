@@ -4,17 +4,20 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import api from "../../utils/api.js";
 import { API_CONFIG } from "../../config/index.js";
+// 导入 Pinia store
+import { useAuthStore } from "../../store/authStore";
 
 const router = useRouter();
 const route = useRoute();
 
-// 从localStorage获取真实商家ID（登录后由后端返回并存储）
-let merchantId = localStorage.getItem("merchantId");
+// 从 Pinia store 获取商家ID
+const authStore = useAuthStore();
+let merchantId = authStore.merchantId;
 
-// 如果没有商家ID，跳转到登录页面
+// 如果没有商家ID，回到首页或注册页
 if (!merchantId) {
 	ElMessage.error("未检测到商家ID，请重新登录");
-	router.push("/merchant/login");
+	router.push("/merchant/register"); // 跳转到注册页或首页
 }
 
 // 商家信息

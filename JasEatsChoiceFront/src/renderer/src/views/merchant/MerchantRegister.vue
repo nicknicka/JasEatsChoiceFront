@@ -1,6 +1,7 @@
 <template>
   <div class="register-container">
     <div class="register-card">
+      <CommonBackButton class="register-back-btn" />
       <h2 class="register-title">商户注册</h2>
 
       <el-form :model="registerForm" :rules="registerRules" ref="registerFormRef" label-width="120px">
@@ -13,7 +14,7 @@
         </el-form-item>
 
         <el-form-item label="经营范围" prop="businessScope">
-          <el-select v-model="registerForm.businessScope" placeholder="请选择经营范围" multiple style="width: 100%;" @change="handleBusinessScopeChange">
+          <el-select ref="businessScopeSelect" v-model="registerForm.businessScope" placeholder="请选择经营范围" multiple style="width: 100%;" @change="handleBusinessScopeChange">
             <el-option label="中餐" value="中餐" />
             <el-option label="西餐" value="西餐" />
             <el-option label="快餐" value="快餐" />
@@ -21,6 +22,11 @@
             <el-option label="饮品" value="饮品" />
             <el-option label="其他" value="其他" />
             <el-option label="自定义" value="自定义" />
+            <template #popper-append>
+              <div style="padding: 8px 10px; border-top: 1px solid #e8e8e8;">
+                <el-button type="primary" size="small" block @click="confirmBusinessScope">确认选择</el-button>
+              </div>
+            </template>
           </el-select>
 
           <!-- 自定义经营范围输入框 -->
@@ -67,11 +73,6 @@
         <el-form-item>
           <el-button type="primary" @click="submitForm" block>注册</el-button>
         </el-form-item>
-
-        <div class="login-link">
-          <span>已有账号？</span>
-          <el-button type="text" @click="toLogin">立即登录</el-button>
-        </div>
       </el-form>
     </div>
   </div>
@@ -85,6 +86,7 @@ import api from '../../utils/api';
 import { API_CONFIG } from '../../config/index.js';
 import { useAuthStore } from '../../store/authStore';
 import { useUserStore } from '../../store/userStore';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const router = useRouter();
 
@@ -110,9 +112,21 @@ const handleBusinessScopeChange = (value) => {
   // 检查是否选择了"自定义"选项
   showCustomBusinessScope.value = value.includes('自定义');
 
+  // 如果选择了"自定义"选项，自动收起下拉框
+  if (showCustomBusinessScope.value && businessScopeSelect.value) {
+    businessScopeSelect.value.blur();
+  }
+
   // 如果取消选择"自定义"，则清空输入框
   if (!showCustomBusinessScope.value) {
     customBusinessScope.value = '';
+  }
+};
+
+// 确认经营范围选择并收起下拉框
+const confirmBusinessScope = () => {
+  if (businessScopeSelect.value) {
+    businessScopeSelect.value.blur();
   }
 };
 
@@ -206,6 +220,9 @@ const getCaptcha = async () => {
 // 表单引用
 const registerFormRef = ref(null);
 
+// 经营范围选择器引用
+const businessScopeSelect = ref(null);
+
 // 页面加载时获取验证码
 onMounted(() => {
   getCaptcha();
@@ -235,32 +252,34 @@ const submitForm = () => {
         api.post(API_CONFIG.merchant.register, merchantData)
           .then(apiResponse => {
             // 严格检查响应是否有效（注意：响应拦截器已将 response.data 直接返回）
-            if (!apiResponse || !apiResponse.id) { // 检查商家ID是否存在
+            if (!apiResponse || !apiResponse.data?.id) { // 检查商家ID是否存在
               console.error('注册失败: 无效的API响应', apiResponse);
               ElMessage.error('注册失败: 服务器返回无效响应');
+              getCaptcha(); // 注册失败时刷新验证码
               return;
             }
 
             ElMessage.success('注册成功！');
+            getCaptcha(); // 注册成功时刷新验证码
 
             // 获取 Pinia 存储实例
             const authStore = useAuthStore();
             const userStore = useUserStore();
 
-            console.log('商家注册响应:', apiResponse);
+            console.log('商家注册响应:', apiResponse.data);
             // 保存用户信息和角色
             const merchantInfo = {
-              merchantId: apiResponse.id, // 商家ID
-              name: apiResponse.name,
-              phone: apiResponse.phone,
-              email: apiResponse.email,
-              businessLicense: apiResponse.businessLicense,
-              businessScope: apiResponse.businessScope,
-              contactName: apiResponse.contactName,
-              avatar: apiResponse.avatar,
-              rating: apiResponse.rating,
-              status: apiResponse.status,
-              businessHours: apiResponse.businessHours
+              merchantId: apiResponse.data.id, // 商家ID
+              name: apiResponse.data.name,
+              phone: apiResponse.data.phone,
+              email: apiResponse.data.email,
+              businessLicense: apiResponse.data.businessLicense,
+              businessScope: apiResponse.data.businessScope,
+              contactName: apiResponse.data.contactName,
+              avatar: apiResponse.data.avatar,
+              rating: apiResponse.data.rating,
+              status: apiResponse.data.status,
+              businessHours: apiResponse.data.businessHours
             };
 
             // 使用 Pinia 存储商家信息
@@ -281,6 +300,7 @@ const submitForm = () => {
           .catch(error => {
             console.error('注册失败:', error);
             ElMessage.error('注册失败，请稍后重试');
+            getCaptcha(); // 注册失败时刷新验证码
           });
       } else {
         ElMessage.error('表单验证失败，请检查输入');
@@ -289,10 +309,6 @@ const submitForm = () => {
   }
 };
 
-// 跳转到登录页面
-const toLogin = () => {
-  router.push('/login');
-};
 </script>
 
 <style scoped lang="less">
@@ -312,6 +328,10 @@ const toLogin = () => {
   border-radius: 10px;
   padding: 30px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.register-back-btn {
+  margin-bottom: 20px;
 }
 
 .register-title {

@@ -6,6 +6,8 @@ import { Sunny, Cloudy, Location, VideoCamera, ArrowRight } from '@element-plus/
 import { useRouter } from 'vue-router';
 import api from '../../utils/api.js';
 import { API_CONFIG } from '../../config/index.js';
+// 导入 WebSocket 常量
+import { WS_CONFIG } from '../../constants/wsConstants.js';
 // import CommonHome from '../../components/CommonHome.vue'; // 不再需要，因为Home.vue已经包含了CommonHome
 
 const router = useRouter();
@@ -228,8 +230,8 @@ const maxAttempts = 10;
 
 // 使用主进程 WebSocket 初始化带有自动重连功能的 WebSocket 连接
 const initializeWebSocket = () => {
-  // 替换为实际的后端 WebSocket URL
-  const wsUrl = 'ws://localhost:9091/ws'; // 后端 Netty 服务器 URL
+  // 使用 WebSocket 常量构建完整 URL
+  const wsUrl = `${WS_CONFIG.URL}${WS_CONFIG.ENDPOINT}`; // 后端 Netty 服务器 URL
 
   console.log('Connecting to WebSocket server:', wsUrl);
 

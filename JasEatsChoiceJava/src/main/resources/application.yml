@@ -4,6 +4,11 @@ server:
     context-path: /api
 
 spring:
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB  # 单个文件最大大小
+      max-request-size: 50MB  # 单次请求最大大小
   # 数据库配置
   datasource:
     url: jdbc:mysql://localhost:3306/jia_shi_yi_xuan?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
@@ -45,9 +50,15 @@ jwt:
   secret: jia_shi_yi_xuan_secret_key_1234567890
   expiration: 86400000  # 24小时
 
+# 文件上传配置
+file:
+  upload:
+    path: ./uploads/  # 文件上传保存路径
+    url-prefix: /api/uploads/  # 访问URL前缀
+
 # Netty配置
 netty:
-  port: 9092  # 更改为未被使用的端口号
+  port: 11277  # 更改为未被使用的端口号
   bossGroup:
     threads: 1
   workerGroup:

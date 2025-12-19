@@ -1,5 +1,7 @@
 package com.xx.jaseatschoicejava.controller;
 
+import com.xx.jaseatschoicejava.constants.ApiConstants;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.Merchant;
@@ -8,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import com.xx.jaseatschoicejava.service.MerchantService;
 import com.xx.jaseatschoicejava.service.OrderService;
 import com.xx.jaseatschoicejava.entity.Order;
+import com.xx.jaseatschoicejava.service.UserService;
+import com.xx.jaseatschoicejava.entity.User;
+import com.xx.jaseatschoicejava.util.JwtUtil;
 import com.xx.jaseatschoicejava.entity.OrderDish;
 import com.xx.jaseatschoicejava.service.OrderDishService;
 import com.xx.jaseatschoicejava.entity.Dish;
@@ -44,8 +49,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/v1/merchant")
 public class MerchantController {
 
+    private static final Logger logger = LoggerFactory.getLogger(MerchantController.class);
+
     @Autowired
     private MerchantService merchantService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private OrderService orderService;
@@ -60,7 +70,6 @@ public class MerchantController {
     private ReviewService reviewService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private static final Logger logger = LoggerFactory.getLogger(MerchantController.class);
 
     /**
      * 商家注册
@@ -72,7 +81,7 @@ public class MerchantController {
     private com.xx.jaseatschoicejava.util.CaptchaUtil captchaUtil;
 
     @PostMapping("/register")
-    public ResponseResult<?> register(@RequestBody MerchantRegisterRequest registerRequest) {
+    public ResponseResult<?> register(@RequestBody MerchantRegisterRequest registerRequest, @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
         try {
             // 验证验证码
             if (registerRequest.getCaptcha() == null || registerRequest.getCaptchaKey() == null) {
@@ -104,6 +113,24 @@ public class MerchantController {
 
             Merchant savedMerchant = merchantService.register(merchant);
             if (savedMerchant != null) {
+                try {
+                    // 从Authorization头中提取token
+                    String token = authorizationHeader.replace("Bearer ", "").trim();
+                    // 提取当前用户ID
+                    Long currentUserId = JwtUtil.extractUserId(token);
+
+                    // 将merchantId存入user表
+                    User user = userService.getById(currentUserId);
+                    if (user != null) {
+                        user.setMerchantId(savedMerchant.getId());
+                        userService.updateById(user);
+                    }
+                } catch (Exception e) {
+                    // 记录token处理异常，但不影响商家注册
+                    e.printStackTrace();
+                    logger.warn("处理用户-商家关联时失败: {}", e.getMessage());
+                }
+
                 // 可以选择在返回前清除密码等敏感信息
                 savedMerchant.setPassword(null);
                 return ResponseResult.success(savedMerchant);
@@ -148,6 +175,12 @@ public class MerchantController {
         // 只显示营业的商家
         queryWrapper.eq(Merchant::getStatus, true);
         List<Merchant> merchants = merchantService.list(queryWrapper);
+
+        // 隐藏所有商家的敏感信息
+        for (Merchant merchant : merchants) {
+            merchant.setPassword(null);
+        }
+
         return ResponseResult.success(merchants);
     }
 
@@ -158,6 +191,8 @@ public class MerchantController {
     public ResponseResult<?> getMerchantDetail(@PathVariable Long merchantId) {
         Merchant merchant = merchantService.getById(merchantId);
         if (merchant != null) {
+            // 隐藏敏感信息
+            merchant.setPassword(null);
             return ResponseResult.success(merchant);
         }
         return ResponseResult.fail("404", "商家不存在");
@@ -167,7 +202,7 @@ public class MerchantController {
      * 更新商家信息
      */
     @PutMapping("/{merchantId}")
-    public ResponseResult<?> updateMerchant(@PathVariable(required = false) Long merchantId, @RequestBody Merchant merchant) {
+    public ResponseResult<?> updateMerchant(@PathVariable Long merchantId, @RequestBody Merchant merchant) {
         // 参数验证
         if (merchantId == null || merchant == null) {
             logger.error("更新商家信息失败：参数错误，merchantId={}, merchant={}", merchantId, merchant);
@@ -209,7 +244,7 @@ public class MerchantController {
      * 更新商家状态
      */
     @PutMapping("/{merchantId}/status")
-    public ResponseResult<?> updateMerchantStatus(@PathVariable(required = false) Long merchantId) {
+    public ResponseResult<?> updateMerchantStatus(@PathVariable Long merchantId) {
         // 参数验证
         if (merchantId == null) {
             return ResponseResult.fail("400", "参数错误");
@@ -231,7 +266,7 @@ public class MerchantController {
      * 更新商家优惠信息
      */
     @PutMapping("/{merchantId}/discounts")
-    public ResponseResult<?> updateMerchantDiscounts(@PathVariable(required = false) Long merchantId, @RequestBody Object discounts) {
+    public ResponseResult<?> updateMerchantDiscounts(@PathVariable Long merchantId, @RequestBody Object discounts) {
         // 参数验证
         if (merchantId == null) {
             return ResponseResult.fail("400", "参数错误");
@@ -310,7 +345,7 @@ public class MerchantController {
                     }
 
                     // 生成访问URL（这里使用本地服务器地址，实际项目中可以用域名或CDN地址）
-                    String imageUrl = "http://localhost:8080/uploads/" + uniqueFilename;
+                    String imageUrl = ApiConstants.UPLOAD_URL_PREFIX + uniqueFilename;
                     albumArray.add(imageUrl);
                 }
 
@@ -406,7 +441,7 @@ public class MerchantController {
             }
 
             // 生成访问URL
-            String avatarUrl = "http://localhost:8080/uploads/" + uniqueFilename;
+            String avatarUrl = ApiConstants.UPLOAD_URL_PREFIX + uniqueFilename;
 
             // 更新商家头像
             merchant.setAvatar(avatarUrl);

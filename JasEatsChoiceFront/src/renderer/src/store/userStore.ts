@@ -8,14 +8,16 @@ export interface UserInfo {
   phone: string
   nickname: string
   email: string
-  height: number
-  weight: number
-  dietGoal: string
-  location: string
-  createdAt: string
-  updatedAt: string
+  height: number | null
+  weight: number | null
+  dietGoal: string | null
+  allergies: any // 过敏原信息，JSON格式
+  preferTags: any // 饮食偏好标签，JSON格式
+  disableWeatherRecommend: boolean | null
+  createTime: string // 创建时间
+  updateTime: string // 更新时间
   merchantId?: string // 商家ID，如果不为空表示用户已注册为商家
-  // 其他用户信息字段
+  avatar?: string // 用户头像URL
 }
 
 export interface MerchantInfo {
@@ -57,9 +59,8 @@ export const useUserStore = defineStore('user', {
           throw new Error('用户ID不存在')
         }
 
-        const response = await axios.get(`${API_CONFIG.baseURL}/v1/user/info`, {
-          params: { userId: authStore.userId }
-        })
+        // 使用正确的API端点路径，后端是GET /v1/users/{userId}
+        const response = await axios.get(`${API_CONFIG.baseURL}/v1/users/${authStore.userId}`)
 
         if (response.data.code === '200') {
           this.userInfo = response.data.data

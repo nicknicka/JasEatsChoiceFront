@@ -5,7 +5,8 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: '',
     userId: '',
-    merchantId: ''
+    merchantId: '',
+    currentRole: ''
   }),
 
   // Getters (计算属性)
@@ -29,10 +30,15 @@ export const useAuthStore = defineStore('auth', {
       this.merchantId = newMerchantId
     },
 
+    setCurrentRole(newRole: string) {
+      this.currentRole = newRole
+    },
+
     clearAuth() {
       this.token = ''
       this.userId = ''
       this.merchantId = ''
+      this.currentRole = ''
     }
   }
 })

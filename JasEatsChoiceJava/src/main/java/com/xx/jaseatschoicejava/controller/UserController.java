@@ -2,6 +2,7 @@ package com.xx.jaseatschoicejava.controller;
 
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.LoginRequest;
+import com.xx.jaseatschoicejava.dto.UserDTO;
 import com.xx.jaseatschoicejava.entity.RegisterRequest;
 import com.xx.jaseatschoicejava.entity.User;
 import com.xx.jaseatschoicejava.entity.UserPreference;
@@ -13,6 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.multipart.MultipartFile;
+import com.xx.jaseatschoicejava.config.FileUploadConfig;
+import com.xx.jaseatschoicejava.util.FileUploadUtil;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -82,6 +88,9 @@ public class UserController {
     @Autowired
     private AliyunSMSService aliyunSMSService;
 
+    @Autowired
+    private FileUploadConfig fileUploadConfig;
+
     // 短信服务配置
     private static final Integer DEFAULT_SMS_EXPIRATION_MINUTES = 5;
 
@@ -106,7 +115,22 @@ public class UserController {
             // 调用登录服务
             String token = userService.login(account, password);
             if (token != null) {
-                return ResponseResult.success(token);
+                // 登录成功，查询用户详细信息
+                User user = userService.lambdaQuery()
+                        .eq(User::getPhone, account)
+                        .one();
+
+                if (user != null) {
+                    // 转换为UserDTO，隐藏敏感信息
+                    UserDTO userDTO = UserDTO.fromUser(user);
+
+                    // 构建包含token和用户信息的响应
+                    Map<String, Object> responseData = new HashMap<>();
+                    responseData.put("token", token);
+                    responseData.put("user", userDTO);
+
+                    return ResponseResult.success(responseData);
+                }
             }
             return ResponseResult.fail("500", "手机号或密码错误");
         } catch (Exception e) {
@@ -120,8 +144,11 @@ public class UserController {
      */
     @GetMapping("/{userId}")
     public ResponseResult<?> getUserInfo(@PathVariable Long userId) {
+        log.info("Getting user info for userId: {}", userId);
         User user = userService.getById(userId);
         if (user != null) {
+            // 隐藏敏感信息
+            user.setPassword(null);
             return ResponseResult.success(user);
         }
         return ResponseResult.fail("404", "用户不存在");
@@ -304,6 +331,85 @@ public class UserController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseResult.fail("500", "用户搜索失败");
+        }
+    }
+
+    /**
+     * 上传用户头像
+     */
+    @PostMapping("/{userId}/avatar")
+    public ResponseResult<?> uploadAvatar(@PathVariable Long userId,
+                                         @RequestParam("file") MultipartFile file) {
+        try {
+            User user = userService.getById(userId);
+            if (user == null) {
+                return ResponseResult.fail("404", "用户不存在");
+            }
+
+            // 上传图片
+            String fileName = FileUploadUtil.uploadImage(file, fileUploadConfig.getUploadPath());
+            // 生成图片URL
+            String avatarUrl = fileUploadConfig.getUrlPrefix() + fileName;
+            // 更新用户头像
+            user.setAvatar(avatarUrl);
+            boolean success = userService.updateById(user);
+            if (success) {
+                Map<String, String> result = new HashMap<>();
+                result.put("avatarUrl", avatarUrl);
+                return ResponseResult.success(result);
+            }
+            return ResponseResult.fail("500", "头像上传失败");
+        } catch (IllegalArgumentException e) {
+            return ResponseResult.fail("400", e.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "图片上传失败");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "系统错误");
+        }
+    }
+
+    /**
+     * 更新用户信息 - 包括头像
+     */
+    @PutMapping("/{userId}/info")
+    public ResponseResult<?> updateUserInfo(@PathVariable Long userId,
+                                            @RequestBody Map<String, Object> updateData) {
+        try {
+            User user = userService.getById(userId);
+            if (user == null) {
+                return ResponseResult.fail("404", "用户不存在");
+            }
+
+            // 更新基本信息
+            if (updateData.containsKey("nickname")) {
+                user.setNickname((String) updateData.get("nickname"));
+            }
+            if (updateData.containsKey("email")) {
+                user.setEmail((String) updateData.get("email"));
+            }
+            if (updateData.containsKey("height")) {
+                user.setHeight((Double) updateData.get("height"));
+            }
+            if (updateData.containsKey("weight")) {
+                user.setWeight((Double) updateData.get("weight"));
+            }
+            if (updateData.containsKey("dietGoal")) {
+                user.setDietGoal((String) updateData.get("dietGoal"));
+            }
+
+            boolean success = userService.updateById(user);
+            if (success) {
+                // 返回更新后的用户信息
+                User updatedUser = userService.getById(userId);
+                updatedUser.setPassword(null); // 隐藏密码
+                return ResponseResult.success(updatedUser);
+            }
+            return ResponseResult.fail("500", "信息更新失败");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "系统错误");
         }
     }
 }

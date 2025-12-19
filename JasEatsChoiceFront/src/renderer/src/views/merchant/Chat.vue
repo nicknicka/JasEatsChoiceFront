@@ -3,6 +3,7 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import router from '../../router/index.js';
+import { useAuthStore } from '../../store/authStore';
 import api from '../../utils/api.js';
 import { decodeJwt } from '../../utils/api.js';
 
@@ -12,7 +13,8 @@ const conversations = ref([]);
 // 页面加载
 onMounted(() => {
   // 从JWT令牌中获取用户ID
-  const token = localStorage.getItem('token');
+  const authStore = useAuthStore();
+  const token = authStore.token;
   let userId = '1'; // 默认值
 
   if (token) {
@@ -30,14 +32,14 @@ onMounted(() => {
     })
     .then(() => {
       // 用户点击重新登录按钮，清除本地存储并跳转到登录页面
-      localStorage.removeItem('token');
-      localStorage.removeItem('currentRole');
+      const authStore = useAuthStore();
+      authStore.clearAuth();
       router.push('/login');
     })
     .catch(() => {
       // 点击取消按钮的处理，也可以跳转到登录页面
-      localStorage.removeItem('token');
-      localStorage.removeItem('currentRole');
+      const authStore = useAuthStore();
+      authStore.clearAuth();
       router.push('/login');
     });
   }
@@ -134,7 +136,8 @@ const selectConversation = (conversation) => {
   }
 
   // 从JWT令牌中获取用户ID
-  const token = localStorage.getItem('token');
+  const authStore = useAuthStore();
+  const token = authStore.token;
   let userId = '1'; // 默认值
 
   if (token) {
@@ -203,7 +206,8 @@ const sendMessage = () => {
   }
 
   // 从JWT令牌中获取用户ID
-  const token = localStorage.getItem('token');
+  const authStore = useAuthStore();
+  const token = authStore.token;
   let fromId = '1'; // 默认值
 
   if (token) {

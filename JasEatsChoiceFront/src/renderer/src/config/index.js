@@ -101,5 +101,5 @@ export const API_CONFIG = {
 
 // WebSocket配置
 export const WS_CONFIG = {
-  url: 'ws://localhost:9091' // WebSocket服务器地址
+  url: 'ws://localhost:11277' // WebSocket服务器地址 (已更新为11277端口)
 }

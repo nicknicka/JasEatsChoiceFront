@@ -233,7 +233,12 @@
       "Bash(__NEW_LINE__ echo -e \"\\n=== 解决方案 ===\")",
       "Bash({)",
       "Bash(__NEW_LINE__ javac -cp /Users/nickxiao/JasEatsChoice/JasEatsChoiceJava/target/classes /tmp/TestNewIdGen.java)",
-      "Bash(__NEW_LINE__ })"
+      "Bash(__NEW_LINE__ })",
+      "Bash(bash -c \"mysql -h localhost -u root -p123456 -D jia_shi_yi_xuan -e ''DESCRIBE t_merchant;''\")",
+      "Bash(bash:*)",
+      "Bash(npm run dev)",
+      "Bash(netstat:*)",
+      "Bash(./mvnw spring-boot:run)"
     ],
     "deny": [],
     "ask": []
