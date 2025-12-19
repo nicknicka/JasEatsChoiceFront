@@ -403,8 +403,6 @@ const submitForm = async () => {
 					const responseData = response.data.data; // 后端返回对象包含token和user
 					const token = responseData.token; // 提取token
 					const userData = responseData.user; // 提取用户信息
-
-					console.log('用户信息:', userData)
 					console.log('Token:', token)
 					// 使用 Pinia 存储认证信息和用户信息
 
@@ -414,8 +412,10 @@ const submitForm = async () => {
 
 					// 保存用户完整信息
 					userStore.setUserInfo(userData);
-					// 同时保存为userInfo对象，以与其他页面保持一致
 
+
+					console.log('userStore' , userStore.userInfo) ;
+					console.log('authStore' , authStore) ;
 					// 保存账号信息
 					// 检查账号是否已经存在
 					const accountIndex = savedAccounts.value.findIndex(

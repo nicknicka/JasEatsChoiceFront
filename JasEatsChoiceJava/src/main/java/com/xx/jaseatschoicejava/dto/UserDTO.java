@@ -21,9 +21,10 @@ public class UserDTO {
     private JsonNode preferTags;
     private String email;
     private Boolean disableWeatherRecommend;
+    private String merchantId; // 商家ID，如果不为空表示用户已注册为商家
+    private String avatar; // 用户头像URL
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
-
     /**
      * 从User实体转换为UserDTO
      * @param user 用户实体
@@ -41,6 +42,8 @@ public class UserDTO {
         userDTO.setPreferTags(user.getPreferTags());
         userDTO.setEmail(user.getEmail());
         userDTO.setDisableWeatherRecommend(user.getDisableWeatherRecommend());
+        userDTO.setMerchantId(user.getMerchantId());
+        userDTO.setAvatar(user.getAvatar());
         userDTO.setCreateTime(user.getCreateTime());
         userDTO.setUpdateTime(user.getUpdateTime());
         // 敏感信息如password已自动隐藏，不进行设置
