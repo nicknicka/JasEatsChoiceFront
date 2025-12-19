@@ -21,10 +21,9 @@ import java.time.LocalDateTime;
 @TableName("t_user")
 @ApiModel(description = "用户实体")
 public class User {
-
     @TableId(value = "user_id", type = com.baomidou.mybatisplus.annotation.IdType.INPUT)
-    @ApiModelProperty(value = "用户ID (11位数字)")
-    private Long userId; // 用户ID (11位数字)
+    @ApiModelProperty(value = "用户ID (U + 16位数字)")
+    private String userId; // 用户ID (U + 16位数字)
 
     @TableField("phone")
     @ApiModelProperty(value = "手机号码（登录账号）")
@@ -68,7 +67,7 @@ public class User {
 
     @TableField("merchant_id")
     @ApiModelProperty(value = "商家ID")
-    private Long merchantId; // 商家ID，如果不为空表示用户已注册为商家
+    private String merchantId; // 商家ID，如果不为空表示用户已注册为商家
 
     @TableField("create_time")
     @ApiModelProperty(value = "创建时间")
@@ -81,125 +80,4 @@ public class User {
     @TableField("avatar")
     @ApiModelProperty(value = "用户头像URL")
     private String avatar; // 用户头像URL
-
-    // Getters and Setters
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getNickname() {
-        return nickname;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
-    public Double getHeight() {
-        return height;
-    }
-
-    public void setHeight(Double height) {
-        this.height = height;
-    }
-
-    public Double getWeight() {
-        return weight;
-    }
-
-    public void setWeight(Double weight) {
-        this.weight = weight;
-    }
-
-    public String getDietGoal() {
-        return dietGoal;
-    }
-
-    public void setDietGoal(String dietGoal) {
-        this.dietGoal = dietGoal;
-    }
-
-    public JsonNode getAllergies() {
-        return allergies;
-    }
-
-    public void setAllergies(JsonNode allergies) {
-        this.allergies = allergies;
-    }
-
-    public JsonNode getPreferTags() {
-        return preferTags;
-    }
-
-    public void setPreferTags(JsonNode preferTags) {
-        this.preferTags = preferTags;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Boolean getDisableWeatherRecommend() {
-        return disableWeatherRecommend;
-    }
-
-    public void setDisableWeatherRecommend(Boolean disableWeatherRecommend) {
-        this.disableWeatherRecommend = disableWeatherRecommend;
-    }
-
-    public LocalDateTime getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(LocalDateTime createTime) {
-        this.createTime = createTime;
-    }
-
-    public LocalDateTime getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(LocalDateTime updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    public Long getMerchantId() {
-        return merchantId;
-    }
-
-    public void setMerchantId(Long merchantId) {
-        this.merchantId = merchantId;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
 }

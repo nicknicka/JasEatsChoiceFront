@@ -24,15 +24,15 @@ public class Order {
 
     @TableId
     @ApiModelProperty(value = "订单ID")
-    private Long id; // 订单ID
+    private String id; // 订单ID
 
     @TableField("user_id")
     @ApiModelProperty(value = "用户ID")
-    private Long userId; // 用户ID
+    private String userId; // 用户ID
 
     @TableField("merchant_id")
     @ApiModelProperty(value = "商家ID")
-    private Long merchantId; // 商家ID
+    private String merchantId; // 商家ID
 
     @TableField("total_amount")
     @ApiModelProperty(value = "订单总金额")

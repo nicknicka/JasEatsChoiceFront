@@ -28,7 +28,7 @@ public class JwtUtil {
      * @param phone User phone number
      * @return JWT token
      */
-    public static String generateToken(Long userId, String phone) {
+    public static String generateToken(String userId, String phone) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("phone", phone);

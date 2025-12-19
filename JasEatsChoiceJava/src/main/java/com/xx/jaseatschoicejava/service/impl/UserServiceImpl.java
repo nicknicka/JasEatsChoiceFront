@@ -27,7 +27,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public boolean register(User user) {
         // 生成用户ID
-        Long userId = IdGenerator.generateId();
+        String userId = IdGenerator.toUserIdString(IdGenerator.generateId());
         user.setUserId(userId);
         // 对密码进行加密
         String encryptedPassword = passwordEncoder.encode(user.getPassword());

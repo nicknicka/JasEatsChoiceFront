@@ -19,7 +19,6 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     setToken(newToken: string) {
       this.token = newToken
-      // 移除 direct localStorage usage，将持久化逻辑移到外部或使用 Pinia 插件
     },
 
     setUserId(newUserId: string) {

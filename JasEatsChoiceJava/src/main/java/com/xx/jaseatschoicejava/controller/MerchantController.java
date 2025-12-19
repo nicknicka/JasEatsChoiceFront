@@ -111,7 +111,7 @@ public class MerchantController {
             merchant.setEmail(registerRequest.getEmail());
             merchant.setPassword(registerRequest.getPassword());
 
-            Merchant savedMerchant = merchantService.register(merchant);
+            Merchant    savedMerchant = merchantService.register(merchant);
             if (savedMerchant != null) {
                 try {
                     // 从Authorization头中提取token
@@ -159,9 +159,10 @@ public class MerchantController {
             // 1. 首先查询包含关键词的菜品对应的商家ID
             LambdaQueryWrapper<Dish> dishQuery = new LambdaQueryWrapper<>();
             dishQuery.like(Dish::getName, keyword);
-            List<Long> merchantIdsWithMatchingDishes = dishService.list(dishQuery)
+            List<String> merchantIdsWithMatchingDishes = dishService.list(dishQuery)
                     .stream()
                     .map(Dish::getMerchantId)
+                    .map(String::valueOf)
                     .distinct()
                     .collect(Collectors.toList());
 
@@ -202,7 +203,7 @@ public class MerchantController {
      * 更新商家信息
      */
     @PutMapping("/{merchantId}")
-    public ResponseResult<?> updateMerchant(@PathVariable Long merchantId, @RequestBody Merchant merchant) {
+    public ResponseResult<?> updateMerchant(@PathVariable String merchantId, @RequestBody Merchant merchant) {
         // 参数验证
         if (merchantId == null || merchant == null) {
             logger.error("更新商家信息失败：参数错误，merchantId={}, merchant={}", merchantId, merchant);
@@ -643,7 +644,7 @@ public class MerchantController {
 
             // 计算菜品销量排行数据
             // 先获取所有订单ID
-            List<Long> orderIds = orders.stream()
+            List<String> orderIds = orders.stream()
                                       .map(Order::getId)
                                       .collect(Collectors.toList());
 

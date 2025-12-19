@@ -24,12 +24,12 @@ public class Review {
     /**
      * 用户ID
      */
-    private Long userId;
+    private String userId;
 
     /**
      * 商家ID
      */
-    private Long merchantId;
+    private String merchantId;
 
     /**
      * 订单ID

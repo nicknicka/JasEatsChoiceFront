@@ -25,7 +25,7 @@ public class Merchant {
 
     @TableId(type = com.baomidou.mybatisplus.annotation.IdType.INPUT)
     @ApiModelProperty(value = "商家ID")
-    private Long id; // 商家ID
+    private String id; // 商家ID (M + 16位数字)
 
     @TableField("name")
     @ApiModelProperty(value = "商家名称")
@@ -101,116 +101,4 @@ public class Merchant {
     @ApiModelProperty(value = "店铺相册（JSON格式，包含environment和dishes两个数组）")
     private JsonNode album; // 店铺相册（JSON格式，包含environment和dishes两个数组）
 
-    // 手动添加缺失的getter/setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getBusinessLicense() {
-        return businessLicense;
-    }
-
-    public void setBusinessLicense(String businessLicense) {
-        this.businessLicense = businessLicense;
-    }
-
-    public String getBusinessScope() {
-        return businessScope;
-    }
-
-    public void setBusinessScope(String businessScope) {
-        this.businessScope = businessScope;
-    }
-
-    public String getContactName() {
-        return contactName;
-    }
-
-    public void setContactName(String contactName) {
-        this.contactName = contactName;
-    }
-
-    public Boolean getStatus() {
-        return status;
-    }
-
-    public void setStatus(Boolean status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(LocalDateTime createTime) {
-        this.createTime = createTime;
-    }
-
-    public LocalDateTime getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(LocalDateTime updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public BigDecimal getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(BigDecimal longitude) {
-        this.longitude = longitude;
-    }
-
-    public BigDecimal getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(BigDecimal latitude) {
-        this.latitude = latitude;
-    }
 }

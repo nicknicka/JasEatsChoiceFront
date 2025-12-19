@@ -230,6 +230,9 @@ const loginRules = reactive({
 const captchaBase64 = ref(""); // 后端返回的验证码图片Base64
 const checkCodeKey = ref(""); // 后端返回的验证码会话key
 
+const authStore = useAuthStore();
+const userStore = useUserStore();
+
 // 从后端获取验证码
 const generateCaptcha = async () => {
 	try {
@@ -385,7 +388,7 @@ const submitForm = async () => {
 							checkCodeKey: checkCodeKey.value,
 						}
 					);
-					// console.log('登录响应:', response.data) ;
+					console.log('登录响应:', response.data) ;
 
 					// 检查后端返回的业务码，不是200则抛出错误
 					if (response.data.code !== "200") {
@@ -401,9 +404,9 @@ const submitForm = async () => {
 					const token = responseData.token; // 提取token
 					const userData = responseData.user; // 提取用户信息
 
+					console.log('用户信息:', userData)
+					console.log('Token:', token)
 					// 使用 Pinia 存储认证信息和用户信息
-					const authStore = useAuthStore();
-					const userStore = useUserStore();
 
 					// 保存认证信息
 					authStore.setToken(token);
@@ -411,7 +414,6 @@ const submitForm = async () => {
 
 					// 保存用户完整信息
 					userStore.setUserInfo(userData);
-					// 用户信息和认证信息已通过Pinia store保存到localStorage，无需重复操作
 					// 同时保存为userInfo对象，以与其他页面保持一致
 
 					// 保存账号信息
@@ -439,6 +441,7 @@ const submitForm = async () => {
 						JSON.stringify(savedAccounts.value)
 					);
 					ElMessage.success("登录成功！");
+					
 					// 登录成功后显示加载动画
 					showLoading.value = true;
 					// 登录成功后根据当前角色跳转到对应首页

@@ -29,7 +29,7 @@ public class Dish {
 
     @TableField("merchant_id")
     @ApiModelProperty(value = "商家ID")
-    private Long merchantId; // 商家ID
+    private String merchantId; // 商家ID
 
     @TableField("name")
     @ApiModelProperty(value = "菜品名称")

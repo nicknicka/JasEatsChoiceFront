@@ -27,7 +27,7 @@ public class OrderDish {
 
     @TableField("order_id")
     @ApiModelProperty(value = "订单ID")
-    private Long orderId; // 订单ID
+    private String orderId; // 订单ID
 
     @TableField("dish_id")
     @ApiModelProperty(value = "菜品ID")

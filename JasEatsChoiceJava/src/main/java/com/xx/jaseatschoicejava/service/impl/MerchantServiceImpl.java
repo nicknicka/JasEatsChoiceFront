@@ -20,7 +20,7 @@ public class MerchantServiceImpl extends ServiceImpl<MerchantMapper, Merchant> i
     @Override
     public Merchant register(Merchant merchant) {
         // 生成商家ID
-        Long merchantId = IdGenerator.generateId();
+        String merchantId = IdGenerator.toMerchantIdString(IdGenerator.generateId());
         merchant.setId(merchantId);
         // 加密密码
         String encryptedPassword = passwordEncoder.encode(merchant.getPassword());

@@ -205,8 +205,6 @@ onMounted(() => {
 			detectedRole = "merchant";
 		}
 
-		// 2. 用户是否注册商家将直接通过userInfo.merchantId判断
-
 		// 3. Always use detected role from route or default to user, ignore saved role
 		userRole.value = detectedRole;
 

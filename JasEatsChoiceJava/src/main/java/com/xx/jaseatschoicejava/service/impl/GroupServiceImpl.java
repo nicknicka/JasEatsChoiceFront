@@ -23,7 +23,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
     @Override
     public boolean save(Group group) {
         // 生成群ID
-        Long groupId = IdGenerator.generateId();
+        String groupId = IdGenerator.toGroupIdString(IdGenerator.generateId());
         group.setId(groupId);
 
         // 设置创建时间和更新时间

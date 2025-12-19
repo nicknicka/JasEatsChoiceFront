@@ -54,7 +54,7 @@ public class GroupController {
      */
     @ApiOperation("更新群信息")
     @PutMapping("/{groupId}")
-    public ResponseResult<?> updateGroup(@PathVariable Long groupId, @RequestBody Group group) {
+    public ResponseResult<?> updateGroup(@PathVariable String groupId, @RequestBody Group group) {
         group.setId(groupId);
         boolean success = groupService.updateById(group);
         if (success) {

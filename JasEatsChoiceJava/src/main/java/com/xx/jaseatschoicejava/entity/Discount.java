@@ -19,7 +19,7 @@ public class Discount {
     private Long id;
 
     @ApiModelProperty(value = "商家ID")
-    private Long merchantId;
+    private String merchantId; // 商家ID
 
     @ApiModelProperty(value = "优惠名称")
     private String name;

@@ -49,6 +49,8 @@ onMounted(() => {
 
   let userId = null;
 
+  console.log('Auth Store:', authStore);
+  console.log('User Store:', userStore);
   // 从authStore获取userId，如果authStore中没有则从userStore的userInfo中获取
   if (authStore.userId) {
     userId = authStore.userId;

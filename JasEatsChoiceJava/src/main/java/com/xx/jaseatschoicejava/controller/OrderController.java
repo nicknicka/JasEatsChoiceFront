@@ -69,7 +69,7 @@ public class OrderController {
      * 更新订单状态
      */
     @PutMapping("/{orderId}/status")
-    public ResponseResult<?> updateOrderStatus(@PathVariable Long orderId, @RequestParam Integer status) {
+    public ResponseResult<?> updateOrderStatus(@PathVariable String orderId, @RequestParam Integer status) {
         Order order = new Order();
         order.setId(orderId);
         order.setStatus(status);
