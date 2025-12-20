@@ -82,7 +82,11 @@ onMounted(() => {
     });
 
   // 获取今日食谱和营养数据
-  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.recipe.today}`)
+  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.recipe.today}`, {
+    params: {
+      userId: userId
+    }
+  })
     .then(response => {
       if (response.data && response.data.code === "200" && response.data.data.nutrition) {
         const nutrition = response.data.data.nutrition;

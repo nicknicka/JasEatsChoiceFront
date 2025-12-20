@@ -59,8 +59,8 @@ public class JwtUtil {
      * @param token JWT token
      * @return User ID
      */
-    public static Long extractUserId(String token) {
-        return extractClaims(token).get("userId", Long.class);
+    public static String extractUserId(String token) {
+        return extractClaims(token).get("userId", String.class);
     }
 
     /**

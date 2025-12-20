@@ -117,7 +117,7 @@ public class MerchantController {
                     // 从Authorization头中提取token
                     String token = authorizationHeader.replace("Bearer ", "").trim();
                     // 提取当前用户ID
-                    Long currentUserId = JwtUtil.extractUserId(token);
+                    String currentUserId = JwtUtil.extractUserId(token);
 
                     // 将merchantId存入user表
                     User user = userService.getById(currentUserId);

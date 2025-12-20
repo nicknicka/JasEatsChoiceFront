@@ -240,7 +240,8 @@
       "Bash(netstat:*)",
       "Bash(./mvnw spring-boot:run)",
       "Bash(./gradlew build:*)",
-      "Bash(bash -c '\nfind src/main/java -name \"\"*.java\"\" -exec sed -i \"\"s/private Long merchantId;/private String merchantId; \\/\\/ 商家ID/\"\" {} \\;\nfind src/main/java -name \"\"*.java\"\" -exec sed -i \"\"s/private Long userId;/private String userId; \\/\\/ 用户ID/\"\" {} \\;\nfind src/main/java -name \"\"*.java\"\" -exec sed -i \"\"s/private Long orderId;/private String orderId; \\/\\/ 订单ID/\"\" {} \\;\nfind src/main/java -name \"\"*.java\"\" -exec sed -i \"\"s/private Long groupId;/private String groupId; \\/\\/ 群ID/\"\" {} \\;')"
+      "Bash(bash -c '\nfind src/main/java -name \"\"*.java\"\" -exec sed -i \"\"s/private Long merchantId;/private String merchantId; \\/\\/ 商家ID/\"\" {} \\;\nfind src/main/java -name \"\"*.java\"\" -exec sed -i \"\"s/private Long userId;/private String userId; \\/\\/ 用户ID/\"\" {} \\;\nfind src/main/java -name \"\"*.java\"\" -exec sed -i \"\"s/private Long orderId;/private String orderId; \\/\\/ 订单ID/\"\" {} \\;\nfind src/main/java -name \"\"*.java\"\" -exec sed -i \"\"s/private Long groupId;/private String groupId; \\/\\/ 群ID/\"\" {} \\;')",
+      "Bash(__NEW_LINE__ \")"
     ],
     "deny": [],
     "ask": []

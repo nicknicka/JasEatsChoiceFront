@@ -22,11 +22,13 @@ public class RecipeController {
     @Autowired
     private RecipeService recipeService;
 
+
+
     /**
      * 获取今日食谱
      */
     @GetMapping("/today")
-    public ResponseResult<?> getTodayRecipes(@RequestParam(value = "userId", required = false) Long userId) {
+    public ResponseResult<?> getTodayRecipes(@RequestParam(value = "userId") String userId) {
         Map<String, Object> result = recipeService.getTodayRecipes(userId);
         return ResponseResult.success(result);
     }
@@ -35,7 +37,7 @@ public class RecipeController {
      * 获取我的食谱
      */
     @GetMapping("/favorite")
-    public ResponseResult<?> getFavoriteRecipes(@RequestParam(value = "userId", required = false) Long userId) {
+    public ResponseResult<?> getFavoriteRecipes(@RequestParam(value = "userId", required = false) String userId) {
         List<Recipe> recipes = recipeService.getFavoriteRecipes(userId);
         return ResponseResult.success(recipes);
     }

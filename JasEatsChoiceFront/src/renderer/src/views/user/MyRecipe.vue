@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { API_CONFIG } from '../../config'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useAuthStore } from './../../store/authStore'
+import { useUserStore } from './../../store/userStore'
 
 // 引入新组件
 import RecipeDetail from '../../components/recipe/RecipeDetail.vue'
@@ -14,8 +16,25 @@ const loadingFailed = ref(false)
 
 // 加载我的食谱数据
 const loadMyRecipes = () => {
+  // 获取用户信息 - 从Pinia store获取
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
+
+  let userId = null
+
+  // 从authStore获取userId，如果authStore中没有则从userStore的userInfo中获取
+  if (authStore.userId) {
+    userId = authStore.userId
+  } else if (userStore.userInfo?.userId) {
+    userId = userStore.userInfo.userId
+  }
+
   axios
-    .get(API_CONFIG.baseURL + API_CONFIG.recipe.favorite)
+    .get(API_CONFIG.baseURL + API_CONFIG.recipe.favorite, {
+      params: {
+        userId: userId
+      }
+    })
     .then((response) => {
       if (response.data.data) {
         myRecipes.value = response.data.data

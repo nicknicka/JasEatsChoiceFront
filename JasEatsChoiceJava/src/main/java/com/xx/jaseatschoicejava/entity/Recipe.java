@@ -22,7 +22,7 @@ public class Recipe {
     private Long id;
 
     @ApiModelProperty(value = "用户ID")
-    private Long userId;
+    private String userId;
 
     @ApiModelProperty(value = "食谱名称")
     private String name;

@@ -216,12 +216,18 @@ const filteredMerchants = computed(() => {
 
 				<div class="card-actions">
 					<el-button
-						type="primary"
+						type="default"
 						size="small"
+						icon="el-icon-info"
 						@click="viewMerchantDetails(merchant)"
 						>查看详情</el-button
 					>
-					<el-button type="success" size="small" @click="orderNow(merchant)"
+					<el-button
+						type="primary"
+						size="small"
+						icon="el-icon-shopping-cart-2"
+						icon-position="left"
+						@click="orderNow(merchant)"
 						>立即下单</el-button
 					>
 				</div>

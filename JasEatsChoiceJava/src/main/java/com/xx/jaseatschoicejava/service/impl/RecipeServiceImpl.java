@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xx.jaseatschoicejava.entity.Recipe;
 import com.xx.jaseatschoicejava.mapper.RecipeMapper;
 import com.xx.jaseatschoicejava.service.RecipeService;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,18 +23,21 @@ import java.util.stream.Collectors;
 @Service
 public class RecipeServiceImpl extends ServiceImpl<RecipeMapper, Recipe> implements RecipeService {
 
+    Logger logger = LoggerFactory.getLogger(RecipeServiceImpl.class);
+
     @Override
-    public Map<String, Object> getTodayRecipes(Long userId) {
+    public Map<String, Object> getTodayRecipes(String userId) {
         // 查询今日食谱
         QueryWrapper<Recipe> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("is_today", true);
         if (userId != null) {
             queryWrapper.eq("user_id", userId);
-        }
+        }else
+            logger.error("请求食谱的用户ID为null，请检查！");
         queryWrapper.orderByDesc("create_time");
 
         List<Recipe> recipes = list(queryWrapper);
-
+        logger.info("返回的recipes: {}", recipes);
         // 确保recipes不为null
         List<Recipe> safeRecipes = recipes != null ? recipes : new ArrayList<>();
 
@@ -64,11 +70,13 @@ public class RecipeServiceImpl extends ServiceImpl<RecipeMapper, Recipe> impleme
         // 添加recipesByType到响应中（如果前端需要）
         result.put("recipesByType", recipesByType);
 
+        logger.info("返回的recipesByType: {}", recipesByType);
+        logger.info("返回的result: {}", result);
         return result;
     }
 
     @Override
-    public List<Recipe> getFavoriteRecipes(Long userId) {
+    public List<Recipe> getFavoriteRecipes(String userId) {
         // 查询收藏的食谱
         QueryWrapper<Recipe> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("is_favorite", true);

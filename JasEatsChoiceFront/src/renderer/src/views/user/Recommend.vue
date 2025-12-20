@@ -153,6 +153,9 @@ const updateRecommendationsByWeatherAndTime = async () => {
 
 		// 将天气时间推荐添加到推荐列表
 		recommendations.value = [...recommendations.value, ...weatherTimeRecommendations];
+
+		// 为标签分配随机类型
+		assignRandomTagTypes(recommendations.value);
 	} catch (error) {
 		console.error("天气推荐失败:", error);
 		ElMessage.error("天气推荐功能暂时不可用");
@@ -351,6 +354,9 @@ const addFestivalRecommendations = () => {
 
 		// 将节日推荐添加到推荐列表
 		recommendations.value = [...festivalRecommendations, ...recommendations.value];
+
+		// 为标签分配随机类型
+		assignRandomTagTypes(recommendations.value);
 	}
 };
 
@@ -401,6 +407,29 @@ const rejectRecommendation = (item) => {
 	ElMessage.success("已标记为不感兴趣");
 };
 
+// 定义随机标签类型数组
+const tagTypes = ['primary', 'success', 'warning', 'info', 'danger']
+
+// 获取随机标签类型
+const getRandomTagType = () => {
+  return tagTypes[Math.floor(Math.random() * tagTypes.length)]
+}
+
+// 为每个推荐项的标签分配随机类型（只在数据加载时执行一次）
+const assignRandomTagTypes = (recommendations) => {
+  recommendations.forEach(item => {
+    if (item.tags && Array.isArray(item.tags)) {
+      // 为每个标签创建带有随机类型的对象
+      item.tagsWithType = item.tags.map(tag => ({
+        name: tag,
+        type: getRandomTagType()
+      })).filter(tag => tag.name && tag.name.trim() !== '') // 过滤空标签
+    } else {
+      item.tagsWithType = []
+    }
+  })
+}
+
 // 从后端获取推荐数据
 const fetchRecommendationsFromBackend = async () => {
 	try {
@@ -427,6 +456,9 @@ const fetchRecommendationsFromBackend = async () => {
 				dish.rating = dish.rating || 4.5;
 				dish.image = dish.image || "🍱";
 			});
+
+			// 为标签分配随机类型
+			assignRandomTagTypes(recommendations.value);
 
 			return data.dishes;
 		} else {
@@ -478,39 +510,37 @@ const recommendations = ref([]);
 					<div class="dish-image">{{ item.image }}</div>
 					<div class="dish-info">
 						<div class="dish-name">{{ item.name }}</div>
-						<div class="dish-type">
-							<el-tag type="primary" size="small">{{ item.type }}</el-tag>
+						<div class="dish-type" >
+							<el-tag type="primary" size="small" v-if="item.type">{{ item.type }}</el-tag>
+							<el-tag type="info" size="small" effect="plain" v-else>未分类</el-tag>
 						</div>
 					</div>
 				</div>
 
-				<div class="calories-info">
+				<div class="calories-info" v-if="item.calories">
 					<span>🔥</span>
 					<span>{{ item.calories }} kcal</span>
+				</div>
+				<div class="calories-info-unavailable" v-else>
+					<span>🔥</span>
+					<span>卡路里信息暂不可用</span>
 				</div>
 
 				<div class="tags-section">
 					<el-tag
-						v-for="tag in item.tags"
-						:key="tag"
+						v-for="tag in item.tagsWithType"
+						:key="tag.name"
 						size="small"
-						:type="
-							tag === '低卡'
-								? 'success'
-								: tag === '高纤维'
-								? 'warning'
-								: tag === '蛋白质丰富'
-								? 'info'
-								: 'primary'
-						"
+						:type="tag.type"
 					>
-						{{ tag }}
+						{{ tag.name }}
 					</el-tag>
 				</div>
 
 				<div class="reason-section">
 					<div class="reason-title">推荐理由</div>
-					<div class="reason-text">{{ item.reason }}</div>
+					<div class="reason-text" v-if="item.reason && item.reason.trim() !== ''">{{ item.reason }}</div>
+					<div class="reason-text empty-reason" v-else>为您精选的优质美食推荐</div>
 				</div>
 
 				<div class="card-actions">
@@ -601,6 +631,15 @@ const recommendations = ref([]);
 			font-size: 16px;
 		}
 
+		.calories-info-unavailable {
+			display: flex;
+			gap: 5px;
+			color: #999;
+			margin-bottom: 15px;
+			font-size: 16px;
+			font-style: italic;
+		}
+
 		.tags-section {
 			margin-bottom: 15px;
 			display: flex;
@@ -620,6 +659,11 @@ const recommendations = ref([]);
 				color: #666;
 				font-size: 14px;
 				line-height: 1.5;
+			}
+
+			.reason-text.empty-reason {
+				color: #999;
+				font-style: italic;
 			}
 		}
 

@@ -16,14 +16,14 @@ public interface RecipeService extends IService<Recipe> {
      * @param userId 用户ID
      * @return 今日食谱和营养信息
      */
-    Map<String, Object> getTodayRecipes(Long userId);
+    Map<String, Object> getTodayRecipes(String userId);
 
     /**
      * 获取我的食谱
      * @param userId 用户ID
      * @return 我的食谱列表
      */
-    List<Recipe> getFavoriteRecipes(Long userId);
+    List<Recipe> getFavoriteRecipes(String userId);
 
     /**
      * 获取推荐食谱
