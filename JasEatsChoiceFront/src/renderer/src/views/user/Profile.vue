@@ -6,7 +6,7 @@
       <!-- 顶部头像区域 -->
       <div class="profile-header">
         <div class="avatar-container">
-          <el-avatar :size="120" class="user-avatar">
+          <el-avatar :size="120" class="user-avatar" :src="userStore.userInfo?.realAvatar || localStorage.getItem('userAvatar') || userStore.userInfo?.avatar">
             {{ (userInfo.nickname || '').charAt(0) || '?' }}
           </el-avatar>
         </div>
@@ -220,8 +220,14 @@ import api from '../../utils/api'
 import { API_CONFIG } from '../../config'
 // 导入authStore
 import { useAuthStore } from '../../store/authStore'
+// 导入userStore
+import { useUserStore } from '../../store/userStore'
 
 const router = useRouter()
+
+// 初始化用户存储
+const authStore = useAuthStore()
+const userStore = useUserStore()
 
 // 真实数据，初始化完整结构
 const userInfo = ref({
@@ -266,6 +272,17 @@ onMounted(() => {
       console.log('response:', response)
       if (response?.data) {
         userInfo.value = response.data
+        // 更新userStore
+        userStore.setUserInfo(response.data)
+
+        // 如果有本地保存的头像，优先使用本地头像
+        const savedAvatar = localStorage.getItem('userAvatar');
+        if (savedAvatar) {
+          // 更新本地用户信息
+          userInfo.value.avatar = savedAvatar;
+          // 更新userStore
+          userStore.userInfo.avatar = savedAvatar;
+        }
       }
     })
     .catch((error) => {
