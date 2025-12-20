@@ -433,6 +433,7 @@ const assignRandomTagTypes = (recommendations) => {
 // 从后端获取推荐数据
 const fetchRecommendationsFromBackend = async () => {
 	try {
+		isLoading.value = true;
 		// 获取用户ID（从localStorage中获取，与其他页面保持一致）
 		const userId = parseInt(localStorage.getItem("userId") || "1", 10);
 
@@ -476,6 +477,8 @@ const fetchRecommendationsFromBackend = async () => {
 		updateRecommendationsByWeatherAndTime();
 
 		return null;
+	} finally {
+		isLoading.value = false;
 	}
 };
 
@@ -486,6 +489,9 @@ onMounted(async () => {
 	updateRecommendationsByWeatherAndTime();
 	await fetchRecommendationsFromBackend();
 });
+
+// 加载状态
+const isLoading = ref(false);
 
 // 我的推荐数据
 const recommendations = ref([]);
@@ -499,8 +505,13 @@ const recommendations = ref([]);
 
 		<h2>我的推荐</h2>
 
+		<!-- 加载中状态 -->
+		<div class="loading-skeleton" v-if="isLoading">
+			<el-skeleton :rows="6" type="card" :border="false" />
+		</div>
+
 		<!-- 推荐列表 -->
-		<div class="recommend-grid" v-if="recommendations.length > 0">
+		<div class="recommend-grid" v-else-if="recommendations.length > 0">
 			<el-card
 				v-for="item in recommendations"
 				:key="item.id"
@@ -560,7 +571,7 @@ const recommendations = ref([]);
 								},
 							})
 						"
-						>立即查看</el-button
+						>立即下单</el-button
 					>
 					<el-button
 						type="text"
@@ -603,66 +614,87 @@ const recommendations = ref([]);
 	}
 
 	.recommend-card {
+		transition: all 0.3s ease;
+		border-radius: 12px;
+		box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+
+		&:hover {
+			box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
+			transform: translateY(-2px);
+		}
+
 		.card-header {
 			display: flex;
 			gap: 20px;
-			margin-bottom: 15px;
+			margin-bottom: 20px;
 			align-items: center;
+			padding: 0;
 
 			.dish-image {
-				font-size: 60px;
+				font-size: 70px;
+				line-height: 1;
 			}
 
 			.dish-info {
+				flex: 1;
+
 				.dish-name {
-					font-size: 18px;
+					font-size: 20px;
 					font-weight: bold;
-					margin-bottom: 5px;
+					margin-bottom: 8px;
+					color: #333;
 				}
 			}
 		}
 
 		.calories-info {
 			display: flex;
-			gap: 5px;
+			gap: 8px;
 			color: #ff6b6b;
 			font-weight: bold;
-			margin-bottom: 15px;
-			font-size: 16px;
+			margin-bottom: 18px;
+			font-size: 17px;
+			align-items: center;
 		}
 
 		.calories-info-unavailable {
 			display: flex;
-			gap: 5px;
-			color: #999;
-			margin-bottom: 15px;
-			font-size: 16px;
-			font-style: italic;
+			gap: 8px;
+			color: #c0c4cc;
+			margin-bottom: 18px;
+			font-size: 14px;
+			align-items: center;
 		}
 
 		.tags-section {
-			margin-bottom: 15px;
+			margin-bottom: 20px;
 			display: flex;
 			flex-wrap: wrap;
-			gap: 8px;
+			gap: 10px;
+
+			:deep(.el-tag) {
+				border-radius: 20px;
+			}
 		}
 
 		.reason-section {
-			margin-bottom: 20px;
+			margin-bottom: 24px;
 
 			.reason-title {
 				font-weight: bold;
-				margin-bottom: 5px;
+				margin-bottom: 8px;
+				color: #333;
+				font-size: 15px;
 			}
 
 			.reason-text {
 				color: #666;
 				font-size: 14px;
-				line-height: 1.5;
+				line-height: 1.6;
 			}
 
 			.reason-text.empty-reason {
-				color: #999;
+				color: #c0c4cc;
 				font-style: italic;
 			}
 		}
@@ -671,39 +703,66 @@ const recommendations = ref([]);
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
+			padding-top: 16px;
+			border-top: 1px solid #f0f0f0;
 
 			.rating {
 				:deep(.el-rate__text) {
 					font-size: 14px;
+					color: #e6a23c;
+				}
+
+				:deep(.el-rate__icon) {
+					font-size: 16px;
 				}
 			}
+
+			.el-button {
+				border-radius: 8px;
+				font-weight: 500;
+			}
 		}
+	}
+
+	// 加载中样式
+	.loading-skeleton {
+		padding: 20px 0;
 	}
 }
 
 .empty-state {
 	text-align: center;
-	padding: 80px 20px;
-	background-color: #fafafa;
-	border-radius: 8px;
+	padding: 100px 20px;
+	background-color: #ffffff;
+	border-radius: 12px;
 	margin-top: 20px;
+	box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+	border: 1px dashed #e4e7ed;
 
 	.empty-icon {
-		font-size: 60px;
+		font-size: 90px;
 		margin-bottom: 20px;
+		opacity: 0.7;
 	}
 
 	.empty-text {
-		font-size: 20px;
+		font-size: 22px;
 		font-weight: bold;
 		color: #333;
-		margin-bottom: 10px;
+		margin-bottom: 12px;
 	}
 
 	.empty-subtext {
 		font-size: 14px;
-		color: #666;
-		margin-bottom: 30px;
+		color: #909399;
+		margin-bottom: 36px;
+		line-height: 1.6;
+	}
+
+	.el-button {
+		border-radius: 8px;
+		font-weight: 500;
+		padding: 10px 24px;
 	}
 }
 </style>
