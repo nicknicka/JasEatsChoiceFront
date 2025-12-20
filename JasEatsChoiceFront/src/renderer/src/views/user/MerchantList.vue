@@ -23,6 +23,21 @@ const filters = ref({
 // 搜索关键词
 const searchKeyword = ref("");
 
+// 商家类型筛选选项
+const typeOptions = ref([
+  { label: "全部", value: "all" },
+  { label: "轻食", value: "轻食" },
+  { label: "早餐", value: "早餐" },
+  { label: "中餐", value: "中餐" },
+  { label: "健身餐", value: "健身餐" }
+]);
+
+// 商家排序选项
+const sortOptions = ref([
+  { label: "距离最近", value: "distance" },
+  { label: "评分最高", value: "rating" }
+]);
+
 // 获取当前路由
 const route = useRoute();
 
@@ -64,16 +79,6 @@ const loadMerchants = () => {
 		});
 };
 
-// 跳转到商家详情页面
-const viewMerchantDetails = (merchant) => {
-	// 将商家信息存储到会话存储，以便在详情页面使用
-	sessionStorage.setItem("selectedMerchant", JSON.stringify(merchant));
-	// 跳转到商家详情页面，使用查看详情模式
-	router.push({
-		path: "/user/home/merchant-detail",
-		query: { viewMode: "details" },
-	});
-};
 
 // 立即下单功能
 const orderNow = (merchant) => {
@@ -145,36 +150,46 @@ const filteredMerchants = computed(() => {
 					v-model="filters.type"
 					placeholder="筛选类型"
 					size="small"
-					style="width: 120px"
+					style="width: 140px"
+					class="type-select"
 				>
-					<el-option label="全部" value="all" />
-					<el-option label="轻食" value="轻食" />
-					<el-option label="早餐" value="早餐" />
-					<el-option label="中餐" value="中餐" />
-					<el-option label="健身餐" value="健身餐" />
+					<el-option
+						v-for="option in typeOptions"
+						:key="option.value"
+						:label="option.label"
+						:value="option.value"
+					/>
 				</el-select>
 
 				<el-select
 					v-model="filters.sort"
 					placeholder="排序方式"
 					size="small"
-					style="width: 120px"
+					style="width: 140px"
 				>
-					<el-option label="距离最近" value="distance" />
-					<el-option label="评分最高" value="rating" />
+					<el-option
+						v-for="option in sortOptions"
+						:key="option.value"
+						:label="option.label"
+						:value="option.value"
+					/>
 				</el-select>
 			</div>
 		</div>
 
 		<!-- 商家列表 -->
 		<div class="merchant-grid">
+			<!-- 加载中状态 -->
+			<el-skeleton :rows="6" v-if="isLoading" class="loading-skeleton" />
+
 			<el-card
 				v-for="merchant in filteredMerchants"
 				:key="merchant.id"
 				class="merchant-card"
+				v-else-if="filteredMerchants.length > 0"
 			>
 				<div class="card-header">
-					<div class="merchant-image">{{ merchant.image }}</div>
+					<div class="merchant-image">{{ merchant.image || '🏪' }}</div>
 					<div class="merchant-info">
 						<div class="merchant-name">{{ merchant.name }}</div>
 						<div class="merchant-rating">
@@ -184,7 +199,7 @@ const filteredMerchants = computed(() => {
 								show-text
 								size="small"
 							/>
-							<span class="distance">{{ merchant.distance }}</span>
+							<span class="distance">{{ merchant.distance || '未知距离' }}</span>
 						</div>
 						<div class="merchant-status">
 							<el-tag
@@ -193,17 +208,19 @@ const filteredMerchants = computed(() => {
 								"
 								size="small"
 							>
-								{{ merchant.status }}
+								{{ merchant.status || '未知状态' }}
 							</el-tag>
 						</div>
 					</div>
 				</div>
 
-				<div class="merchant-type">
+				<!-- 商家类型 - 只在有数据时显示 -->
+				<div class="merchant-type" v-if="merchant.type">
 					<el-tag type="primary" size="small">{{ merchant.type }}</el-tag>
 				</div>
 
-				<div class="merchant-tags">
+				<!-- 商家标签 - 只在有数据时显示 -->
+				<div class="merchant-tags" v-if="merchant.tags && merchant.tags.length > 0">
 					<el-tag
 						v-for="tag in merchant.tags"
 						:key="tag"
@@ -216,13 +233,6 @@ const filteredMerchants = computed(() => {
 
 				<div class="card-actions">
 					<el-button
-						type="default"
-						size="small"
-						icon="el-icon-info"
-						@click="viewMerchantDetails(merchant)"
-						>查看详情</el-button
-					>
-					<el-button
 						type="primary"
 						size="small"
 						icon="el-icon-shopping-cart-2"
@@ -232,6 +242,15 @@ const filteredMerchants = computed(() => {
 					>
 				</div>
 			</el-card>
+
+			<!-- 空数据提示 -->
+			<div class="empty-data" v-else>
+				<div class="empty-icon">😕</div>
+				<div class="empty-text">
+					<h3>暂无商家数据</h3>
+					<p>当前条件下没有找到任何商家，请尝试调整搜索条件或筛选方式</p>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -250,6 +269,10 @@ const filteredMerchants = computed(() => {
 		justify-content: space-between;
 		align-items: center;
 		margin-bottom: 20px;
+		padding: 15px;
+		background-color: #f8f9fa;
+		border-radius: 8px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 
 		.search-input {
 			width: 300px;
@@ -257,7 +280,14 @@ const filteredMerchants = computed(() => {
 
 		.filter-row {
 			display: flex;
-			gap: 10px;
+			gap: 15px;
+		}
+
+		.type-select {
+			.el-select__input {
+				border-radius: 4px;
+				border: 1px solid #dcdfe6;
+			}
 		}
 	}
 
@@ -316,6 +346,42 @@ const filteredMerchants = computed(() => {
 
 			.el-button {
 				flex: 1;
+			}
+		}
+	}
+
+	// 加载中样式
+	.loading-skeleton {
+		grid-column: 1 / -1;
+	}
+
+	// 空数据样式
+	.empty-data {
+		grid-column: 1 / -1;
+		text-align: center;
+		padding: 80px 20px;
+		background-color: #f8f9fa;
+		border-radius: 8px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+
+		.empty-icon {
+			font-size: 80px;
+			margin-bottom: 20px;
+			opacity: 0.6;
+		}
+
+		.empty-text {
+			color: #666;
+
+			h3 {
+				font-size: 20px;
+				margin: 0 0 10px 0;
+				color: #333;
+			}
+
+			p {
+				font-size: 14px;
+				margin: 0;
 			}
 		}
 	}
