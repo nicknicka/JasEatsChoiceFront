@@ -68,11 +68,11 @@ export const API_CONFIG = {
   // 天气API端点
   weather: {
     current: '/v1/weather', // 获取天气信息接口
-    location: '/v1/location' // 获取当前定位接口
   },
 
   // 位置选择API端点
   location: {
+    location: '/v1/location', // 获取当前定位接口
     cascaderData: '/v1/location/cascader' // 获取级联选择器地址数据接口
   },
 

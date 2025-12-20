@@ -472,6 +472,8 @@ const fetchRecommendationsFromBackend = async () => {
 		// 后端接口失败时，继续使用mock数据作为后备
 		ElMessage.warning("个性化推荐服务暂时不可用，将为您提供基于节日和天气的推荐");
 
+		// 先清除现有推荐数据，避免重复
+		recommendations.value = [];
 		// 保持现有的mock数据生成逻辑
 		addFestivalRecommendations();
 		updateRecommendationsByWeatherAndTime();
@@ -482,11 +484,9 @@ const fetchRecommendationsFromBackend = async () => {
 	}
 };
 
-// 页面加载时获取定位、节日推荐和后端推荐数据
+// 页面加载时获取定位和后端推荐数据
 onMounted(async () => {
 	getCurrentLocation();
-	addFestivalRecommendations();
-	updateRecommendationsByWeatherAndTime();
 	await fetchRecommendationsFromBackend();
 });
 

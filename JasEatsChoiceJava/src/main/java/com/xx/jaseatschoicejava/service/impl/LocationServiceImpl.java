@@ -38,7 +38,7 @@ public class LocationServiceImpl implements LocationService {
             // 从API获取原始数据
             String response = restTemplate.getForObject(url, String.class);
 
-//            logger.info("高德地图返回的response =  {}", response);
+            logger.info("高德地图getCurrentLocation返回的response =  {}", response);
             // 使用Jackson解析JSON
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> responseMap = mapper.readValue(response, Map.class);

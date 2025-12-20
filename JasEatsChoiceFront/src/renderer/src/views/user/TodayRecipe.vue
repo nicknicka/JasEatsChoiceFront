@@ -643,7 +643,7 @@ const filteredRecipes = computed(() => {
         </div>
         <div class="recipe-actions">
           <el-button type="text" size="small" @click="viewRecipeDetails(recipe)"
-            >查看详情</el-button
+            >立即下单</el-button
           >
           <el-button type="text" size="small" @click="addDish(recipe)">添加菜品</el-button>
           <el-button type="text" size="small" @click="openImportMerchantDish(recipe)"

@@ -242,7 +242,7 @@ const deleteRecipe = (id) => {
         </div>
         <div class="recipe-actions">
           <el-button type="text" size="small" @click="viewRecipeDetails(recipe)"
-            >查看详情</el-button
+            >立即下单</el-button
           >
           <el-button type="danger" size="small" @click="deleteRecipe(recipe.id)"
             >删除食谱</el-button

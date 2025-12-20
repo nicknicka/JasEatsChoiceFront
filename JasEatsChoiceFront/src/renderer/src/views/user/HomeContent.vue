@@ -8,7 +8,6 @@ import api from '../../utils/api.js';
 import { API_CONFIG } from '../../config/index.js';
 // 导入 WebSocket 常量
 import { WS_CONFIG } from '../../constants/wsConstants.js';
-// import CommonHome from '../../components/CommonHome.vue'; // 不再需要，因为Home.vue已经包含了CommonHome
 
 const router = useRouter();
 
@@ -16,15 +15,12 @@ const router = useRouter();
 const featuredTutorials = ref([]);
 
 // 今日推荐菜品 - 来自后端
-// 今日推荐菜品 - 从后端获取
 const recommendedDishes = ref([]);
-// 推荐菜品空状态消息
 // 推荐菜品空状态消息
 const recommendEmptyMessage = ref('暂无推荐菜品');
 // 今日热点 - 从后端获取
 const hotTopic = ref("");
 
-// 天气和位置数据
 // 天气和位置数据
 const weather = ref({
   temp: 32,
@@ -33,7 +29,6 @@ const weather = ref({
   address: ''
 });
 
-// 使用位置选择组合式函数
 // 使用位置选择组合式函数
 const {
   cascaderLocationData,
@@ -44,16 +39,14 @@ const {
 
 
 // 根据天气条件获取对应的图标
-// 根据天气条件获取对应的图标
 const getWeatherIcon = () => {
   const condition = weather.value.condition;
-  if (!condition) return Sunny; // 如果天气条件为空或未定义，默认显示晴天图标
+  if (!condition) return Sunny;
   if (condition.includes('晴')) return Sunny;
   if (condition.includes('云') || condition.includes('阴') || condition.includes('雨') || condition.includes('雷') || condition.includes('雪')) return Cloudy;
-  return Sunny; // 默认显示晴天图标
+  return Sunny;
 };
 
-// 根据天气条件获取推荐的菜品系列
 // 根据天气条件获取推荐的菜品系列
 const getRecommendedDishesSeries = () => {
   const condition = weather.value.condition;
@@ -128,7 +121,6 @@ const fetchHotTopic = () => {
 };
 
 // 处理自动定位
-// 处理自动定位
 const handleAutoLocation = async () => {
   // 调用现有 fetchWeather 函数（无参数）获取自动定位
   await fetchWeather();
@@ -136,8 +128,6 @@ const handleAutoLocation = async () => {
   locationDialogVisible.value = false;
 };
 
-
-// 处理位置确认
 // 处理位置确认
 const handleConfirmLocation = () => {
   if (manualLocation.value && manualLocation.value.length > 0) {
@@ -162,7 +152,6 @@ const handleConfirmLocation = () => {
 };
 
 // 从后端获取位置和天气数据
-// 从后端获取位置和天气数据
 const fetchWeather = async (selectedCity = null) => {
   try {
     if (selectedCity) {
@@ -181,7 +170,7 @@ const fetchWeather = async (selectedCity = null) => {
       }
     } else {
       // 步骤1: 从后端获取当前位置
-      const locationResponse = await api.get(API_CONFIG.weather.location);
+      const locationResponse = await api.get(API_CONFIG.location.location);
       if (locationResponse.data) {
         let { city, address } = locationResponse.data;
 
@@ -215,9 +204,6 @@ const fetchWeather = async (selectedCity = null) => {
   }
   console.log('获取天气数据:', weather.value);
 };
-
-// 模拟用户信息已移除 - 现在由 CommonHome 组件处理
-// 搜索功能已移除 - 现在由 CommonHome 组件处理
 
 // 处理菜单导航
 const navigateTo = (path) => {
