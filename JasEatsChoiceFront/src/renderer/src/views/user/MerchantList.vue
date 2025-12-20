@@ -298,6 +298,15 @@ const filteredMerchants = computed(() => {
 	}
 
 	.merchant-card {
+		transition: all 0.3s ease;
+		border-radius: 12px;
+		box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+
+		&:hover {
+			box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
+			transform: translateY(-2px);
+		}
+
 		.card-header {
 			display: flex;
 			gap: 20px;
@@ -343,9 +352,13 @@ const filteredMerchants = computed(() => {
 		.card-actions {
 			display: flex;
 			gap: 10px;
+			padding-top: 16px;
+			border-top: 1px solid #f0f0f0;
 
 			.el-button {
 				flex: 1;
+				border-radius: 8px;
+				font-weight: 500;
 			}
 		}
 	}
