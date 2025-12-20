@@ -1,23 +1,33 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import api from "../../utils/api.js";
 import { API_CONFIG } from "../../config/index.js";
-// 导入 Pinia store
 import { useAuthStore } from "../../store/authStore";
+// 导入拆分后的组件
+import MerchantInfo from "../../components/merchant/MerchantInfo.vue";
+import BusinessOverview from "../../components/merchant/BusinessOverview.vue";
+import OrderCenter from "../../components/merchant/OrderCenter.vue";
+import TodayMenu from "../../components/merchant/TodayMenu.vue";
 
 const router = useRouter();
-const route = useRoute();
 
 // 从 Pinia store 获取商家ID
 const authStore = useAuthStore();
 let merchantId = authStore.merchantId;
 
-// 如果没有商家ID，回到首页或注册页
+// 如果 Pinia 中没有商家ID，尝试从 localStorage 读取
 if (!merchantId) {
-	ElMessage.error("未检测到商家ID，请重新登录");
-	router.push("/merchant/register"); // 跳转到注册页或首页
+	const localStorageMerchantId = localStorage.getItem("auth_merchantId");
+	if (localStorageMerchantId) {
+		merchantId = localStorageMerchantId;
+		authStore.setMerchantId(localStorageMerchantId); // 更新到 Pinia 中
+	} else {
+		// 如果 localStorage 中也没有，回到首页或注册页
+		ElMessage.error("未检测到商家ID，请重新登录");
+		router.push("/merchant/register"); // 跳转到注册页或首页
+	}
 }
 
 // 商家信息
@@ -589,19 +599,6 @@ const overviewConfig = ref([
 // 筛选功能
 const activeFilter = ref("today");
 
-// 菜单筛选功能
-const activeMenuFilter = ref("all");
-
-// 菜单分类列表 - 使用数组减少冗余
-const menuCategories = ref(["all", "早餐", "午餐", "晚餐", "下午茶", "今日特色"]);
-
-// 菜单状态列表 - 使用数组减少冗余
-const menuStatuses = ref([
-	{ value: "all", label: "全部" },
-	{ value: "online", label: "上架中" },
-	{ value: "offline", label: "下架中" },
-	{ value: "draft", label: "草稿" },
-]);
 
 // 所有订单数据
 const allOrders = ref([]);
@@ -677,134 +674,6 @@ const menuStatusMap = {
 };
 
 // 菜品状态映射
-const dishStatusMap = {
-	online: { text: "🟢 在售", type: "success" },
-	almost_sold: { text: "🟡 即将售罄", type: "warning" },
-	offline: { text: "🔴 下架", type: "danger" },
-};
-
-// 模拟菜品数据，关联到各个菜单
-const dishData = {
-	早餐菜单: [
-		{
-			id: 1,
-			name: "豆浆",
-			price: 3,
-			category: "饮品",
-			status: "online",
-			stock: 100,
-			updateTime: "2024-11-21 06:00",
-		},
-		{
-			id: 2,
-			name: "油条",
-			price: 2,
-			category: "主食",
-			status: "online",
-			stock: 80,
-			updateTime: "2024-11-21 06:30",
-		},
-		{
-			id: 3,
-			name: "包子",
-			price: 1.5,
-			category: "主食",
-			status: "online",
-			stock: 120,
-			updateTime: "2024-11-21 06:15",
-		},
-	],
-	午餐菜单: [
-		{
-			id: 4,
-			name: "鱼香肉丝",
-			price: 18,
-			category: "热菜",
-			status: "online",
-			stock: 50,
-			updateTime: "2024-11-21 10:30",
-		},
-		{
-			id: 5,
-			name: "宫保鸡丁",
-			price: 16,
-			category: "热菜",
-			status: "online",
-			stock: 40,
-			updateTime: "2024-11-21 10:45",
-		},
-		{
-			id: 6,
-			name: "西红柿鸡蛋",
-			price: 12,
-			category: "热菜",
-			status: "online",
-			stock: 60,
-			updateTime: "2024-11-21 10:20",
-		},
-	],
-	晚餐菜单: [
-		{
-			id: 7,
-			name: "红烧肉",
-			price: 22,
-			category: "热菜",
-			status: "online",
-			stock: 30,
-			updateTime: "2024-11-21 16:30",
-		},
-		{
-			id: 8,
-			name: "清蒸鱼",
-			price: 28,
-			category: "海鲜",
-			status: "online",
-			stock: 20,
-			updateTime: "2024-11-21 16:45",
-		},
-	],
-	下午茶菜单: [
-		{
-			id: 9,
-			name: "奶茶",
-			price: 15,
-			category: "饮品",
-			status: "online",
-			stock: 70,
-			updateTime: "2024-11-21 14:00",
-		},
-		{
-			id: 10,
-			name: "蛋糕",
-			price: 25,
-			category: "甜点",
-			status: "online",
-			stock: 40,
-			updateTime: "2024-11-21 14:30",
-		},
-	],
-	今日特色菜单: [
-		{
-			id: 4,
-			name: "鱼香肉丝",
-			price: 18,
-			category: "热菜",
-			status: "online",
-			stock: 50,
-			updateTime: "2024-11-21 10:30",
-		},
-		{
-			id: 9,
-			name: "奶茶",
-			price: 15,
-			category: "饮品",
-			status: "online",
-			stock: 70,
-			updateTime: "2024-11-21 14:00",
-		},
-	],
-};
-
 // 今日菜单数据
 const todayMenus = ref([]);
 
@@ -838,121 +707,16 @@ const fetchTodayMenus = () => {
 		});
 };
 
-// 当前选中的菜单
-const selectedMenu = ref(null);
-// 当前菜单的菜品
-const currentMenuDishes = ref([]);
-
 // 筛选后的菜单
 const filteredMenus = ref([...todayMenus.value]);
 
 // 菜单类型筛选
-const activeMenuTypeFilter = ref("all");
 
-// 切换菜单
-const switchMenu = (menu) => {
-	selectedMenu.value = menu;
-	currentMenuDishes.value = dishData[menu.name] || [];
-};
-
-// 筛选菜单：先按类型，再按状态
-const filterMenus = (filterType, filterCategory = "status") => {
-	if (filterCategory === "status") {
-		activeMenuFilter.value = filterType;
-	} else if (filterCategory === "type") {
-		activeMenuTypeFilter.value = filterType;
-	}
-
-	// 组合筛选
-	filteredMenus.value = todayMenus.value.filter((menu) => {
-		// 状态筛选
-		const statusMatch =
-			activeMenuFilter.value === "all"
-				? true
-				: menu.status === activeMenuFilter.value;
-
-		// 类型筛选
-		let typeMatch = true;
-		if (activeMenuTypeFilter.value !== "all") {
-			const menuType = menu.name.replace("菜单", ""); // 从名称中提取类型
-			typeMatch = menuType.includes(activeMenuTypeFilter.value);
-		}
-
-		return statusMatch && typeMatch;
-	});
-
-	// 如果当前选中的菜单不在筛选结果中，重置选择
-	if (
-		selectedMenu.value &&
-		!filteredMenus.value.some((menu) => menu.id === selectedMenu.value.id)
-	) {
-		selectedMenu.value = null;
-		currentMenuDishes.value = [];
-	}
-};
-
-// 编辑菜品
-const editDish = (dish) => {
-	// 导航到菜品编辑页面
-	router.push({
-		path: "/merchant/home/dish-edit",
-		query: { dishId: dish.id, menuName: selectedMenu.value.name },
-	});
-};
-
-// 切换菜品状态
-const toggleDishStatus = (dish) => {
-	// 计算新状态
-	const currentStatus = dish.status;
-	let newStatus;
-
-	// 根据当前状态确定新状态
-	if (currentStatus === "online" || currentStatus === "almost_sold") {
-		newStatus = "offline";
-	} else if (currentStatus === "offline") {
-		// 如果下架状态切换回上架，检查库存
-		newStatus = dish.stock <= 10 ? "almost_sold" : "online";
-	}
-
-	// 更新本地状态
-	const oldStatusText =
-		currentStatus === "online"
-			? "上架"
-			: currentStatus === "almost_sold"
-			? "即将售罄"
-			: "下架";
-	const newStatusText =
-		newStatus === "online"
-			? "上架"
-			: newStatus === "almost_sold"
-			? "即将售罄"
-			: "下架";
-
-	// 调用API更新菜品状态
-	const updateData = {
-		dishId: dish.id,
-		status: newStatus,
-	};
-
-	api.put(API_CONFIG.merchant.updateDishStatus.replace("{dishId}", dish.id), updateData)
-		.then((response) => {
-			if (response.data && response.data.success) {
-				// 更新本地状态
-				dish.status = newStatus;
-				ElMessage.success(
-					`菜品 ${dish.name} 已从${oldStatusText}状态切换为${newStatusText}状态`
-				);
-			}
-		})
-		.catch((error) => {
-			console.error("切换菜品状态失败:", error);
-			ElMessage.error("切换菜品状态失败");
-		});
-};
 
 // 页面加载
 onMounted(() => {
-	ElMessage.success("欢迎进入商家中心");
+	// ElMessage.success("欢迎进入商家中心");
+	console.log("商家ID:", merchantId);
 	// 调用后端API获取今日营业概览数据
 
 	// 获取营业概览
@@ -1012,315 +776,20 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="merchant-home-container" v-if="route.path === '/merchant/home'">
+	<div class="merchant-home-container">
 		<div class="merchant-content">
 			<!-- 商家信息 -->
-			<div class="merchant-info-card">
-				<div class="info-header">
-					<div class="avatar-section">
-						<span class="avatar">📸</span>
-						<!-- <el-button type="primary" size="small" class="edit-btn">🔧 编辑资料</el-button> -->
-					</div>
-					<div class="detail-section">
-						<div class="merchant-name">🏪 {{ merchantInfo.name }}</div>
-						<div class="merchant-rating">🌟 {{ merchantInfo.rating }}</div>
-						<div class="contact-info">
-							<span class="phone">📞 {{ merchantInfo.phone }}</span>
-							<span class="email">📧 {{ merchantInfo.email }}</span>
-							<span class="address">📍 {{ merchantInfo.address }}</span>
-						</div>
-					</div>
-				</div>
-			</div>
+			<MerchantInfo />
 
 			<!-- 今日营业概览 -->
-			<div class="overview-card">
-				<h3 class="card-title">📈 今日营业概览：</h3>
-				<div class="overview-grid">
-					<div
-						v-for="item in overviewConfig"
-						:key="item.key"
-						class="overview-item"
-						:class="item.key"
-						@click="item.onClick"
-					>
-						<div class="item-icon">{{ item.icon }}</div>
-						<div class="item-content">
-							<div class="overview-label">{{ item.label }}</div>
-							<div class="overview-value">
-								{{ item.suffix || ""
-								}}{{
-									item.key === "sales"
-										? businessOverview.sales.toFixed(0)
-										: businessOverview[item.key]
-								}}
-							</div>
-							<div class="item-trend" :class="item.trendClass">
-								{{ item.trend }}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+			<BusinessOverview />
 
 			<!-- 订单中心 -->
-			<div class="orders-card">
-				<div class="orders-header">
-					<h3 class="card-title">📋 订单中心</h3>
-					<div class="filter-section">
-						<el-tag
-							type="primary"
-							effect="plain"
-							class="filter-tag"
-							:class="{ active: activeFilter === 'today' }"
-							@click="filterOrders('today')"
-							>今日订单</el-tag
-						>
-						<el-tag
-							type="primary"
-							effect="plain"
-							class="filter-tag"
-							:class="{ active: activeFilter === 'week' }"
-							@click="filterOrders('week')"
-							>本周订单</el-tag
-						>
-						<el-tag
-							type="primary"
-							effect="plain"
-							class="filter-tag"
-							:class="{ active: activeFilter === 'month' }"
-							@click="filterOrders('month')"
-							>本月订单</el-tag
-						>
-						<el-tag
-							type="primary"
-							effect="plain"
-							class="filter-tag"
-							:class="{ active: activeFilter === 'all' }"
-							@click="filterOrders('all')"
-							>全部订单</el-tag
-						>
-					</div>
-				</div>
-
-				<div class="orders-list">
-					<div
-						class="order-item"
-						v-for="order in filteredOrders"
-						:key="order.id"
-					>
-						<div class="order-info">
-							<div class="order-no">🍽️ 订单号：{{ order.id }}</div>
-							<div class="order-details">
-								<span class="amount"
-									>¥{{
-										order.totalAmount
-											? order.totalAmount.toFixed(2)
-											: "0.00"
-									}}</span
-								>
-								<span class="time">⏱️ {{ order.createTime }}</span>
-								<el-tag
-									:type="
-										order.status === 1 ||
-										order.status === 2 ||
-										order.status === 3
-											? 'info'
-											: order.status === 4
-											? 'warning'
-											: order.status === 5
-											? 'success'
-											: 'danger'
-									"
-								>
-									{{ orderStatusMap[order.status] || "未知状态" }}
-								</el-tag>
-							</div>
-						</div>
-						<div class="order-actions">
-							<el-button
-								type="primary"
-								size="small"
-								@click="viewOrderDetails(order)"
-								>🔍 详情</el-button
-							>
-							<el-button
-								type="success"
-								size="small"
-								@click="updateOrderStatus(order)"
-								>⏱️ 更新状态</el-button
-							>
-							<el-button
-								type="warning"
-								size="small"
-								@click="notifyUser(order)"
-								>🔔 通知用户</el-button
-							>
-						</div>
-					</div>
-					<div v-if="filteredOrders.length === 0" class="no-orders">
-						<p>后端数据为空，当前没有订单</p>
-					</div>
-				</div>
-
-				<div class="view-all">
-					<el-button type="text" @click="navigateToOrders"
-						>📤 查看全部订单</el-button
-					>
-				</div>
-			</div>
+			<OrderCenter />
 
 			<!-- 今日菜单 -->
-			<div class="quick-actions-card today-menu-card">
-				<div class="menu-header">
-					<h3 class="card-title">📋 今日菜单</h3>
-					<div class="filter-section">
-						<span class="filter-label">分类：</span>
-						<el-tag
-							v-for="category in menuCategories"
-							:key="category"
-							type="primary"
-							effect="plain"
-							class="filter-tag"
-							:class="{ active: activeMenuTypeFilter === category }"
-							@click="filterMenus(category, 'type')"
-							>{{ category }}</el-tag
-						>
-					</div>
-				</div>
+			<TodayMenu />
 
-				<div class="menu-header">
-					<div class="filter-section">
-						<span class="filter-label">状态：</span>
-						<el-tag
-							v-for="status in menuStatuses"
-							:key="status.value"
-							type="primary"
-							effect="plain"
-							class="filter-tag"
-							:class="{ active: activeMenuFilter === status.value }"
-							@click="filterMenus(status.value, 'status')"
-							>{{ status.label }}</el-tag
-						>
-					</div>
-				</div>
-
-				<div class="menu-table-container">
-					<el-table
-						:data="filteredMenus"
-						:row-class-name="
-							(row) => (selectedMenu?.id === row.id ? 'active' : '')
-						"
-						@row-click="switchMenu"
-					>
-						<el-table-column prop="name" label="菜单名称" min-width="200" />
-						<el-table-column prop="status" label="状态" width="140">
-							<template #default="scope">
-								<el-tag :type="menuStatusMap[scope.row.status].type">
-									{{ menuStatusMap[scope.row.status].icon }}
-									{{ menuStatusMap[scope.row.status].text }}
-								</el-tag>
-							</template>
-						</el-table-column>
-						<el-table-column prop="dishes" label="菜品数量" width="120">
-							<template #default="scope">
-								🍴 {{ scope.row.dishes }} 菜品
-							</template>
-						</el-table-column>
-						<el-table-column prop="updateTime" label="更新时间" width="200" />
-						<el-table-column prop="autoOnline" label="自动上架" width="180" />
-						<el-table-column
-							prop="autoOffline"
-							label="自动下架"
-							width="180"
-						/>
-
-						<!-- 自定义空数据提示 -->
-						<template #empty>
-							<div class="empty-state">
-								<span class="el-icon-info"></span>
-								<p>🍽️ 今日咱未设置菜单</p>
-							</div>
-						</template>
-					</el-table>
-				</div>
-
-				<div class="view-all">
-					<el-button type="text" @click="navigateToMenu"
-						>📤 查看全部菜单</el-button
-					>
-				</div>
-			</div>
-
-			<!-- 菜品列表 -->
-			<div v-if="selectedMenu" class="quick-actions-card dishes-card">
-				<div class="menu-header">
-					<h3 class="card-title">🍽️ {{ selectedMenu.name }} - 菜品列表</h3>
-				</div>
-
-				<div class="dish-list">
-					<div
-						class="dish-item"
-						v-for="dish in currentMenuDishes"
-						:key="dish.id"
-					>
-						<div class="dish-cover">
-							{{ dish.image || "🍱" }}
-						</div>
-						<div class="dish-info">
-							<div class="dish-name">
-								<span class="name">{{ dish.name }}</span>
-								<el-tag
-									:type="dishStatusMap[dish.status].type"
-									size="small"
-								>
-									{{ dishStatusMap[dish.status].text }}
-								</el-tag>
-							</div>
-
-							<div class="dish-desc">
-								{{ dish.description || "美味可口，欢迎品尝" }}
-							</div>
-
-							<div class="dish-stats">
-								<span class="dish-category">📁 {{ dish.category }}</span>
-								<span class="dish-price">💰 ¥{{ dish.price }}</span>
-								<span
-									class="dish-stock"
-									:class="{
-										'stock-almost': dish.status === 'almost_sold',
-										'stock-off': dish.status === 'offline',
-									}"
-								>
-									{{
-										dish.status === "almost_sold"
-											? "⏳ 即将售罄"
-											: dish.status === "offline"
-											? "❌ 已下架"
-											: `📦 ${dish.stock} 份`
-									}}
-								</span>
-							</div>
-						</div>
-						<div class="dish-actions">
-							<el-button
-								type="primary"
-								size="small"
-								@click="editDish(dish)"
-							>
-								✏️ 编辑
-							</el-button>
-							<el-button
-								:type="dish.status === 'online' ? 'warning' : 'success'"
-								size="small"
-								@click="toggleDishStatus(dish)"
-							>
-								{{ dish.status === "online" ? "🔴 下架" : "🟢 上架" }}
-							</el-button>
-						</div>
-					</div>
-				</div>
-			</div>
 
 			<!-- 优惠管理部分 -->
 			<div class="discounts-section">
@@ -1926,24 +1395,20 @@ onMounted(() => {
 			}
 
 			.filter-section {
-				.filter-tag {
+				.order-filter-tag {
 					margin-right: 10px;
-					cursor: pointer; // 添加鼠标悬浮点击样式
+					cursor: pointer;
+					transition: all 0.3s ease;
+					border-radius: 20px;
 
-					&.active {
-						color: #409eff;
-						background-color: rgba(64, 158, 255, 0.1);
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
 					}
 
-					&:first-child {
-						// 今日订单样式优化
-						border-left: 3px solid #67c23a;
-						padding-left: 8px;
-
-						&.active {
-							background-color: rgba(103, 194, 58, 0.1);
-							color: #67c23a;
-						}
+					&.active {
+						transform: translateY(-1px);
+						box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 					}
 				}
 			}
@@ -2088,22 +1553,25 @@ onMounted(() => {
 				.filter-section {
 					display: flex;
 					align-items: center;
-					gap: 14px; /* 增加标签之间的间距 */
+					gap: 20px; /* 增加标签之间的间距 */
 					flex-wrap: wrap;
 
-					.filter-tag {
+					.menu-filter-tag,
+					.menu-status-tag {
 						cursor: pointer;
 						transition: all 0.3s ease;
-						padding: 6px 14px; /* 增加标签内边距，让标签更舒展 */
-						border-radius: 20px; /* 圆角优化，让标签更柔和 */
+						border-radius: 20px;
+						margin-right: 12px;
+						margin-bottom: 8px;
 
 						&:hover {
 							transform: translateY(-2px);
-							box-shadow: 0 2px 8px rgba(103, 194, 58, 0.2); /* 绿色主题阴影 */
+							box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
 						}
 
 						&.active {
 							transform: translateY(-1px);
+							box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 						}
 					}
 				}

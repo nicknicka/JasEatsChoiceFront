@@ -22,9 +22,6 @@ public class MerchantServiceImpl extends ServiceImpl<MerchantMapper, Merchant> i
         // 生成商家ID
         String merchantId = IdGenerator.toMerchantIdString(IdGenerator.generateId());
         merchant.setId(merchantId);
-        // 加密密码
-        String encryptedPassword = passwordEncoder.encode(merchant.getPassword());
-        merchant.setPassword(encryptedPassword);
         // 默认新注册商家为营业状态
         merchant.setStatus(true);
         // 设置创建时间

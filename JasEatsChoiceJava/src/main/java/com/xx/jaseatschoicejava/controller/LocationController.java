@@ -20,11 +20,14 @@ public class LocationController {
 
     /**
      * 获取当前定位
+     * @param latitude 纬度
+     * @param longitude 经度
+     * @return 定位信息
      */
     @GetMapping
-    public ResponseResult<?> getCurrentLocation() {
+    public ResponseResult<?> getCurrentLocation(@RequestParam(required = false) Double latitude, @RequestParam(required = false) Double longitude) {
         // 调用定位服务获取当前定位
-        Map<String, Object> location = locationService.getCurrentLocation();
+        Map<String, Object> location = locationService.getCurrentLocation(latitude, longitude);
         return ResponseResult.success(location);
     }
 

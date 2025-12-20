@@ -6,9 +6,17 @@
       <!-- 顶部头像区域 -->
       <div class="profile-header">
         <div class="avatar-container">
-          <el-avatar :size="120" class="user-avatar" :src="userStore.userInfo?.realAvatar || localStorage.getItem('userAvatar') || userStore.userInfo?.avatar">
+          <el-avatar :size="120" class="user-avatar" :src="avatarSrc">
             {{ (userInfo.nickname || '').charAt(0) || '?' }}
           </el-avatar>
+          <!-- Avatar upload input (hidden) -->
+          <input
+            type="file"
+            accept="image/*"
+            ref="avatarInput"
+            style="display: none"
+            @change="handleAvatarUpload"
+          />
         </div>
         <div class="user-basic-info">
           <h3 class="user-name">{{ userInfo.nickname || '未设置' }}</h3>
@@ -31,6 +39,9 @@
             </div>
           </div>
           <div class="action-buttons">
+            <el-button type="primary" size="small" class="upload-avatar-btn" @click="$refs.avatarInput.click()"
+              >📸 更换头像</el-button
+            >
             <el-button type="primary" size="small" class="share-btn" @click="shareProfile"
               >📤 分享</el-button
             >
@@ -213,7 +224,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '../../utils/api'
@@ -228,6 +239,11 @@ const router = useRouter()
 // 初始化用户存储
 const authStore = useAuthStore()
 const userStore = useUserStore()
+
+// 计算头像来源
+const avatarSrc = computed(() => {
+  return userStore.userInfo?.avatar || localStorage.getItem('userAvatar') || userStore.userInfo?.avatar
+})
 
 // 真实数据，初始化完整结构
 const userInfo = ref({
@@ -254,7 +270,29 @@ onMounted(() => {
 
   // 从authStore获取userId
   const authStore = useAuthStore()
-  const userId = parseInt(authStore.userId || '0', 10)
+  let userId = parseInt(authStore.userId || '0', 10)
+
+  // 如果authStore中没有有效的userId，尝试从localStorage获取并同步到Store
+  if (isNaN(userId) || userId <= 0) {
+    const localStorageUserId = localStorage.getItem('userId')
+    if (localStorageUserId) {
+      userId = parseInt(localStorageUserId, 10)
+      // 更新authStore的userId
+      authStore.userId = userId
+
+      // 如果存在token，也同步到authStore
+      const token = localStorage.getItem('token')
+      if (token) {
+        authStore.token = token
+      }
+
+      // 如果存在手机号，也同步到authStore
+      const phone = localStorage.getItem('phone')
+      if (phone) {
+        authStore.phone = phone
+      }
+    }
+  }
 
   console.log('userId:', userId) ;
 
@@ -265,36 +303,85 @@ onMounted(() => {
     return
   }
 
-  // 从后端API获取用户信息
-  api
-    .get(API_CONFIG.user.profile.replace('{userId}', userId))
-    .then((response) => {
-      console.log('response:', response)
-      if (response?.data) {
-        userInfo.value = response.data
-        // 更新userStore
-        userStore.setUserInfo(response.data)
+  // 如果当前用户信息为空或不完整，从后端API获取用户信息
+  const isUserInfoEmpty = !userStore.userInfo || Object.keys(userStore.userInfo).length === 0 || !userStore.userInfo.nickname || !userStore.userInfo.phone;
 
-        // 如果有本地保存的头像，优先使用本地头像
-        const savedAvatar = localStorage.getItem('userAvatar');
-        if (savedAvatar) {
-          // 更新本地用户信息
-          userInfo.value.avatar = savedAvatar;
+  if (isUserInfoEmpty) {
+    // 从后端API获取用户信息
+    api
+      .get(API_CONFIG.user.profile.replace('{userId}', userId))
+      .then((response) => {
+        console.log('response:', response)
+        if (response?.data) {
+          userInfo.value = response.data
           // 更新userStore
-          userStore.userInfo.avatar = savedAvatar;
+          userStore.setUserInfo(response.data)
+
+          // 如果有本地保存的头像，优先使用本地头像
+          const savedAvatar = localStorage.getItem('userAvatar');
+          if (savedAvatar) {
+            // 更新本地用户信息
+            userInfo.value.avatar = savedAvatar;
+            // 更新userStore
+            userStore.userInfo.avatar = savedAvatar;
+          }
         }
-      }
-    })
-    .catch((error) => {
-      console.error('加载用户信息失败:', error)
-      // 使用默认数据作为 fallback
-      ElMessage.error('加载用户信息失败，将显示默认数据')
-    })
+      })
+      .catch((error) => {
+        console.error('加载用户信息失败:', error)
+        // 使用默认数据作为 fallback
+        ElMessage.error('加载用户信息失败，将显示默认数据')
+      })
+  } else {
+    // 使用store中的用户信息
+    userInfo.value = userStore.userInfo;
+  }
 
   console.log('userInfo:', userInfo.value) ;
 
 })
 
+// Handle avatar upload
+const handleAvatarUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    // Extract base64 part from data URL
+    const base64Data = e.target.result.split(',')[1]
+    const imageData = {
+      base64: base64Data,
+      type: file.type,
+      name: file.name
+    }
+
+    // Upload image to main process for processing
+    api.uploadImage(imageData)
+      .then(result => {
+        if (result.error) {
+          ElMessage.error('头像上传失败: ' + result.error)
+          return
+        }
+
+        // Update user store and localStorage with the new avatar path
+        userStore.userInfo.avatar = result.thumbnail // Use thumbnail as default
+        userStore.userInfo.realAvatar = result.original // Store original path for full view
+        localStorage.setItem('userAvatar', result.thumbnail)
+
+        // Update local userInfo
+        userInfo.value.avatar = result.thumbnail
+
+        ElMessage.success('头像上传成功')
+      })
+      .catch(error => {
+        console.error('Avatar upload failed:', error)
+        ElMessage.error('头像上传失败')
+      })
+  }
+
+  reader.readAsDataURL(file)
+}
 
 // 跳转到所有订单页面
 const goToAllOrders = () => {
@@ -503,12 +590,17 @@ const logout = () => {
     type: 'warning'
   })
     .then(() => {
-      // 清除本地存储中的所有用户相关数据
+      // 清除localStorage中的所有用户相关数据
       localStorage.removeItem('userInfo')
       localStorage.removeItem('userAvatar')
       localStorage.removeItem('phone')
       localStorage.removeItem('userId')
       localStorage.removeItem('token')
+      // localStorage.removeItem('savedAccounts') // 也可以考虑清除保存的账号
+
+      // 清除Store中的用户信息
+      authStore.clearAuth()
+      userStore.clearUserInfo()
 
       // 跳转到登录页面
       router.push('/login')
@@ -632,6 +724,7 @@ const copyShareLink = async () => {
 .avatar-container {
   position: relative;
 }
+
 
 .user-avatar {
   background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);

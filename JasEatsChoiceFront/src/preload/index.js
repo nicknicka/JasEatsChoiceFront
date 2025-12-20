@@ -51,6 +51,10 @@ const api = {
   },
   disconnectWebSocket: () => {
     ipcRenderer.invoke('websocket:disconnect')
+  },
+  // Image upload functionality
+  uploadImage: (imageData) => {
+    ipcRenderer.invoke('user:uploadImage', imageData)
   }
 }
 

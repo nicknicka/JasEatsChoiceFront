@@ -109,7 +109,6 @@ public class MerchantController {
             merchant.setContactName(registerRequest.getContactName());
             merchant.setPhone(registerRequest.getPhone());
             merchant.setEmail(registerRequest.getEmail());
-            merchant.setPassword(registerRequest.getPassword());
 
             Merchant    savedMerchant = merchantService.register(merchant);
             if (savedMerchant != null) {

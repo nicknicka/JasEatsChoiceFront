@@ -1,7 +1,7 @@
 <template>
   <div class="register-container">
     <div class="register-card">
-      <CommonBackButton class="register-back-btn" />
+      <CommonBackButton class="register-back-btn" useRouterBack="false" @click="goToUserHome" />
       <h2 class="register-title">商户注册</h2>
 
       <el-form :model="registerForm" :rules="registerRules" ref="registerFormRef" label-width="120px">
@@ -14,24 +14,29 @@
         </el-form-item>
 
         <el-form-item label="经营范围" prop="businessScope">
-          <el-select ref="businessScopeSelect" v-model="registerForm.businessScope" placeholder="请选择经营范围" multiple style="width: 100%;" @change="handleBusinessScopeChange">
-            <el-option label="中餐" value="中餐" />
-            <el-option label="西餐" value="西餐" />
-            <el-option label="快餐" value="快餐" />
-            <el-option label="甜点" value="甜点" />
-            <el-option label="饮品" value="饮品" />
-            <el-option label="其他" value="其他" />
-            <el-option label="自定义" value="自定义" />
-            <template #popper-append>
-              <div style="padding: 8px 10px; border-top: 1px solid #e8e8e8;">
-                <el-button type="primary" size="small" block @click="confirmBusinessScope">确认选择</el-button>
-              </div>
-            </template>
+          <el-select
+            ref="businessScopeSelect"
+            v-model="registerForm.businessScope"
+            placeholder="请选择经营范围"
+            multiple
+            style="width: 100%;"
+            @change="handleBusinessScopeChange">
+              <el-option label="中餐" value="中餐" />
+              <el-option label="西餐" value="西餐" />
+              <el-option label="快餐" value="快餐" />
+              <el-option label="甜点" value="甜点" />
+              <el-option label="饮品" value="饮品" />
+              <el-option label="其他" value="其他" />
+              <el-option label="自定义" value="自定义" />
           </el-select>
 
           <!-- 自定义经营范围输入框 -->
-          <div v-if="showCustomBusinessScope" style="display: flex; gap: 10px; margin-top: 10px;">
-            <el-input v-model="customBusinessScope" placeholder="请输入自定义经营范围" style="flex: 1;" />
+          <div v-if="showCustomBusinessScope" style="margin-top: 10px; padding: 10px; border: 1px solid #e8e8e8; border-radius: 4px;">
+            <el-input
+              v-model="customBusinessScope"
+              placeholder="请输入自定义经营范围"
+              style="margin-right: 10px;"
+              @keyup.enter="addCustomBusinessScope" />
             <el-button type="primary" @click="addCustomBusinessScope">确定</el-button>
           </div>
         </el-form-item>
@@ -48,25 +53,18 @@
           <el-input v-model="registerForm.email" placeholder="请输入邮箱" type="email" />
         </el-form-item>
 
-        <el-form-item label="密码" prop="password">
-          <el-input v-model="registerForm.password" type="password" placeholder="请输入密码" />
-        </el-form-item>
-
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="registerForm.confirmPassword" type="password" placeholder="请确认密码" />
-        </el-form-item>
 
         <el-form-item label="验证码" prop="captcha">
-          <div style="display: flex; align-items: center;">
-            <el-input v-model="registerForm.captcha" placeholder="请输入验证码" style="width: 40%; margin-right: 10px;" />
+          <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <el-input v-model="registerForm.captcha" placeholder="请输入验证码" style="width: 160px;" />
             <img
               v-if="captchaImage"
               :src="captchaImage"
-              style="width: 120px; height: 36px; cursor: pointer; margin-right: 10px;"
+              style="width: 120px; height: 36px; cursor: pointer; border-radius: 4px; border: 1px solid #dcdfe6;"
               @click="getCaptcha"
               alt="验证码"
             />
-            <el-button type="text" size="small" @click="getCaptcha" style="margin-left: 0;">刷新</el-button>
+            <el-button type="primary" size="small" @click="getCaptcha" style="height: 36px;">刷新</el-button>
           </div>
         </el-form-item>
 
@@ -98,8 +96,6 @@ const registerForm = reactive({
   contactName: '',
   contactPhone: '',
   email: '',
-  password: '',
-  confirmPassword: '',
   captcha: ''
 });
 
@@ -114,7 +110,7 @@ const handleBusinessScopeChange = (value) => {
 
   // 如果选择了"自定义"选项，自动收起下拉框
   if (showCustomBusinessScope.value && businessScopeSelect.value) {
-    businessScopeSelect.value.blur();
+    businessScopeSelect.value.close();
   }
 
   // 如果取消选择"自定义"，则清空输入框
@@ -123,12 +119,6 @@ const handleBusinessScopeChange = (value) => {
   }
 };
 
-// 确认经营范围选择并收起下拉框
-const confirmBusinessScope = () => {
-  if (businessScopeSelect.value) {
-    businessScopeSelect.value.blur();
-  }
-};
 
 // 添加自定义经营范围
 const addCustomBusinessScope = () => {
@@ -172,21 +162,6 @@ const registerRules = reactive({
     { required: true, message: '请输入邮箱', trigger: ['blur', 'change'] },
     { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
   ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 32, message: '密码长度在 6 到 32 个字符', trigger: 'blur' },
-    { pattern: /^(?=.*[a-zA-Z])(?=.*\d)/, message: '密码必须包含字母和数字', trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
-    { validator: (rule, value, callback) => {
-        if (value !== registerForm.password) {
-          callback(new Error('两次输入密码不一致'));
-        } else {
-          callback();
-        }
-      }, trigger: 'blur' }
-  ],
   captcha: [
     { required: true, message: '请输入验证码', trigger: 'blur' }
   ]
@@ -223,6 +198,11 @@ const registerFormRef = ref(null);
 // 经营范围选择器引用
 const businessScopeSelect = ref(null);
 
+// 跳转到用户首页
+const goToUserHome = () => {
+  router.push('/user/home');
+};
+
 // 页面加载时获取验证码
 onMounted(() => {
   getCaptcha();
@@ -238,7 +218,6 @@ const submitForm = () => {
           // 注意：前端字段与后端字段映射
           name: registerForm.merchantName, // 后端是name，前端是merchantName
           phone: registerForm.contactPhone, // 后端是phone，前端是contactPhone
-          password: registerForm.password,
           // 其他字段暂时保留，等待后端实体更新后启用
           businessLicense: registerForm.businessLicense,
           businessScope: registerForm.businessScope, // 直接发送数组

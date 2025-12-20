@@ -9,9 +9,11 @@ import java.util.Map;
 public interface LocationService {
     /**
      * 获取当前定位
+     * @param latitude 纬度
+     * @param longitude 经度
      * @return 定位信息
      */
-    Map<String, Object> getCurrentLocation();
+    Map<String, Object> getCurrentLocation(Double latitude, Double longitude);
 
     /**
      * 获取级联选择器地址数据

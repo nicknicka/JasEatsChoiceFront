@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import { API_CONFIG } from '../config'
 import { useAuthStore } from './authStore'
-const authStore = useAuthStore() ;
 
 export interface UserInfo {
   userId: string
@@ -55,6 +54,7 @@ export const useUserStore = defineStore('user', {
   actions: {
     async fetchUserInfo() {
       try {
+        const authStore = useAuthStore();
         if (!authStore.userId) {
           throw new Error('用户ID不存在')
         }
@@ -83,7 +83,7 @@ export const useUserStore = defineStore('user', {
 
     setUserInfo(info: UserInfo) {
       this.userInfo = info
-
+      const authStore = useAuthStore();
       // 如果用户有注册商家ID，保存到authStore
       if (info.merchantId) {
         authStore.setMerchantId(info.merchantId)
@@ -92,6 +92,7 @@ export const useUserStore = defineStore('user', {
 
     async fetchMerchantInfo() {
       try {
+        const authStore = useAuthStore();
         if (!authStore.merchantId) {
           throw new Error('商家ID不存在')
         }

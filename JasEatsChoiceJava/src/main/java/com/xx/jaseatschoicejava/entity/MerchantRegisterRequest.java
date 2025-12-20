@@ -37,11 +37,6 @@ public class MerchantRegisterRequest {
     private String email;
 
     /**
-     * 密码
-     */
-    private String password;
-
-    /**
      * 验证码
      */
     private String captcha;
@@ -97,14 +92,6 @@ public class MerchantRegisterRequest {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getCaptcha() {

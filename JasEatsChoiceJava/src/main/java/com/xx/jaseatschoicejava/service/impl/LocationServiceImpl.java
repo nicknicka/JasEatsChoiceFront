@@ -30,7 +30,59 @@ public class LocationServiceImpl implements LocationService {
     private String gaodeApiUrl;
 
     @Override
-    public Map<String, Object> getCurrentLocation() {
+    public Map<String, Object> getCurrentLocation(Double latitude, Double longitude) {
+        // 如果前端传入了经纬度，使用逆地理编码获取定位信息
+        if (latitude != null && longitude != null) {
+            try {
+                // 调用高德地图逆地理编码API获取位置信息
+                String url = String.format("%s/geocode/regeo?location=%f,%f&key=%s", gaodeApiUrl, longitude, latitude, gaodeApiKey);
+
+                // 从API获取原始数据
+                String response = restTemplate.getForObject(url, String.class);
+
+                logger.info("高德地图逆地理编码返回的response = {}", response);
+
+                // 使用Jackson解析JSON
+                ObjectMapper mapper = new ObjectMapper();
+                Map<String, Object> responseMap = mapper.readValue(response, Map.class);
+
+                // 解析定位数据
+                boolean success = responseMap != null && "1".equals(responseMap.get("status"));
+
+                if (success) {
+                    Map<String, Object> location = new HashMap<>();
+
+                    // 解析逆地理编码结果
+                    Map<String, Object> regeocode = (Map<String, Object>) responseMap.get("regeocode");
+                    if (regeocode != null) {
+                        String formattedAddress = (String) regeocode.get("formatted_address");
+                        location.put("address", formattedAddress);
+
+                        // 解析地址组件
+                        Map<String, Object> addressComponent = (Map<String, Object>) regeocode.get("addressComponent");
+                        if (addressComponent != null) {
+                            String province = (String) addressComponent.get("province");
+                            String city = (String) addressComponent.get("city");
+                            String district = (String) addressComponent.get("district");
+
+                            location.put("province", province != null ? province : "");
+                            location.put("city", city != null ? city : "");
+                            location.put("district", district != null ? district : "");
+                        }
+                    }
+
+                    location.put("longitude", longitude.toString());
+                    location.put("latitude", latitude.toString());
+
+                    // 返回定位数据
+                    return location;
+                }
+            } catch (Exception e) {
+                logger.error("从高德地图API获取逆地理编码数据失败: {}", e.getMessage());
+            }
+        }
+
+        // 如果前端没有传入经纬度或者逆地理编码失败，回退到IP定位
         try {
             // 调用高德地图IP定位API获取当前位置
             String url = String.format("%s/ip?key=%s", gaodeApiUrl, gaodeApiKey);
@@ -49,12 +101,11 @@ public class LocationServiceImpl implements LocationService {
 
             if (success) {
                 Map<String, Object> location = new HashMap<>();
-                location.put("city", responseMap.get("city"));
-                location.put("district", responseMap.get("district"));
+                // 先初始化城市和区字段为null，后面会覆盖处理
                 // 解析经纬度坐标
                 Object rectangle = responseMap.get("rectangle");
-                String longitude = null;
-                String latitude = null;
+                String ipLongitude = null;
+                String ipLatitude = null;
 
                 if (rectangle != null) {
                     try {
@@ -64,8 +115,8 @@ public class LocationServiceImpl implements LocationService {
                         if (points.length > 0) {
                             String[] coords = points[0].split(",");
                             if (coords.length == 2) {
-                                longitude = coords[0];
-                                latitude = coords[1];
+                                ipLongitude = coords[0];
+                                ipLatitude = coords[1];
                             }
                         }
                     } catch (Exception e) {
@@ -73,18 +124,44 @@ public class LocationServiceImpl implements LocationService {
                     }
                 }
 
-                location.put("longitude", longitude);
-                location.put("latitude", latitude);
-                location.put("address",
-                    (responseMap.get("province") != null ? responseMap.get("province").toString() : "") +
-                    (responseMap.get("city") != null ? responseMap.get("city").toString() : "") +
-                    (responseMap.get("district") != null ? responseMap.get("district").toString() : ""));
+                location.put("longitude", ipLongitude);
+                location.put("latitude", ipLatitude);
+                // 处理省份、城市、区字段：如果是数组且不为空则取第一个元素，否则取空字符串
+                String province = "";
+                if (responseMap.get("province") instanceof List) {
+                    List<?> provinceList = (List<?>) responseMap.get("province");
+                    province = provinceList.isEmpty() ? "" : provinceList.get(0).toString();
+                } else if (responseMap.get("province") != null) {
+                    province = responseMap.get("province").toString();
+                }
+
+                String city = "";
+                if (responseMap.get("city") instanceof List) {
+                    List<?> cityList = (List<?>) responseMap.get("city");
+                    city = cityList.isEmpty() ? "" : cityList.get(0).toString();
+                } else if (responseMap.get("city") != null) {
+                    city = responseMap.get("city").toString();
+                }
+
+                String district = "";
+                if (responseMap.get("district") instanceof List) {
+                    List<?> districtList = (List<?>) responseMap.get("district");
+                    district = districtList.isEmpty() ? "" : districtList.get(0).toString();
+                } else if (responseMap.get("district") != null) {
+                    district = responseMap.get("district").toString();
+                }
+
+                location.put("province", province);
+                location.put("city", city);
+                location.put("district", district);
+
+                location.put("address", province + city + district);
 
                 // 如果解析结果有效，返回真实数据，否则返回空数据
-                if (location.get("city") != null || location.get("longitude") != null) {
+                if (!city.isEmpty() || longitude != null) {
                     return location;
                 } else {
-                    logger.warn("从高德地图API获取有效的定位数据失败: 所有字段都是null");
+                    logger.warn("从高德地图API获取有效的定位数据失败: 所有字段都是null或空值");
                     return new HashMap<>();
                 }
             }

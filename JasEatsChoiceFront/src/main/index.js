@@ -2,7 +2,9 @@
 
 const { app, shell, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
+const fs = require('fs/promises')
 const Store = require('electron-store')
+const sharp = require('sharp') // Image processing library
 
 // Check if we're in development mode
 const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV
@@ -59,6 +61,56 @@ app.whenReady().then(() => {
       },
       offlineMenus: [],
       historyOrders: []
+    }
+  })
+
+  // Create user data directory
+  const createUserDataDir = async () => {
+    const userDataPath = path.join(app.getPath('userData'), 'user')
+    const imagesPath = path.join(userDataPath, 'images')
+    const chatDataPath = path.join(userDataPath, 'chat')
+
+    try {
+      await fs.mkdir(imagesPath, { recursive: true })
+      await fs.mkdir(chatDataPath, { recursive: true })
+      console.log('User data directories created successfully')
+    } catch (error) {
+      console.error('Failed to create user data directories:', error)
+    }
+
+    return { userDataPath, imagesPath, chatDataPath }
+  }
+
+  // Handle image upload and processing
+  ipcMain.handle('user:uploadImage', async (event, imageData) => {
+    try {
+      const { imagesPath } = await createUserDataDir()
+      const buffer = Buffer.from(imageData.base64, 'base64')
+      const ext = imageData.type.split('/')[1] || 'png'
+      const filename = `${Date.now()}.${ext}`
+      const originalPath = path.join(imagesPath, filename)
+
+      // Save original image
+      await fs.writeFile(originalPath, buffer)
+
+      // Generate thumbnail with _cover suffix
+      const thumbnailFilename = `${Date.now()}_cover.${ext}`
+      const thumbnailPath = path.join(imagesPath, thumbnailFilename)
+
+      await sharp(buffer)
+        .resize({ width: 200, height: 200, fit: 'cover' })
+        .toFile(thumbnailPath)
+
+      return {
+        original: originalPath,
+        thumbnail: thumbnailPath,
+        filename,
+        thumbnailFilename,
+        ext
+      }
+    } catch (error) {
+      console.error('Image upload failed:', error)
+      return { error: error.message }
     }
   })
 

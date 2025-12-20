@@ -248,7 +248,7 @@ if (!listenersRegistered && window.api) {
     // 必要时发送身份验证
     const authMsg = {
       msgType: 'auth',
-      userId: localStorage.getItem('userId') || 'test-user-123', // 替换为实际用户 ID
+      userId: localStorage.getItem('userId') , // 替换为实际用户 ID
       token: 'test-token' // 替换为实际令牌
     };
     sendWebSocketMessage(authMsg);

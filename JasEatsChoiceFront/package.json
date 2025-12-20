@@ -27,6 +27,7 @@
     "element-plus": "^2.11.8",
     "pinia": "^3.0.4",
     "qrcode": "^1.5.4",
+    "sharp": "^0.34.5",
     "utf-8-validate": "^6.0.5",
     "vue-router": "^4.6.3",
     "ws": "^8.18.3"

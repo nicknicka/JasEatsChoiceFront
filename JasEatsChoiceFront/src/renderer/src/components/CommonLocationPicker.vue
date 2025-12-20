@@ -102,7 +102,7 @@ const getCurrentLocation = () => {
 // 根据经纬度获取城市信息
 const getCityByLocation = async (latitude, longitude) => {
   try {
-    const response = await axios.get(API_CONFIG.baseURL + API_CONFIG.weather.location, {
+    const response = await axios.get(API_CONFIG.baseURL + API_CONFIG.location.location, {
       params: {
         latitude,
         longitude

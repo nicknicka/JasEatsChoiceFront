@@ -406,12 +406,25 @@ const submitForm = async () => {
 					console.log('Token:', token)
 					// 使用 Pinia 存储认证信息和用户信息
 
-					// 保存认证信息
+					// 保存认证信息到 Pinia
 					authStore.setToken(token);
 					authStore.setUserId(userData.userId);
+					authStore.setPhone(userData.phone);
 
-					// 保存用户完整信息
+					// 保存用户完整信息到 Pinia
 					userStore.setUserInfo(userData);
+
+					// 将关键信息保存到localStorage，用于页面刷新或重新登录时恢复
+					localStorage.setItem('userId', userData.userId);
+					localStorage.setItem('token', token);
+					localStorage.setItem('phone', userData.phone);
+					// 可以考虑只保存用户基本信息，避免localStorage过大
+					localStorage.setItem('userInfo', JSON.stringify({
+						userId: userData.userId,
+						phone: userData.phone,
+						nickname: userData.nickname || '',
+						avatar: userData.avatar || ''
+					}));
 
 
 					console.log('userStore' , userStore.userInfo) ;
