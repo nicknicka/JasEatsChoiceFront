@@ -295,9 +295,12 @@ const filteredMerchants = computed(() => {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 		gap: 20px;
+		padding: 0 20px;
 	}
 
 	.merchant-card {
+		width: 100%;
+		box-sizing: border-box;
 		transition: all 0.3s ease;
 		border-radius: 12px;
 		box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
