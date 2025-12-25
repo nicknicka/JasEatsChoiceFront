@@ -64,6 +64,8 @@ public class CaptchaController {
             Map<String, String> result = new HashMap<>();
             result.put("checkCode", captchaBase64);
             result.put("checkCodeKey", checkCodeKey);
+            // 返回验证码答案，仅用于开发环境快速测试
+            result.put("captchaAnswer", captchaResult);
 
             return ResponseResult.success(result);
         } catch (Exception e) {

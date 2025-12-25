@@ -237,11 +237,17 @@ const userStore = useUserStore();
 const generateCaptcha = async () => {
 	try {
 		const response = await axios.get(`${API_CONFIG.baseURL}/v1/captcha/checkCode`);
-		// console.log('验证码响应:', response.data.data) ;
 		const result = response.data.data;
 		// 添加base64图片前缀，否则浏览器无法识别
 		captchaBase64.value = "data:image/png;base64," + result.checkCode;
 		checkCodeKey.value = result.checkCodeKey;
+		// 开发者模式下自动填充验证码答案
+		// 假设后端在开发环境会返回captchaAnswer字段
+		const isDevMode = import.meta.env.MODE === 'development' || import.meta.env.DEV;
+		if (isDevMode && result.captchaAnswer) {
+			loginForm.captcha = result.captchaAnswer.toUpperCase();
+			console.log('开发者模式: 自动填充验证码答案 ->', result.captchaAnswer);
+		}
 	} catch (error) {
 		console.error("获取验证码失败:", error);
 		ElMessage.error("获取验证码失败，请稍后重试");
