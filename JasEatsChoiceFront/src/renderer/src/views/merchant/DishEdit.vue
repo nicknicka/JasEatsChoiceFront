@@ -146,7 +146,7 @@ const handleUpload = (file) => {
         <el-button type="success" @click="saveDish('online')">💾 保存菜品并上架</el-button>
         <el-button type="warning" @click="saveDish('offline')">💾 保存菜品并下架</el-button>
         <el-button type="info" @click="saveDish()">💾 保存菜品</el-button>
-        <el-button type="text" @click="$router.back()">🔙 取消编辑</el-button>
+        <CommonBackButton type="text" text="🔙 取消编辑" />
       </div>
     </div>
   </div>

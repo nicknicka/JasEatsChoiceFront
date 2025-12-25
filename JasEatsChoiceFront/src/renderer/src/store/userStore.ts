@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import { API_CONFIG } from '../config'
 import { useAuthStore } from './authStore'
+const authStore = useAuthStore() ;
 
 export interface UserInfo {
   userId: string
@@ -15,8 +16,8 @@ export interface UserInfo {
   preferTags: any // 饮食偏好标签，JSON格式
   disableWeatherRecommend: boolean | null
   createTime: string // 创建时间
-  updateTime: string // 更新时间
-  merchantId: string // 商家ID，如果不为空表示用户已注册为商家
+  updateTime: string | null
+  merchantId: string | null // 商家ID，如果不为空表示用户已注册为商家
   avatar: string // 用户头像URL
 }
 
@@ -31,7 +32,7 @@ export interface MerchantInfo {
   businessLicense: string
   businessScope: string[]
   contactName: string
-  avatar?: string
+  avatar?: string // 商家头像URL
   rating?: number
   businessHours?: string
   email?: string
@@ -47,7 +48,7 @@ export const useUserStore = defineStore('user', {
 
   // Getters (计算属性)
   getters: {
-    isMerchantRegistered: (state) => !!state.userInfo?.merchantId || !!state.merchantInfo
+    isMerchantRegistered: (state) => !!state.userInfo?.merchantId || authStore.hasMerchantId
   },
 
   // Actions (方法)
@@ -110,6 +111,38 @@ export const useUserStore = defineStore('user', {
       } catch (error: any) {
         console.error('获取商家信息失败:', error)
         throw error
+      }
+    },
+
+    // 更新用户头像
+    async updateUserAvatar(avatar: string) {
+      if (this.userInfo) {
+        // Update in store first
+        this.userInfo.avatar = avatar
+
+        // Try to update on backend if userId exists
+        try {
+          const authStore = useAuthStore();
+          if (authStore.userId) {
+            const response = await axios.put(`${API_CONFIG.baseURL}/v1/users/${authStore.userId}`, {
+              avatar
+            });
+
+            // Check response.data for status
+            if (response.data?.code !== '200') {
+              console.error('Failed to update avatar on backend:', response.data?.message || 'Unknown error');
+            }
+          }
+        } catch (error) {
+          console.error('Failed to update avatar on backend:', error);
+        }
+      }
+    },
+
+    // 更新商家头像
+    updateMerchantAvatar(avatar: string) {
+      if (this.merchantInfo) {
+        this.merchantInfo.avatar = avatar
       }
     },
 

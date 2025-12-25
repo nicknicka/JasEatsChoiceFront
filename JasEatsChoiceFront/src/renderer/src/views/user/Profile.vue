@@ -242,7 +242,7 @@ const userStore = useUserStore()
 
 // 计算头像来源
 const avatarSrc = computed(() => {
-  return userStore.userInfo?.avatar || localStorage.getItem('userAvatar') || userStore.userInfo?.avatar
+  return userStore.userInfo?.avatar || localStorage.getItem('userAvatar')
 })
 
 // 真实数据，初始化完整结构
@@ -262,7 +262,8 @@ const userInfo = ref({
   },
   collections: 0,
   addresses: 0,
-  defaultAddress: ''
+  defaultAddress: '',
+  avatar: ''
 })
 
 // 从本地存储加载真实数据
@@ -365,8 +366,7 @@ const handleAvatarUpload = (event) => {
         }
 
         // Update user store and localStorage with the new avatar path
-        userStore.userInfo.avatar = result.thumbnail // Use thumbnail as default
-        userStore.userInfo.realAvatar = result.original // Store original path for full view
+        userStore.updateUserAvatar(result.thumbnail) // Use the new action to update avatar with thumbnail
         localStorage.setItem('userAvatar', result.thumbnail)
 
         // Update local userInfo

@@ -55,14 +55,14 @@
 						<template #default="{ item }">
 							<div class="saved-account-item">
 								<span>{{ item.label }}</span>
-								<el-button
-									type="text"
+								<el-link
+									type="danger"
 									size="small"
 									class="delete-account-btn"
 									@click.stop="deleteSavedAccount(item.value)"
 								>
 									x
-								</el-button>
+								</el-link>
 							</div>
 						</template>
 					</el-autocomplete>
@@ -82,7 +82,7 @@
 						<el-input
 							v-model="loginForm.captcha"
 							placeholder="请输入验证码"
-							style="width: 60%; margin-right: 10px"
+							style="width: 160px; margin-right: 10px"
 							@input="
 								(val) => {
 									loginForm.captcha = val.toUpperCase();
@@ -101,12 +101,13 @@
 							"
 							@click="generateCaptcha"
 						/>
-						<el-button
-							type="text"
+						<el-link
+							type="primary"
 							size="small"
-							style="margin-left: 10px"
+							:underline="false"
+							class="captcha-refresh-link"
 							@click="generateCaptcha"
-							>刷新</el-button
+							>刷新</el-link
 						>
 					</div>
 				</el-form-item>
@@ -116,7 +117,7 @@
 						style="
 							display: flex;
 							align-items: center;
-							justify-content: flex-start;
+							justify-content: center;
 						"
 					>
 						<el-button
@@ -180,7 +181,7 @@
 
 				<div class="register-link">
 					<span>没有账号？</span>
-					<el-button type="text" @click="toRegister">立即注册</el-button>
+					<el-link type="primary" @click="toRegister">立即注册</el-link>
 				</div>
 			</el-form>
 		</div>
@@ -193,7 +194,6 @@ import { ElMessage, ElForm, ElFormItem, ElInput, ElButton } from "element-plus";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { API_CONFIG } from "../../config";
-import { decodeJwt } from "../../utils/api.js";
 import { useAuthStore } from "../../store/authStore";
 import { useUserStore } from "../../store/userStore";
 
@@ -335,6 +335,13 @@ const handlePhoneChange = (value) => {
 		loginForm.password = "";
 		rememberPassword.value = false;
 	}
+	// 清除手机号和密码字段的验证错误
+	clearFieldError("phone");
+	clearFieldError("password");
+	// 清除整个表单的验证错误
+	if (loginFormRef.value) {
+		loginFormRef.value.clearValidate();
+	}
 };
 
 // 删除保存的账号
@@ -388,7 +395,7 @@ const submitForm = async () => {
 							checkCodeKey: checkCodeKey.value,
 						}
 					);
-					console.log('登录响应:', response.data) ;
+					console.log("登录响应:", response.data);
 
 					// 检查后端返回的业务码，不是200则抛出错误
 					if (response.data.code !== "200") {
@@ -403,7 +410,7 @@ const submitForm = async () => {
 					const responseData = response.data.data; // 后端返回对象包含token和user
 					const token = responseData.token; // 提取token
 					const userData = responseData.user; // 提取用户信息
-					console.log('Token:', token)
+					console.log("Token:", token);
 					// 使用 Pinia 存储认证信息和用户信息
 
 					// 保存认证信息到 Pinia
@@ -415,20 +422,22 @@ const submitForm = async () => {
 					userStore.setUserInfo(userData);
 
 					// 将关键信息保存到localStorage，用于页面刷新或重新登录时恢复
-					localStorage.setItem('userId', userData.userId);
-					localStorage.setItem('token', token);
-					localStorage.setItem('phone', userData.phone);
+					localStorage.setItem("userId", userData.userId);
+					localStorage.setItem("token", token);
+					localStorage.setItem("phone", userData.phone);
 					// 可以考虑只保存用户基本信息，避免localStorage过大
-					localStorage.setItem('userInfo', JSON.stringify({
-						userId: userData.userId,
-						phone: userData.phone,
-						nickname: userData.nickname || '',
-						avatar: userData.avatar || ''
-					}));
+					localStorage.setItem(
+						"userInfo",
+						JSON.stringify({
+							userId: userData.userId,
+							phone: userData.phone,
+							nickname: userData.nickname || "",
+							avatar: userData.avatar || "",
+						})
+					);
 
-
-					console.log('userStore' , userStore.userInfo) ;
-					console.log('authStore' , authStore) ;
+					console.log("userStore", userStore.userInfo);
+					console.log("authStore", authStore);
 					// 保存账号信息
 					// 检查账号是否已经存在
 					const accountIndex = savedAccounts.value.findIndex(
@@ -454,7 +463,7 @@ const submitForm = async () => {
 						JSON.stringify(savedAccounts.value)
 					);
 					ElMessage.success("登录成功！");
-					
+
 					// 登录成功后显示加载动画
 					showLoading.value = true;
 					// 登录成功后根据当前角色跳转到对应首页
@@ -534,6 +543,18 @@ const thirdPartyLogin = (type) => {
 	font-size: 24px;
 }
 
+/* 确保表单标签和输入框垂直居中对齐 */
+.el-form-item {
+	display: flex !important;
+	align-items: center !important;
+	margin-bottom: 20px;
+}
+
+/* 验证码区域内部垂直居中 */
+.el-form-item .el-form-item__content {
+	align-self: center;
+}
+
 .register-link {
 	text-align: center;
 	margin-top: 15px;
@@ -603,5 +624,17 @@ const thirdPartyLogin = (type) => {
 	margin-top: 20px;
 	font-size: 18px;
 	color: #fff;
+}
+
+.captcha-refresh-link {
+	margin-left: 10px;
+	font-size: 12px;
+	opacity: 0.8;
+	transition: opacity 0.2s;
+}
+
+.captcha-refresh-link:hover {
+	font-size: 13px;
+	opacity: 1;
 }
 </style>

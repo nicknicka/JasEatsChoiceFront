@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../store/authStore';
 import api, { decodeJwt } from '../../utils/api.js';
 import { API_CONFIG } from '../../config/index.js';
+import CommonBackButton from '../../components/common/CommonBackButton.vue';
 
 const router = useRouter();
 
@@ -241,7 +242,7 @@ const markAllAsRead = () => {
           {{ selectedMessage.content }}
         </div>
         <div class="detail-actions">
-          <el-button @click="backToList">返回列表</el-button>
+          <CommonBackButton @click="backToList" :useRouterBack="false" text="返回列表" />
           <el-button v-if="!selectedMessage.isRead" type="success" @click="markAsRead(selectedMessage)">
             标记为已读
           </el-button>

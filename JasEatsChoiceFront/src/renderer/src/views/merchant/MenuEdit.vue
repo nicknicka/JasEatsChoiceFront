@@ -279,7 +279,7 @@ const batchAssociateDishes = () => {
         <el-button type="success" @click="saveMenu('online')">💾 保存菜单并上架</el-button>
         <el-button type="warning" @click="saveMenu('offline')">💾 保存菜单并下架</el-button>
         <el-button type="info" @click="saveMenu('draft')">💾 保存为草稿</el-button>
-        <el-button type="text" @click="$router.back()">🔙 取消编辑</el-button>
+        <CommonBackButton type="text" text="🔙 取消编辑" />
       </div>
 
       <!-- 添加菜品对话框 -->

@@ -1,7 +1,7 @@
 <template>
   <div class="register-container">
     <div class="register-card">
-      <CommonBackButton class="register-back-btn" useRouterBack="false" @click="goToUserHome" />
+      <CommonBackButton class="register-back-btn" :useRouterBack="false" @click="goToUserHome" />
       <h2 class="register-title">商户注册</h2>
 
       <el-form :model="registerForm" :rules="registerRules" ref="registerFormRef" label-width="120px">
@@ -21,24 +21,38 @@
             multiple
             style="width: 100%;"
             @change="handleBusinessScopeChange">
-              <el-option label="中餐" value="中餐" />
-              <el-option label="西餐" value="西餐" />
-              <el-option label="快餐" value="快餐" />
-              <el-option label="甜点" value="甜点" />
-              <el-option label="饮品" value="饮品" />
-              <el-option label="其他" value="其他" />
-              <el-option label="自定义" value="自定义" />
-          </el-select>
+            <el-option label="中餐" value="中餐" />
+            <el-option label="西餐" value="西餐" />
+            <el-option label="快餐" value="快餐" />
+            <el-option label="甜点" value="甜点" />
+            <el-option label="饮品" value="饮品" />
 
-          <!-- 自定义经营范围输入框 -->
-          <div v-if="showCustomBusinessScope" style="margin-top: 10px; padding: 10px; border: 1px solid #e8e8e8; border-radius: 4px;">
-            <el-input
-              v-model="customBusinessScope"
-              placeholder="请输入自定义经营范围"
-              style="margin-right: 10px;"
-              @keyup.enter="addCustomBusinessScope" />
-            <el-button type="primary" @click="addCustomBusinessScope">确定</el-button>
-          </div>
+            <!-- 自定义选项部分 -->
+            <template #footer>
+              <div v-if="!isAddingCustomScope" style="padding: 8px;">
+                <el-button text size="small" block @click="isAddingCustomScope = true">
+                  + 添加自定义经营范围
+                </el-button>
+              </div>
+              <div v-else class="select-custom-footer" style="padding: 8px 10px;">
+                <el-input
+                  v-model="customBusinessScope"
+                  placeholder="请输入自定义经营范围"
+                  size="small"
+                  style="margin-bottom: 8px;"
+                  @keyup.enter="addCustomBusinessScope"
+                />
+                <div style="display: flex; gap: 8px;">
+                  <el-button type="primary" size="small" block @click="addCustomBusinessScope">
+                    确定
+                  </el-button>
+                  <el-button size="small" block @click="isAddingCustomScope = false; customBusinessScope = ''">
+                    取消
+                  </el-button>
+                </div>
+              </div>
+            </template>
+          </el-select>
         </el-form-item>
 
         <el-form-item label="联系人姓名" prop="contactName">
@@ -64,7 +78,7 @@
               @click="getCaptcha"
               alt="验证码"
             />
-            <el-button type="primary" size="small" @click="getCaptcha" style="height: 36px;">刷新</el-button>
+            <el-link type="primary" size="small" class="captcha-refresh-link" @click="getCaptcha">刷新</el-link>
           </div>
         </el-form-item>
 
@@ -77,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, nextTick } from 'vue';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElButton, ElSelect, ElOption } from 'element-plus';
 import { useRouter } from 'vue-router';
 import api from '../../utils/api';
@@ -100,21 +114,14 @@ const registerForm = reactive({
 });
 
 // 自定义经营范围相关
-const showCustomBusinessScope = ref(false);
-const customBusinessScope = ref('');
+const isAddingCustomScope = ref(false); // 是否正在添加自定义经营范围
+const customBusinessScope = ref(''); // 用于存储自定义经营范围输入
 
 // 自定义经营范围变化处理
 const handleBusinessScopeChange = (value) => {
   // 检查是否选择了"自定义"选项
-  showCustomBusinessScope.value = value.includes('自定义');
-
-  // 如果选择了"自定义"选项，自动收起下拉框
-  if (showCustomBusinessScope.value && businessScopeSelect.value) {
-    businessScopeSelect.value.close();
-  }
-
   // 如果取消选择"自定义"，则清空输入框
-  if (!showCustomBusinessScope.value) {
+  if (!value.includes('自定义')) {
     customBusinessScope.value = '';
   }
 };
@@ -132,9 +139,8 @@ const addCustomBusinessScope = () => {
     // 添加自定义经营范围
     registerForm.businessScope.push(customBusinessScope.value.trim());
 
-    // 清空输入框并隐藏自定义选项区域
+    // 清空输入框
     customBusinessScope.value = '';
-    showCustomBusinessScope.value = false;
   }
 };
 
@@ -271,9 +277,9 @@ const submitForm = () => {
             // const token = response.data.data;
             // authStore.setToken(token);
 
-            // 注册成功后跳转到商家首页
+            // 注册成功后跳转到用户首页
             setTimeout(() => {
-              router.push('/merchant/home');
+              router.push('/user/home');
             }, 1500);
           })
           .catch(error => {
@@ -329,5 +335,19 @@ const submitForm = () => {
   span {
     margin-right: 8px;
   }
+}
+
+.captcha-refresh-link {
+  height: 36px;
+  line-height: 36px;
+  font-size: 12px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  text-decoration: none !important; /* 始终去除下划线 */
+}
+
+.captcha-refresh-link:hover {
+  opacity: 1;
+  text-decoration: none !important;
 }
 </style>

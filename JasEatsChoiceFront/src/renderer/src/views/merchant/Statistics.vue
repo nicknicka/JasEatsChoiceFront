@@ -36,71 +36,12 @@ const chartContainerWidth = ref(0);
 // 图表引用
 const chartRef = ref(null);
 
-// 模拟销售额数据
-const salesData = ref({
-  today: [
-    { time: '00:00', value: 120 },
-    { time: '01:00', value: 100 },
-    { time: '02:00', value: 80 },
-    { time: '03:00', value: 150 },
-    { time: '04:00', value: 200 },
-    { time: '05:00', value: 180 },
-    { time: '06:00', value: 250 },
-    { time: '07:00', value: 300 },
-    { time: '08:00', value: 400 },
-    { time: '09:00', value: 350 }
-  ],
-  yesterday: [
-    { time: '00:00', value: 100 },
-    { time: '01:00', value: 90 },
-    { time: '02:00', value: 70 },
-    { time: '03:00', value: 130 },
-    { time: '04:00', value: 180 },
-    { time: '05:00', value: 160 },
-    { time: '06:00', value: 230 },
-    { time: '07:00', value: 280 },
-    { time: '08:00', value: 380 },
-    { time: '09:00', value: 330 }
-  ],
-  week: [
-    { time: '周一', value: 2000 },
-    { time: '周二', value: 2200 },
-    { time: '周三', value: 1800 },
-    { time: '周四', value: 2500 },
-    { time: '周五', value: 3000 },
-    { time: '周六', value: 3500 },
-    { time: '周日', value: 2800 }
-  ],
-  month: [
-    { time: '1日', value: 8000 },
-    { time: '2日', value: 7500 },
-    { time: '3日', value: 9000 },
-    { time: '4日', value: 8500 },
-    { time: '5日', value: 10000 }
-  ]
-});
+// 销售额数据
 
-// 模拟菜品销售数据
-const dishSalesData = ref([
-  { name: '宫保鸡丁', sales: 120, revenue: 3360 },
-  { name: '麻婆豆腐', sales: 150, revenue: 2700 },
-  { name: '鱼香肉丝', sales: 180, revenue: 5040 },
-  { name: '糖醋排骨', sales: 90, revenue: 3780 },
-  { name: '回锅肉', sales: 110, revenue: 3960 }
-]);
+// 菜品销售数据
 
-// 当前显示的销售额数据
-const currentSalesData = ref([]);
 
 // 更新当前显示的销售额数据
-const updateSalesData = () => {
-  currentSalesData.value = salesData.value[activeTimeRange.value];
-  currentBasicStats.value = basicStats.value[activeTimeRange.value];
-  currentOrderTrend.value = orderTrend.value[activeTimeRange.value];
-
-  // 更新图表数据
-  updateChartData();
-};
 
 // 从后端获取统计数据
 const fetchStatisticsData = () => {
@@ -126,8 +67,11 @@ const fetchStatisticsData = () => {
     })
     .catch(error => {
       console.error('获取统计数据失败:', error);
-      // 如果获取失败，保留模拟数据
-      updateSalesData();
+      // 如果获取失败，清空数据
+      currentBasicStats.value = { orders: 0, totalAmount: 0.00, avgAmount: 0.00, newCustomers: 0 };
+      currentOrderTrend.value = [];
+      dishSalesRank.value = [];
+      updateChartData();
     });
 };
 
@@ -169,83 +113,18 @@ const updateChartContainerWidth = () => {
   });
 };
 
-// 模拟基础统计数据 - 按时间范围
-const basicStats = ref({
-  today: {
-    orders: 156,
-    totalAmount: 8900.00,
-    avgAmount: 57.05,
-    newCustomers: 35
-  },
-  yesterday: {
-    orders: 142,
-    totalAmount: 8200.50,
-    avgAmount: 57.75,
-    newCustomers: 28
-  },
-  week: {
-    orders: 890,
-    totalAmount: 51200.00,
-    avgAmount: 57.53,
-    newCustomers: 165
-  },
-  month: {
-    orders: 3560,
-    totalAmount: 204300.75,
-    avgAmount: 57.40,
-    newCustomers: 680
-  }
-});
+// 基础统计数据 - 按时间范围
 
 // 当前显示的基础统计数据
-const currentBasicStats = ref({ ...basicStats.value.today });
+const currentBasicStats = ref({ orders: 0, totalAmount: 0.00, avgAmount: 0.00, newCustomers: 0 });
 
-// 模拟订单趋势数据 - 按时间范围
-const orderTrend = ref({
-  today: [
-    { time: '00:00', orders: 12 },
-    { time: '03:00', orders: 8 },
-    { time: '06:00', orders: 25 },
-    { time: '09:00', orders: 40 },
-    { time: '12:00', orders: 55 },
-    { time: '15:00', orders: 60 }
-  ],
-  yesterday: [
-    { time: '00:00', orders: 10 },
-    { time: '03:00', orders: 7 },
-    { time: '06:00', orders: 22 },
-    { time: '09:00', orders: 38 },
-    { time: '12:00', orders: 52 },
-    { time: '15:00', orders: 58 }
-  ],
-  week: [
-    { time: '周一', orders: 125 },
-    { time: '周二', orders: 130 },
-    { time: '周三', orders: 145 },
-    { time: '周四', orders: 160 },
-    { time: '周五', orders: 180 },
-    { time: '周六', orders: 210 },
-    { time: '周日', orders: 195 }
-  ],
-  month: [
-    { time: '第一周', orders: 680 },
-    { time: '第二周', orders: 850 },
-    { time: '第三周', orders: 1020 },
-    { time: '第四周', orders: 1210 }
-  ]
-});
+// 订单趋势数据 - 按时间范围
 
 // 当前显示的订单趋势数据
-const currentOrderTrend = ref([...orderTrend.value.today]);
+const currentOrderTrend = ref([]);
 
-// 模拟菜品销量排行数据
-const dishSalesRank = ref([
-  { name: '宫保鸡丁', sales: 120, revenue: 3360 },
-  { name: '麻婆豆腐', sales: 150, revenue: 2700 },
-  { name: '鱼香肉丝', sales: 180, revenue: 5040 },
-  { name: '糖醋排骨', sales: 90, revenue: 3780 },
-  { name: '回锅肉', sales: 110, revenue: 3960 }
-]);
+// 菜品销量排行数据
+const dishSalesRank = ref([]);
 
 // 配置订单趋势图表
 const orderChartOptions = ref({
@@ -261,7 +140,7 @@ const orderChartOptions = ref({
   },
   xAxis: {
     type: 'category',
-    data: orderTrend.value.today.map(item => item.time)
+    data: []
   },
   yAxis: {
     type: 'value',
@@ -272,7 +151,7 @@ const orderChartOptions = ref({
   series: [
     {
       name: '订单数',
-      data: orderTrend.value.today.map(item => item.orders),
+      data: [],
       type: 'line',
       smooth: true,
       lineStyle: {
@@ -350,14 +229,17 @@ const updateChartData = () => {
         <h4 class="section-title">📈 订单趋势</h4>
         <div class="chart-container" v-show="true">
           <v-chart
-            v-if="chartContainerWidth > 0"
+            v-if="chartContainerWidth > 0 && currentOrderTrend.length > 0"
             :options="orderChartOptions"
             style="height: 250px; width: 100%"
             :autoresize="true"
             ref="chartRef"
           />
-          <div v-else class="chart-placeholder">
-            图表加载中...
+          <div v-else-if="chartContainerWidth > 0" class="chart-placeholder">
+            暂时没有数据提供
+          </div>
+          <div v-else class="chart-placeholder chart-loading">
+            <span class="loading-text">图表加载中...</span>
           </div>
         </div>
       </div>
@@ -365,7 +247,7 @@ const updateChartData = () => {
       <!-- 菜品销量排行 -->
       <div class="dish-sales-section">
         <h4 class="section-title">🏆 菜品销量排行</h4>
-        <div class="sales-rank-list">
+        <div v-if="dishSalesRank.length > 0" class="sales-rank-list">
           <div
             v-for="(dish, index) in dishSalesRank"
             :key="dish.name"
@@ -378,6 +260,9 @@ const updateChartData = () => {
             </div>
             <div class="dish-revenue">¥{{ dish.revenue }}</div>
           </div>
+        </div>
+        <div v-else class="no-data-placeholder">
+          暂时没有数据提供
         </div>
       </div>
     </div>
@@ -470,13 +355,15 @@ const updateChartData = () => {
         align-items: center;
         justify-content: center;
         width: 100%;
-        
+
         .chart-placeholder {
           color: #909399;
           font-size: 14px;
         }
+
       }
     }
+
 
     .dish-sales-section {
       background-color: #fff;
@@ -488,6 +375,13 @@ const updateChartData = () => {
         font-size: 16px;
         font-weight: 600;
         margin-bottom: 20px;
+      }
+
+      .no-data-placeholder {
+        color: #909399;
+        font-size: 14px;
+        padding: 40px 0;
+        text-align: center;
       }
 
       .sales-rank-list {

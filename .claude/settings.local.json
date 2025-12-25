@@ -271,7 +271,21 @@
       "Bash(__NEW_LINE__ grep -B 5 -A 5 \"activeMenuFilter = ref\" /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/src/renderer/src/views/merchant/HomeContent.vue)",
       "Bash(npm show element-plus version)",
       "Bash(npm view element-plus exports)",
-      "Bash(npm view element-plus/dist/types/components/select-v2/index.d.ts)"
+      "Bash(npm view element-plus/dist/types/components/select-v2/index.d.ts)",
+      "Bash(npm install element-plus@latest:*)",
+      "Bash(npm install -D @babel/plugin-proposal-decorators)",
+      "Bash(npm show:*)",
+      "Bash(for file in /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/src/renderer/src/views/merchant/[A-Z]*.vue)",
+      "Bash(do:*)",
+      "Bash(__NEW_LINE__ head -50 \"$file\")",
+      "Bash(__NEW_LINE__ done)",
+      "Bash(for file in /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/src/renderer/src/views/merchant/*.vue)",
+      "Bash(__NEW_LINE__ grep -n -A1 -B1 \"back-button\\|BackButton\" \"$file\")",
+      "Bash(__NEW_LINE__ grep -n -A1 -B1 \"el-button\" \"$file\")",
+      "Bash(if grep -q -E \"(el-button.*back|el-button.*返回)\" \"$file\")",
+      "Bash(! grep -q \"CommonBackButton\" \"$file\")",
+      "Bash(__NEW_LINE__ grep -n -B1 -A1 \"back\\|返回\" \"$file\")",
+      "Bash(__NEW_LINE__ fi)"
     ],
     "deny": [],
     "ask": []

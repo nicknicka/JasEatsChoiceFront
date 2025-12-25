@@ -39,8 +39,8 @@ const userRole = ref("user"); // 'user' 或 'merchant'
 
 // 提供更新用户信息的方法给子组件
 const updateSidebarAvatar = (avatarUrl) => {
-	userStore.userInfo.realAvatar = avatarUrl;
-	
+	userStore.userInfo.avatar = avatarUrl;
+
 };
 provide("updateSidebarAvatar", updateSidebarAvatar);
 
@@ -267,8 +267,7 @@ watch(
 				// 商户端信息从userStore.merchantInfo获取
 				userStore.userInfo = {
 					name: "商户端",
-					avatar: "🏪",
-					realAvatar: userStore.merchantInfo?.avatar || "https://picsum.photos/id/200/150/150",
+					avatar: userStore.merchantInfo?.avatar || "https://picsum.photos/id/200/150/150",
 				};
 			} else if (userRole.value === "user") {
 				// 从authStore获取token并解码用户名
@@ -361,7 +360,7 @@ const handleSearch = (value) => {
 			<div class="user-info">
 				<!-- 商家端已注册：显示角色切换按钮 -->
 				<el-button
-					v-if="!!userStore.userInfo?.merchantId"
+					v-if="!!authStore.hasMerchantId"
 					type="text"
 					class="identity-switch"
 					@click="toggleRole"
@@ -394,7 +393,7 @@ const handleSearch = (value) => {
 						:size="80"
 						class="user-avatar"
 						style="cursor: pointer"
-						:src="userStore.userInfo?.realAvatar"
+						:src="userStore.userInfo?.avatar"
 					>
 						{{ userRole === "merchant" ? "🏪" : "👤" }}
 					</el-avatar>
@@ -429,7 +428,7 @@ const handleSearch = (value) => {
 		<!-- 头像放大对话框 -->
 		<el-dialog v-model="showLargeAvatar" title="个人头像" width="300px" top="20%">
 			<div style="text-align: center; padding: 20px 0">
-				<el-avatar :size="200" class="user-avatar" :src="userStore.userInfo?.realAvatar">
+				<el-avatar :size="200" class="user-avatar" :src="userStore.userInfo?.avatar">
 					{{ userRole === "merchant" ? "🏪" : "👤" }}
 				</el-avatar>
 			</div>
