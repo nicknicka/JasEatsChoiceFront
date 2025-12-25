@@ -242,7 +242,6 @@ const generateCaptcha = async () => {
 		captchaBase64.value = "data:image/png;base64," + result.checkCode;
 		checkCodeKey.value = result.checkCodeKey;
 		// 开发者模式下自动填充验证码答案
-		// 假设后端在开发环境会返回captchaAnswer字段
 		const isDevMode = import.meta.env.MODE === 'development' || import.meta.env.DEV;
 		if (isDevMode && result.captchaAnswer) {
 			loginForm.captcha = result.captchaAnswer.toUpperCase();
@@ -485,8 +484,7 @@ const submitForm = async () => {
 						error.response?.data?.message ||
 							"登录失败，请检查验证码或账号密码是否正确"
 					);
-				} finally {
-					// 无论成功失败，重新生成验证码
+					// 登录失败，重新生成验证码
 					generateCaptcha();
 				}
 			} else {

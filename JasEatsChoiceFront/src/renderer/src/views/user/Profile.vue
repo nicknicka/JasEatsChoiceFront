@@ -227,7 +227,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import api from '../../utils/api'
+import axios from '../../utils/api'
 import { API_CONFIG } from '../../config'
 // 导入authStore
 import { useAuthStore } from '../../store/authStore'
@@ -559,7 +559,7 @@ const saveEditProfile = () => {
         try {
           const userId = parseInt(localStorage.getItem('userId'), 10)
           // 发送PUT请求更新用户资料
-          const response = await api.put(API_CONFIG.user.update.replace('{userId}', userId), editForm.value)
+          const response = await axios.put(API_CONFIG.user.update.replace('{userId}', userId), editForm.value)
 
           if (response.success) {
             // 更新本地用户信息
