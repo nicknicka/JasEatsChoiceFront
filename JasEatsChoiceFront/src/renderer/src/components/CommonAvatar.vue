@@ -1,10 +1,11 @@
 <template>
 	<!-- 单一容器解决 class 传递问题 -->
+	<!-- 将所有未识别的属性传递给容器 -->
 	<div
 		class="avatar-container"
 		@click="handleAvatarClick"
 		:style="{ cursor: clickToEnlarge ? 'pointer' : 'default' }"
-		v-bind="$attrs"  <!-- 将所有未识别的属性传递给容器 -->
+		v-bind="$attrs"
 	>
 		<el-avatar :size="size" class="user-avatar" :src="avatarUrl" :shape="shape">
 			<template #error>
@@ -59,7 +60,7 @@
 import { ref } from "vue";
 
 // 组件属性定义
-const props = withDefaults(defineProps({
+const props = defineProps({
 	// Avatar URL
 	avatarUrl: {
 		type: String,
@@ -105,7 +106,7 @@ const props = withDefaults(defineProps({
 		type: String,
 		default: "个人头像",
 	},
-}), {});
+});
 
 // Emits
 const emit = defineEmits(["upload", "error", "click", "enlarge"]);
