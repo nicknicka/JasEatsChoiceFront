@@ -18,6 +18,8 @@ import {
 import { decodeJwt } from "../utils/api.js";
 import { useAuthStore } from "../store/authStore";
 import { useUserStore } from "../store/userStore";
+// 导入CommonAvatar组件
+import CommonAvatar from './CommonAvatar.vue'
 
 const router = useRouter();
 
@@ -389,13 +391,14 @@ const handleSearch = (value) => {
 			<!-- 左侧菜单栏 -->
 			<el-aside width="168px" class="sidebar-menu">
 				<div class="avatar-section" @click="handleAvatarClick">
-					<el-avatar
+					<CommonAvatar
 						:size="80"
 						class="user-avatar"
-						style="cursor: pointer"
-						:src="userStore.userInfo?.avatar"
+						:avatar-url="userStore.userInfo?.avatar"
+						:fallback-text="userStore.userInfo?.name || '用户'"
+						:show-upload="false"
 					>
-					</el-avatar>
+					</CommonAvatar>
 					<div class="username">{{ userStore.userInfo?.name || userRole === "merchant" ? "商户端" : "用户端" }}</div>
 				</div>
 
@@ -427,9 +430,14 @@ const handleSearch = (value) => {
 		<!-- 头像放大对话框 -->
 		<el-dialog v-model="showLargeAvatar" title="个人头像" width="300px" top="20%">
 			<div style="text-align: center; padding: 20px 0">
-				<el-avatar :size="200" class="user-avatar" :src="userStore.userInfo?.avatar">
-					{{ userRole === "merchant" ? "🏪" : "👤" }}
-				</el-avatar>
+				<CommonAvatar
+					:size="200"
+					class="user-avatar"
+					:avatar-url="userStore.userInfo?.avatar"
+					:fallback-text="userRole === 'merchant' ? '商户' : '用户'"
+					:show-upload="false"
+				>
+				</CommonAvatar>
 			</div>
 			<template #footer>
 				<span class="dialog-footer">
