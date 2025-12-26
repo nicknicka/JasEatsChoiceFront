@@ -32,7 +32,7 @@ export interface MerchantInfo {
   businessLicense: string
   businessScope: string[]
   contactName: string
-  avatar?: string // 商家头像URL
+  avatar?: string 
   rating?: number
   businessHours?: string
   email?: string

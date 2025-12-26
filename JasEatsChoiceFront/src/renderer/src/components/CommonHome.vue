@@ -147,7 +147,7 @@ const updateActiveMenuIndex = () => {
 		// 检查当前路由是否以菜单项的path开头
 		if (currentPath.startsWith(menuItem.path)) {
 			activeMenuIndex.value = menuItem.index;
-			console.log("匹配到的菜单项:", menuItem);
+			// console.log("匹配到的菜单项:", menuItem);
 			return;
 		}
 	}
@@ -395,7 +395,7 @@ const handleSearch = (value) => {
 						style="cursor: pointer"
 						:src="userStore.userInfo?.avatar"
 					>
-						{{ userRole === "merchant" ? "🏪" : "👤" }}
+						<!-- {{ userRole === "merchant" ? "🏪" : "👤" }} -->
 					</el-avatar>
 					<div class="username">{{ userStore.userInfo?.name || userRole === "merchant" ? "商户端" : "用户端" }}</div>
 				</div>

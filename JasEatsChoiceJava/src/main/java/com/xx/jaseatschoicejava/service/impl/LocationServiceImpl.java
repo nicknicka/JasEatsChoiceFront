@@ -31,6 +31,7 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public Map<String, Object> getCurrentLocation(Double latitude, Double longitude) {
+        if (true) return new HashMap<>() ;
         // 如果前端传入了经纬度，使用逆地理编码获取定位信息
         if (latitude != null && longitude != null) {
             try {
@@ -81,7 +82,6 @@ public class LocationServiceImpl implements LocationService {
                 logger.error("从高德地图API获取逆地理编码数据失败: {}", e.getMessage());
             }
         }
-
         // 如果前端没有传入经纬度或者逆地理编码失败，回退到IP定位
         try {
             // 调用高德地图IP定位API获取当前位置
@@ -177,6 +177,7 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public List<Map<String, Object>> getCascaderLocationData() {
+        if (true) return new ArrayList<>() ;
         try {
             // 调用高德地图API获取中国所有省市区数据
             String url = String.format("%s/config/district?keywords=中国&subdistrict=2&key=%s", gaodeApiUrl, gaodeApiKey);

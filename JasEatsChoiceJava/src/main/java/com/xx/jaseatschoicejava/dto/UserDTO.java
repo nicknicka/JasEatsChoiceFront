@@ -22,7 +22,7 @@ public class UserDTO {
     private String email;
     private Boolean disableWeatherRecommend;
     private String merchantId; // 商家ID，如果不为空表示用户已注册为商家
-    private String avatar; // 用户头像URL
+    private String avatar;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     /**

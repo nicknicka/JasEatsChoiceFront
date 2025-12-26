@@ -84,28 +84,24 @@ app.whenReady().then(() => {
   // Handle image upload and processing
   ipcMain.handle('user:uploadImage', async (event, imageData) => {
     try {
-      const { imagesPath } = await createUserDataDir()
+      console.log('Received image data for upload:', imageData)
+      // Resize image and return as data URL instead of file path
       const buffer = Buffer.from(imageData.base64, 'base64')
       const ext = imageData.type.split('/')[1] || 'png'
-      const filename = `${Date.now()}.${ext}`
-      const originalPath = path.join(imagesPath, filename)
 
-      // Save original image
-      await fs.writeFile(originalPath, buffer)
-
-      // Generate thumbnail with _cover suffix
-      const thumbnailFilename = `${Date.now()}_cover.${ext}`
-      const thumbnailPath = path.join(imagesPath, thumbnailFilename)
-
-      await sharp(buffer)
+      // Generate thumbnail
+      const thumbnailBuffer = await sharp(buffer)
         .resize({ width: 200, height: 200, fit: 'cover' })
-        .toFile(thumbnailPath)
+        .toBuffer()
+
+      // Convert to base64 and create data URL
+      const thumbnailBase64 = thumbnailBuffer.toString('base64')
+      const thumbnailDataUrl = `data:${imageData.type};base64,${thumbnailBase64}`
 
       return {
-        original: originalPath,
-        thumbnail: thumbnailPath,
-        filename,
-        thumbnailFilename,
+        original: `data:${imageData.type};base64,${imageData.base64}`,
+        thumbnail: thumbnailDataUrl,
+        filename: `${Date.now()}.${ext}`,
         ext
       }
     } catch (error) {

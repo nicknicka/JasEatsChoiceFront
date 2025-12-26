@@ -17,7 +17,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.xx.jaseatschoicejava.config.FileUploadConfig;
 import com.xx.jaseatschoicejava.util.FileUploadUtil;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -108,7 +111,6 @@ public class UserController {
                 return ResponseResult.fail("400", "验证码错误或已过期");
             }
 
-            // 处理登录账号：前端传phone或username（统一作为手机号处理，因为User实体没有username字段）
             String account = loginRequest.getPhone();
             String password = loginRequest.getPassword();
 
@@ -121,13 +123,22 @@ public class UserController {
                         .one();
 
                 if (user != null) {
+                    // 将头像转换为base64编码
+                    String avatarBase64 = convertAvatarToBase64(user.getAvatar());
+
+                    // 设置base64头像
+                    user.setAvatar(avatarBase64);
+                    log.info("login user entity: {}", user);
+
                     // 转换为UserDTO，隐藏敏感信息
                     UserDTO userDTO = UserDTO.fromUser(user);
+                    log.info("login userDto : {}", userDTO);
 
                     // 构建包含token和用户信息的响应
                     Map<String, Object> responseData = new HashMap<>();
                     responseData.put("token", token);
                     responseData.put("user", userDTO);
+
 
                     return ResponseResult.success(responseData);
                 }
@@ -149,9 +160,45 @@ public class UserController {
         if (user != null) {
             // 隐藏敏感信息
             user.setPassword(null);
+
+            // 将头像转换为base64编码
+            String avatarBase64 = convertAvatarToBase64(user.getAvatar());
+
+            // 将base64头像直接存入User对象
+            user.setAvatar(avatarBase64);
+
+            log.info("user entity: {}", user);
+
+
+            // 返回包含base64头像的用户信息
             return ResponseResult.success(user);
         }
         return ResponseResult.fail("404", "用户不存在");
+    }
+
+    /**
+     * 将用户头像转换为base64编码
+     * @param avatarUrl 用户头像的URL路径
+     * @return base64编码的头像字符串，或null如果转换失败
+     */
+    private String convertAvatarToBase64(String avatarUrl) {
+        if (avatarUrl == null) {
+            return null;
+        }
+
+        try {
+            // 拼接完整的图片路径
+            String fullPath = fileUploadConfig.getUploadPath() + avatarUrl.substring(fileUploadConfig.getUrlPrefix().length());
+            File avatarFile = new File(fullPath);
+            if (avatarFile.exists()) {
+                byte[] imageBytes = Files.readAllBytes(avatarFile.toPath());
+                return "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
+            }
+        } catch (IOException e) {
+            log.error("Failed to convert avatar to base64: {}", e.getMessage());
+        }
+
+        return null;
     }
 
     /**
@@ -335,7 +382,7 @@ public class UserController {
     }
 
     /**
-     * 上传用户头像
+     * 上传用户头像 - 文件上传
      */
     @PostMapping("/{userId}/avatar")
     public ResponseResult<?> uploadAvatar(@PathVariable Long userId,
@@ -346,16 +393,73 @@ public class UserController {
                 return ResponseResult.fail("404", "用户不存在");
             }
 
-            // 上传图片
-            String fileName = FileUploadUtil.uploadImage(file, fileUploadConfig.getUploadPath());
+            // 上传图片（按用户ID分类存储）
+            String fileName = FileUploadUtil.uploadImage(file, fileUploadConfig.getUploadPath(), user.getUserId());
             // 生成图片URL
             String avatarUrl = fileUploadConfig.getUrlPrefix() + fileName;
             // 更新用户头像
             user.setAvatar(avatarUrl);
             boolean success = userService.updateById(user);
             if (success) {
+                // 将头像转换为base64编码
+                String avatarBase64 = convertAvatarToBase64(avatarUrl);
+
                 Map<String, String> result = new HashMap<>();
-                result.put("avatarUrl", avatarUrl);
+                result.put("avatarBase64", avatarBase64);
+
+                // 通过WebSocket发送头像更新通知
+                com.xx.jaseatschoicejava.netty.NettyChatHandler.sendAvatarUpdateNotification(String.valueOf(userId), avatarBase64);
+
+                return ResponseResult.success(result);
+            }
+            return ResponseResult.fail("500", "头像上传失败");
+        } catch (IllegalArgumentException e) {
+            return ResponseResult.fail("400", e.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "图片上传失败");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.fail("500", "系统错误");
+        }
+    }
+
+    /**
+     * 上传用户头像 - Base64格式
+     */
+    @PutMapping("/{userId}/avatar/base64")
+    public ResponseResult<?> uploadAvatarBase64(@PathVariable Long userId,
+                                                @RequestBody Map<String, Object> base64Data) {
+        log.info("Received base64 data from user {} : {}",userId, base64Data);
+        try {
+            User user = userService.getById(userId);
+            if (user == null) {
+                return ResponseResult.fail("404", "用户不存在");
+            }
+
+            // 获取base64字符串
+            String base64Str = (String) base64Data.get("avatarBase64");
+            if (base64Str == null || base64Str.isEmpty()) {
+                return ResponseResult.fail("400", "base64头像不能为空");
+            }
+
+            // 上传Base64图片（按用户ID分类存储）
+            String fileName = FileUploadUtil.uploadBase64Image(base64Str, fileUploadConfig.getUploadPath(), user.getUserId());
+            // 生成图片URL
+            String avatarUrl = fileUploadConfig.getUrlPrefix() + fileName;
+            // 更新用户头像
+            user.setAvatar(avatarUrl);
+            boolean success = userService.updateById(user);
+            if (success) {
+                // 将头像转换为base64编码
+                String avatarBase64 = convertAvatarToBase64(avatarUrl);
+
+                Map<String, String> result = new HashMap<>();
+                result.put("avatarBase64", avatarBase64);
+
+                // 通过WebSocket发送头像更新通知
+                com.xx.jaseatschoicejava.netty.NettyChatHandler.sendAvatarUpdateNotification(user.getUserId(), avatarBase64);
+
                 return ResponseResult.success(result);
             }
             return ResponseResult.fail("500", "头像上传失败");
@@ -404,6 +508,11 @@ public class UserController {
                 // 返回更新后的用户信息
                 User updatedUser = userService.getById(userId);
                 updatedUser.setPassword(null); // 隐藏密码
+
+                // 将头像转换为base64编码
+                String avatarBase64 = convertAvatarToBase64(updatedUser.getAvatar());
+                updatedUser.setAvatar(avatarBase64);
+
                 return ResponseResult.success(updatedUser);
             }
             return ResponseResult.fail("500", "信息更新失败");

@@ -54,7 +54,7 @@ const api = {
   },
   // Image upload functionality
   uploadImage: (imageData) => {
-    ipcRenderer.invoke('user:uploadImage', imageData)
+    return ipcRenderer.invoke('user:uploadImage', imageData)
   }
 }
 

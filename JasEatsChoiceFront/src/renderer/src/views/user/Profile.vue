@@ -7,7 +7,11 @@
       <div class="profile-header">
         <div class="avatar-container">
           <el-avatar :size="120" class="user-avatar" :src="avatarSrc">
-            {{ (userInfo.nickname || '').charAt(0) || '?' }}
+            <template #error>
+             <div class="avatar-error-class">
+              {{ (userInfo.nickname || '').charAt(0) || '?' }}
+             </div>
+            </template>
           </el-avatar>
           <!-- Avatar upload input (hidden) -->
           <input
@@ -227,7 +231,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import axios from '../../utils/api'
+import api from '../../utils/api'
 import { API_CONFIG } from '../../config'
 // 导入authStore
 import { useAuthStore } from '../../store/authStore'
@@ -267,7 +271,7 @@ const userInfo = ref({
 })
 
 // 从本地存储加载真实数据
-onMounted(() => {
+onMounted(async () => {
 
   // 从authStore获取userId
   const authStore = useAuthStore()
@@ -300,7 +304,9 @@ onMounted(() => {
   // 检查userId是否有效
   if (isNaN(userId) || userId <= 0) {
     ElMessage.error('用户未登录或登录信息无效，请重新登录')
-    router.push('/login')
+    setTimeout(() => {
+      router.push('/login')
+    }, 1000)
     return
   }
 
@@ -308,31 +314,9 @@ onMounted(() => {
   const isUserInfoEmpty = !userStore.userInfo || Object.keys(userStore.userInfo).length === 0 || !userStore.userInfo.nickname || !userStore.userInfo.phone;
 
   if (isUserInfoEmpty) {
+    console.log('当前用户信息为空或不完整，从后端API获取用户信息', userStore.userInfo)
     // 从后端API获取用户信息
-    api
-      .get(API_CONFIG.user.profile.replace('{userId}', userId))
-      .then((response) => {
-        console.log('response:', response)
-        if (response?.data) {
-          userInfo.value = response.data
-          // 更新userStore
-          userStore.setUserInfo(response.data)
-
-          // 如果有本地保存的头像，优先使用本地头像
-          const savedAvatar = localStorage.getItem('userAvatar');
-          if (savedAvatar) {
-            // 更新本地用户信息
-            userInfo.value.avatar = savedAvatar;
-            // 更新userStore
-            userStore.userInfo.avatar = savedAvatar;
-          }
-        }
-      })
-      .catch((error) => {
-        console.error('加载用户信息失败:', error)
-        // 使用默认数据作为 fallback
-        ElMessage.error('加载用户信息失败，将显示默认数据')
-      })
+    userInfo.value = await userStore.fetchUserInfo(userId)
   } else {
     // 使用store中的用户信息
     userInfo.value = userStore.userInfo;
@@ -348,36 +332,35 @@ const handleAvatarUpload = (event) => {
   if (!file) return
 
   const reader = new FileReader()
-  reader.onload = (e) => {
-    // Extract base64 part from data URL
-    const base64Data = e.target.result.split(',')[1]
-    const imageData = {
-      base64: base64Data,
-      type: file.type,
-      name: file.name
-    }
+  reader.onload = async (e) => {
+    // 获取完整的base64数据
+    const base64Image = e.target.result
 
-    // Upload image to main process for processing
-    api.uploadImage(imageData)
-      .then(result => {
-        if (result.error) {
-          ElMessage.error('头像上传失败: ' + result.error)
-          return
-        }
+    try {
+      // 获取当前登录用户的ID
+      const userId = authStore.userId ;
+      if (!userId) {
+        ElMessage.error('用户未登录，请重新登录')
+        return
+      }
 
-        // Update user store and localStorage with the new avatar path
-        userStore.updateUserAvatar(result.thumbnail) // Use the new action to update avatar with thumbnail
-        localStorage.setItem('userAvatar', result.thumbnail)
-
-        // Update local userInfo
-        userInfo.value.avatar = result.thumbnail
+      // 直接将base64图片上传到后端
+      const response = await api.put(`/v1/users/${userId}/avatar/base64`, {
+        avatarBase64: base64Image
+      })
+      console.log('update avatar response:', response)
+      if (response.code === '200') {
+        console.log('update avatar success')
+        userInfo.value = await userStore.fetchUserInfo(userId)
 
         ElMessage.success('头像上传成功')
-      })
-      .catch(error => {
-        console.error('Avatar upload failed:', error)
-        ElMessage.error('头像上传失败')
-      })
+      } else {
+        ElMessage.error('头像上传失败: ' + response.message)
+      }
+    } catch (error) {
+      console.error('Avatar upload failed:', error)
+      ElMessage.error('头像上传失败')
+    }
   }
 
   reader.readAsDataURL(file)
@@ -559,7 +542,7 @@ const saveEditProfile = () => {
         try {
           const userId = parseInt(localStorage.getItem('userId'), 10)
           // 发送PUT请求更新用户资料
-          const response = await axios.put(API_CONFIG.user.update.replace('{userId}', userId), editForm.value)
+          const response = await api.put(API_CONFIG.user.update.replace('{userId}', userId), editForm.value)
 
           if (response.success) {
             // 更新本地用户信息
@@ -727,11 +710,15 @@ const copyShareLink = async () => {
 
 
 .user-avatar {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
-  font-size: 48px;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  background-color: #fff;
   transition: transform 0.3s ease;
+  .avatar-error-class {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    color: #fff;
+    font-size: 48px;
+    background-clip: text;
+  }
 }
 
 .user-avatar:hover {

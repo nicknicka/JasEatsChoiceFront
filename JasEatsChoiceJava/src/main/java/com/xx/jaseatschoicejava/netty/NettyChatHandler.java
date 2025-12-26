@@ -183,5 +183,34 @@ public class NettyChatHandler extends SimpleChannelInboundHandler<TextWebSocketF
         CHANNEL_GROUP.writeAndFlush(new TextWebSocketFrame(message));
         logger.info("Broadcast message: {}", message);
     }
+
+    /**
+     * 静态方法：发送头像更新通知给指定用户
+     *
+     * @param userId 用户ID
+     * @param avatar 新的头像
+     */
+    public static void sendAvatarUpdateNotification(Object userId, String avatar) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            // 构造头像更新通知消息
+            com.fasterxml.jackson.databind.node.ObjectNode responseMsg = objectMapper.createObjectNode();
+            responseMsg.put("msgType", "avatar_update");
+            responseMsg.put("userId", userId.toString());
+            responseMsg.put("avatar", avatar);
+            responseMsg.put("timestamp", Instant.now().toEpochMilli());
+
+            String message = objectMapper.writeValueAsString(responseMsg);
+
+            // 发送消息给所有在线用户（或指定好友）
+            // 注意：这里需要根据实际业务逻辑发送给该用户的所有好友
+            // 目前先简化处理，发送给所有在线用户
+            CHANNEL_GROUP.writeAndFlush(new TextWebSocketFrame(message));
+            logger.info("Sent avatar update notification: {} for user: {}", message, userId);
+        } catch (Exception e) {
+            logger.error("Failed to send avatar update notification for user {}: {}", userId, e.getMessage());
+        }
+    }
 }
 
