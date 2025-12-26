@@ -390,13 +390,14 @@ const handleSearch = (value) => {
 		<div class="main-content">
 			<!-- 左侧菜单栏 -->
 			<el-aside width="168px" class="sidebar-menu">
-				<div class="avatar-section" @click="handleAvatarClick">
+				<div class="avatar-section">
 					<CommonAvatar
 						:size="80"
 						class="user-avatar"
 						:avatar-url="userStore.userInfo?.avatar"
 						:fallback-text="userStore.userInfo?.name || '用户'"
 						:show-upload="false"
+						:click-to-enlarge="true"
 					>
 					</CommonAvatar>
 					<div class="username">{{ userStore.userInfo?.name || userRole === "merchant" ? "商户端" : "用户端" }}</div>

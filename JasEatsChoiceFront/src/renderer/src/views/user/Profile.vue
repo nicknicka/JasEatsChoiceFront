@@ -11,6 +11,7 @@
           :size="120"
           :show-upload="true"
           :show-upload-button="false"
+          :click-to-enlarge="true"
           ref="commonAvatarRef"
           @upload="handleAvatarUpload"
         />

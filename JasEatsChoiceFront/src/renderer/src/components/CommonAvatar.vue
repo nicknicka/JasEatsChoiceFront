@@ -1,5 +1,11 @@
 <template>
-	<div class="avatar-container">
+	<!-- 单一容器解决 class 传递问题 -->
+	<div
+		class="avatar-container"
+		@click="handleAvatarClick"
+		:style="{ cursor: clickToEnlarge ? 'pointer' : 'default' }"
+		v-bind="$attrs"  <!-- 将所有未识别的属性传递给容器 -->
+	>
 		<el-avatar :size="size" class="user-avatar" :src="avatarUrl" :shape="shape">
 			<template #error>
 				<div class="avatar-error-class">
@@ -29,13 +35,31 @@
 			📸 更换头像
 		</el-button>
 	</div>
+
+	<!-- 头像放大对话框 -->
+	<el-dialog v-model="showLargeAvatar" :title="enlargeTitle" width="300px" top="20%" @close="handleCloseDialog">
+		<div style="text-align: center; padding: 20px 0">
+			<el-avatar :size="enlargeSize" class="user-avatar" :src="avatarUrl" :shape="shape">
+				<div class="avatar-error-class">
+					{{ (fallbackText || "?").charAt(0) }}
+				</div>
+			</el-avatar>
+		</div>
+		<template #footer>
+			<span class="dialog-footer">
+				<el-button type="primary" @click="handleCloseDialog"
+					>关闭</el-button
+				>
+			</span>
+		</template>
+	</el-dialog>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref } from "vue";
 
-// Props
-const props = defineProps({
+// 组件属性定义
+const props = withDefaults(defineProps({
 	// Avatar URL
 	avatarUrl: {
 		type: String,
@@ -66,10 +90,25 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 	},
-});
+	// Whether to enable click to enlarge functionality
+	clickToEnlarge: {
+		type: Boolean,
+		default: false,
+	},
+	// Enlarged avatar size in dialog
+	enlargeSize: {
+		type: [Number, String],
+		default: 200,
+	},
+	// Dialog title when avatar is enlarged
+	enlargeTitle: {
+		type: String,
+		default: "个人头像",
+	},
+}), {});
 
 // Emits
-const emit = defineEmits(["upload", "error"]);
+const emit = defineEmits(["upload", "error", "click", "enlarge"]);
 
 // Handle file selection
 const handleFileSelect = (event) => {
@@ -81,6 +120,26 @@ const handleFileSelect = (event) => {
 
 	// Clear the input value to allow selecting the same file again
 	event.target.value = "";
+};
+
+// Ref for dialog visibility
+const showLargeAvatar = ref(false);
+
+// Handle avatar click event
+const handleAvatarClick = () => {
+	emit("click");
+
+	// Show dialog if clickToEnlarge is enabled
+	if (props.clickToEnlarge) {
+		showLargeAvatar.value = true;
+		emit("enlarge", true);
+	}
+};
+
+// Handle dialog close
+const handleCloseDialog = () => {
+	showLargeAvatar.value = false;
+	emit("enlarge", false);
 };
 </script>
 

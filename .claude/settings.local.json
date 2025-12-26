@@ -290,7 +290,8 @@
       "Bash(npm install electron@25.9.8)",
       "Bash(xargs cat:*)",
       "Bash(mvn compile -DskipTests)",
-      "Bash(__NEW_LINE__ cat /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/src/renderer/src/views/user/Profile.vue)"
+      "Bash(__NEW_LINE__ cat /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/src/renderer/src/views/user/Profile.vue)",
+      "Bash(mvn spring-boot:run)"
     ],
     "deny": [],
     "ask": []
