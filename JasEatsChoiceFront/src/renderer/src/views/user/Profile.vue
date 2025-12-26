@@ -5,23 +5,15 @@
     <el-card class="profile-card">
       <!-- 顶部头像区域 -->
       <div class="profile-header">
-        <div class="avatar-container">
-          <el-avatar :size="120" class="user-avatar" :src="avatarSrc">
-            <template #error>
-             <div class="avatar-error-class">
-              {{ (userInfo.nickname || '').charAt(0) || '?' }}
-             </div>
-            </template>
-          </el-avatar>
-          <!-- Avatar upload input (hidden) -->
-          <input
-            type="file"
-            accept="image/*"
-            ref="avatarInput"
-            style="display: none"
-            @change="handleAvatarUpload"
-          />
-        </div>
+        <CommonAvatar
+          :avatar-url="avatarSrc"
+          :fallback-text="userInfo.nickname || '未设置'"
+          :size="120"
+          :show-upload="true"
+          :show-upload-button="false"
+          ref="commonAvatarRef"
+          @upload="handleAvatarUpload"
+        />
         <div class="user-basic-info">
           <h3 class="user-name">{{ userInfo.nickname || '未设置' }}</h3>
           <div class="user-stats">
@@ -43,7 +35,7 @@
             </div>
           </div>
           <div class="action-buttons">
-            <el-button type="primary" size="small" class="upload-avatar-btn" @click="$refs.avatarInput.click()"
+            <el-button type="primary" size="small" class="upload-avatar-btn" @click="triggerAvatarUpload"
               >📸 更换头像</el-button
             >
             <el-button type="primary" size="small" class="share-btn" @click="shareProfile"
@@ -231,6 +223,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import CommonAvatar from '../../components/CommonAvatar.vue'
 import api from '../../utils/api'
 import { API_CONFIG } from '../../config'
 // 导入authStore
@@ -326,9 +319,15 @@ onMounted(async () => {
 
 })
 
+// Handle upload button click (for external button)
+const commonAvatarRef = ref(null)
+const triggerAvatarUpload = () => {
+  // Trigger the hidden file input in the CommonAvatar component
+  commonAvatarRef.value?.$refs?.avatarInput?.click()
+}
+
 // Handle avatar upload
-const handleAvatarUpload = (event) => {
-  const file = event.target.files[0]
+const handleAvatarUpload = (file) => {
   if (!file) return
 
   const reader = new FileReader()

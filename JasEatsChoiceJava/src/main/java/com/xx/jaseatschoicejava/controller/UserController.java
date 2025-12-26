@@ -167,7 +167,7 @@ public class UserController {
             // 将base64头像直接存入User对象
             user.setAvatar(avatarBase64);
 
-            log.info("user entity: {}", user);
+//            log.info("user entity: {}", user);
 
 
             // 返回包含base64头像的用户信息

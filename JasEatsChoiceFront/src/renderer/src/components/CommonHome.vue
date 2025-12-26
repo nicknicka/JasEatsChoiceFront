@@ -395,7 +395,6 @@ const handleSearch = (value) => {
 						style="cursor: pointer"
 						:src="userStore.userInfo?.avatar"
 					>
-						<!-- {{ userRole === "merchant" ? "🏪" : "👤" }} -->
 					</el-avatar>
 					<div class="username">{{ userStore.userInfo?.name || userRole === "merchant" ? "商户端" : "用户端" }}</div>
 				</div>
