@@ -22,6 +22,7 @@
 			accept="image/*"
 			ref="avatarInput"
 			style="display: none"
+			@click.stop
 			@change="handleFileSelect"
 		/>
 
@@ -31,7 +32,7 @@
 			type="primary"
 			size="small"
 			class="upload-avatar-btn"
-			@click="$refs.avatarInput.click()"
+			@click.stop="$refs.avatarInput.click()"
 		>
 			📸 更换头像
 		</el-button>

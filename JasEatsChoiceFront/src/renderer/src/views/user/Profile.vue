@@ -271,28 +271,6 @@ onMounted(async () => {
   const authStore = useAuthStore()
   let userId = parseInt(authStore.userId || '0', 10)
 
-  // 如果authStore中没有有效的userId，尝试从localStorage获取并同步到Store
-  if (isNaN(userId) || userId <= 0) {
-    const localStorageUserId = localStorage.getItem('userId')
-    if (localStorageUserId) {
-      userId = parseInt(localStorageUserId, 10)
-      // 更新authStore的userId
-      authStore.userId = userId
-
-      // 如果存在token，也同步到authStore
-      const token = localStorage.getItem('token')
-      if (token) {
-        authStore.token = token
-      }
-
-      // 如果存在手机号，也同步到authStore
-      const phone = localStorage.getItem('phone')
-      if (phone) {
-        authStore.phone = phone
-      }
-    }
-  }
-
   console.log('userId:', userId) ;
 
   // 检查userId是否有效
@@ -305,7 +283,7 @@ onMounted(async () => {
   }
 
   // 如果当前用户信息为空或不完整，从后端API获取用户信息
-  const isUserInfoEmpty = !userStore.userInfo || Object.keys(userStore.userInfo).length === 0 || !userStore.userInfo.nickname || !userStore.userInfo.phone;
+  const isUserInfoEmpty = !userStore.userInfo || Object.keys(userStore.userInfo).length === 0 || !userStore.userInfo.nickname || !userStore.userInfo.phone || !userStore.userInfo.avatar || !userStore.userInfo.avatar.length;
 
   if (isUserInfoEmpty) {
     console.log('当前用户信息为空或不完整，从后端API获取用户信息', userStore.userInfo)

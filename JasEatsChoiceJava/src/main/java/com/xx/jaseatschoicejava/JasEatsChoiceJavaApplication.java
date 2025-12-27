@@ -22,7 +22,7 @@ public class JasEatsChoiceJavaApplication implements WebMvcConfigurer {
         // 配置静态资源访问路径
         registry.addResourceHandler("/uploads/**")
                 // 映射到本地上传目录
-                .addResourceLocations("file:/tmp/jia_shi_yi_xuan/uploads/");
+                .addResourceLocations("file:./uploads/");
     }
 
 }

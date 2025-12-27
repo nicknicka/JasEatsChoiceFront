@@ -126,8 +126,11 @@ public class UserController {
                     // 将头像转换为base64编码
                     String avatarBase64 = convertAvatarToBase64(user.getAvatar());
 
-                    // 设置base64头像
-                    user.setAvatar(avatarBase64);
+                    // 如果转换成功，使用base64，否则保留原始URL
+                    if (avatarBase64 != null) {
+                        // 设置base64头像
+                        user.setAvatar(avatarBase64);
+                    }
                     log.info("login user entity: {}", user);
 
                     // 转换为UserDTO，隐藏敏感信息
@@ -160,12 +163,15 @@ public class UserController {
         if (user != null) {
             // 隐藏敏感信息
             user.setPassword(null);
-
+            log.info("user entity: {}", user);
             // 将头像转换为base64编码
             String avatarBase64 = convertAvatarToBase64(user.getAvatar());
 
-            // 将base64头像直接存入User对象
-            user.setAvatar(avatarBase64);
+            // 如果转换成功，使用base64，否则保留原始URL
+            if (avatarBase64 != null) {
+                // 将base64头像直接存入User对象
+                user.setAvatar(avatarBase64);
+            }
 
 //            log.info("user entity: {}", user);
 
@@ -188,8 +194,12 @@ public class UserController {
 
         try {
             // 拼接完整的图片路径
+//            log.info("avatarUrl: {}", avatarUrl);
             String fullPath = fileUploadConfig.getUploadPath() + avatarUrl.substring(fileUploadConfig.getUrlPrefix().length());
+//            log.info("fullPath: {}", fullPath);
             File avatarFile = new File(fullPath);
+//            log.info("avatarFile: {}", avatarFile);
+//                log.info("avatarFile exists: {}", avatarFile.exists());
             if (avatarFile.exists()) {
                 byte[] imageBytes = Files.readAllBytes(avatarFile.toPath());
                 return "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
@@ -449,6 +459,7 @@ public class UserController {
             String avatarUrl = fileUploadConfig.getUrlPrefix() + fileName;
             // 更新用户头像
             user.setAvatar(avatarUrl);
+//            log.info("Updating user {} with avatar URL: {} filename {} ", userId, avatarUrl, fileName);
             boolean success = userService.updateById(user);
             if (success) {
                 // 将头像转换为base64编码
@@ -459,6 +470,7 @@ public class UserController {
 
                 // 通过WebSocket发送头像更新通知
                 com.xx.jaseatschoicejava.netty.NettyChatHandler.sendAvatarUpdateNotification(user.getUserId(), avatarBase64);
+//                log.info("Sending avatar update notification to user {} base64 {}", userId , avatarBase64);
 
                 return ResponseResult.success(result);
             }

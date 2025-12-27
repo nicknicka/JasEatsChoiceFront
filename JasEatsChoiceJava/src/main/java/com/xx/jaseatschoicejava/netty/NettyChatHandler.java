@@ -207,7 +207,7 @@ public class NettyChatHandler extends SimpleChannelInboundHandler<TextWebSocketF
             // 注意：这里需要根据实际业务逻辑发送给该用户的所有好友
             // 目前先简化处理，发送给所有在线用户
             CHANNEL_GROUP.writeAndFlush(new TextWebSocketFrame(message));
-            logger.info("Sent avatar update notification: {} for user: {}", message, userId);
+//            logger.info("Sent avatar update notification: {} for user: {}", message, userId);
         } catch (Exception e) {
             logger.error("Failed to send avatar update notification for user {}: {}", userId, e.getMessage());
         }

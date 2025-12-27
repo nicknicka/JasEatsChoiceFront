@@ -19,7 +19,7 @@ import { decodeJwt } from "../utils/api.js";
 import { useAuthStore } from "../store/authStore";
 import { useUserStore } from "../store/userStore";
 // 导入CommonAvatar组件
-import CommonAvatar from './CommonAvatar.vue'
+import CommonAvatar from "./CommonAvatar.vue";
 
 const router = useRouter();
 
@@ -42,7 +42,6 @@ const userRole = ref("user"); // 'user' 或 'merchant'
 // 提供更新用户信息的方法给子组件
 const updateSidebarAvatar = (avatarUrl) => {
 	userStore.userInfo.avatar = avatarUrl;
-
 };
 provide("updateSidebarAvatar", updateSidebarAvatar);
 
@@ -200,6 +199,10 @@ const toggleRole = () => {
 // 页面加载时从当前路由恢复角色，默认进入用户角色
 onMounted(() => {
 	try {
+		if (!userStore.userInfo || userStore.userInfo.avatar === "") {
+			userStore.fetchUserInfo() ;
+		}
+
 		// 1. First check current route to determine role
 		let detectedRole = "user"; // Always default to user
 
@@ -218,7 +221,6 @@ onMounted(() => {
 				userStore.userInfo.name = decodedToken.username;
 			}
 		}
-
 
 		// Don't save role to localStorage - always default to user
 
@@ -269,7 +271,9 @@ watch(
 				// 商户端信息从userStore.merchantInfo获取
 				userStore.userInfo = {
 					name: "商户端",
-					avatar: userStore.merchantInfo?.avatar || "https://picsum.photos/id/200/150/150",
+					avatar:
+						userStore.merchantInfo?.avatar ||
+						"https://picsum.photos/id/200/150/150",
 				};
 			} else if (userRole.value === "user") {
 				// 从authStore获取token并解码用户名
@@ -284,7 +288,7 @@ watch(
 				userStore.userInfo = {
 					...userStore.userInfo,
 					name: username,
-					avatar: "👤"
+					avatar: "👤",
 				};
 			}
 
@@ -400,7 +404,13 @@ const handleSearch = (value) => {
 						:click-to-enlarge="true"
 					>
 					</CommonAvatar>
-					<div class="username">{{ userStore.userInfo?.name || userRole === "merchant" ? "商户端" : "用户端" }}</div>
+					<div class="username">
+						{{
+							userStore.userInfo?.name || userRole === "merchant"
+								? "商户端"
+								: "用户端"
+						}}
+					</div>
 				</div>
 
 				<el-menu
