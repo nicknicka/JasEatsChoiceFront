@@ -87,7 +87,7 @@ const loadTodayRecipes = () => {
       }
     })
     .then((response) => {
-      console.log(response) ;
+      // console.log(response) ;
       if (
         response.data.data &&
         response.data.data.recipes &&
@@ -256,11 +256,26 @@ const replacementDishes = ref([
 
 // 添加菜单
 const addMenuVisible = ref(false)
+const menuFormRef = ref(null) // 表单ref
 const newMenu = ref({
   name: '',
   type: '',
   items: []
 })
+
+// 处理添加食谱对话框关闭事件
+const handleAddMenuClose = () => {
+  // 重置表单验证状态
+  if (menuFormRef.value) {
+    menuFormRef.value.resetFields()
+  }
+  // 重置表单数据
+  newMenu.value = {
+    name: '',
+    type: '',
+    items: []
+  }
+}
 
 // 查看详情
 const viewRecipeDetails = (recipe) => {
@@ -686,14 +701,7 @@ const addNewMenu = () => {
           todayRecipes.value.push(newRecipe)
           ElMessage.success('菜单已添加')
 
-        // 重置表单
-        newMenu.value = {
-          name: '',
-          type: '',
-          items: []
-        }
-
-        // 关闭模态框
+        // 关闭模态框（会自动触发@close事件进行重置）
         addMenuVisible.value = false
         } else {
           ElMessage.error('添加菜单失败: 服务器返回无效数据')
@@ -848,14 +856,13 @@ const filteredRecipes = computed(() => {
       </el-button>
 
       <!-- 批量管理按钮 -->
-      <div class="batch-operations" v-if="todayRecipes.length > 0">
-        <el-button type="danger" size="small" @click="batchDeleteRecipes" :disabled="selectedRecipes.length === 0">
-          🗑️ 批量删除
-        </el-button>
-        <el-button type="warning" size="small" @click="batchFavoriteRecipes" :disabled="selectedRecipes.length === 0">
-          ⭐ 批量收藏
-        </el-button>
-      </div>
+      <el-button type="danger" size="small" @click="batchDeleteRecipes" :disabled="selectedRecipes.length === 0">
+        🗑️ 批量删除
+      </el-button>
+
+      <el-button type="warning" size="small" @click="batchFavoriteRecipes" :disabled="selectedRecipes.length === 0">
+        ⭐ 批量收藏
+      </el-button>
     </div>
     <!-- 食谱列表 -->
     <div :class="['recipe-list', layoutType]">
@@ -872,9 +879,11 @@ const filteredRecipes = computed(() => {
           <template #header>
             <div class="card-header">
               <!-- 批量选择复选框 -->
-              <el-checkbox
-                style="margin-right: 10px"
-              ></el-checkbox>
+              <div class="checkbox-wrapper">
+                <el-checkbox
+                  :label="recipe.id"
+                ></el-checkbox>
+              </div>
               <span class="meal-icon">
                 {{ getMealIcon(recipe.type) }}
             </span>
@@ -1244,8 +1253,8 @@ const filteredRecipes = computed(() => {
   </el-dialog>
 
   <!-- 添加食谱对话框 -->
-  <el-dialog v-model="addMenuVisible" title="添加新食谱" width="400px" top="20%">
-    <el-form :model="newMenu" class="add-menu-form">
+  <el-dialog v-model="addMenuVisible" title="添加新食谱" width="400px" top="20%" @close="handleAddMenuClose">
+    <el-form ref="menuFormRef" :model="newMenu" class="add-menu-form">
       <el-form-item label="食谱名称" prop="name" required>
         <el-input v-model="newMenu.name" placeholder="请输入食谱名称（如：下午茶、夜宵）" />
       </el-form-item>
@@ -1313,12 +1322,13 @@ const filteredRecipes = computed(() => {
 
     .nutrition-stats {
       display: flex;
-      justify-content: space-around;
+      justify-content: space-between;
       padding: 20px;
 
       .stat-item {
         text-align: center;
         min-width: 120px;
+        flex: 1;
 
         .stat-label {
           font-size: 14px;
@@ -1340,7 +1350,7 @@ const filteredRecipes = computed(() => {
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 20px;
+    gap: 25px;
 
     .recipe-card {
       flex: 1 1 100%;
@@ -1352,7 +1362,7 @@ const filteredRecipes = computed(() => {
   }
 
   .recipe-card {
-    margin-bottom: 24px;
+    margin-bottom: 7px !important;
     background: rgba(255, 255, 255, 0.95) !important;
     border-radius: 16px !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -1530,6 +1540,7 @@ const filteredRecipes = computed(() => {
     justify-content: flex-start;
     align-items: center;
     margin-bottom: 24px;
+    margin-left: 24px;
     gap: 12px; /* 统一按钮间距 */
 
     .el-button {
@@ -1893,6 +1904,14 @@ const filteredRecipes = computed(() => {
       transform: translateY(-2px);
     }
   }
+}
+
+// 隐藏批量选择复选框的自动label
+.checkbox-wrapper {
+  :deep(.el-checkbox__label) {
+    display: none !important;
+  }
+  margin-right: 10px;
 }
 
 // 导入商家菜品对话框样式
