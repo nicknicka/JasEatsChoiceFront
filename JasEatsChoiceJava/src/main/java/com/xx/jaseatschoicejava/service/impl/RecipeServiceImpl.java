@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,25 +28,34 @@ public class RecipeServiceImpl extends ServiceImpl<RecipeMapper, Recipe> impleme
 
     @Override
     public Map<String, Object> getTodayRecipes(String userId) {
-        // 查询今日食谱
         QueryWrapper<Recipe> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("is_today", true);
+
+        // 1. 查询当前用户的所有食谱
         if (userId != null) {
             queryWrapper.eq("user_id", userId);
-        }else
+        } else {
             logger.error("请求食谱的用户ID为null，请检查！");
-        queryWrapper.orderByDesc("create_time");
+        }
+
+        // 2. 根据createTime筛选出今日的食谱
+        LocalDate today = LocalDate.now();
+        // 使用ge和le方法筛选出今天的所有食谱
+        queryWrapper.ge("create_time", today.atStartOfDay());
+        queryWrapper.le("create_time", today.plusDays(1).atStartOfDay());
+
+        // 3. 按照updateTime排序
+        queryWrapper.orderByDesc("update_time");
 
         List<Recipe> recipes = list(queryWrapper);
         logger.info("返回的recipes: {}", recipes);
         // 确保recipes不为null
         List<Recipe> safeRecipes = recipes != null ? recipes : new ArrayList<>();
 
-        // 按照餐点类型分组
+        // 按照餐点类型分组，items现在是String类型
         Map<String, List<String>> recipesByType = safeRecipes.stream()
                 .collect(Collectors.groupingBy(
                         Recipe::getType,
-                        Collectors.mapping(Recipe::getContent, Collectors.toList())
+                        Collectors.mapping(Recipe::getItems, Collectors.toList())
                 ));
 
         // 计算营养总摄入
@@ -83,7 +93,7 @@ public class RecipeServiceImpl extends ServiceImpl<RecipeMapper, Recipe> impleme
         if (userId != null) {
             queryWrapper.eq("user_id", userId);
         }
-        queryWrapper.orderByDesc("create_time");
+        queryWrapper.orderByDesc("update_time");
 
         return list(queryWrapper);
     }
@@ -98,4 +108,82 @@ public class RecipeServiceImpl extends ServiceImpl<RecipeMapper, Recipe> impleme
 
         return list(queryWrapper);
     }
+
+    @Override
+    public List<Recipe> getAllRecipes(String userId) {
+        QueryWrapper<Recipe> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId);
+        queryWrapper.orderByDesc("create_time");
+        return list(queryWrapper);
+    }
+
+    @Override
+    public Recipe addRecipe(Recipe recipe) {
+        recipe.setCreateTime(LocalDateTime.now());
+        recipe.setUpdateTime(LocalDateTime.now());
+        if (recipe.getFavorite() == null) {
+            recipe.setFavorite(false);
+        }
+        // 为items字段设置默认值为空JSON字符串，避免数据库报错
+        if (recipe.getItems() == null) {
+            recipe.setItems("[]");
+        }
+        // 为营养相关字段设置默认值为0，避免数据库报错
+        if (recipe.getCalories() == null) {
+            recipe.setCalories(0);
+        }
+        if (recipe.getProtein() == null) {
+            recipe.setProtein(0);
+        }
+        if (recipe.getCarbs() == null) {
+            recipe.setCarbs(0);
+        }
+        if (recipe.getFat() == null) {
+            recipe.setFat(0);
+        }
+        // 为cookTime字段设置默认值为空字符串
+        if (recipe.getCookTime() == null) {
+            recipe.setCookTime("");
+        }
+        save(recipe);
+        return recipe;
+    }
+
+    @Override
+    public Recipe updateRecipe(Long id, Recipe recipe) {
+        Recipe existingRecipe = getById(id);
+        if (existingRecipe == null) {
+            return null;
+        }
+        existingRecipe.setName(recipe.getName());
+        existingRecipe.setType(recipe.getType());
+        existingRecipe.setItems(recipe.getItems());
+        existingRecipe.setCalories(recipe.getCalories());
+        existingRecipe.setProtein(recipe.getProtein());
+        existingRecipe.setCarbs(recipe.getCarbs());
+        existingRecipe.setFat(recipe.getFat());
+        existingRecipe.setCookTime(recipe.getCookTime());
+        existingRecipe.setFavorite(recipe.getFavorite());
+        existingRecipe.setUpdateTime(LocalDateTime.now());
+        updateById(existingRecipe);
+        return existingRecipe;
+    }
+
+    @Override
+    public boolean deleteRecipe(Long id) {
+        return removeById(id);
+    }
+
+    @Override
+    public Recipe toggleFavorite(Long id) {
+        Recipe recipe = getById(id);
+        if (recipe == null) {
+            return null;
+        }
+        recipe.setFavorite(!recipe.getFavorite());
+        recipe.setUpdateTime(LocalDateTime.now());
+        updateById(recipe);
+        return recipe;
+    }
+
 }

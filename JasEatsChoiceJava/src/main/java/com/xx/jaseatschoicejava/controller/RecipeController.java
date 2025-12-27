@@ -4,10 +4,7 @@ import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.Recipe;
 import com.xx.jaseatschoicejava.service.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -28,7 +25,7 @@ public class RecipeController {
      * 获取今日食谱
      */
     @GetMapping("/today")
-    public ResponseResult<?> getTodayRecipes(@RequestParam(value = "userId") String userId) {
+    public ResponseResult<?> getTodayRecipes(@RequestParam(value = "userId", required = true) String userId) {
         Map<String, Object> result = recipeService.getTodayRecipes(userId);
         return ResponseResult.success(result);
     }
@@ -50,4 +47,60 @@ public class RecipeController {
         List recipes = recipeService.getRecommendedRecipes();
         return ResponseResult.success(recipes);
     }
+
+    /**
+     * 获取用户所有食谱
+     */
+    @GetMapping("/all")
+    public ResponseResult<?> getAllRecipes(@RequestParam(value = "userId", required = true) String userId) {
+        List<Recipe> recipes = recipeService.getAllRecipes(userId);
+        return ResponseResult.success(recipes);
+    }
+
+    /**
+     * 新增食谱
+     */
+    @PostMapping
+    public ResponseResult<?> addRecipe(@RequestBody Recipe recipe) {
+        Recipe newRecipe = recipeService.addRecipe(recipe);
+        return ResponseResult.success(newRecipe);
+    }
+
+    /**
+     * 更新食谱
+     */
+    @PutMapping("/{id}")
+    public ResponseResult<?> updateRecipe(@PathVariable Long id, @RequestBody Recipe recipe) {
+        Recipe updatedRecipe = recipeService.updateRecipe(id, recipe);
+        if (updatedRecipe == null) {
+            return ResponseResult.fail("404", "食谱不存在");
+        }
+        return ResponseResult.success(updatedRecipe);
+    }
+
+    /**
+     * 删除食谱
+     */
+    @DeleteMapping("/{id}")
+    public ResponseResult<?> deleteRecipe(@PathVariable Long id) {
+        boolean success = recipeService.deleteRecipe(id);
+        if (success) {
+            return ResponseResult.success("删除成功");
+        } else {
+            return ResponseResult.fail("404", "删除失败，食谱不存在");
+        }
+    }
+
+    /**
+     * 切换食谱收藏状态
+     */
+    @PutMapping("/{id}/toggle-favorite")
+    public ResponseResult<?> toggleFavorite(@PathVariable Long id) {
+        Recipe updatedRecipe = recipeService.toggleFavorite(id);
+        if (updatedRecipe == null) {
+            return ResponseResult.fail("404", "食谱不存在");
+        }
+        return ResponseResult.success(updatedRecipe);
+    }
+
 }

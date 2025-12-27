@@ -26,7 +26,14 @@ export const API_CONFIG = {
   recipe: {
     today: '/v1/recipe/today', // 今日食谱接口
     favorite: '/v1/recipe/favorite', // 我的食谱接口
-    recommend: '/v1/recipe/recommend' // 推荐食谱接口
+    recommend: '/v1/recipe/recommend', // 推荐食谱接口
+    all: '/v1/recipe/all', // 所有食谱接口
+    add: '/v1/recipe', // 新增食谱接口
+    update: '/v1/recipe/', // 更新食谱接口 (需要拼接id)
+    delete: '/v1/recipe/', // 删除食谱接口 (需要拼接id)
+    toggleFavorite: '/v1/recipe/', // 切换收藏状态 (需要拼接id)
+    setToday: '/v1/recipe/', // 设置为今日食谱 (需要拼接id)
+    unsetToday: '/v1/recipe/' // 取消今日食谱 (需要拼接id)
   },
 
   // 商家API端点

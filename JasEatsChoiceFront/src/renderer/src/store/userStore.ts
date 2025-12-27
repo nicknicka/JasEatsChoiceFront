@@ -42,8 +42,8 @@ export interface MerchantInfo {
 export const useUserStore = defineStore('user', {
   // 严格的 Pinia 状态声明
   state: () => ({
-    userInfo: null as UserInfo | null,
-    merchantInfo: null as MerchantInfo | null
+    userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null') as UserInfo | null,
+    merchantInfo: JSON.parse(localStorage.getItem('merchantInfo') || 'null') as MerchantInfo | null
   }),
 
   // Getters (计算属性)

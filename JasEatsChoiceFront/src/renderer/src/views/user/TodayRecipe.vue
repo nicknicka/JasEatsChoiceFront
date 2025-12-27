@@ -1,12 +1,38 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ArrowDown } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { API_CONFIG } from '../../config'
 import axios from 'axios'
+import { useAuthStore } from '../../store/authStore'
+
+// 餐型图标映射
+const getMealIcon = (type) => {
+  const mealTypeIcons = {
+    breakfast: '🥣',
+    lunch: '🍚',
+    dinner: '🍱',
+    afternoon_tea: '🍵', tea: '🍵',
+    night_snack: '🍪', snack: '🍪',
+    morning_snack: '🥐', brunch: '🥐',
+    supper: '🌙', midnight_snack: '🌙',
+    health_snack: '💪', fitness_meal: '💪',
+    dessert: '🍰', sweet: '🍰',
+    soup: '🍲', porridge: '🍲',
+    salad: '🥗', vegetable: '🥗',
+    meat: '🥩', protein: '🥩'
+  };
+  return mealTypeIcons[type] || '🍴';
+}
+
+// 获取认证信息
+const authStore = useAuthStore()
 
 // 今日食谱数据
 const todayRecipes = ref([])
+
+// 批量操作相关变量
+const selectedRecipes = ref([]) // 存储选中的食谱
 
 // 营养摄入数据 - 从菜品数据计算得出
 // TODO: 未来可以通过AI预测菜品营养数据，当前若菜品无数据则默认为0
@@ -16,15 +42,19 @@ const nutritionData = computed(() => {
   let totalCarbs = 0
   let totalFat = 0
 
-  // 遍历筛选后的食谱和菜品
+  // 遍历筛选后的食谱和菜品，确保recipe和recipe.items存在
   filteredRecipes.value.forEach((recipe) => {
-    recipe.items.forEach((dish) => {
-      // 如果菜品有营养数据则累加，否则默认为0
-      totalCalories += dish.calories || 0
-      totalProtein += dish.protein || 0
-      totalCarbs += dish.carbs || 0
-      totalFat += dish.fat || 0
-    })
+    if (recipe && recipe.items) {
+      // 确保recipe.items是数组
+      const items = Array.isArray(recipe.items) ? recipe.items : typeof recipe.items === 'string' ? JSON.parse(recipe.items) : [];
+      items.forEach((dish) => {
+        // 如果菜品有营养数据则累加，否则默认为0
+        totalCalories += dish?.calories || 0
+        totalProtein += dish?.protein || 0
+        totalCarbs += dish?.carbs || 0
+        totalFat += dish?.fat || 0
+      })
+    }
   })
 
   return {
@@ -42,20 +72,35 @@ const filters = ref({
 
 // 加载今日食谱数据
 const loadTodayRecipes = () => {
+  // 确保有userId
+  if (!authStore.userId) {
+    console.error('加载今日食谱失败: 缺少userId')
+    ElMessage.error('加载今日食谱失败: 用户未登录')
+    todayRecipes.value = []
+    return
+  }
+
   axios
-    .get(API_CONFIG.baseURL + API_CONFIG.recipe.today)
+    .get(API_CONFIG.baseURL + API_CONFIG.recipe.today, {
+      params: {
+        userId: authStore.userId
+      }
+    })
     .then((response) => {
+      console.log(response) ;
       if (
         response.data.data &&
         response.data.data.recipes &&
         response.data.data.recipes.length > 0
       ) {
         // console.log('加载今日食谱成功:', response.data.data.recipes);
-        // 确保所有食谱都有items数组
-        todayRecipes.value = response.data.data.recipes.map((recipe) => ({
-          ...recipe,
-          items: recipe.items || []
-        }))
+        // 确保所有食谱都有items数组，并且移除任何null或无效的食谱
+        todayRecipes.value = response.data.data.recipes
+          .filter(recipe => recipe && recipe.id) // 确保食谱存在且有id
+          .map((recipe) => ({
+            ...recipe,
+            items: typeof recipe.items === 'string' ? JSON.parse(recipe.items) : recipe.items || []
+          }))
         // nutritionData now computed from recipe items, no need for direct assignment
       } else {
         // 后端没有返回数据
@@ -135,7 +180,11 @@ const customDishName = ref('')
 // 新菜品输入
 const newDish = ref({
   name: '',
-  ingredients: [] // 食材列表
+  ingredients: [], // 食材列表
+  calories: 0,
+  protein: 0,
+  carbs: 0,
+  fat: 0
 })
 
 // 食材输入
@@ -217,25 +266,8 @@ const newMenu = ref({
 const viewRecipeDetails = (recipe) => {
   selectedRecipe.value = recipe
   detailDialogVisible.value = true
-  // 初始化编辑模式和编辑数据
-  editMode.value = false
-  // 深拷贝当前菜品的营养数据到编辑对象
-  editNutritionData.value = {
-    calories: recipe.calories || 0,
-    protein: recipe.protein || 0,
-    carbs: recipe.carbs || 0,
-    fat: recipe.fat || 0
-  }
 }
 
-// 详情编辑相关变量
-const editMode = ref(false)
-const editNutritionData = ref({
-  calories: 0,
-  protein: 0,
-  carbs: 0,
-  fat: 0
-})
 
 // 替换菜品
 const replaceDish = (recipe, dish) => {
@@ -247,21 +279,63 @@ const replaceDish = (recipe, dish) => {
 // 确认替换菜品
 const confirmReplaceDish = (newDish) => {
   if (selectedRecipe.value && selectedDish.value && selectedRecipe.value.items) {
+    // 先保存原菜品，以便失败时恢复
+    const oldDish = selectedDish.value
+
     // 找到并替换菜品
     const index = selectedRecipe.value.items.indexOf(selectedDish.value)
     if (index !== -1) {
-      selectedRecipe.value.items[index] = newDish.name
-      ElMessage.success('菜品已替换')
+      // 替换菜品
+      selectedRecipe.value.items[index] = {
+        name: newDish.name,
+        ingredients: [],
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0
+      }
+
+      // 调用后端API更新食谱 - 将items转换为JSON字符串
+      const updateData = {
+        ...selectedRecipe.value,
+        items: JSON.stringify(selectedRecipe.value.items)
+      }
+
+      axios
+        .put(API_CONFIG.baseURL + API_CONFIG.recipe.update + selectedRecipe.value.id, updateData)
+        .then((response) => {
+          // 更新本地数据 - 确保items字段已解析
+          const recipeIndex = todayRecipes.value.findIndex(r => r.id === selectedRecipe.value.id)
+          if (recipeIndex !== -1) {
+            // 确保返回的食谱有items数组并已解析
+            const updatedRecipe = {
+              ...response.data.data,
+              items: typeof response.data.data.items === 'string' ? JSON.parse(response.data.data.items) : response.data.data.items || []
+            }
+            todayRecipes.value[recipeIndex] = updatedRecipe
+          }
+
+          ElMessage.success('菜品已替换')
+          replaceDialogVisible.value = false
+
+          // 重置选中状态
+          selectedRecipe.value = null
+          selectedDish.value = null
+        })
+        .catch((error) => {
+          console.error('替换菜品失败:', error)
+          // 失败时恢复本地数据
+          selectedRecipe.value.items[index] = oldDish
+          ElMessage.error('替换菜品失败')
+        })
     }
-    replaceDialogVisible.value = false
-    // 重置选中状态
-    selectedRecipe.value = null
-    selectedDish.value = null
   }
 }
 
 // 添加菜品
 const addDish = (recipe) => {
+  // 确保recipe.items是数组
+  recipe.items = recipe.items || []
   selectedRecipe.value = recipe
   addDishVisible.value = true
 }
@@ -295,8 +369,11 @@ const confirmImportMerchantDishes = () => {
   if (selectedMerchantDishes.value.length > 0) {
     // 这里需要知道要导入到哪个食谱，需要先设置 selectedRecipe
     if (selectedRecipe.value) {
+      // 先保存当前的items，以便失败时恢复
+      const originalItems = [...selectedRecipe.value.items]
+
+      // 将商家菜品转换为食谱需要的格式并添加到本地
       selectedMerchantDishes.value.forEach((dish) => {
-        // 将商家菜品转换为食谱需要的格式
         const recipeDish = {
           name: dish.name,
           ingredients: [], // 商家菜品默认没有食材，用户可以后续添加
@@ -307,12 +384,41 @@ const confirmImportMerchantDishes = () => {
         }
         selectedRecipe.value.items.push(recipeDish)
       })
-      ElMessage.success(`成功导入 ${selectedMerchantDishes.value.length} 道菜品`)
-      importMerchantDishVisible.value = false
-      // 重置状态
-      selectedMerchant.value = null
-      merchantDishes.value = []
-      selectedMerchantDishes.value = []
+
+      // 调用后端API更新食谱 - 将items转换为JSON字符串
+      const updateData = {
+        ...selectedRecipe.value,
+        items: JSON.stringify(selectedRecipe.value.items)
+      }
+
+      axios
+        .put(API_CONFIG.baseURL + API_CONFIG.recipe.update + selectedRecipe.value.id, updateData)
+        .then((response) => {
+          // 更新本地数据 - 确保items字段已解析
+          const recipeIndex = todayRecipes.value.findIndex(r => r.id === selectedRecipe.value.id)
+          if (recipeIndex !== -1) {
+            // 确保返回的食谱有items数组并已解析
+            const updatedRecipe = {
+              ...response.data.data,
+              items: typeof response.data.data.items === 'string' ? JSON.parse(response.data.data.items) : response.data.data.items || []
+            }
+            todayRecipes.value[recipeIndex] = updatedRecipe
+          }
+
+          ElMessage.success(`成功导入 ${selectedMerchantDishes.value.length} 道菜品`)
+          importMerchantDishVisible.value = false
+
+          // 重置状态
+          selectedMerchant.value = null
+          merchantDishes.value = []
+          selectedMerchantDishes.value = []
+        })
+        .catch((error) => {
+          console.error('导入商家菜品失败:', error)
+          // 失败时恢复本地数据
+          selectedRecipe.value.items = originalItems
+          ElMessage.error('导入商家菜品失败')
+        })
     } else {
       ElMessage.error('请先选择要导入到的食谱')
     }
@@ -325,9 +431,8 @@ const confirmImportMerchantDishes = () => {
 const confirmImportOrder = () => {
   if (selectedOrder.value) {
     console.log('Selected order:', selectedOrder.value)
-    // 创建新食谱
-    const newRecipe = {
-      id: Date.now(),
+    // 创建新食谱数据
+    const newRecipeData = {
       name: `订单-${selectedOrder.value.orderNo}`,
       type: 'dinner', // 默认类型，可根据实际情况调整
       items: selectedOrder.value.dishes.map((dish) => ({
@@ -337,15 +442,39 @@ const confirmImportOrder = () => {
         protein: 0,
         carbs: 0,
         fat: 0
-      }))
+      })),
+      userId: authStore.userId
     }
 
-    // 添加到食谱列表
-    todayRecipes.value.push(newRecipe)
+    // 调用后端API添加食谱 - 将items转换为JSON字符串
+    const newRecipeDataWithStringItems = {
+      ...newRecipeData,
+      items: JSON.stringify(newRecipeData.items)
+    }
 
-    ElMessage.success('订单已成功导入为新食谱')
-    importOrderVisible.value = false
-    selectedOrder.value = null
+    axios
+      .post(API_CONFIG.baseURL + API_CONFIG.recipe.add, newRecipeDataWithStringItems)
+      .then((response) => {
+        // 检查返回的数据是否有效
+        if (response.data.data) {
+          // 确保返回的食谱有items数组并已解析
+          const newRecipe = {
+            ...response.data.data,
+            items: typeof response.data.data.items === 'string' ? JSON.parse(response.data.data.items) : response.data.data.items || []
+          }
+          // 将返回的食谱添加到本地列表
+          todayRecipes.value.push(newRecipe)
+          ElMessage.success('订单已成功导入为新食谱')
+          importOrderVisible.value = false
+          selectedOrder.value = null
+        } else {
+          ElMessage.error('导入订单失败: 服务器返回无效数据')
+        }
+      })
+      .catch((error) => {
+        console.error('导入订单失败:', error)
+        ElMessage.error('导入订单失败')
+      })
   }
 }
 
@@ -368,22 +497,51 @@ const confirmAddDish = () => {
       fat: newDish.value.fat
     }
 
+    // 先添加到本地
     selectedRecipe.value.items.push(dishWithIngredients)
-    ElMessage.success('菜品已添加')
-    addDishVisible.value = false
 
-    // 重置表单
-    newDish.value = {
-      name: '',
-      ingredients: [],
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0
+    // 调用后端API更新食谱 - 将items转换为JSON字符串
+    const updateData = {
+      ...selectedRecipe.value,
+      items: JSON.stringify(selectedRecipe.value.items)
     }
-    newIngredient.value = ''
 
-    selectedRecipe.value = null
+    axios
+      .put(API_CONFIG.baseURL + API_CONFIG.recipe.update + selectedRecipe.value.id, updateData)
+      .then((response) => {
+        // 更新本地数据 - 确保items字段已解析
+        const recipeIndex = todayRecipes.value.findIndex(r => r.id === selectedRecipe.value.id)
+        if (recipeIndex !== -1) {
+          // 确保返回的食谱有items数组并已解析
+          const updatedRecipe = {
+            ...response.data.data,
+            items: typeof response.data.data.items === 'string' ? JSON.parse(response.data.data.items) : response.data.data.items || []
+          }
+          todayRecipes.value[recipeIndex] = updatedRecipe
+        }
+
+        ElMessage.success('菜品已添加')
+        addDishVisible.value = false
+
+        // 重置表单
+        newDish.value = {
+          name: '',
+          ingredients: [],
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fat: 0
+        }
+        newIngredient.value = ''
+
+        selectedRecipe.value = null
+      })
+      .catch((error) => {
+        console.error('添加菜品失败:', error)
+        // 失败时恢复本地数据
+        selectedRecipe.value.items.pop()
+        ElMessage.error('添加菜品失败')
+      })
   } else {
     ElMessage.error('请输入菜品名称')
   }
@@ -399,53 +557,155 @@ const isValidDishName = (name) => {
 // 删除菜品
 const deleteDish = (recipe, dish) => {
   if (recipe && dish && recipe.items) {
+    // 先更新本地数据
     const index = recipe.items.indexOf(dish)
     if (index !== -1) {
       recipe.items.splice(index, 1)
-      ElMessage.success('菜品已删除')
+
+      // 调用后端API更新食谱
+      const updateData = {
+        ...recipe
+      }
+
+      axios
+        .put(API_CONFIG.baseURL + API_CONFIG.recipe.update + recipe.id, updateData)
+        .then((response) => {
+          // 更新本地数据
+          const recipeIndex = todayRecipes.value.findIndex(r => r.id === recipe.id)
+          if (recipeIndex !== -1) {
+            todayRecipes.value[recipeIndex] = response.data.data
+          }
+
+          ElMessage.success('菜品已删除')
+        })
+        .catch((error) => {
+          console.error('删除菜品失败:', error)
+          // 失败时恢复本地数据
+          recipe.items.splice(index, 0, dish)
+          ElMessage.error('删除菜品失败')
+        })
     }
   }
+}
+
+// 批量删除食谱
+const batchDeleteRecipes = () => {
+  if (selectedRecipes.value.length === 0) return
+
+  // 确认删除
+  ElMessageBox.confirm('确定要批量删除选中的食谱吗？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+  .then(() => {
+    // 遍历删除选中的食谱
+    const deletePromises = selectedRecipes.value.map(id =>
+      axios.delete(API_CONFIG.baseURL + API_CONFIG.recipe.delete + id)
+    )
+
+    Promise.all(deletePromises)
+    .then((responses) => {
+      // 删除成功，更新本地数据
+      selectedRecipes.value.forEach(id => {
+        const index = todayRecipes.value.findIndex(r => r.id === id)
+        if (index !== -1) {
+          todayRecipes.value.splice(index, 1)
+        }
+      })
+      // 清空选中列表
+      selectedRecipes.value = []
+      ElMessage.success(`成功删除${responses.length}个食谱`)
+    })
+    .catch((error) => {
+      console.error('批量删除失败:', error)
+      ElMessage.error('批量删除失败')
+    })
+  })
+  .catch(() => {
+    // 取消删除
+  })
+}
+
+// 批量收藏食谱
+const batchFavoriteRecipes = () => {
+  if (selectedRecipes.value.length === 0) return
+
+  // 遍历收藏选中的食谱
+  const favoritePromises = selectedRecipes.value.map(id =>
+    axios.put(API_CONFIG.baseURL + API_CONFIG.recipe.toggleFavorite + id)
+  )
+
+  Promise.all(favoritePromises)
+  .then((responses) => {
+    // 更新本地数据
+    responses.forEach((response) => {
+      const updatedRecipe = response.data.data
+      const index = todayRecipes.value.findIndex(r => r.id === updatedRecipe.id)
+      if (index !== -1) {
+        todayRecipes.value[index] = updatedRecipe
+      }
+    })
+    // 清空选中列表
+    selectedRecipes.value = []
+    ElMessage.success(`成功收藏${responses.length}个食谱`)
+  })
+  .catch((error) => {
+    console.error('批量收藏失败:', error)
+    ElMessage.error('批量收藏失败')
+  })
 }
 
 // 添加新菜单
 const addNewMenu = () => {
   if (newMenu.value.name.trim() && newMenu.value.type.trim()) {
-    const menu = {
-      id: Date.now(), // 使用时间戳作为唯一ID
+    const menuData = {
       name: newMenu.value.name.trim(),
       type: newMenu.value.type.trim().toLowerCase(),
-      items: ['待添加菜品'] // 初始默认菜品
+      items: [],
+      userId: authStore.userId
     }
 
-    todayRecipes.value.push(menu)
-    ElMessage.success('菜单已添加')
-
-    // 重置表单
-    newMenu.value = {
-      name: '',
-      type: '',
-      items: []
+    // 调用后端API添加食谱 - 将items转换为JSON字符串
+    const menuDataWithStringItems = {
+      ...menuData,
+      items: JSON.stringify(menuData.items)
     }
 
-    // 关闭模态框
-    addMenuVisible.value = false
+    axios
+      .post(API_CONFIG.baseURL + API_CONFIG.recipe.add, menuDataWithStringItems)
+      .then((response) => {
+        // 检查返回的数据是否有效
+        if (response.data.data) {
+          // 确保返回的食谱有items数组并已解析
+          const newRecipe = {
+            ...response.data.data,
+            items: typeof response.data.data.items === 'string' ? JSON.parse(response.data.data.items) : response.data.data.items || []
+          }
+          // 将返回的食谱添加到本地列表
+          todayRecipes.value.push(newRecipe)
+          ElMessage.success('菜单已添加')
+
+        // 重置表单
+        newMenu.value = {
+          name: '',
+          type: '',
+          items: []
+        }
+
+        // 关闭模态框
+        addMenuVisible.value = false
+        } else {
+          ElMessage.error('添加菜单失败: 服务器返回无效数据')
+        }
+      })
+      .catch((error) => {
+        console.error('添加菜单失败:', error)
+        ElMessage.error('添加菜单失败')
+      })
   }
 }
 
-// 保存营养数据修改
-const saveNutritionChanges = () => {
-  if (selectedRecipe.value) {
-    // 更新当前食谱的营养数据
-    selectedRecipe.value.calories = editNutritionData.value.calories
-    selectedRecipe.value.protein = editNutritionData.value.protein
-    selectedRecipe.value.carbs = editNutritionData.value.carbs
-    selectedRecipe.value.fat = editNutritionData.value.fat
-
-    // 切换回查看模式
-    editMode.value = false
-    ElMessage.success('营养数据已更新')
-  }
-}
 
 // 处理自定义菜品替换
 const handleCustomDishReplacement = () => {
@@ -474,12 +734,15 @@ const openImportMerchantDish = (recipe) => {
 const filteredRecipes = computed(() => {
   let filtered = [...todayRecipes.value]
 
+  // 首先筛选掉null和没有id的食谱
+  filtered = filtered.filter(recipe => recipe && recipe.id)
+
   // 餐型筛选
   if (filters.value.mealType !== 'all') {
     if (filters.value.mealType === 'snack') {
       // 加餐包含所有零食类餐型
       filtered = filtered.filter((recipe) =>
-        [
+        recipe && [ // 再次确保recipe不为null
           'snack',
           'night_snack',
           'morning_snack',
@@ -490,7 +753,7 @@ const filteredRecipes = computed(() => {
         ].includes(recipe.type)
       )
     } else {
-      filtered = filtered.filter((recipe) => recipe.type === filters.value.mealType)
+      filtered = filtered.filter((recipe) => recipe && recipe.type === filters.value.mealType)
     }
   }
 
@@ -583,49 +846,37 @@ const filteredRecipes = computed(() => {
       <el-button type="success" size="small" @click="importOrderVisible = true">
         ➕ 从订单导入
       </el-button>
+
+      <!-- 批量管理按钮 -->
+      <div class="batch-operations" v-if="todayRecipes.length > 0">
+        <el-button type="danger" size="small" @click="batchDeleteRecipes" :disabled="selectedRecipes.length === 0">
+          🗑️ 批量删除
+        </el-button>
+        <el-button type="warning" size="small" @click="batchFavoriteRecipes" :disabled="selectedRecipes.length === 0">
+          ⭐ 批量收藏
+        </el-button>
+      </div>
     </div>
     <!-- 食谱列表 -->
     <div :class="['recipe-list', layoutType]">
       <div v-if="filteredRecipes.length === 0" class="no-recipes-message">
         <el-empty description="今日没有食谱数据"></el-empty>
       </div>
-      <el-card
-        v-for="recipe in filteredRecipes"
-        v-else
-        :key="recipe.id"
-        class="recipe-card"
-        :class="recipe.type"
-      >
-        <template #header>
-          <div class="card-header">
-            <span :class="`meal-icon ${recipe.type}`">
-              {{
-                recipe.type === 'breakfast'
-                  ? '🥣'
-                  : recipe.type === 'lunch'
-                    ? '🍚'
-                    : recipe.type === 'dinner'
-                      ? '🍱'
-                      : recipe.type === 'afternoon_tea' || recipe.type === 'tea'
-                        ? '🍵'
-                        : recipe.type === 'night_snack' || recipe.type === 'snack'
-                          ? '🍪'
-                          : recipe.type === 'morning_snack' || recipe.type === 'brunch'
-                            ? '🥐'
-                            : recipe.type === 'supper' || recipe.type === 'midnight_snack'
-                              ? '🌙'
-                              : recipe.type === 'health_snack' || recipe.type === 'fitness_meal'
-                                ? '💪'
-                                : recipe.type === 'dessert' || recipe.type === 'sweet'
-                                  ? '🍰'
-                                  : recipe.type === 'soup' || recipe.type === 'porridge'
-                                    ? '🍲'
-                                    : recipe.type === 'salad' || recipe.type === 'vegetable'
-                                      ? '🥗'
-                                      : recipe.type === 'meat' || recipe.type === 'protein'
-                                        ? '🥩'
-                                        : '🍴'
-              }}
+      <el-checkbox-group v-model="selectedRecipes" v-else>
+         <el-card
+          v-for="recipe in filteredRecipes"
+          :key="recipe.id"
+          class="recipe-card"
+          :class="recipe.type"
+        >
+          <template #header>
+            <div class="card-header">
+              <!-- 批量选择复选框 -->
+              <el-checkbox
+                style="margin-right: 10px"
+              ></el-checkbox>
+              <span class="meal-icon">
+                {{ getMealIcon(recipe.type) }}
             </span>
             {{ recipe.name }}
           </div>
@@ -643,13 +894,14 @@ const filteredRecipes = computed(() => {
         </div>
         <div class="recipe-actions">
           <el-button type="text" size="small" @click="viewRecipeDetails(recipe)"
-            >立即下单</el-button
+            >查看详情</el-button
           >
           <el-button type="text" size="small" @click="addDish(recipe)">添加菜品</el-button>
           <el-button type="text" size="small" @click="openImportMerchantDish(recipe)"
             >导入商家菜品</el-button
           >
-          <el-dropdown trigger="click">
+          <!-- 替换菜品按钮：仅在有菜品时显示 -->
+          <el-dropdown trigger="click" v-if="recipe.items && recipe.items.length > 0">
             <el-button type="text" size="small">
               替换菜品 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
@@ -657,7 +909,7 @@ const filteredRecipes = computed(() => {
               <el-dropdown-menu>
                 <el-dropdown-item
                   v-for="dish in recipe.items || []"
-                  :key="dish"
+                  :key="dish.id || dish"
                   @click="replaceDish(recipe, dish)"
                 >
                   {{ typeof dish === 'object' ? dish.name : dish }}
@@ -665,7 +917,7 @@ const filteredRecipes = computed(() => {
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <el-dropdown trigger="click">
+          <el-dropdown trigger="click" v-if="recipe.items && recipe.items.length > 0">
             <el-button type="text" size="small">
               删除菜品 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
@@ -673,7 +925,7 @@ const filteredRecipes = computed(() => {
               <el-dropdown-menu>
                 <el-dropdown-item
                   v-for="dish in recipe.items || []"
-                  :key="dish"
+                  :key="dish.id || dish"
                   @click="deleteDish(recipe, dish)"
                 >
                   {{ typeof dish === 'object' ? dish.name : dish }}
@@ -683,6 +935,7 @@ const filteredRecipes = computed(() => {
           </el-dropdown>
         </div>
       </el-card>
+      </el-checkbox-group>
     </div>
   </div>
 
@@ -696,12 +949,21 @@ const filteredRecipes = computed(() => {
     <div v-if="selectedRecipe" class="recipe-details">
       <div class="detail-item">
         <span class="detail-label">餐型:</span>
-        <span class="detail-value">{{ selectedRecipe.name }}</span>
+        <span class="detail-value">
+          {{
+            selectedRecipe.type === 'breakfast' ? '早餐' :
+            selectedRecipe.type === 'lunch' ? '午餐' :
+            selectedRecipe.type === 'dinner' ? '晚餐' :
+            selectedRecipe.type === 'afternoon_tea' || selectedRecipe.type === 'tea' ? '下午茶' :
+            selectedRecipe.type === 'night_snack' || selectedRecipe.type === 'snack' ? '加餐' :
+            selectedRecipe.type
+          }}
+        </span>
       </div>
       <div class="detail-item">
         <span class="detail-label">菜品:</span>
         <div class="detail-value dish-list">
-          <div v-for="(item, index) in selectedRecipe.items" :key="index" class="dish-item">
+          <div v-for="(item, index) in (selectedRecipe.items && selectedRecipe.items.length > 0 ? selectedRecipe.items : ['待添加菜品'])" :key="index" class="dish-item" :class="{ 'empty-dish': typeof item === 'string' }">
             <h5 class="dish-name">
               {{ typeof item === 'object' ? item.name : item }}
             </h5>
@@ -734,47 +996,19 @@ const filteredRecipes = computed(() => {
         <div class="detail-value nutrition-info">
           <div class="nutrition-item">
             <span class="nutrition-label">卡路里:</span>
-            <span v-if="!editMode" class="nutrition-value">{{ nutritionData.calories }} kcal</span>
-            <el-input-number
-              v-else
-              v-model="editNutritionData.calories"
-              :min="0"
-              :precision="0"
-              style="width: 150px"
-            />
+            <span class="nutrition-value">{{ nutritionData.calories }} kcal</span>
           </div>
           <div class="nutrition-item">
             <span class="nutrition-label">蛋白质:</span>
-            <span v-if="!editMode" class="nutrition-value">{{ nutritionData.protein }} g</span>
-            <el-input-number
-              v-else
-              v-model="editNutritionData.protein"
-              :min="0"
-              :precision="1"
-              style="width: 150px"
-            />
+            <span class="nutrition-value">{{ nutritionData.protein }} g</span>
           </div>
           <div class="nutrition-item">
             <span class="nutrition-label">碳水化合物:</span>
-            <span v-if="!editMode" class="nutrition-value">{{ nutritionData.carbs }} g</span>
-            <el-input-number
-              v-else
-              v-model="editNutritionData.carbs"
-              :min="0"
-              :precision="1"
-              style="width: 150px"
-            />
+            <span class="nutrition-value">{{ nutritionData.carbs }} g</span>
           </div>
           <div class="nutrition-item">
             <span class="nutrition-label">脂肪:</span>
-            <span v-if="!editMode" class="nutrition-value">{{ nutritionData.fat }} g</span>
-            <el-input-number
-              v-else
-              v-model="editNutritionData.fat"
-              :min="0"
-              :precision="1"
-              style="width: 150px"
-            />
+            <span class="nutrition-value">{{ nutritionData.fat }} g</span>
           </div>
         </div>
       </div>
@@ -782,22 +1016,20 @@ const filteredRecipes = computed(() => {
 
     <template #footer>
       <el-button @click="detailDialogVisible = false">关闭</el-button>
-      <el-button v-if="!editMode" type="primary" @click="editMode = true">编辑</el-button>
-      <el-button v-else type="success" @click="saveNutritionChanges">保存</el-button>
     </template>
   </el-dialog>
 
   <!-- 替换菜品对话框 -->
   <el-dialog
     v-model="replaceDialogVisible"
-    :title="selectedDish ? `替换 ${selectedDish}` : '替换菜品'"
+    :title="selectedDish ? `替换 ${selectedDish.name}` : '替换菜品'"
     width="600px"
     top="10%"
   >
     <div v-if="selectedDish" class="replace-dish-container">
       <div class="current-dish">
         <span class="detail-label">当前菜品:</span>
-        <span class="detail-value">{{ selectedDish }}</span>
+        <span class="detail-value">{{ selectedDish.name }}</span>
       </div>
 
       <div class="available-dishes">
@@ -1113,7 +1345,7 @@ const filteredRecipes = computed(() => {
     .recipe-card {
       flex: 1 1 100%;
       max-width: 100%;
-      min-width: 280px;
+      min-width: 317px;
       box-sizing: border-box;
       margin: 0;
     }
@@ -1140,10 +1372,9 @@ const filteredRecipes = computed(() => {
 
       .meal-icon {
         font-size: 28px;
-        padding: 10px;
-        background-color: rgba(0, 0, 0, 0.05);
+        padding: 2px 7px 21px 7px;
         border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 7px 7px rgba(0, 0, 0, 0.1);
       }
     }
 
@@ -1299,6 +1530,7 @@ const filteredRecipes = computed(() => {
     justify-content: flex-start;
     align-items: center;
     margin-bottom: 24px;
+    gap: 12px; /* 统一按钮间距 */
 
     .el-button {
       border-radius: 24px !important;
@@ -1450,6 +1682,9 @@ const filteredRecipes = computed(() => {
       flex-direction: column;
       gap: 24px;
       margin-top: 16px;
+      max-height: 200px; /* 调整为你需要的最大高度 */
+      overflow-y: auto; /* 超过最大高度时显示垂直滚动条 */
+      padding-right: 10px; /* 为滚动条预留空间 */
     }
 
     .dish-item {
@@ -1465,6 +1700,25 @@ const filteredRecipes = computed(() => {
         box-shadow: 0 8px 24px rgba(33, 150, 243, 0.15);
         transform: translateY(-2px);
         border-color: #1976d2;
+      }
+
+      // 待添加菜品样式
+      &.empty-dish {
+        background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%) !important;
+        border: 1px dashed #ccc !important;
+        border-left: 5px solid #9e9e9e !important;
+        opacity: 0.7;
+        box-shadow: none !important;
+
+        &:hover {
+          transform: none !important;
+          cursor: default;
+        }
+
+        .dish-name {
+          font-style: italic;
+          color: #999;
+        }
       }
     }
 

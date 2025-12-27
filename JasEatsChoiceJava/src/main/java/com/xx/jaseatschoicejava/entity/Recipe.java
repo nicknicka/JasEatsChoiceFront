@@ -1,13 +1,18 @@
 package com.xx.jaseatschoicejava.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 食谱实体
@@ -30,8 +35,9 @@ public class Recipe {
     @ApiModelProperty(value = "食谱类型: breakfast/lunch/dinner/snack")
     private String type;
 
-    @ApiModelProperty(value = "食谱内容")
-    private String content;
+    @ApiModelProperty(value = "食谱菜品列表")
+    @TableField(value = "items")
+    private String items;
 
     @ApiModelProperty(value = "卡路里")
     private Integer calories;
@@ -49,10 +55,8 @@ public class Recipe {
     private String cookTime;
 
     @ApiModelProperty(value = "是否收藏")
-    private Boolean isFavorite;
-
-    @ApiModelProperty(value = "是否为今日食谱")
-    private Boolean isToday;
+    @TableField("is_favorite")
+    private Boolean favorite;
 
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;

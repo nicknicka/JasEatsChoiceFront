@@ -26,8 +26,45 @@ public interface RecipeService extends IService<Recipe> {
     List<Recipe> getFavoriteRecipes(String userId);
 
     /**
+     * 获取用户所有食谱
+     * @param userId 用户ID
+     * @return 用户所有食谱列表
+     */
+    List<Recipe> getAllRecipes(String userId);
+
+    /**
      * 获取推荐食谱
      * @return 推荐食谱列表
      */
     List<Recipe> getRecommendedRecipes();
+
+    /**
+     * 新增食谱
+     * @param recipe 食谱信息
+     * @return 新增的食谱
+     */
+    Recipe addRecipe(Recipe recipe);
+
+    /**
+     * 更新食谱
+     * @param id 食谱ID
+     * @param recipe 食谱信息
+     * @return 更新后的食谱
+     */
+    Recipe updateRecipe(Long id, Recipe recipe);
+
+    /**
+     * 删除食谱
+     * @param id 食谱ID
+     * @return 是否删除成功
+     */
+    boolean deleteRecipe(Long id);
+
+    /**
+     * 切换食谱收藏状态
+     * @param id 食谱ID
+     * @return 更新后的食谱
+     */
+    Recipe toggleFavorite(Long id);
+
 }
