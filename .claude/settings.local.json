@@ -291,7 +291,9 @@
       "Bash(xargs cat:*)",
       "Bash(mvn compile -DskipTests)",
       "Bash(__NEW_LINE__ cat /Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/src/renderer/src/views/user/Profile.vue)",
-      "Bash(mvn spring-boot:run)"
+      "Bash(mvn spring-boot:run)",
+      "Bash(npm run serve:*)",
+      "Bash(./gradlew bootRun:*)"
     ],
     "deny": [],
     "ask": []

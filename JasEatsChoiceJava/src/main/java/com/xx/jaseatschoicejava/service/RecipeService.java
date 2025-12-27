@@ -67,4 +67,12 @@ public interface RecipeService extends IService<Recipe> {
      */
     Recipe toggleFavorite(Long id);
 
+    /**
+     * 批量切换食谱收藏状态
+     * @param recipeIds 食谱ID列表
+     * @param favorite 是否收藏
+     * @return 更新后的食谱列表
+     */
+    List<Recipe> batchToggleFavorite(List<Long> recipeIds, boolean favorite);
+
 }

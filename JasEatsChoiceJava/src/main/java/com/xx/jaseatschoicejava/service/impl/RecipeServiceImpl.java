@@ -186,4 +186,25 @@ public class RecipeServiceImpl extends ServiceImpl<RecipeMapper, Recipe> impleme
         return recipe;
     }
 
+    @Override
+    public List<Recipe> batchToggleFavorite(List<Long> recipeIds, boolean favorite) {
+        // 查询所有要更新的食谱
+        List<Recipe> recipes = listByIds(recipeIds);
+        if (recipes == null || recipes.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 批量更新收藏状态和时间
+        LocalDateTime now = LocalDateTime.now();
+        for (Recipe recipe : recipes) {
+            recipe.setFavorite(favorite);
+            recipe.setUpdateTime(now);
+        }
+
+        // 批量更新数据库
+        updateBatchById(recipes);
+
+        return recipes;
+    }
+
 }

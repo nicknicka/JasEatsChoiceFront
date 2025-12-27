@@ -646,24 +646,38 @@ const batchDeleteRecipes = () => {
 const batchFavoriteRecipes = () => {
   if (selectedRecipes.value.length === 0) return
 
-  // 遍历收藏选中的食谱
-  const favoritePromises = selectedRecipes.value.map(id =>
-    axios.put(API_CONFIG.baseURL + API_CONFIG.recipe.toggleFavorite + id)
-  )
+  // 批量设置所有选中的食谱为收藏状态
+  const recipeIds = selectedRecipes.value
+  const favorite = true // 批量收藏
 
-  Promise.all(favoritePromises)
-  .then((responses) => {
+  axios.put(API_CONFIG.baseURL + API_CONFIG.recipe.batchToggleFavorite, {
+    recipeIds,
+    favorite
+  })
+  .then((response) => {
     // 更新本地数据
-    responses.forEach((response) => {
-      const updatedRecipe = response.data.data
-      const index = todayRecipes.value.findIndex(r => r.id === updatedRecipe.id)
-      if (index !== -1) {
-        todayRecipes.value[index] = updatedRecipe
+    console.log('批量收藏成功:', response)
+    const updatedRecipes = response.data.data || []
+    updatedRecipes.forEach(updatedRecipe => {
+      const recipeIndex = todayRecipes.value.findIndex(r => r.id === updatedRecipe.id)
+      if (recipeIndex !== -1) {
+        // 确保返回的食谱有items数组并已解析
+        const originalRecipe = todayRecipes.value[recipeIndex]
+        // 使用 Object.assign 创建新对象，避免覆盖原对象
+        const updatedRecipeWithParsedItems = Object.assign({}, originalRecipe, updatedRecipe, {
+          items: typeof updatedRecipe.items === 'string'
+            ? JSON.parse(updatedRecipe.items)
+            : updatedRecipe.items || originalRecipe.items || [], // 确保items字段不会丢失
+          // 统一字段名称，将后端返回的favorite映射为前端使用的isFavorite
+          isFavorite: updatedRecipe.favorite !== undefined ? updatedRecipe.favorite : updatedRecipe.isFavorite
+        })
+        todayRecipes.value[recipeIndex] = updatedRecipeWithParsedItems
       }
     })
+
     // 清空选中列表
     selectedRecipes.value = []
-    ElMessage.success(`成功收藏${responses.length}个食谱`)
+    ElMessage.success(`成功收藏${updatedRecipes.length}个食谱`)
   })
   .catch((error) => {
     console.error('批量收藏失败:', error)
@@ -732,6 +746,60 @@ const handleCustomDishReplacement = () => {
   }
 }
 
+// 单个食谱收藏/取消收藏
+const toggleRecipeFavorite = (recipe) => {
+
+  // 发送API请求切换收藏状态
+  axios.put(API_CONFIG.baseURL + API_CONFIG.recipe.toggleFavorite + recipe.id, {})
+  .then((response) => {
+    console.log('切换收藏状态成功:', response)
+    const updatedRecipe = response.data.data
+    if (updatedRecipe && updatedRecipe.id) {
+      // 更新本地数据 - 确保items字段已解析
+      const recipeIndex = todayRecipes.value.findIndex(r => r.id === updatedRecipe.id)
+      if (recipeIndex !== -1) {
+        // 确保返回的食谱有items数组并已解析
+        const originalRecipe = todayRecipes.value[recipeIndex]
+        // 使用 Object.assign 创建新对象，避免覆盖原对象
+        const updatedRecipeWithParsedItems = Object.assign({}, originalRecipe, updatedRecipe, {
+          items: typeof updatedRecipe.items === 'string'
+            ? JSON.parse(updatedRecipe.items)
+            : updatedRecipe.items || originalRecipe.items || [], // 确保items字段不会丢失
+          // 统一字段名称，将后端返回的favorite映射为前端使用的isFavorite
+          isFavorite: updatedRecipe.favorite !== undefined ? updatedRecipe.favorite : updatedRecipe.isFavorite
+        })
+        todayRecipes.value[recipeIndex] = updatedRecipeWithParsedItems
+      }
+      // 显示提示
+      if (updatedRecipe.isFavorite) {
+        ElMessage.success('食谱已收藏')
+      } else {
+        ElMessage.success('食谱已取消收藏')
+      }
+    } else {
+      // API请求失败，本地切换收藏状态
+      recipe.isFavorite = !recipe.isFavorite
+      // 显示提示
+      if (recipe.isFavorite) {
+        ElMessage.success('食谱已收藏')
+      } else {
+        ElMessage.success('食谱已取消收藏')
+      }
+    }
+  })
+  .catch((error) => {
+    console.error('切换收藏状态失败:', error)
+    // 网络错误时，本地切换收藏状态作为降级方案
+    recipe.isFavorite = !recipe.isFavorite
+    // 显示提示
+    if (recipe.isFavorite) {
+      ElMessage.warning('网络异常，已在本地标记为收藏')
+    } else {
+      ElMessage.warning('网络异常，已在本地取消收藏')
+    }
+  })
+}
+
 // 打开导入商家菜品对话框
 const openImportMerchantDish = (recipe) => {
   selectedRecipe.value = recipe
@@ -744,6 +812,19 @@ const filteredRecipes = computed(() => {
 
   // 首先筛选掉null和没有id的食谱
   filtered = filtered.filter(recipe => recipe && recipe.id)
+
+  // 按收藏状态和修改时间排序：收藏的食谱置顶，然后按照修改时间从晚到早排序（更改越晚越靠前）
+  filtered.sort((a, b) => {
+    // 首先比较收藏状态，收藏的排前面
+    if (a.isFavorite && !b.isFavorite) return -1;
+    if (!a.isFavorite && b.isFavorite) return 1;
+
+    // 如果收藏状态相同，比较修改时间（假设字段名为updateTime）
+    // 这里需要根据实际字段名调整，如果没有则可以注释这部分
+    const timeA = new Date(a.updateTime || 0);
+    const timeB = new Date(b.updateTime || 0);
+    return timeB - timeA; // 从晚到早排序（最新修改的在最上面）
+  })
 
   // 餐型筛选
   if (filters.value.mealType !== 'all') {
@@ -874,7 +955,7 @@ const filteredRecipes = computed(() => {
           v-for="recipe in filteredRecipes"
           :key="recipe.id"
           class="recipe-card"
-          :class="recipe.type"
+          :class="[recipe.type, { 'recipe-card-favorited': recipe.isFavorite }]"
         >
           <template #header>
             <div class="card-header">
@@ -885,9 +966,21 @@ const filteredRecipes = computed(() => {
                 ></el-checkbox>
               </div>
               <span class="meal-icon">
-                {{ getMealIcon(recipe.type) }}
+                {{ getMealIcon(recipe?.type) }}
             </span>
             {{ recipe.name }}
+            <!-- 右上角收藏按钮 -->
+            <div class="card-favorite">
+              <el-button
+                type="text"
+                size="small"
+                @click="toggleRecipeFavorite(recipe)"
+                :class="{ 'favorite-btn': recipe.isFavorite }"
+                style="padding: 0; margin: 0; font-size: 18px"
+              >
+                {{ recipe.isFavorite ? '⭐' : '☆' }}
+              </el-button>
+            </div>
           </div>
         </template>
         <div class="recipe-items">
@@ -1362,42 +1455,183 @@ const filteredRecipes = computed(() => {
   }
 
   .recipe-card {
-    margin-bottom: 7px !important;
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    margin-bottom: 16px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+
+    &.recipe-card-favorited {
+      border: 2px solid #ffd700 !important;
+      box-shadow: 0 8px 30px rgba(255, 215, 0, 0.15), 0 0 0 3px rgba(255, 215, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &::before {
+        background: linear-gradient(90deg, #ffd700 0%, #ffed4e 100%);
+      }
+    }
+
+    // 为收藏状态的卡片添加与餐型匹配的hover阴影效果
+    &.recipe-card-favorited:hover {
+      transform: translateY(-8px); // 增强悬浮提升效果
+
+      // 早餐
+      &.breakfast {
+        box-shadow: 0 15px 40px rgba(255, 193, 7, 0.25) !important;
+        border-color: #ffc107 !important;
+      }
+
+      // 午餐
+      &.lunch {
+        box-shadow: 0 15px 40px rgba(76, 175, 80, 0.25) !important;
+        border-color: #4caf50 !important;
+      }
+
+      // 晚餐
+      &.dinner {
+        box-shadow: 0 15px 40px rgba(33, 150, 243, 0.25) !important;
+        border-color: #2196f3 !important;
+      }
+
+      // 下午茶/茶点
+      &.afternoon_tea,
+      &.tea {
+        box-shadow: 0 15px 40px rgba(156, 39, 176, 0.25) !important;
+        border-color: #9c27b0 !important;
+      }
+
+      // 夜宵/零食
+      &.night_snack,
+      &.snack {
+        box-shadow: 0 15px 40px rgba(30, 136, 229, 0.25) !important;
+        border-color: #1e88e5 !important;
+      }
+
+      // 上午加餐/早午餐
+      &.morning_snack,
+      &.brunch {
+        box-shadow: 0 15px 40px rgba(255, 152, 0, 0.25) !important;
+        border-color: #ff9800 !important;
+      }
+
+      // 宵夜/深夜零食
+      &.supper,
+      &.midnight_snack {
+        box-shadow: 0 15px 40px rgba(0, 188, 212, 0.25) !important;
+        border-color: #00bcd4 !important;
+      }
+
+      // 健康零食/健身餐
+      &.health_snack,
+      &.fitness_meal {
+        box-shadow: 0 15px 40px rgba(76, 175, 80, 0.25) !important;
+        border-color: #4caf50 !important;
+      }
+
+      // 甜点/甜食
+      &.dessert,
+      &.sweet {
+        box-shadow: 0 15px 40px rgba(233, 30, 99, 0.25) !important;
+        border-color: #e91e63 !important;
+      }
+
+      // 汤/粥
+      &.soup,
+      &.porridge {
+        box-shadow: 0 15px 40px rgba(0, 150, 136, 0.25) !important;
+        border-color: #009688 !important;
+      }
+
+      // 沙拉/蔬菜
+      &.salad,
+      &.vegetable {
+        box-shadow: 0 15px 40px rgba(139, 195, 74, 0.25) !important;
+        border-color: #8bc34a !important;
+      }
+
+      // 肉类/蛋白质
+      &.meat,
+      &.protein {
+        box-shadow: 0 15px 40px rgba(121, 85, 72, 0.25) !important;
+        border-color: #795548 !important;
+      }
+
+      // 默认样式
+      &.info {
+        box-shadow: 0 15px 40px rgba(0, 188, 212, 0.25) !important;
+        border-color: #00bcd4 !important;
+      }
+    }
 
     &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      transform: translateY(-6px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+      border-color: rgba(255, 255, 255, 1) !important;
     }
 
     .card-header {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
       font-size: 20px;
       font-weight: 700;
+      color: #2c3e50;
+      padding: 20px 24px !important;
 
       .meal-icon {
-        font-size: 28px;
-        padding: 2px 7px 21px 7px;
+        font-size: 32px;
+        padding: 10px;
         border-radius: 50%;
-        box-shadow: 0 7px 7px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
       }
     }
 
     .recipe-items {
-      margin: 20px 0;
+      margin: 24px;
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
+
+      .el-tag {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+      }
     }
 
     .recipe-actions {
       text-align: right;
-      margin-top: 20px;
+      margin: 0 24px 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eef2f7;
+
+      .el-button {
+        margin-left: 8px;
+        font-size: 14px;
+        padding: 6px 16px;
+        border-radius: 8px;
+      }
     }
 
     &.breakfast {
@@ -1424,103 +1658,180 @@ const filteredRecipes = computed(() => {
       }
     }
 
-    // 自定义菜单类型样式
+    // 自定义菜单类型样式 - 早餐
+    &.breakfast {
+      border-left: 4px solid #ffc107;
+
+      &::before {
+        background: linear-gradient(90deg, #ffc107 0%, #ffeb3b 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #ffc107 0%, #ffeb3b 100%) !important;
+        color: #333 !important;
+      }
+    }
+
+    // 午餐
+    &.lunch {
+      border-left: 4px solid #4caf50;
+
+      &::before {
+        background: linear-gradient(90deg, #4caf50 0%, #8bc34a 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%) !important;
+        color: white !important;
+      }
+    }
+
+    // 晚餐
+    &.dinner {
+      border-left: 4px solid #2196f3;
+
+      &::before {
+        background: linear-gradient(90deg, #2196f3 0%, #64b5f6 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%) !important;
+        color: white !important;
+      }
+    }
+
+    // 下午茶/茶点
     &.afternoon_tea,
     &.tea {
       border-left: 4px solid #9c27b0;
 
-      .meal-icon.afternoon_tea,
-      .meal-icon.tea {
-        color: #9c27b0;
-        font-size: 24px;
+      &::before {
+        background: linear-gradient(90deg, #9c27b0 0%, #ba68c8 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%) !important;
+        color: white !important;
       }
     }
 
+    // 夜宵/零食
     &.night_snack,
     &.snack {
       border-left: 4px solid #1e88e5;
 
-      .meal-icon.night_snack,
-      .meal-icon.snack {
-        color: #1e88e5;
-        font-size: 24px;
+      &::before {
+        background: linear-gradient(90deg, #1e88e5 0%, #42a5f5 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #1e88e5 0%, #42a5f5 100%) !important;
+        color: white !important;
       }
     }
 
+    // 上午加餐/早午餐
     &.morning_snack,
     &.brunch {
       border-left: 4px solid #ff9800;
 
-      .meal-icon.morning_snack,
-      .meal-icon.brunch {
-        color: #ff9800;
-        font-size: 24px;
+      &::before {
+        background: linear-gradient(90deg, #ff9800 0%, #ffa726 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%) !important;
+        color: white !important;
       }
     }
 
+    // 宵夜/深夜零食
     &.supper,
     &.midnight_snack {
       border-left: 4px solid #00bcd4;
 
-      .meal-icon.supper,
-      .meal-icon.midnight_snack {
-        color: #00bcd4;
-        font-size: 24px;
+      &::before {
+        background: linear-gradient(90deg, #00bcd4 0%, #29b6f6 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #00bcd4 0%, #29b6f6 100%) !important;
+        color: white !important;
       }
     }
 
+    // 健康零食/健身餐
     &.health_snack,
     &.fitness_meal {
       border-left: 4px solid #4caf50;
 
-      .meal-icon.health_snack,
-      .meal-icon.fitness_meal {
-        color: #4caf50;
-        font-size: 24px;
+      &::before {
+        background: linear-gradient(90deg, #4caf50 0%, #81c784 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #4caf50 0%, #81c784 100%) !important;
+        color: white !important;
       }
     }
 
+    // 甜点/甜食
     &.dessert,
     &.sweet {
       border-left: 4px solid #e91e63;
 
-      .meal-icon.dessert,
-      .meal-icon.sweet {
-        color: #e91e63;
-        font-size: 24px;
+      &::before {
+        background: linear-gradient(90deg, #e91e63 0%, #f06292 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #e91e63 0%, #f06292 100%) !important;
+        color: white !important;
       }
     }
 
+    // 汤/粥
     &.soup,
     &.porridge {
       border-left: 4px solid #009688;
 
-      .meal-icon.soup,
-      .meal-icon.porridge {
-        color: #009688;
-        font-size: 24px;
+      &::before {
+        background: linear-gradient(90deg, #009688 0%, #26a69a 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #009688 0%, #26a69a 100%) !important;
+        color: white !important;
       }
     }
 
+    // 沙拉/蔬菜
     &.salad,
     &.vegetable {
       border-left: 4px solid #8bc34a;
 
-      .meal-icon.salad,
-      .meal-icon.vegetable {
-        color: #8bc34a;
-        font-size: 24px;
+      &::before {
+        background: linear-gradient(90deg, #8bc34a 0%, #aed581 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #8bc34a 0%, #aed581 100%) !important;
+        color: white !important;
       }
     }
 
+    // 肉类/蛋白质
     &.meat,
     &.protein {
       border-left: 4px solid #795548;
 
-      .meal-icon.meat,
-      .meal-icon.protein {
-        color: #795548;
-        font-size: 24px;
+      &::before {
+        background: linear-gradient(90deg, #795548 0%, #a1887f 100%);
+      }
+
+      .meal-icon {
+        background: linear-gradient(135deg, #795548 0%, #a1887f 100%) !important;
+        color: white !important;
       }
     }
 
@@ -1911,6 +2222,34 @@ const filteredRecipes = computed(() => {
   :deep(.el-checkbox__label) {
     display: none !important;
   }
+  margin-right: 10px;
+}
+
+// 收藏按钮样式
+.favorite-btn {
+  color: #ffd700 !important; // 收藏状态用金色，确保覆盖默认样式
+  font-weight: bold;
+}
+
+// 卡片头部样式
+.card-header {
+  position: relative; // 设置为相对定位，让收藏按钮可以绝对定位
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+// 右上角收藏按钮样式
+.card-favorite {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+// 收藏按钮通用样式
+.recipe-actions .el-button {
+  // 确保所有按钮样式统一
   margin-right: 10px;
 }
 

@@ -94,13 +94,31 @@ public class RecipeController {
     /**
      * 切换食谱收藏状态
      */
-    @PutMapping("/{id}/toggle-favorite")
+    @PutMapping("/toggle-favorite/{id}")
     public ResponseResult<?> toggleFavorite(@PathVariable Long id) {
         Recipe updatedRecipe = recipeService.toggleFavorite(id);
         if (updatedRecipe == null) {
             return ResponseResult.fail("404", "食谱不存在");
         }
         return ResponseResult.success(updatedRecipe);
+    }
+
+    /**
+     * 批量切换食谱收藏状态
+     */
+    @PutMapping("/batch-toggle-favorite")
+    public ResponseResult<?> batchToggleFavorite(@RequestBody Map<String, Object> request) {
+        try {
+            // 解析请求参数
+            List<Long> recipeIds = (List<Long>) request.get("recipeIds");
+            boolean favorite = (Boolean) request.get("favorite");
+
+            // 调用服务层方法
+            List<Recipe> updatedRecipes = recipeService.batchToggleFavorite(recipeIds, favorite);
+            return ResponseResult.success(updatedRecipes);
+        } catch (Exception e) {
+            return ResponseResult.fail("500", "批量操作失败：" + e.getMessage());
+        }
     }
 
 }

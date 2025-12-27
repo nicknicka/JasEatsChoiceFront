@@ -31,7 +31,8 @@ export const API_CONFIG = {
     add: '/v1/recipe', // 新增食谱接口
     update: '/v1/recipe/', // 更新食谱接口 (需要拼接id)
     delete: '/v1/recipe/', // 删除食谱接口 (需要拼接id)
-    toggleFavorite: '/v1/recipe/', // 切换收藏状态 (需要拼接id)
+    toggleFavorite: '/v1/recipe/toggle-favorite/', // 切换收藏状态 (需要拼接id)
+    batchToggleFavorite: '/v1/recipe/batch-toggle-favorite', // 批量切换收藏状态
     setToday: '/v1/recipe/', // 设置为今日食谱 (需要拼接id)
     unsetToday: '/v1/recipe/' // 取消今日食谱 (需要拼接id)
   },
@@ -74,7 +75,7 @@ export const API_CONFIG = {
 
   // 天气API端点
   weather: {
-    current: '/v1/weather', // 获取天气信息接口
+    current: '/v1/weather' // 获取天气信息接口
   },
 
   // 位置选择API端点
