@@ -1,28 +1,29 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import axios from 'axios';
-import { API_CONFIG } from '../../config';
-import { ElMessage } from 'element-plus';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import axios from 'axios'
+import { API_CONFIG } from '../../config'
+import { ElMessage } from 'element-plus'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
 // 用户订单数据
-const orders = ref([]);
+const orders = ref([])
 
 // 加载用户订单数据
 const loadOrders = () => {
-  const userId = parseInt(localStorage.getItem('userId') || '1', 10); // 临时使用固定用户ID
-  axios.get(API_CONFIG.baseURL + API_CONFIG.order.list + userId)
-    .then(response => {
+  const userId = parseInt(localStorage.getItem('userId') || '1', 10) // 临时使用固定用户ID
+  axios
+    .get(API_CONFIG.baseURL + API_CONFIG.order.list + userId)
+    .then((response) => {
       if (response.data.data) {
-        orders.value = response.data.data;
+        orders.value = response.data.data
       }
     })
-    .catch(error => {
-      console.error('加载订单失败:', error);
+    .catch((error) => {
+      console.error('加载订单失败:', error)
       // 使用默认数据作为 fallback
       orders.value = [
         {
@@ -79,51 +80,51 @@ const loadOrders = () => {
           time: '2023-11-24 18:30',
           items: ['牛排套餐', '柠檬红茶']
         }
-      ];
-      ElMessage.error('加载订单失败，将显示默认数据');
-    });
-};
+      ]
+      ElMessage.error('加载订单失败，将显示默认数据')
+    })
+}
 
 // 订单状态筛选
-const activeStatus = ref('all');
+const activeStatus = ref('all')
 
 // 订单状态映射
 const orderStatusMap = {
-  'all': '全部订单',
-  'processing': '进行中',
-  'pending': '待确认',
-  'pendingComment': '待评价',
-  'delivered': '已送达',
-  'completed': '已完成',
-  'cancelled': '已取消'
-};
+  all: '全部订单',
+  processing: '进行中',
+  pending: '待确认',
+  pendingComment: '待评价',
+  delivered: '已送达',
+  completed: '已完成',
+  cancelled: '已取消'
+}
 
 // 组件挂载时加载数据
 onMounted(() => {
   // 检查是否有传递的状态参数
   if (route.query.status) {
-    activeStatus.value = route.query.status;
+    activeStatus.value = route.query.status
   }
-  loadOrders();
-});
+  loadOrders()
+})
 
 // 监听路由参数变化
 watch(
   () => route.query.status,
   (newStatus) => {
     if (newStatus) {
-      activeStatus.value = newStatus;
+      activeStatus.value = newStatus
     }
   }
-);
+)
 
 // 筛选后的订单
 const filteredOrders = computed(() => {
   if (activeStatus.value === 'all') {
-    return orders.value;
+    return orders.value
   }
-  return orders.value.filter(order => order.status === activeStatus.value);
-});
+  return orders.value.filter((order) => order.status === activeStatus.value)
+})
 
 // 查看订单详情
 const viewOrderDetails = (order) => {
@@ -132,28 +133,36 @@ const viewOrderDetails = (order) => {
     path: `/user/home/order-detail/${order.id}`,
     name: 'user-order-detail',
     params: { id: order.id }
-  });
-};
+  })
+}
 
 // 取消订单
 const cancelOrder = (order) => {
   // 实际应用中实现取消订单功能
-  console.log('取消订单:', order);
-  order.status = 'cancelled';
-};
+  console.log('取消订单:', order)
+  order.status = 'cancelled'
+}
 </script>
 
 <template>
   <div class="orders-container">
     <div class="page-header">
       <common-back-button />
-      <h2 style="margin-left: 15px;">查看订单</h2>
+      <h2 style="margin-left: 15px">查看订单</h2>
     </div>
 
     <!-- 订单筛选 -->
     <div class="order-filters">
       <el-button
-        v-for="status in ['all', 'processing', 'pending', 'pendingComment', 'delivered', 'completed', 'cancelled']"
+        v-for="status in [
+          'all',
+          'processing',
+          'pending',
+          'pendingComment',
+          'delivered',
+          'completed',
+          'cancelled'
+        ]"
         :key="status"
         type="primary"
         :plain="activeStatus !== status"
@@ -166,11 +175,7 @@ const cancelOrder = (order) => {
 
     <!-- 订单列表 -->
     <div class="order-list">
-      <el-card
-        v-for="order in filteredOrders"
-        :key="order.id"
-        class="order-card"
-      >
+      <el-card v-for="order in filteredOrders" :key="order.id" class="order-card">
         <div class="order-header">
           <div class="order-info">
             <div class="order-no">订单号: {{ order.orderNo }}</div>
@@ -180,11 +185,17 @@ const cancelOrder = (order) => {
           <div class="order-status">
             <el-tag
               :type="
-                order.status === 'processing' ? 'warning' :
-                order.status === 'pending' ? 'primary' :
-                order.status === 'pendingComment' ? 'info' :
-                order.status === 'delivered' ? 'success' :
-                order.status === 'completed' ? 'info' : 'danger'
+                order.status === 'processing'
+                  ? 'warning'
+                  : order.status === 'pending'
+                    ? 'primary'
+                    : order.status === 'pendingComment'
+                      ? 'info'
+                      : order.status === 'delivered'
+                        ? 'success'
+                        : order.status === 'completed'
+                          ? 'info'
+                          : 'danger'
               "
             >
               {{ orderStatusMap[order.status] }}
@@ -195,7 +206,9 @@ const cancelOrder = (order) => {
         <div class="order-items">
           <div class="item-title">商品:</div>
           <div class="item-list">
-            <el-tag v-for="item in order.items" :key="item" type="info" size="small">{{ item }}</el-tag>
+            <el-tag v-for="item in order.items" :key="item" type="info" size="small">{{
+              item
+            }}</el-tag>
           </div>
         </div>
 
@@ -205,11 +218,7 @@ const cancelOrder = (order) => {
         </div>
 
         <div class="order-actions">
-          <el-button
-            type="primary"
-            size="small"
-            @click="viewOrderDetails(order)"
-          >
+          <el-button type="primary" size="small" @click="viewOrderDetails(order)">
             查看详情
           </el-button>
           <el-button
@@ -225,10 +234,7 @@ const cancelOrder = (order) => {
     </div>
 
     <!-- 空数据提示 -->
-    <el-empty
-      v-if="orders.length === 0"
-      description="暂无订单"
-    ></el-empty>
+    <el-empty v-if="orders.length === 0" description="暂无订单"></el-empty>
   </div>
 </template>
 

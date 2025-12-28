@@ -1,7 +1,6 @@
-
 <script setup>
-import { ref, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 
 // 模拟群组列表
 const groupList = ref([
@@ -32,7 +31,7 @@ const groupList = ref([
     unreadCount: 0,
     memberCount: 50
   }
-]);
+])
 
 // 模拟聊天记录
 const chatMessages = ref([
@@ -57,36 +56,36 @@ const chatMessages = ref([
     time: '2024-11-21 14:32',
     isRead: true
   }
-]);
+])
 
 // 当前选中的群组
-const selectedGroup = ref(null);
+const selectedGroup = ref(null)
 
 // 新消息内容
-const newMessage = ref('');
+const newMessage = ref('')
 
 // 页面加载
 onMounted(() => {
   // 默认选中第一个群组
   if (groupList.value.length > 0) {
-    selectedGroup.value = groupList.value[0];
+    selectedGroup.value = groupList.value[0]
   }
-});
+})
 
 // 选择群组
 const selectGroup = (group) => {
-  selectedGroup.value = group;
+  selectedGroup.value = group
   // 清空未读消息
   if (group.unreadCount > 0) {
-    group.unreadCount = 0;
-    ElMessage.success('消息已标记为已读');
+    group.unreadCount = 0
+    ElMessage.success('消息已标记为已读')
   }
-};
+}
 
 // 发送消息
 const sendMessage = () => {
   if (!newMessage.value.trim() || !selectedGroup.value) {
-    return;
+    return
   }
 
   // 创建新消息
@@ -96,18 +95,18 @@ const sendMessage = () => {
     content: newMessage.value.trim(),
     time: new Date().toISOString().slice(0, 19).replace('T', ' '),
     isRead: true
-  };
+  }
 
   // 添加到聊天记录
-  chatMessages.value.push(message);
+  chatMessages.value.push(message)
 
   // 更新群组列表的最后一条消息
-  selectedGroup.value.lastMessage = message.content;
-  selectedGroup.value.time = message.time;
+  selectedGroup.value.lastMessage = message.content
+  selectedGroup.value.time = message.time
 
   // 清空输入框
-  newMessage.value = '';
-};
+  newMessage.value = ''
+}
 </script>
 
 <template>
@@ -166,7 +165,10 @@ const sendMessage = () => {
             v-for="message in chatMessages"
             :key="message.id"
             class="message-item"
-            :class="{ 'others-message': message.sender !== '我', 'my-message': message.sender === '我' }"
+            :class="{
+              'others-message': message.sender !== '我',
+              'my-message': message.sender === '我'
+            }"
           >
             <div class="message-header" v-if="message.sender !== '我'">
               <span class="sender-name">{{ message.sender }}</span>

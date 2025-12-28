@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import { API_CONFIG } from '../config'
 import { useAuthStore } from './authStore'
-const authStore = useAuthStore() ;
+const authStore = useAuthStore()
 
 export interface UserInfo {
   userId: string
@@ -32,7 +32,7 @@ export interface MerchantInfo {
   businessLicense: string
   businessScope: string[]
   contactName: string
-  avatar?: string 
+  avatar?: string
   rating?: number
   businessHours?: string
   email?: string
@@ -55,7 +55,7 @@ export const useUserStore = defineStore('user', {
   actions: {
     async fetchUserInfo() {
       try {
-        const authStore = useAuthStore();
+        const authStore = useAuthStore()
         if (!authStore.userId) {
           throw new Error('用户ID不存在')
         }
@@ -84,7 +84,7 @@ export const useUserStore = defineStore('user', {
 
     setUserInfo(info: UserInfo) {
       this.userInfo = info
-      const authStore = useAuthStore();
+      const authStore = useAuthStore()
       // 如果用户有注册商家ID，保存到authStore
       if (info.merchantId) {
         authStore.setMerchantId(info.merchantId)
@@ -93,7 +93,7 @@ export const useUserStore = defineStore('user', {
 
     async fetchMerchantInfo() {
       try {
-        const authStore = useAuthStore();
+        const authStore = useAuthStore()
         if (!authStore.merchantId) {
           throw new Error('商家ID不存在')
         }
@@ -122,19 +122,22 @@ export const useUserStore = defineStore('user', {
 
         // Try to update on backend if userId exists
         try {
-          const authStore = useAuthStore();
+          const authStore = useAuthStore()
           if (authStore.userId) {
             const response = await axios.put(`${API_CONFIG.baseURL}/v1/users/${authStore.userId}`, {
               avatar
-            });
+            })
 
             // Check response.data for status
             if (response.data?.code !== '200') {
-              console.error('Failed to update avatar on backend:', response.data?.message || 'Unknown error');
+              console.error(
+                'Failed to update avatar on backend:',
+                response.data?.message || 'Unknown error'
+              )
             }
           }
         } catch (error) {
-          console.error('Failed to update avatar on backend:', error);
+          console.error('Failed to update avatar on backend:', error)
         }
       }
     },

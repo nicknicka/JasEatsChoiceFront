@@ -21,10 +21,10 @@ const closeDialog = () => {
 const toggleFavorite = () => {
   if (props.recipe) {
     // 创建一个新的recipe对象
-    const updatedRecipe = { ...props.recipe, favorite: !props.recipe.favorite };
+    const updatedRecipe = { ...props.recipe, favorite: !props.recipe.favorite }
 
     // 发射事件通知父组件更新
-    emit('update:recipe', updatedRecipe);
+    emit('update:recipe', updatedRecipe)
 
     // 显示消息提示
     ElMessage.success(updatedRecipe.favorite ? '已添加到收藏' : '已取消收藏')
@@ -70,12 +70,7 @@ const activeDishName = ref('')
   >
     <div class="recipe-detail-container">
       <div class="detail-header">
-        <el-tag
-          v-if="recipe"
-          :type="getTagType(recipe.type)"
-          size="large"
-          class="type-tag"
-        >
+        <el-tag v-if="recipe" :type="getTagType(recipe.type)" size="large" class="type-tag">
           {{ recipe.type }}
         </el-tag>
         <el-icon
@@ -139,7 +134,7 @@ const activeDishName = ref('')
         class="stat-card"
         :body-style="{
           background: '#f8f9fa',
-          borderRadius: '8px',
+          borderRadius: '8px'
         }"
       >
         <h4 class="section-title">
@@ -147,10 +142,7 @@ const activeDishName = ref('')
           食谱详情
         </h4>
         <div class="detail-content">
-          {{
-            recipe.details ||
-            '这是一个健康美味的' + recipe.type + '食谱，营养均衡，味道鲜美。'
-          }}
+          {{ recipe.details || '这是一个健康美味的' + recipe.type + '食谱，营养均衡，味道鲜美。' }}
         </div>
       </el-card>
 
@@ -161,7 +153,7 @@ const activeDishName = ref('')
         class="stat-card"
         :body-style="{
           background: '#f8f9fa',
-          borderRadius: '8px',
+          borderRadius: '8px'
         }"
       >
         <h4 class="section-title">
@@ -171,7 +163,9 @@ const activeDishName = ref('')
         <div class="dish-composition">
           <el-collapse v-model="activeDishName" accordion class="dish-collapse">
             <el-collapse-item
-              v-for="(dish, index) in recipe.dishComposition || [{ name: '空', ingredients: ['空'] }]"
+              v-for="(dish, index) in recipe.dishComposition || [
+                { name: '空', ingredients: ['空'] }
+              ]"
               :key="index"
               :title="dish.name"
               :name="dish.name"
@@ -200,7 +194,7 @@ const activeDishName = ref('')
         class="stat-card"
         :body-style="{
           background: '#f8f9fa',
-          borderRadius: '8px',
+          borderRadius: '8px'
         }"
       >
         <h4 class="section-title">
@@ -236,7 +230,7 @@ const activeDishName = ref('')
         class="stat-card"
         :body-style="{
           background: '#f8f9fa',
-          borderRadius: '8px',
+          borderRadius: '8px'
         }"
       >
         <h4 class="section-title">

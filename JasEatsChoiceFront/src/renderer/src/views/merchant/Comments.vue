@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ref, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 评价评分对应文本
 const ratingTextMap = {
@@ -9,7 +9,7 @@ const ratingTextMap = {
   3: '😐 一般',
   2: '👎 不满意',
   1: '💢 非常不满意'
-};
+}
 
 // 评价标签样式
 const ratingTagTypeMap = {
@@ -18,7 +18,7 @@ const ratingTagTypeMap = {
   3: 'warning',
   2: 'danger',
   1: 'danger'
-};
+}
 
 // 模拟评价数据
 const comments = ref([
@@ -77,31 +77,33 @@ const comments = ref([
     time: '2024-11-18 19:30',
     dishes: ['牛肉面', '拍黄瓜', '可乐']
   }
-]);
+])
 
 // 筛选条件
-const activeStatusFilter = ref('all'); // all, unreplied, replied
-const activeRatingFilter = ref('all'); // all, 5,4,3,2,1
-const searchKeyword = ref('');
+const activeStatusFilter = ref('all') // all, unreplied, replied
+const activeRatingFilter = ref('all') // all, 5,4,3,2,1
+const searchKeyword = ref('')
 
 // 筛选后的评价
-const filteredComments = ref([]);
-filteredComments.value = [...comments.value];
+const filteredComments = ref([])
+filteredComments.value = [...comments.value]
 
 // 评价统计
 const commentsStats = computed(() => {
-  const total = filteredComments.value.length;
-  const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-  filteredComments.value.forEach(comment => {
-    ratingCounts[comment.rating]++;
-  });
+  const total = filteredComments.value.length
+  const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+  filteredComments.value.forEach((comment) => {
+    ratingCounts[comment.rating]++
+  })
 
   // 计算平均评分
-  const avgRating = total > 0 ?
-    filteredComments.value.reduce((sum, comment) => sum + comment.rating, 0) / total : 0;
+  const avgRating =
+    total > 0 ? filteredComments.value.reduce((sum, comment) => sum + comment.rating, 0) / total : 0
 
-  const repliedCount = filteredComments.value.filter(comment => comment.status === 'replied').length;
-  const unrepliedCount = total - repliedCount;
+  const repliedCount = filteredComments.value.filter(
+    (comment) => comment.status === 'replied'
+  ).length
+  const unrepliedCount = total - repliedCount
 
   return {
     total,
@@ -109,58 +111,61 @@ const commentsStats = computed(() => {
     ratingCounts,
     repliedCount,
     unrepliedCount
-  };
-});
+  }
+})
 
 // 更新筛选
 const updateFilter = () => {
-  filteredComments.value = comments.value.filter(comment => {
+  filteredComments.value = comments.value.filter((comment) => {
     // 状态筛选
-    const statusMatch = activeStatusFilter.value === 'all' || comment.status === activeStatusFilter.value;
+    const statusMatch =
+      activeStatusFilter.value === 'all' || comment.status === activeStatusFilter.value
 
     // 评分筛选
-    const ratingMatch = activeRatingFilter.value === 'all' || comment.rating === parseInt(activeRatingFilter.value);
+    const ratingMatch =
+      activeRatingFilter.value === 'all' || comment.rating === parseInt(activeRatingFilter.value)
 
     // 搜索筛选
-    const searchMatch = !searchKeyword.value ||
+    const searchMatch =
+      !searchKeyword.value ||
       comment.orderNo.includes(searchKeyword.value) ||
       comment.user.includes(searchKeyword.value) ||
-      comment.dishes.some(dish => dish.includes(searchKeyword.value));
+      comment.dishes.some((dish) => dish.includes(searchKeyword.value))
 
-    return statusMatch && ratingMatch && searchMatch;
-  });
-};
+    return statusMatch && ratingMatch && searchMatch
+  })
+}
 
 // 回复评价
-const replyComment = ref('');
-const currentComment = ref(null);
-const showReplyDialog = ref(false);
+const replyComment = ref('')
+const currentComment = ref(null)
+const showReplyDialog = ref(false)
 
 const openReplyDialog = (comment) => {
-  currentComment.value = comment;
-  replyComment.value = comment.reply;
-  showReplyDialog.value = true;
-};
+  currentComment.value = comment
+  replyComment.value = comment.reply
+  showReplyDialog.value = true
+}
 
 const submitReply = () => {
   if (!replyComment.value.trim() || !currentComment.value) {
-    ElMessage.warning('请输入回复内容');
-    return;
+    ElMessage.warning('请输入回复内容')
+    return
   }
 
   // 更新回复内容
-  currentComment.value.reply = replyComment.value;
-  currentComment.value.status = 'replied';
+  currentComment.value.reply = replyComment.value
+  currentComment.value.status = 'replied'
 
-  updateFilter();
-  replyComment.value = '';
-  currentComment.value = null;
-  showReplyDialog.value = false;
-  ElMessage.success('回复成功');
-};
+  updateFilter()
+  replyComment.value = ''
+  currentComment.value = null
+  showReplyDialog.value = false
+  ElMessage.success('回复成功')
+}
 
 // 页面加载时初始化筛选
-updateFilter();
+updateFilter()
 </script>
 
 <template>
@@ -206,14 +211,16 @@ updateFilter();
                   </div>
                 </el-col>
               </el-row>
-              
+
               <div class="rating-distribution">
                 <h5 class="distribution-title">评分分布</h5>
                 <div class="rating-bars">
-                  <div v-for="rating in [5,4,3,2,1]" :key="rating" class="rating-bar-item">
+                  <div v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="rating-bar-item">
                     <div class="rating-label">{{ ratingTextMap[rating] }}</div>
-                    <el-progress 
-                      :percentage="(commentsStats.ratingCounts[rating] / commentsStats.total * 100) || 0" 
+                    <el-progress
+                      :percentage="
+                        (commentsStats.ratingCounts[rating] / commentsStats.total) * 100 || 0
+                      "
                       :stroke-width="10"
                       :color="rating >= 4 ? '#67C23A' : rating === 3 ? '#E6A23C' : '#F56C6C'"
                       striped
@@ -241,7 +248,10 @@ updateFilter();
                 :key="status"
                 :type="activeStatusFilter === status ? 'primary' : 'info'"
                 effect="plain"
-                @click="activeStatusFilter = status; updateFilter()"
+                @click="
+                  activeStatusFilter = status
+                  updateFilter()
+                "
                 class="filter-tag"
               >
                 {{ status === 'all' ? '全部' : status === 'unreplied' ? '未回复' : '已回复' }}
@@ -254,14 +264,16 @@ updateFilter();
                 :key="rating"
                 :type="activeRatingFilter === rating ? 'primary' : 'info'"
                 effect="plain"
-                @click="activeRatingFilter = rating; updateFilter()"
+                @click="
+                  activeRatingFilter = rating
+                  updateFilter()
+                "
                 class="filter-tag"
               >
                 {{ rating === 'all' ? '全部' : `${rating}分` }}
               </el-tag>
             </div>
             <div class="filter-item search-item">
-
               <div class="search-group">
                 <el-input
                   v-model="searchKeyword"
@@ -289,13 +301,9 @@ updateFilter();
             <span class="comments-count">共 {{ filteredComments.length }} 条评价</span>
           </div>
         </template>
-        
+
         <div class="comments-list">
-          <div
-            v-for="comment in filteredComments"
-            :key="comment.id"
-            class="comment-item"
-          >
+          <div v-for="comment in filteredComments" :key="comment.id" class="comment-item">
             <div class="comment-header">
               <div class="user-info">
                 <div class="user-avatar">
@@ -314,18 +322,10 @@ updateFilter();
                 <el-tag :type="ratingTagTypeMap[comment.rating]" size="small">
                   {{ ratingTextMap[comment.rating] }}
                 </el-tag>
-                <el-tag
-                  v-if="comment.status === 'unreplied'"
-                  type="warning"
-                  size="small"
-                >
+                <el-tag v-if="comment.status === 'unreplied'" type="warning" size="small">
                   未回复
                 </el-tag>
-                <el-tag
-                  v-if="comment.status === 'replied'"
-                  type="success"
-                  size="small"
-                >
+                <el-tag v-if="comment.status === 'replied'" type="success" size="small">
                   已回复
                 </el-tag>
               </div>
@@ -334,10 +334,10 @@ updateFilter();
             <div class="comment-content">
               <div class="comment-dishes">
                 <span class="dish-label">🍽️ 菜品：</span>
-                <el-tag 
-                  v-for="dish in comment.dishes" 
-                  :key="dish" 
-                  size="small" 
+                <el-tag
+                  v-for="dish in comment.dishes"
+                  :key="dish"
+                  size="small"
                   type="info"
                   class="dish-tag"
                 >
@@ -357,12 +357,7 @@ updateFilter();
             </div>
 
             <div class="comment-actions">
-              <el-button
-                type="primary"
-                size="small"
-                plain
-                @click="openReplyDialog(comment)"
-              >
+              <el-button type="primary" size="small" plain @click="openReplyDialog(comment)">
                 {{ comment.status === 'unreplied' ? '回复评价' : '修改回复' }}
               </el-button>
             </div>
@@ -371,7 +366,15 @@ updateFilter();
           <!-- 空数据提示 -->
           <div v-if="filteredComments.length === 0" class="empty-comments">
             <el-empty description="暂无评价">
-              <el-button type="primary" @click="activeStatusFilter='all'; activeRatingFilter='all'; searchKeyword=''; updateFilter();">
+              <el-button
+                type="primary"
+                @click="
+                  activeStatusFilter = 'all'
+                  activeRatingFilter = 'all'
+                  searchKeyword = ''
+                  updateFilter()
+                "
+              >
                 清除筛选条件
               </el-button>
             </el-empty>
@@ -381,11 +384,7 @@ updateFilter();
     </div>
 
     <!-- 回复对话框 -->
-    <el-dialog
-      v-model="showReplyDialog"
-      title="回复评价"
-      width="500px"
-    >
+    <el-dialog v-model="showReplyDialog" title="回复评价" width="500px">
       <el-input
         v-model="replyComment"
         type="textarea"
@@ -423,17 +422,17 @@ updateFilter();
   // 概览卡片
   .overview-section {
     margin-bottom: 20px;
-    
+
     .overview-card {
       background: white;
       border-radius: 8px;
       box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
       overflow: hidden;
-      
+
       .overview-header {
         padding: 20px;
         border-bottom: 1px solid #eee;
-        
+
         .overview-title {
           margin: 0;
           font-size: 18px;
@@ -441,70 +440,70 @@ updateFilter();
           color: #303133;
         }
       }
-      
+
       .overview-content {
         padding: 20px;
-        
+
         .stat-card {
           text-align: center;
           padding: 15px;
           background: #f8f9fa;
           border-radius: 6px;
           transition: all 0.3s;
-          
+
           &:hover {
             transform: translateY(-3px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           }
-          
+
           .stat-value {
             font-size: 28px;
             font-weight: 700;
             color: #409eff;
             margin-bottom: 5px;
           }
-          
+
           .stat-label {
             font-size: 14px;
             color: #606266;
           }
         }
-        
+
         .rating-distribution {
           margin-top: 30px;
-          
+
           .distribution-title {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 15px;
             color: #303133;
           }
-          
+
           .rating-bars {
             .rating-bar-item {
               display: flex;
               align-items: center;
               margin-bottom: 15px;
-              
+
               .rating-label {
                 width: 120px;
                 font-size: 14px;
                 color: #606266;
               }
-              
+
               :deep(.el-progress) {
                 flex: 1;
                 margin: 0 15px;
-                
+
                 .el-progress-bar__outer {
                   border-radius: 5px;
                 }
-                
+
                 .el-progress-bar__inner {
                   border-radius: 5px;
                 }
               }
-              
+
               .rating-count {
                 width: 30px;
                 font-size: 14px;
@@ -517,7 +516,6 @@ updateFilter();
       }
     }
   }
-
 
   // 筛选区域
   .filter-section {
@@ -537,43 +535,43 @@ updateFilter();
         gap: 20px;
         width: 100%;
         flex-wrap: wrap;
-        
+
         .filter-item {
           display: flex;
           align-items: center;
           flex-wrap: wrap;
           gap: 10px;
-          
+
           .filter-label {
             font-weight: 600;
             color: #303133;
             white-space: nowrap;
           }
-          
+
           .filter-tag {
             cursor: pointer;
             transition: all 0.3s;
-            
+
             &:hover {
               transform: translateY(-2px);
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             }
           }
         }
-        
+
         .search-item {
           flex: 1;
           min-width: 300px;
         }
       }
     }
-    
+
     .search-group {
       height: 100%;
       display: flex;
       align-items: center;
       min-width: 300px;
-      
+
       :deep(.el-input) {
         width: 100%;
         .el-input__wrapper {
@@ -588,24 +586,24 @@ updateFilter();
     .comments-card {
       border-radius: 8px;
       box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-      
+
       :deep(.el-card__header) {
         background: #f8f9fa;
         border-bottom: 1px solid #eee;
         padding: 15px 20px;
-        
+
         .comments-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          
+
           .comments-count {
             font-size: 14px;
             color: #606266;
           }
         }
       }
-      
+
       .comments-list {
         .comment-item {
           padding: 20px;
@@ -614,28 +612,28 @@ updateFilter();
           margin-bottom: 15px;
           background-color: #fff;
           transition: all 0.3s ease;
-          
+
           &:hover {
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
           }
-          
+
           .comment-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 15px;
-            
+
             .user-info {
               display: flex;
               gap: 12px;
-              
+
               .user-avatar {
                 :deep(.el-avatar) {
                   background-color: #409eff;
                 }
               }
-              
+
               .user-details {
                 .user-name {
                   font-weight: 600;
@@ -643,69 +641,73 @@ updateFilter();
                   margin-bottom: 5px;
                   color: #303133;
                 }
-                
+
                 .order-info {
                   display: flex;
                   gap: 15px;
                   font-size: 13px;
                   color: #606266;
-                  
-                  .order-no, .time {
+
+                  .order-no,
+                  .time {
                     font-size: 12px;
                   }
                 }
               }
             }
-            
+
             .rating-info {
               display: flex;
               gap: 8px;
             }
           }
-          
+
           .comment-content {
             margin-bottom: 15px;
-            
+
             .comment-dishes {
               display: flex;
               align-items: center;
               flex-wrap: wrap;
               gap: 8px;
               margin-bottom: 15px;
-              
+
               .dish-label {
                 font-weight: 500;
                 font-size: 14px;
                 color: #303133;
               }
-              
+
               .dish-tag {
                 margin: 2px 0;
               }
             }
-            
-            .comment-text, .comment-reply {
+
+            .comment-text,
+            .comment-reply {
               margin-bottom: 12px;
-              
-              .comment-label, .reply-label {
+
+              .comment-label,
+              .reply-label {
                 font-weight: 600;
                 font-size: 14px;
                 margin-bottom: 5px;
                 color: #303133;
               }
-              
-              .comment-value, .reply-value {
+
+              .comment-value,
+              .reply-value {
                 font-size: 14px;
                 color: #303133;
                 line-height: 1.6;
                 padding: 10px;
                 border-radius: 4px;
               }
-              
+
               .comment-value {
                 background-color: #f5f7fa;
               }
-              
+
               .reply-value {
                 background-color: #ecf5ff;
                 color: #409eff;
@@ -713,13 +715,13 @@ updateFilter();
               }
             }
           }
-          
+
           .comment-actions {
             text-align: right;
           }
         }
       }
-      
+
       .empty-comments {
         padding: 40px 0;
         text-align: center;

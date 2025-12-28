@@ -1,11 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { ElMessage, ElUpload } from 'element-plus';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElUpload } from 'element-plus'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
-const route = useRoute();
-const router = useRouter();
+const route = useRoute()
+const router = useRouter()
 
 // 菜品基本信息
 const dishInfo = ref({
@@ -15,44 +15,44 @@ const dishInfo = ref({
   status: 'online', // online: 在售, almost_sold: 即将售罄, offline: 下架
   stock: 50,
   description: '精选食材，麻辣鲜香，回味无穷'
-});
+})
 
 // 菜品分类选项
-const categories = ['主食', '汤品', '饮料', '小吃'];
+const categories = ['主食', '汤品', '饮料', '小吃']
 
 // 菜品状态映射
 const dishStatusMap = {
   online: { text: '🟢 在售', type: 'success' },
   almost_sold: { text: '🟡 即将售罄', type: 'warning' },
   offline: { text: '🔴 下架', type: 'danger' }
-};
+}
 
 // 页面加载
 onMounted(() => {
   // 可以从路由参数获取菜品ID并加载菜品数据
-});
+})
 
 // 保存菜品
 const saveDish = (saveType) => {
   // 根据保存类型更新菜品状态
   if (saveType) {
-    dishInfo.value.status = saveType;
+    dishInfo.value.status = saveType
   }
 
   // 模拟保存
-  console.log('保存菜品:', dishInfo.value);
-  ElMessage.success('菜品保存成功');
+  console.log('保存菜品:', dishInfo.value)
+  ElMessage.success('菜品保存成功')
 
   // 跳回菜品管理页面
-  router.push('/merchant/dish-management');
-};
+  router.push('/merchant/dish-management')
+}
 
 // 上传菜品图片
 const handleUpload = (file) => {
-  console.log('上传菜品图片:', file);
-  ElMessage.success('图片上传成功');
-  return false; // 阻止自动上传
-};
+  console.log('上传菜品图片:', file)
+  ElMessage.success('图片上传成功')
+  return false // 阻止自动上传
+}
 </script>
 
 <template>
@@ -68,12 +68,7 @@ const handleUpload = (file) => {
       <!-- 菜品图片管理 -->
       <div class="dish-images-section">
         <h4 class="section-title">📷 菜品图片</h4>
-        <el-upload
-          action="#"
-          list-type="picture-card"
-          :auto-upload="false"
-          @change="handleUpload"
-        >
+        <el-upload action="#" list-type="picture-card" :auto-upload="false" @change="handleUpload">
           <el-icon class="avatar-uploader-icon">
             <Plus />
           </el-icon>
@@ -85,11 +80,11 @@ const handleUpload = (file) => {
         <h4 class="section-title">📝 菜品基本信息</h4>
         <div class="info-item">
           <span class="info-label">🍽️ 菜品名称：</span>
-          <el-input v-model="dishInfo.name" placeholder="请输入菜品名称" style="width: 300px;" />
+          <el-input v-model="dishInfo.name" placeholder="请输入菜品名称" style="width: 300px" />
         </div>
         <div class="info-item">
           <span class="info-label">📋 菜品分类：</span>
-          <el-select v-model="dishInfo.category" placeholder="选择菜品分类" style="width: 200px;">
+          <el-select v-model="dishInfo.category" placeholder="选择菜品分类" style="width: 200px">
             <el-option
               v-for="category in categories"
               :key="category"
@@ -100,27 +95,17 @@ const handleUpload = (file) => {
         </div>
         <div class="info-item">
           <span class="info-label">💰 价格：</span>
-          <el-input-number
-            v-model="dishInfo.price"
-            :min="0.01"
-            :step="0.01"
-            style="width: 200px;"
-          />
+          <el-input-number v-model="dishInfo.price" :min="0.01" :step="0.01" style="width: 200px" />
           <span class="unit">元</span>
         </div>
         <div class="info-item">
           <span class="info-label">📦 库存：</span>
-          <el-input-number
-            v-model="dishInfo.stock"
-            :min="0"
-            :step="1"
-            style="width: 200px;"
-          />
+          <el-input-number v-model="dishInfo.stock" :min="0" :step="1" style="width: 200px" />
           <span class="unit">份</span>
         </div>
         <div class="info-item">
           <span class="info-label">📋 菜品状态：</span>
-          <el-select v-model="dishInfo.status" placeholder="选择菜品状态" style="width: 200px;">
+          <el-select v-model="dishInfo.status" placeholder="选择菜品状态" style="width: 200px">
             <el-option
               v-for="(status, key) in dishStatusMap"
               :key="key"
@@ -134,7 +119,7 @@ const handleUpload = (file) => {
           <el-input
             v-model="dishInfo.description"
             placeholder="请输入菜品描述"
-            style="width: 500px;"
+            style="width: 500px"
             type="textarea"
             :rows="4"
           />
@@ -167,7 +152,8 @@ const handleUpload = (file) => {
   }
 
   .dish-edit-content {
-    .dish-images-section, .dish-info-section {
+    .dish-images-section,
+    .dish-info-section {
       background-color: #fff;
       border-radius: 8px;
       padding: 16px;

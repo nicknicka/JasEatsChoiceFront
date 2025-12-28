@@ -1,5 +1,5 @@
 <script setup>
-import CommonHome from '../../components/CommonHome.vue';
+import CommonHome from '../../components/CommonHome.vue'
 // 商家首页使用CommonHome组件，它包含完整的布局和导航
 </script>
 

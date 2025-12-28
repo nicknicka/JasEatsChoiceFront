@@ -1,13 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '../../store/authStore';
-import api, { decodeJwt } from '../../utils/api.js';
-import { API_CONFIG } from '../../config/index.js';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../../store/authStore'
+import api, { decodeJwt } from '../../utils/api.js'
+import { API_CONFIG } from '../../config/index.js'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
-const router = useRouter();
+const router = useRouter()
 
 // 消息分类映射
 const messageCategories = {
@@ -15,52 +15,52 @@ const messageCategories = {
   system: '系统通知',
   order: '订单消息',
   comment: '评价消息'
-};
+}
 
 // 消息数据，将从后端API获取
-const messages = ref([]);
-const selectedMessage = ref(null);
-const activeCategory = ref('all');
+const messages = ref([])
+const selectedMessage = ref(null)
+const activeCategory = ref('all')
 
 // 筛选后的消息
-const filteredMessages = ref([]);
+const filteredMessages = ref([])
 
 // 未读消息统计
 const unreadCounts = ref({
   system: 0,
   order: 0,
   comment: 0
-});
+})
 
 // 计算未读消息数量
 const calculateUnreadCounts = () => {
   unreadCounts.value = {
-    system: messages.value.filter(msg => msg.type === 'system' && !msg.isRead).length,
-    order: messages.value.filter(msg => msg.type === 'order' && !msg.isRead).length,
-    comment: messages.value.filter(msg => msg.type === 'comment' && !msg.isRead).length
-  };
-};
+    system: messages.value.filter((msg) => msg.type === 'system' && !msg.isRead).length,
+    order: messages.value.filter((msg) => msg.type === 'order' && !msg.isRead).length,
+    comment: messages.value.filter((msg) => msg.type === 'comment' && !msg.isRead).length
+  }
+}
 
 // 更新筛选
 const updateFilter = () => {
-  filteredMessages.value = messages.value.filter(message => {
-    return activeCategory.value === 'all' || message.type === activeCategory.value;
-  });
-  calculateUnreadCounts(); // 更新未读消息统计
-};
+  filteredMessages.value = messages.value.filter((message) => {
+    return activeCategory.value === 'all' || message.type === activeCategory.value
+  })
+  calculateUnreadCounts() // 更新未读消息统计
+}
 
 // 页面加载时初始化
 onMounted(() => {
   // 从后端API加载实际消息数据
   // 从JWT令牌中获取用户ID
-  const authStore = useAuthStore();
-  const token = authStore.token;
-  let userId = 1; // 默认值
+  const authStore = useAuthStore()
+  const token = authStore.token
+  let userId = 1 // 默认值
 
   if (token) {
-    const decodedToken = decodeJwt(token);
+    const decodedToken = decodeJwt(token)
     if (decodedToken && decodedToken.userId) {
-      userId = decodedToken.userId;
+      userId = decodedToken.userId
     }
   } else {
     // 无法获取用户ID，弹出提示框要求重新登录
@@ -68,29 +68,30 @@ onMounted(() => {
       confirmButtonText: '重新登录',
       type: 'error',
       closeOnClickModal: false,
-      closeOnPressEscape: false,
+      closeOnPressEscape: false
     })
-    .then(() => {
-      // 用户点击重新登录按钮，清除本地存储并跳转到登录页面
-      const authStore = useAuthStore();
-      authStore.clearAuth();
-      router.push('/login');
-    })
-    .catch(() => {
-      // 点击取消按钮的处理，也可以跳转到登录页面
-      const authStore = useAuthStore();
-      authStore.clearAuth();
-      router.push('/login');
-    });
+      .then(() => {
+        // 用户点击重新登录按钮，清除本地存储并跳转到登录页面
+        const authStore = useAuthStore()
+        authStore.clearAuth()
+        router.push('/login')
+      })
+      .catch(() => {
+        // 点击取消按钮的处理，也可以跳转到登录页面
+        const authStore = useAuthStore()
+        authStore.clearAuth()
+        router.push('/login')
+      })
   }
 
-  api.get(API_CONFIG.message.list, {
-    params: { userId }
-  })
-    .then(response => {
+  api
+    .get(API_CONFIG.message.list, {
+      params: { userId }
+    })
+    .then((response) => {
       if (response.data && response.data.success) {
         // 转换后端返回的数据格式以匹配前端期望的字段
-        const formattedMessages = response.data.data.map(message => ({
+        const formattedMessages = response.data.data.map((message) => ({
           id: message.id,
           // 后端返回的content作为前端的title
           title: message.content,
@@ -103,61 +104,61 @@ onMounted(() => {
           isRead: message.readStatus,
           // 暂时默认所有消息类型为system
           type: 'system'
-        }));
+        }))
 
-        messages.value = formattedMessages;
-        filteredMessages.value = [...messages.value];
-        calculateUnreadCounts(); // 初始化未读消息统计
+        messages.value = formattedMessages
+        filteredMessages.value = [...messages.value]
+        calculateUnreadCounts() // 初始化未读消息统计
       }
     })
-    .catch(error => {
-      console.error('加载消息失败:', error);
-      ElMessage.error('加载消息失败，请稍后重试');
-    });
-});
+    .catch((error) => {
+      console.error('加载消息失败:', error)
+      ElMessage.error('加载消息失败，请稍后重试')
+    })
+})
 
 // 查看消息详情
 const viewMessageDetail = (message) => {
   // 检查是否是订单消息，如果是则导航到订单详情页
   if (message.type === 'order') {
     // 从消息标题或内容中提取订单号
-    const orderIdMatch = message.title.match(/订单号(?:JD)?(\\d+)/);
+    const orderIdMatch = message.title.match(/订单号(?:JD)?(\\d+)/)
     if (orderIdMatch) {
-      const orderId = orderIdMatch[1];
-      router.push(`/merchant/home/order-detail/${orderId}`);
-      return;
+      const orderId = orderIdMatch[1]
+      router.push(`/merchant/home/order-detail/${orderId}`)
+      return
     }
   }
   // 普通消息则显示详情
-  selectedMessage.value = message;
+  selectedMessage.value = message
   // 自动标记为已读
   if (!message.isRead) {
-    message.isRead = true;
-    ElMessage.success('消息已标记为已读');
-    updateFilter(); // 刷新筛选后的列表以更新状态
+    message.isRead = true
+    ElMessage.success('消息已标记为已读')
+    updateFilter() // 刷新筛选后的列表以更新状态
   }
-};
+}
 
 // 返回消息列表
 const backToList = () => {
-  selectedMessage.value = null;
-};
+  selectedMessage.value = null
+}
 
 // 标记为已读
 const markAsRead = (message) => {
-  message.isRead = true;
-  ElMessage.success('消息已标记为已读');
-  updateFilter();
-};
+  message.isRead = true
+  ElMessage.success('消息已标记为已读')
+  updateFilter()
+}
 
 // 全部标记为已读
 const markAllAsRead = () => {
-  filteredMessages.value.forEach(message => {
-    message.isRead = true;
-  });
-  ElMessage.success('所有消息已标记为已读');
-  updateFilter();
-};
+  filteredMessages.value.forEach((message) => {
+    message.isRead = true
+  })
+  ElMessage.success('所有消息已标记为已读')
+  updateFilter()
+}
 </script>
 
 <template>
@@ -167,9 +168,7 @@ const markAllAsRead = () => {
         <h3 class="page-title">【消息中心】</h3>
       </div>
       <div class="header-right" v-if="!selectedMessage">
-        <el-button type="success" @click="markAllAsRead">
-          全部标记为已读
-        </el-button>
+        <el-button type="success" @click="markAllAsRead"> 全部标记为已读 </el-button>
       </div>
     </div>
 
@@ -183,11 +182,18 @@ const markAllAsRead = () => {
             :key="category"
             :type="activeCategory === category ? 'primary' : 'info'"
             effect="plain"
-            @click="activeCategory = category; updateFilter()"
+            @click="
+              activeCategory = category
+              updateFilter()
+            "
             class="category-tag"
           >
             {{ messageCategories[category] }}
-            <el-badge v-if="category !== 'all' && unreadCounts[category]" :value="unreadCounts[category]" type="danger" />
+            <el-badge
+              v-if="category !== 'all' && unreadCounts[category]"
+              :value="unreadCounts[category]"
+              type="danger"
+            />
           </el-tag>
         </div>
 
@@ -243,7 +249,11 @@ const markAllAsRead = () => {
         </div>
         <div class="detail-actions">
           <CommonBackButton @click="backToList" :useRouterBack="false" text="返回列表" />
-          <el-button v-if="!selectedMessage.isRead" type="success" @click="markAsRead(selectedMessage)">
+          <el-button
+            v-if="!selectedMessage.isRead"
+            type="success"
+            @click="markAsRead(selectedMessage)"
+          >
             标记为已读
           </el-button>
         </div>
@@ -307,7 +317,7 @@ const markAllAsRead = () => {
           }
 
           &.unread-message {
-            border-left: 4px solid #409EFF;
+            border-left: 4px solid #409eff;
             background-color: rgba(64, 158, 255, 0.05);
           }
 
@@ -370,13 +380,15 @@ const markAllAsRead = () => {
           gap: 10px;
           font-size: 14px;
 
-          .sender-info, .time-info {
+          .sender-info,
+          .time-info {
             display: flex;
             align-items: center;
             gap: 8px;
           }
 
-          .sender-label, .time-label {
+          .sender-label,
+          .time-label {
             color: #909399;
             font-weight: 500;
           }

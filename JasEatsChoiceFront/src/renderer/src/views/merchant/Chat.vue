@@ -1,26 +1,25 @@
-
 <script setup>
-import { ref, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import router from '../../router/index.js';
-import { useAuthStore } from '../../store/authStore';
-import api from '../../utils/api.js';
-import { decodeJwt } from '../../utils/api.js';
+import { ref, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import router from '../../router/index.js'
+import { useAuthStore } from '../../store/authStore'
+import api from '../../utils/api.js'
+import { decodeJwt } from '../../utils/api.js'
 
 // 合并的会话列表（包含单聊和群聊）
-const conversations = ref([]);
+const conversations = ref([])
 
 // 页面加载
 onMounted(() => {
   // 从JWT令牌中获取用户ID
-  const authStore = useAuthStore();
-  const token = authStore.token;
-  let userId = '1'; // 默认值
+  const authStore = useAuthStore()
+  const token = authStore.token
+  let userId = '1' // 默认值
 
   if (token) {
-    const decodedToken = decodeJwt(token);
+    const decodedToken = decodeJwt(token)
     if (decodedToken && decodedToken.userId) {
-      userId = decodedToken.userId;
+      userId = decodedToken.userId
     }
   } else {
     // 无法获取用户ID，弹出提示框要求重新登录
@@ -28,60 +27,71 @@ onMounted(() => {
       confirmButtonText: '重新登录',
       type: 'error',
       closeOnClickModal: false,
-      closeOnPressEscape: false,
+      closeOnPressEscape: false
     })
-    .then(() => {
-      // 用户点击重新登录按钮，清除本地存储并跳转到登录页面
-      const authStore = useAuthStore();
-      authStore.clearAuth();
-      router.push('/login');
-    })
-    .catch(() => {
-      // 点击取消按钮的处理，也可以跳转到登录页面
-      const authStore = useAuthStore();
-      authStore.clearAuth();
-      router.push('/login');
-    });
+      .then(() => {
+        // 用户点击重新登录按钮，清除本地存储并跳转到登录页面
+        const authStore = useAuthStore()
+        authStore.clearAuth()
+        router.push('/login')
+      })
+      .catch(() => {
+        // 点击取消按钮的处理，也可以跳转到登录页面
+        const authStore = useAuthStore()
+        authStore.clearAuth()
+        router.push('/login')
+      })
   }
 
   // 从后端API获取会话列表
-  api.get(`/v1/chat/users/${userId}/chat-sessions`)
-    .then(response => {
+  api
+    .get(`/v1/chat/users/${userId}/chat-sessions`)
+    .then((response) => {
       if (response.data && response.data.success) {
         // 转换后端返回的数据格式以匹配前端期望的字段
-        const formattedConversations = response.data.data.map(session => {
+        const formattedConversations = response.data.data.map((session) => {
           // 根据最后一条消息判断是单聊还是群聊
-          const isGroupChat = session.msgType === 'group';
+          const isGroupChat = session.msgType === 'group'
 
           return {
-            id: isGroupChat ? session.toId : session.fromId === userId ? session.toId : session.fromId,
+            id: isGroupChat
+              ? session.toId
+              : session.fromId === userId
+                ? session.toId
+                : session.fromId,
             type: isGroupChat ? 'group' : 'private',
-            name: isGroupChat ? session.toId : `用户${session.fromId === userId ? session.toId : session.fromId}`,
+            name: isGroupChat
+              ? session.toId
+              : `用户${session.fromId === userId ? session.toId : session.fromId}`,
             avatar: isGroupChat ? '👥' : '👤',
             lastMessage: session.content,
             time: session.createTime,
             unreadCount: 0,
             memberCount: isGroupChat ? Math.floor(Math.random() * 50) + 10 : undefined,
-            userId: isGroupChat ? undefined : (session.fromId === userId ? session.toId : session.fromId)
-          };
-        });
+            userId: isGroupChat
+              ? undefined
+              : session.fromId === userId
+                ? session.toId
+                : session.fromId
+          }
+        })
 
         // 将会话按最后消息时间排序（从最新到最旧）
         formattedConversations.sort((a, b) => {
-          return new Date(b.time) - new Date(a.time);
-        });
+          return new Date(b.time) - new Date(a.time)
+        })
 
-        conversations.value = formattedConversations;
+        conversations.value = formattedConversations
 
         // 默认选中第一个会话
         if (conversations.value.length > 0) {
-          selectedConversation.value = conversations.value[0];
+          selectedConversation.value = conversations.value[0]
         }
       }
     })
-    .catch(error => {
-      console.error('加载会话列表失败:', error);
-      ElMessage.error('加载会话列表失败，请稍后重试');
+    .catch((error) => {
+      console.error('加载会话列表失败:', error)
+      ElMessage.error('加载会话列表失败，请稍后重试')
 
       // 如果后端请求失败，使用默认模拟数据
       conversations.value = [
@@ -105,79 +115,85 @@ onMounted(() => {
           unreadCount: 2,
           memberCount: 25
         }
-      ];
+      ]
 
       // 默认选中第一个会话
       if (conversations.value.length > 0) {
-        selectedConversation.value = conversations.value[0];
+        selectedConversation.value = conversations.value[0]
       }
-    });
-});
+    })
+})
 
 // 聊天记录
-const chatMessages = ref([]);
+const chatMessages = ref([])
 
 // 当前选中的会话
-const selectedConversation = ref(null);
+const selectedConversation = ref(null)
 
 // 新消息内容
-const newMessage = ref('');
+const newMessage = ref('')
 
 // 同步至群聊开关
-const syncToGroup = ref(false);
+const syncToGroup = ref(false)
 
 // 选择会话
 const selectConversation = (conversation) => {
-  selectedConversation.value = conversation;
+  selectedConversation.value = conversation
   // 清空未读消息
   if (conversation.unreadCount > 0) {
-    conversation.unreadCount = 0;
-    ElMessage.success('消息已标记为已读');
+    conversation.unreadCount = 0
+    ElMessage.success('消息已标记为已读')
   }
 
   // 从JWT令牌中获取用户ID
-  const authStore = useAuthStore();
-  const token = authStore.token;
-  let userId = '1'; // 默认值
+  const authStore = useAuthStore()
+  const token = authStore.token
+  let userId = '1' // 默认值
 
   if (token) {
-    const decodedToken = decodeJwt(token);
+    const decodedToken = decodeJwt(token)
     if (decodedToken && decodedToken.userId) {
-      userId = decodedToken.userId;
+      userId = decodedToken.userId
     }
   }
 
   // 构建会话ID
-  let sessionId = '';
+  let sessionId = ''
   if (conversation.type === 'group') {
     // 群聊会话ID就是群ID
-    sessionId = conversation.id;
+    sessionId = conversation.id
   } else {
     // 单聊会话ID格式：fromId_toId
     // 确保会话ID唯一，按字典序排列
-    const ids = [userId, conversation.id];
-    ids.sort();
-    sessionId = ids.join('_');
+    const ids = [userId, conversation.id]
+    ids.sort()
+    sessionId = ids.join('_')
   }
 
   // 从后端API获取聊天记录
-  api.get(`/v1/chat/${sessionId}/messages`)
-    .then(response => {
+  api
+    .get(`/v1/chat/${sessionId}/messages`)
+    .then((response) => {
       if (response.data && response.data.success) {
         // 转换后端返回的数据格式以匹配前端期望的字段
-        const formattedMessages = response.data.data.records.map(message => ({
+        const formattedMessages = response.data.data.records.map((message) => ({
           id: message.id,
-          sender: message.fromId === userId ? (conversation.type === 'private' ? 'merchant' : '我') : message.fromId,
+          sender:
+            message.fromId === userId
+              ? conversation.type === 'private'
+                ? 'merchant'
+                : '我'
+              : message.fromId,
           content: message.content,
           time: message.createTime,
           isRead: message.readStatus
-        }));
+        }))
 
-        chatMessages.value = formattedMessages;
+        chatMessages.value = formattedMessages
       }
     })
-    .catch(error => {
-      console.error('加载聊天记录失败:', error);
+    .catch((error) => {
+      console.error('加载聊天记录失败:', error)
 
       // 如果后端请求失败，使用默认模拟数据
       chatMessages.value = [
@@ -195,25 +211,25 @@ const selectConversation = (conversation) => {
           time: '2024-11-21 14:31',
           isRead: true
         }
-      ];
-    });
-};
+      ]
+    })
+}
 
 // 发送消息
 const sendMessage = () => {
   if (!newMessage.value.trim() || !selectedConversation.value) {
-    return;
+    return
   }
 
   // 从JWT令牌中获取用户ID
-  const authStore = useAuthStore();
-  const token = authStore.token;
-  let fromId = '1'; // 默认值
+  const authStore = useAuthStore()
+  const token = authStore.token
+  let fromId = '1' // 默认值
 
   if (token) {
-    const decodedToken = decodeJwt(token);
+    const decodedToken = decodeJwt(token)
     if (decodedToken && decodedToken.userId) {
-      fromId = decodedToken.userId;
+      fromId = decodedToken.userId
     }
   }
 
@@ -223,11 +239,12 @@ const sendMessage = () => {
     toId: selectedConversation.value.id,
     content: newMessage.value.trim(),
     msgType: selectedConversation.value.type === 'group' ? 'group' : 'private'
-  };
+  }
 
   // 发送消息到后端API
-  api.post('/api/v1/chat/messages', messageData)
-    .then(response => {
+  api
+    .post('/api/v1/chat/messages', messageData)
+    .then((response) => {
       if (response.data && response.data.success) {
         // 创建新消息对象
         const message = {
@@ -236,59 +253,59 @@ const sendMessage = () => {
           content: newMessage.value.trim(),
           time: new Date().toISOString().slice(0, 19).replace('T', ' '),
           isRead: true
-        };
+        }
 
         // 添加到聊天记录
-        chatMessages.value.push(message);
+        chatMessages.value.push(message)
 
         // 更新会话列表的最后一条消息
-        selectedConversation.value.lastMessage = message.content;
-        selectedConversation.value.time = message.time;
+        selectedConversation.value.lastMessage = message.content
+        selectedConversation.value.time = message.time
 
         // 将当前会话移到最前面
-        const index = conversations.value.indexOf(selectedConversation.value);
+        const index = conversations.value.indexOf(selectedConversation.value)
         if (index > -1) {
-          conversations.value.splice(index, 1);
-          conversations.value.unshift(selectedConversation.value);
+          conversations.value.splice(index, 1)
+          conversations.value.unshift(selectedConversation.value)
         }
 
         // 同步消息到所有群聊
         if (syncToGroup.value && selectedConversation.value.type === 'private') {
-          const syncMessageContent = `【订单同步】${message.content}`;
+          const syncMessageContent = `【订单同步】${message.content}`
 
           // 更新所有群聊的最后消息
-          conversations.value.forEach(conversation => {
+          conversations.value.forEach((conversation) => {
             if (conversation.type === 'group') {
-              conversation.lastMessage = syncMessageContent;
-              conversation.time = message.time;
-              conversation.unreadCount++;
+              conversation.lastMessage = syncMessageContent
+              conversation.time = message.time
+              conversation.unreadCount++
 
               // 将群聊会话移到前面
-              const groupIndex = conversations.value.indexOf(conversation);
+              const groupIndex = conversations.value.indexOf(conversation)
               if (groupIndex > -1) {
-                conversations.value.splice(groupIndex, 1);
-                conversations.value.unshift(conversation);
+                conversations.value.splice(groupIndex, 1)
+                conversations.value.unshift(conversation)
               }
             }
-          });
+          })
 
           // 重置同步开关
-          syncToGroup.value = false;
+          syncToGroup.value = false
 
           // 提示用户消息已同步
-          ElMessage.info('消息已同步至所有群聊');
+          ElMessage.info('消息已同步至所有群聊')
         }
 
         // 清空输入框
-        newMessage.value = '';
-        ElMessage.success('消息发送成功');
+        newMessage.value = ''
+        ElMessage.success('消息发送成功')
       }
     })
-    .catch(error => {
-      console.error('发送消息失败:', error);
-      ElMessage.error('发送消息失败，请稍后重试');
-    });
-};
+    .catch((error) => {
+      console.error('发送消息失败:', error)
+      ElMessage.error('发送消息失败，请稍后重试')
+    })
+}
 </script>
 
 <template>
@@ -344,7 +361,9 @@ const sendMessage = () => {
           <div class="conversation-info">
             <div class="name-info">
               <span class="name">{{ selectedConversation.name }}</span>
-              <span v-if="selectedConversation.type === 'group'" class="member-count"> ({{ selectedConversation.memberCount }}人)</span>
+              <span v-if="selectedConversation.type === 'group'" class="member-count">
+                ({{ selectedConversation.memberCount }}人)</span
+              >
             </div>
           </div>
         </div>
@@ -356,12 +375,18 @@ const sendMessage = () => {
             :key="message.id"
             class="message-item"
             :class="{
-              'others-message': (selectedConversation.type === 'private' && message.sender !== 'merchant') || (selectedConversation.type === 'group' && message.sender !== '我'),
-              'merchant-message': selectedConversation.type === 'private' && message.sender === 'merchant',
+              'others-message':
+                (selectedConversation.type === 'private' && message.sender !== 'merchant') ||
+                (selectedConversation.type === 'group' && message.sender !== '我'),
+              'merchant-message':
+                selectedConversation.type === 'private' && message.sender === 'merchant',
               'my-message': selectedConversation.type === 'group' && message.sender === '我'
             }"
           >
-            <div v-if="selectedConversation.type === 'group' && message.sender !== '我'" class="message-header">
+            <div
+              v-if="selectedConversation.type === 'group' && message.sender !== '我'"
+              class="message-header"
+            >
               <span class="sender-name">{{ message.sender }}</span>
             </div>
             <div class="message-content">
@@ -378,17 +403,17 @@ const sendMessage = () => {
 
         <!-- 消息输入框 -->
         <div class="message-input-container">
-          <div style="width: 100%; margin-bottom: 8px;">
-            <el-checkbox v-model="syncToGroup" style="font-size: 12px;">同步至群聊</el-checkbox>
+          <div style="width: 100%; margin-bottom: 8px">
+            <el-checkbox v-model="syncToGroup" style="font-size: 12px">同步至群聊</el-checkbox>
           </div>
-          <div style="display: flex; gap: 12px;">
+          <div style="display: flex; gap: 12px">
             <el-input
               v-model="newMessage"
               type="textarea"
               placeholder="输入消息内容..."
               :rows="2"
               @keyup.enter="sendMessage"
-              style="flex: 1;"
+              style="flex: 1"
             />
             <el-button type="primary" @click="sendMessage">发送</el-button>
           </div>
@@ -430,7 +455,7 @@ const sendMessage = () => {
       width: 37%; /* 固定宽度 */
       border: 1px solid #e4e7ed;
       border-radius: 4px;
-      overflow : hidden;
+      overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
 
@@ -519,7 +544,7 @@ const sendMessage = () => {
         .unread-count {
           background-color: #f56c6c;
           // height: auto;
-          width: 10px ;
+          width: 10px;
           height: 10px;
           color: #fff;
           border-radius: 50%;
@@ -584,7 +609,6 @@ const sendMessage = () => {
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        
 
         .message-item {
           margin-bottom: 16px;

@@ -1,16 +1,16 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { VideoCamera, Document } from '@element-plus/icons-vue';
-import { useRouter, useRoute } from 'vue-router';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, onMounted } from 'vue'
+import { VideoCamera, Document } from '@element-plus/icons-vue'
+import { useRouter, useRoute } from 'vue-router'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
 // 返回教程列表页面
 const goBackToList = () => {
-  router.push('/user/home/tutorials');
-};
+  router.push('/user/home/tutorials')
+}
 
 // 详细教程数据
 const detailedTutorials = [
@@ -71,28 +71,30 @@ const detailedTutorials = [
       '3. 搭配一份水果或蔬菜，如香蕉、苹果或菠菜',
       '4. 可以添加一些坚果或种子，增加营养和口感'
     ],
-    tips: [
-      '早餐要吃好，保证足够的能量和营养',
-      '避免吃过多油腻和甜的食物',
-      '提前准备早餐，节省时间'
-    ]
+    tips: ['早餐要吃好，保证足够的能量和营养', '避免吃过多油腻和甜的食物', '提前准备早餐，节省时间']
   }
-];
+]
 
 // 当前教程
-const currentTutorial = ref(null);
+const currentTutorial = ref(null)
 
 // 获取当前教程
 onMounted(() => {
-  const tutorialId = parseInt(route.params.id);
-  currentTutorial.value = detailedTutorials.find(tutorial => tutorial.id === tutorialId);
-});
+  const tutorialId = parseInt(route.params.id)
+  currentTutorial.value = detailedTutorials.find((tutorial) => tutorial.id === tutorialId)
+})
 </script>
 
 <template>
   <div class="tutorial-detail-container">
     <div class="page-header">
-      <common-back-button type="primary" size="small" text="返回列表" @click="goBackToList" :use-router-back="false" />
+      <common-back-button
+        type="primary"
+        size="small"
+        text="返回列表"
+        @click="goBackToList"
+        :use-router-back="false"
+      />
     </div>
 
     <el-card v-if="currentTutorial" class="tutorial-detail-card" shadow="hover">
@@ -183,7 +185,7 @@ onMounted(() => {
       gap: 5px;
 
       .video-icon {
-        color: #FF6B6B;
+        color: #ff6b6b;
       }
 
       .article-icon {
@@ -227,7 +229,7 @@ onMounted(() => {
 
       ol {
         font-size: 16px;
-        line-height: 2.0;
+        line-height: 2;
         color: #606266;
         padding-left: 25px;
 
@@ -238,7 +240,7 @@ onMounted(() => {
 
       p {
         font-size: 16px;
-        line-height: 2.0;
+        line-height: 2;
         color: #606266;
         margin-bottom: 15px;
       }
@@ -258,7 +260,7 @@ onMounted(() => {
 
       ul {
         font-size: 16px;
-        line-height: 2.0;
+        line-height: 2;
         color: #606266;
         padding-left: 25px;
 

@@ -3,18 +3,18 @@
 </script>
 
 <template>
-	<div class="app-container">
-		<router-view v-slot="{ Component }">
-			<keep-alive>
-				<component :is="Component"></component>
-			</keep-alive>
-		</router-view>
-	</div>
+  <div class="app-container">
+    <router-view v-slot="{ Component }">
+      <keep-alive>
+        <component :is="Component"></component>
+      </keep-alive>
+    </router-view>
+  </div>
 </template>
 
 <style scoped lang="less">
 .app-container {
-	height: 100vh;
-	width: 100%;
+  height: 100vh;
+  width: 100%;
 }
 </style>

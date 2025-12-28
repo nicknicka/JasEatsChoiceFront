@@ -1,5 +1,5 @@
 <script setup>
-import CommonHome from '../../components/CommonHome.vue';
+import CommonHome from '../../components/CommonHome.vue'
 // 这里可以添加Home页面的公共逻辑
 </script>
 

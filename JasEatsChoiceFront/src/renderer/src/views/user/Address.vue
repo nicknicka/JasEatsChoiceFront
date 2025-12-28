@@ -5,9 +5,9 @@
       <h2>管理地址</h2>
     </div>
 
-    <el-button type="primary" style="margin-bottom: 20px;" @click="showAddDialog = true">
+    <el-button type="primary" style="margin-bottom: 20px" @click="showAddDialog = true">
       <el-icon><Plus /></el-icon>
-       新增地址
+      新增地址
     </el-button>
 
     <div class="address-list">
@@ -23,7 +23,9 @@
         </div>
 
         <div class="address-details">
-          <div class="address-full">{{ address.province }} {{ address.city }} {{ address.district }} {{ address.street }}</div>
+          <div class="address-full">
+            {{ address.province }} {{ address.city }} {{ address.district }} {{ address.street }}
+          </div>
           <div class="address-tag" v-if="address.tag">{{ address.tag }}</div>
         </div>
 
@@ -38,7 +40,8 @@
           </el-button>
           <el-button
             v-if="!address.isDefault"
-            type="text" size="small"
+            type="text"
+            size="small"
             @click="setDefault(address)"
           >
             设置默认
@@ -69,23 +72,25 @@
             placeholder="请选择或输入省/市/区"
             style="width: 100%"
             filterable
-            @change="(value) => {
-              if (value && value.length >= 1) {
-                newAddress.province = value[0];
+            @change="
+              (value) => {
+                if (value && value.length >= 1) {
+                  newAddress.province = value[0]
+                }
+                if (value && value.length >= 2) {
+                  newAddress.city = value[1]
+                }
+                if (value && value.length >= 3) {
+                  newAddress.district = value[2]
+                }
+                // 如果选择被清空
+                if (!value || value.length === 0) {
+                  newAddress.province = ''
+                  newAddress.city = ''
+                  newAddress.district = ''
+                }
               }
-              if (value && value.length >= 2) {
-                newAddress.city = value[1];
-              }
-              if (value && value.length >= 3) {
-                newAddress.district = value[2];
-              }
-              // 如果选择被清空
-              if (!value || value.length === 0) {
-                newAddress.province = '';
-                newAddress.city = '';
-                newAddress.district = '';
-              }
-            }"
+            "
           />
         </el-form-item>
         <el-form-item label="街道" prop="street">
@@ -123,23 +128,25 @@
             placeholder="请选择或输入省/市/区"
             style="width: 100%"
             filterable
-            @change="(value) => {
-              if (value && value.length >= 1) {
-                editingAddress.province = value[0];
+            @change="
+              (value) => {
+                if (value && value.length >= 1) {
+                  editingAddress.province = value[0]
+                }
+                if (value && value.length >= 2) {
+                  editingAddress.city = value[1]
+                }
+                if (value && value.length >= 3) {
+                  editingAddress.district = value[2]
+                }
+                // 如果选择被清空
+                if (!value || value.length === 0) {
+                  editingAddress.province = ''
+                  editingAddress.city = ''
+                  editingAddress.district = ''
+                }
               }
-              if (value && value.length >= 2) {
-                editingAddress.city = value[1];
-              }
-              if (value && value.length >= 3) {
-                editingAddress.district = value[2];
-              }
-              // 如果选择被清空
-              if (!value || value.length === 0) {
-                editingAddress.province = '';
-                editingAddress.city = '';
-                editingAddress.district = '';
-              }
-            }"
+            "
           />
         </el-form-item>
         <el-form-item label="街道" prop="street">
@@ -164,40 +171,41 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { Edit, Delete, Plus } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
-import axios from 'axios';
-import { API_CONFIG } from '../../config/index.js';
+import { ref, reactive, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { Edit, Delete, Plus } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
+import axios from 'axios'
+import { API_CONFIG } from '../../config/index.js'
 
 // Cascader location data
-const cascaderLocationData = ref([]);
+const cascaderLocationData = ref([])
 
 // Fetch cascader location data from API
 const fetchCascaderData = () => {
-  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.location.cascaderData}`)
-    .then(response => {
+  axios
+    .get(`${API_CONFIG.baseURL}${API_CONFIG.location.cascaderData}`)
+    .then((response) => {
       if (response.data && response.data.data) {
-        cascaderLocationData.value = response.data.data; // API返回的是对象，需要提取其中的data数组
+        cascaderLocationData.value = response.data.data // API返回的是对象，需要提取其中的data数组
       }
     })
-    .catch(error => {
-      console.error('加载地址数据失败:', error);
-    });
-};
+    .catch((error) => {
+      console.error('加载地址数据失败:', error)
+    })
+}
 
-const router = useRouter();
+const router = useRouter()
 
 // 地址列表
-const addresses = ref([]);
+const addresses = ref([])
 
 // 新增地址对话框
-const showAddDialog = ref(false);
+const showAddDialog = ref(false)
 
 // 编辑地址对话框
-const showEditDialog = ref(false);
+const showEditDialog = ref(false)
 
 // 新增地址表单数据
 const newAddress = ref({
@@ -209,16 +217,16 @@ const newAddress = ref({
   street: '',
   tag: '',
   isDefault: false
-});
+})
 
 // Cascader value for new address
-const newAddressCascader = ref([]);
+const newAddressCascader = ref([])
 
 // 编辑地址表单数据
-const editingAddress = ref({});
+const editingAddress = ref({})
 
 // Cascader value for editing address
-const editAddressCascader = ref([]);
+const editAddressCascader = ref([])
 
 // 地址验证规则
 const addressRules = ref({
@@ -231,106 +239,109 @@ const addressRules = ref({
   city: [{ required: true, message: '请输入城市', trigger: 'blur' }],
   district: [{ required: false, message: '请输入区/县', trigger: 'blur' }], // 区/县改为非必填，因为部分城市可能没有区级划分
   street: [{ required: true, message: '请输入详细地址', trigger: 'blur' }]
-});
+})
 
 // 从后端加载地址数据和级联选择器数据
 onMounted(async () => {
   // Fetch cascader location data first
-  fetchCascaderData();
+  fetchCascaderData()
 
   try {
     // 从localStorage获取当前用户ID
-    const userId = localStorage.getItem('userId') || 1;
+    const userId = localStorage.getItem('userId') || 1
 
     // 调用后端API获取地址列表
-    const response = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`);
+    const response = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`)
 
     if (response.data && response.data.code === '200') {
       // 将后端返回的地址数据映射为前端需要的格式
-      let mappedAddresses = response.data.data.map(address => ({
+      let mappedAddresses = response.data.data.map((address) => ({
         id: address.id,
-        name: address.receiverName,  // 后端字段: receiverName -> 前端字段: name
+        name: address.receiverName, // 后端字段: receiverName -> 前端字段: name
         phone: address.receiverPhone, // 后端字段: receiverPhone -> 前端字段: phone
         province: address.province,
         city: address.city,
         district: address.district,
-        street: address.detail,      // 后端字段: detail -> 前端字段: street
-        tag: address.tag || '',       // 后端可能没有tag字段，默认为空
+        street: address.detail, // 后端字段: detail -> 前端字段: street
+        tag: address.tag || '', // 后端可能没有tag字段，默认为空
         isDefault: address.isDefault === 1 // 后端字段: isDefault(0/1) -> 前端字段: isDefault(boolean)
-      }));
+      }))
 
       // 排序：默认地址置顶
-      mappedAddresses.sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+      mappedAddresses.sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0))
 
       // 如果没有默认地址，设置第一个为默认
-      if (mappedAddresses.length > 0 && !mappedAddresses.some(addr => addr.isDefault)) {
-        mappedAddresses[0].isDefault = true;
+      if (mappedAddresses.length > 0 && !mappedAddresses.some((addr) => addr.isDefault)) {
+        mappedAddresses[0].isDefault = true
       }
 
       // 更新地址列表
-      addresses.value = mappedAddresses;
+      addresses.value = mappedAddresses
     } else {
-      ElMessage.error('加载地址数据失败：' + (response.data?.message || '未知错误'));
+      ElMessage.error('加载地址数据失败：' + (response.data?.message || '未知错误'))
     }
   } catch (error) {
-    console.error('加载地址失败:', error);
-    ElMessage.error('加载地址失败，请稍后重试');
+    console.error('加载地址失败:', error)
+    ElMessage.error('加载地址失败，请稍后重试')
 
     // 异常情况下，显示空地址列表
-    addresses.value = [];
+    addresses.value = []
   }
-});
+})
 
 // 新增地址
 const addAddress = async () => {
   try {
     // 从localStorage获取当前用户ID
-    const userId = localStorage.getItem('userId') || 1;
+    const userId = localStorage.getItem('userId') || 1
 
     // 映射前端表单数据为后端需要的格式
     const addressData = {
-      receiverName: newAddress.value.name,  // 前端字段: name -> 后端字段: receiverName
+      receiverName: newAddress.value.name, // 前端字段: name -> 后端字段: receiverName
       receiverPhone: newAddress.value.phone, // 前端字段: phone -> 后端字段: receiverPhone
       province: newAddress.value.province,
       city: newAddress.value.city,
       district: newAddress.value.district,
-      detail: newAddress.value.street,      // 前端字段: street -> 后端字段: detail
+      detail: newAddress.value.street, // 前端字段: street -> 后端字段: detail
       isDefault: newAddress.value.isDefault ? 1 : 0, // 前端: boolean -> 后端: 0/1
-      tag: newAddress.value.tag       // 前端: tag -> 后端: tag
-    };
+      tag: newAddress.value.tag // 前端: tag -> 后端: tag
+    }
 
     // 调用后端API新增地址
-    const response = await axios.post(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`, addressData);
+    const response = await axios.post(
+      `${API_CONFIG.baseURL}/v1/users/${userId}/addresses`,
+      addressData
+    )
 
     if (response.data && response.data.code === '200') {
       // 重新加载地址列表
       try {
         // 从localStorage获取当前用户ID
-        const userId = localStorage.getItem('userId') || 1;
+        const userId = localStorage.getItem('userId') || 1
         // 调用后端API获取地址列表
-        const response = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`);
+        const response = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`)
 
         if (response.data && response.data.code === '200') {
           // 将后端返回的地址数据映射为前端需要的格式
-          addresses.value = response.data.data.map(address => ({
+          addresses.value = response.data.data.map((address) => ({
             id: address.id,
-            name: address.receiverName,  // 后端字段: receiverName -> 前端字段: name
+            name: address.receiverName, // 后端字段: receiverName -> 前端字段: name
             phone: address.receiverPhone, // 后端字段: receiverPhone -> 前端字段: phone
             province: address.province,
             city: address.city,
             district: address.district,
-            street: address.detail,      // 后端字段: detail -> 前端字段: street
-            tag: address.tag || '',       // 后端可能没有tag字段，默认为空
+            street: address.detail, // 后端字段: detail -> 前端字段: street
+            tag: address.tag || '', // 后端可能没有tag字段，默认为空
             isDefault: address.isDefault === 1 // 后端字段: isDefault(0/1) -> 前端字段: isDefault(boolean)
-          }));
+          }))
 
           // 如果没有默认地址，设置第一个为默认
-          if (addresses.value.length > 0 && !addresses.value.some(addr => addr.isDefault)) {
-            addresses.value[0].isDefault = true;
+          if (addresses.value.length > 0 && !addresses.value.some((addr) => addr.isDefault)) {
+            addresses.value[0].isDefault = true
           }
         }
       } catch (error) {
-        console.error('重新加载地址失败:', error);
+        console.error('重新加载地址失败:', error)
       }
       // 重置表单
       newAddress.value = {
@@ -342,56 +353,59 @@ const addAddress = async () => {
         street: '',
         tag: '',
         isDefault: false
-      };
+      }
       // 关闭对话框
-      showAddDialog.value = false;
+      showAddDialog.value = false
       // 提示成功
-      ElMessage.success('地址已新增');
+      ElMessage.success('地址已新增')
     } else {
-      ElMessage.error('新增地址失败：' + (response.data?.message || '未知错误'));
+      ElMessage.error('新增地址失败：' + (response.data?.message || '未知错误'))
     }
   } catch (error) {
-    console.error('新增地址失败:', error);
-    ElMessage.error('新增地址失败，请稍后重试');
+    console.error('新增地址失败:', error)
+    ElMessage.error('新增地址失败，请稍后重试')
   }
-};
+}
 
 // 编辑地址
 const editAddress = (address) => {
   // 复制地址信息到编辑表单
-  editingAddress.value = JSON.parse(JSON.stringify(address));
+  editingAddress.value = JSON.parse(JSON.stringify(address))
   // 初始化级联选择器值
-  editAddressCascader.value = [address.province, address.city, address.district];
+  editAddressCascader.value = [address.province, address.city, address.district]
   // 显示编辑对话框
-  showEditDialog.value = true;
-};
+  showEditDialog.value = true
+}
 
 // 更新地址
 const updateAddress = async () => {
   try {
     // 从localStorage获取当前用户ID
-    const userId = localStorage.getItem('userId') || 1;
+    const userId = localStorage.getItem('userId') || 1
 
     // 映射前端表单数据为后端需要的格式
     const addressData = {
-      receiverName: editingAddress.value.name,  // 前端字段: name -> 后端字段: receiverName
+      receiverName: editingAddress.value.name, // 前端字段: name -> 后端字段: receiverName
       receiverPhone: editingAddress.value.phone, // 前端字段: phone -> 后端字段: receiverPhone
       province: editingAddress.value.province,
       city: editingAddress.value.city,
       district: editingAddress.value.district,
-      detail: editingAddress.value.street,      // 前端字段: street -> 后端字段: detail
+      detail: editingAddress.value.street, // 前端字段: street -> 后端字段: detail
       isDefault: editingAddress.value.isDefault ? 1 : 0, // 前端: boolean -> 后端: 0/1
-      tag: editingAddress.value.tag       // 前端: tag -> 后端: tag
-    };
+      tag: editingAddress.value.tag // 前端: tag -> 后端: tag
+    }
 
     // 调用后端API更新地址
-    const response = await axios.put(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses/${editingAddress.value.id}`, addressData);
+    const response = await axios.put(
+      `${API_CONFIG.baseURL}/v1/users/${userId}/addresses/${editingAddress.value.id}`,
+      addressData
+    )
 
     if (response.data && response.data.code === '200') {
       // 重新加载地址列表
-      const reloadResponse = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`);
+      const reloadResponse = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`)
       if (reloadResponse.data && reloadResponse.data.code === '200') {
-        addresses.value = reloadResponse.data.data.map(address => ({
+        addresses.value = reloadResponse.data.data.map((address) => ({
           id: address.id,
           name: address.receiverName,
           phone: address.receiverPhone,
@@ -401,43 +415,45 @@ const updateAddress = async () => {
           street: address.detail,
           tag: address.tag || '',
           isDefault: address.isDefault === 1
-        }));
+        }))
       }
 
       // 关闭对话框
-      showEditDialog.value = false;
+      showEditDialog.value = false
 
       // 提示成功
-      ElMessage.success('地址已更新');
+      ElMessage.success('地址已更新')
     } else {
-      ElMessage.error('更新地址失败：' + (response.data?.message || '未知错误'));
+      ElMessage.error('更新地址失败：' + (response.data?.message || '未知错误'))
     }
   } catch (error) {
-    console.error('更新地址失败:', error);
-    ElMessage.error('更新地址失败，请稍后重试');
+    console.error('更新地址失败:', error)
+    ElMessage.error('更新地址失败，请稍后重试')
   }
-};
+}
 
 // 删除地址
 const deleteAddress = async (address) => {
   // 如果是默认地址，不能删除
   if (address.isDefault) {
-    ElMessage.warning('默认地址不能删除');
-    return;
+    ElMessage.warning('默认地址不能删除')
+    return
   }
 
   try {
     // 从localStorage获取当前用户ID
-    const userId = localStorage.getItem('userId') || 1;
+    const userId = localStorage.getItem('userId') || 1
 
     // 调用后端API删除地址
-    const response = await axios.delete(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses/${address.id}`);
+    const response = await axios.delete(
+      `${API_CONFIG.baseURL}/v1/users/${userId}/addresses/${address.id}`
+    )
 
     if (response.data && response.data.code === '200') {
       // 重新加载地址列表
-      const reloadResponse = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`);
+      const reloadResponse = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`)
       if (reloadResponse.data && reloadResponse.data.code === '200') {
-        addresses.value = reloadResponse.data.data.map(addr => ({
+        addresses.value = reloadResponse.data.data.map((addr) => ({
           id: addr.id,
           name: addr.receiverName,
           phone: addr.receiverPhone,
@@ -447,25 +463,25 @@ const deleteAddress = async (address) => {
           street: addr.detail,
           tag: addr.tag || '',
           isDefault: addr.isDefault === 1
-        }));
+        }))
       }
 
       // 提示成功
-      ElMessage.success('地址已删除');
+      ElMessage.success('地址已删除')
     } else {
-      ElMessage.error('删除地址失败：' + (response.data?.message || '未知错误'));
+      ElMessage.error('删除地址失败：' + (response.data?.message || '未知错误'))
     }
   } catch (error) {
-    console.error('删除地址失败:', error);
-    ElMessage.error('删除地址失败，请稍后重试');
+    console.error('删除地址失败:', error)
+    ElMessage.error('删除地址失败，请稍后重试')
   }
-};
+}
 
 // 设置默认地址
 const setDefault = async (address) => {
   try {
     // 从localStorage获取当前用户ID
-    const userId = localStorage.getItem('userId') || 1;
+    const userId = localStorage.getItem('userId') || 1
 
     // 映射前端地址数据为后端需要的格式
     const addressData = {
@@ -477,16 +493,19 @@ const setDefault = async (address) => {
       detail: address.street,
       isDefault: 1, // 设置为默认地址（1表示是，0表示否）
       tag: address.tag || ''
-    };
+    }
 
     // 调用后端API更新地址
-    const response = await axios.put(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses/${address.id}`, addressData);
+    const response = await axios.put(
+      `${API_CONFIG.baseURL}/v1/users/${userId}/addresses/${address.id}`,
+      addressData
+    )
 
     if (response.data && response.data.code === '200') {
       // 重新加载地址列表
-      const reloadResponse = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`);
+      const reloadResponse = await axios.get(`${API_CONFIG.baseURL}/v1/users/${userId}/addresses`)
       if (reloadResponse.data && reloadResponse.data.code === '200') {
-        addresses.value = reloadResponse.data.data.map(addr => ({
+        addresses.value = reloadResponse.data.data.map((addr) => ({
           id: addr.id,
           name: addr.receiverName,
           phone: addr.receiverPhone,
@@ -496,19 +515,19 @@ const setDefault = async (address) => {
           street: addr.detail,
           tag: addr.tag || '',
           isDefault: addr.isDefault === 1
-        }));
+        }))
       }
 
       // 提示成功
-      ElMessage.success('默认地址已设置');
+      ElMessage.success('默认地址已设置')
     } else {
-      ElMessage.error('设置默认地址失败：' + (response.data?.message || '未知错误'));
+      ElMessage.error('设置默认地址失败：' + (response.data?.message || '未知错误'))
     }
   } catch (error) {
-    console.error('设置默认地址失败:', error);
-    ElMessage.error('设置默认地址失败，请稍后重试');
+    console.error('设置默认地址失败:', error)
+    ElMessage.error('设置默认地址失败，请稍后重试')
   }
-};
+}
 </script>
 
 <style scoped lang="less">
@@ -564,7 +583,7 @@ const setDefault = async (address) => {
       border-color: #67c23a;
 
       &::before {
-        content: "默认地址";
+        content: '默认地址';
         position: absolute;
         top: 24px;
         right: 24px;

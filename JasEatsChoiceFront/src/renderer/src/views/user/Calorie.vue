@@ -1,10 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-import { API_CONFIG } from '../../config/index.js';
-import { ElMessage } from 'element-plus';
-import { useAuthStore } from './../../store/authStore';
-import { useUserStore } from './../../store/userStore';
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import { API_CONFIG } from '../../config/index.js'
+import { ElMessage } from 'element-plus'
+import { useAuthStore } from './../../store/authStore'
+import { useUserStore } from './../../store/userStore'
 
 // 卡路里统计数据
 const calorieData = ref({
@@ -28,119 +28,237 @@ const calorieData = ref({
     { name: '碳水化合物', value: 0, unit: 'g' },
     { name: '脂肪', value: 0, unit: 'g' }
   ]
-});
+})
 
 // 推荐营养目标（根据膳食指南）
 const recommendedGoals = ref({
-  '蛋白质': 90, // g
-  '碳水化合物': 250, // g
-  '脂肪': 70 // g
-});
+  蛋白质: 90, // g
+  碳水化合物: 250, // g
+  脂肪: 70 // g
+})
 
 // 自定义营养目标（用户设置）
-const customGoals = ref({});
-
+const customGoals = ref({})
 
 // 从API获取数据
 onMounted(() => {
   // 获取用户信息 - 从Pinia store获取
-  const authStore = useAuthStore();
-  const userStore = useUserStore();
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
 
-  let userId = null;
+  let userId = null
 
-  console.log('Auth Store:', authStore);
-  console.log('User Store:', userStore);
+  console.log('Auth Store:', authStore)
+  console.log('User Store:', userStore)
   // 从authStore获取userId，如果authStore中没有则从userStore的userInfo中获取
   if (authStore.userId) {
-    userId = authStore.userId;
+    userId = authStore.userId
   } else if (userStore.userInfo?.userId) {
-    userId = userStore.userInfo.userId;
+    userId = userStore.userInfo.userId
   } else {
     // 用户未登录或没有保存用户信息
-    ElMessage.error('未找到用户信息，请先登录');
-    return;
+    ElMessage.error('未找到用户信息，请先登录')
+    return
   }
 
   // 获取用户偏好设置（包含卡路里目标和营养目标）
-  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`)
-    .then(response => {
-      if (response.data && response.data.code === "200") {
+  axios
+    .get(`${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`)
+    .then((response) => {
+      console.log('用户偏好:', response.data)
+      if (response.data && response.data.code === '200') {
         // 设置卡路里目标
         if (response.data.data.calorieTarget) {
-          calorieData.value.today.target = response.data.data.calorieTarget;
+          calorieData.value.today.target = response.data.data.calorieTarget
         }
 
         // 设置自定义营养目标
         if (response.data.data.nutritionGoals) {
-          customGoals.value = response.data.data.nutritionGoals;
+          customGoals.value = response.data.data.nutritionGoals
         }
       }
     })
-    .catch(error => {
-      console.error('加载用户偏好失败:', error);
-    });
+    .catch((error) => {
+      console.error('加载用户偏好失败:', error)
+    })
 
-  // 获取今日食谱和营养数据
-  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.recipe.today}`, {
-    params: {
-      userId: userId
-    }
-  })
-    .then(response => {
-      if (response.data && response.data.code === "200" && response.data.data.nutrition) {
-        const nutrition = response.data.data.nutrition;
-        // 更新今日卡路里消耗
-        calorieData.value.today.consumed = nutrition.calories;
-        calorieData.value.today.remaining = calorieData.value.today.target - nutrition.calories;
+  // 获取今日食谱
+  axios
+    .get(`${API_CONFIG.baseURL}${API_CONFIG.recipe.today}`, {
+      params: {
+        userId: userId
+      }
+    })
+    .then((response) => {
+      console.log('今日食谱:', response.data)
+      if (
+        response.data &&
+        response.data.code === '200' &&
+        response.data.data.recipes &&
+        response.data.data.recipes.length > 0
+      ) {
+        const recipes = response.data.data.recipes
+        // 确保食谱有items数组
+        const processedRecipes = recipes
+          .filter((recipe) => recipe && recipe.id) // 确保食谱存在且有id
+          .map((recipe) => ({
+            ...recipe,
+            items: typeof recipe.items === 'string' ? JSON.parse(recipe.items) : recipe.items || []
+          }))
+
+        // 计算今日总营养摄入
+        let totalCalories = 0
+        let totalProtein = 0
+        let totalCarbs = 0
+        let totalFat = 0
+
+        // 遍历食谱和菜品计算营养
+        processedRecipes.forEach((recipe) => {
+          if (recipe && recipe.items) {
+            recipe.items.forEach((dish) => {
+              totalCalories += dish?.calories || 0
+              totalProtein += dish?.protein || 0
+              totalCarbs += dish?.carbs || 0
+              totalFat += dish?.fat || 0
+            })
+          }
+        })
+
+        //        console.log('今日总营养摄入:', {
+        //          totalCalories,
+        //          totalProtein,
+        //          totalCarbs,
+        //          totalFat
+        //        });
+        // 更新今日卡路里数据
+        calorieData.value.today.consumed = totalCalories
+        calorieData.value.today.remaining = calorieData.value.today.target - totalCalories
 
         // 更新营养数据
-        calorieData.value.nutrition[0].value = nutrition.protein; // 蛋白质
-        calorieData.value.nutrition[1].value = nutrition.carbs; // 碳水化合物
-        calorieData.value.nutrition[2].value = nutrition.fat; // 脂肪
+        calorieData.value.nutrition[0].value = totalProtein // 蛋白质
+        calorieData.value.nutrition[1].value = totalCarbs // 碳水化合物
+        calorieData.value.nutrition[2].value = totalFat // 脂肪
+
+        // 检查异常值并提供不同健康提示
+        const checkExtremeValues = () => {
+          // 计算各营养的百分比
+          const fatPercent = getNutritionPercentage(totalFat, '脂肪')
+          const proteinPercent = getNutritionPercentage(totalProtein, '蛋白质')
+          const carbsPercent = getNutritionPercentage(totalCarbs, '碳水化合物')
+          const caloriesPercent = (totalCalories / calorieData.value.today.target) * 100
+
+          let messages = []
+
+          // 脂肪异常提示
+          if (fatPercent > 200) {
+            messages.push('脂肪摄入已超过推荐值2倍，长期过量摄入会增加健康风险')
+          } else if (fatPercent > 150) {
+            messages.push('脂肪摄入已超过推荐值1.5倍，建议适当减少')
+          }
+
+          // 蛋白质异常提示
+          if (proteinPercent > 200) {
+            messages.push('蛋白质摄入已超过推荐值2倍，长期过量摄入可能加重肾脏负担')
+          } else if (proteinPercent > 150) {
+            messages.push('蛋白质摄入已超过推荐值1.5倍，建议合理搭配饮食')
+          }
+
+          // 碳水化合物异常提示
+          if (carbsPercent > 200) {
+            messages.push('碳水化合物摄入已超过推荐值2倍，长期过量可能导致血糖波动')
+          } else if (carbsPercent > 150) {
+            messages.push('碳水化合物摄入已超过推荐值1.5倍，建议增加膳食纤维摄入')
+          }
+
+          // 总卡路里异常提示
+          if (caloriesPercent > 200) {
+            messages.push('总卡路里摄入已超过推荐值2倍，长期过量会导致体重增加')
+          } else if (caloriesPercent > 150) {
+            messages.push('总卡路里摄入已超过推荐值1.5倍，建议适当增加运动量')
+          }
+
+          // 显示所有提示
+          if (messages.length > 0) {
+            messages.forEach((msg) => {
+              ElMessage.warning(msg)
+            })
+          }
+        }
+
+        checkExtremeValues()
       }
     })
-    .catch(error => {
-      console.error('加载今日营养数据失败:', error);
-    });
+    .catch((error) => {
+      console.error('加载今日食谱失败:', error)
+    })
 
   // 直接从后端获取本周卡路里统计
-  axios.get(`${API_CONFIG.baseURL}${API_CONFIG.diet.week.replace('{userId}', userId)}`)
-    .then(response => {
-      if (response.data && response.data.code === "200") {
+  axios
+    .get(`${API_CONFIG.baseURL}${API_CONFIG.diet.week.replace('{userId}', userId)}`)
+    .then((response) => {
+      if (response.data && response.data.code === '200') {
         // 直接使用后端返回的每周数据
-        calorieData.value.weekly = response.data.data;
+        calorieData.value.weekly = response.data.data
       }
     })
-    .catch(error => {
-      console.error('加载本周卡路里记录失败:', error);
-      ElMessage.error('加载本周卡路里记录失败，请稍后重试');
-    });
-});
+    .catch((error) => {
+      console.error('加载本周卡路里记录失败:', error)
+      ElMessage.error('加载本周卡路里记录失败，请稍后重试')
+    })
+})
 
 // 获取营养百分比
 const getNutritionPercentage = (value, name) => {
   // 优先使用用户自定义目标，若无则使用推荐目标
-  const goal = customGoals.value[name] || recommendedGoals.value[name] || 1;
+  const goal = customGoals.value[name] || recommendedGoals.value[name] || 1
   // 避免除以0
-  let percentage = goal > 0 ? (value / goal) * 100 : 0;
+  let percentage = goal > 0 ? (value / goal) * 100 : 0
+  // 不再限制百分比在0-100之间，允许超过
   // 四舍五入保留两位小数
-  return Math.round(percentage * 100) / 100;
-};
+  return Math.round(percentage * 100) / 100
+}
 
-// 获取营养颜色
-const getNutritionColor = (name) => {
-  switch (name) {
-    case '蛋白质':
-      return '#2196F3';
-    case '碳水化合物':
-      return '#4CAF50';
-    case '脂肪':
-      return '#FF9800';
-    default:
-      return '#FF6B6B';
+// 判断是否为极端值 - 与健康提示阈值一致
+const isExtremeValue = (value, name) => {
+  const percent = getNutritionPercentage(value, name)
+  // 超过150%则标记为极端值
+  return percent > 150
+}
+
+// 获取营养颜色 - 基于百分比动态变化
+const getNutritionColor = (name, percentage) => {
+  // 正常范围（0-100%）
+  const normalColors = {
+    蛋白质: '#2196F3',
+    碳水化合物: '#4CAF50',
+    脂肪: '#FF9800',
+    default: '#FF6B6B'
   }
-};
+
+  // 警告范围（101-200%）
+  const warningColors = {
+    蛋白质: '#FFC107',
+    碳水化合物: '#FFC107',
+    脂肪: '#FFC107',
+    default: '#FFC107'
+  }
+
+  // 危险范围（>200%）
+  const dangerColors = {
+    蛋白质: '#FF6B6B',
+    碳水化合物: '#FF6B6B',
+    脂肪: '#FF6B6B',
+    default: '#FF6B6B'
+  }
+
+  if (percentage > 200) {
+    return dangerColors[name] || dangerColors.default
+  } else if (percentage > 100) {
+    return warningColors[name] || warningColors.default
+  } else {
+    return normalColors[name] || normalColors.default
+  }
+}
 </script>
 
 <template>
@@ -183,15 +301,23 @@ const getNutritionColor = (name) => {
             v-for="item in calorieData.nutrition"
             :key="item.name"
             class="nutrition-item"
+            :class="{ 'extreme-value': isExtremeValue(item.value, item.name) }"
           >
             <div class="nutrition-info">
               <div class="nutrition-name">{{ item.name }}</div>
-              <div class="nutrition-value">{{ item.value }}{{ item.unit }}</div>
+              <div class="nutrition-value">
+                {{ item.value }}{{ item.unit }}
+                <span class="recommended-goal">
+                  (推荐: {{ customGoals[item.name] || recommendedGoals[item.name] || 0
+                  }}{{ item.unit }})
+                </span>
+              </div>
             </div>
             <el-progress
               :percentage="getNutritionPercentage(item.value, item.name)"
-              :color="getNutritionColor(item.name)"
-              :format="() => getNutritionPercentage(item.value, item.name) + '%'"
+              :color="getNutritionColor(item.name, getNutritionPercentage(item.value, item.name))"
+              :format="(percent) => (percent > 200 ? '严重超出' : `${percent}%`)"
+              :class="{ 'extreme-progress': getNutritionPercentage(item.value, item.name) > 200 }"
             />
           </div>
         </div>
@@ -217,7 +343,13 @@ const getNutritionColor = (name) => {
           <div class="overview-item">
             <div class="overview-label">本周日均</div>
             <div class="overview-value average">
-              {{ Math.round(calorieData.weekly.reduce((sum, item) => sum + item.consumed, 0) / Math.max(calorieData.weekly.length, 1)) }} kcal
+              {{
+                Math.round(
+                  calorieData.weekly.reduce((sum, item) => sum + item.consumed, 0) /
+                    Math.max(calorieData.weekly.length, 1)
+                )
+              }}
+              kcal
             </div>
           </div>
         </el-card>
@@ -235,23 +367,26 @@ const getNutritionColor = (name) => {
           <div class="card-header">每日卡路里摄入</div>
         </template>
         <div class="weekly-chart">
-          <div
-            v-for="item in calorieData.weekly"
-            :key="item.day"
-            class="weekly-bar"
-          >
+          <div v-for="item in calorieData.weekly" :key="item.day" class="weekly-bar">
             <div class="bar-label">{{ item.day }}</div>
             <div class="bar-container">
               <!-- 目标线指示器 -->
-              <div class="bar-target-line"
-                   :style="{ left: `100%` }"
-                   :title="`目标: ${calorieData.today.target} kcal`"></div>
+              <div
+                class="bar-target-line"
+                :style="{ left: `100%` }"
+                :title="`目标: ${calorieData.today.target} kcal`"
+              ></div>
 
               <div
                 class="bar-fill"
                 :style="{
                   // 确保目标值不为0以避免NaN，同时当进度为0时设置min-width为24px以显示进度条
-                  width: ((calorieData.today.target > 0 ? (item.consumed / calorieData.today.target * 100) : 0) || 0).toFixed(2) + '%',
+                  width:
+                    (
+                      (calorieData.today.target > 0
+                        ? (item.consumed / calorieData.today.target) * 100
+                        : 0) || 0
+                    ).toFixed(2) + '%',
                   minWidth: '24px'
                 }"
                 :class="{ 'over-target': item.consumed > calorieData.today.target }"
@@ -267,7 +402,7 @@ const getNutritionColor = (name) => {
         </div>
       </el-card>
     </div>
-</div>
+  </div>
 </template>
 
 <style scoped lang="less">
@@ -318,20 +453,20 @@ const getNutritionColor = (name) => {
         .overview-value {
           font-size: 32px;
           font-weight: 700;
-          background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+          background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
 
           &.remaining {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
           }
 
           &.target {
-            background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+            background: linear-gradient(135deg, #2196f3 0%, #0b7dda 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -374,6 +509,30 @@ const getNutritionColor = (name) => {
         margin-bottom: 12px;
         font-size: 14px;
         font-weight: 600;
+      }
+
+      // 极端值样式 - 简化，移除卡片效果
+      &.extreme-value {
+        // 只有文字颜色变化
+        .nutrition-value {
+          color: #ff6b6b !important; // 红色数值
+        }
+      }
+
+      // 推荐目标值样式
+      .recommended-goal {
+        font-size: 12px; // 小号字体
+        color: #999; // 灰色文字
+        margin-left: 6px; // 与实际值保持间距
+      }
+
+      // 严重超出的进度条文本样式
+      :deep(.extreme-progress) {
+        .el-progress__text {
+          color: #ff6b6b !important; // 红色文本
+          font-weight: 700 !important; // 加粗
+          font-size: 16px !important; // 增大字号
+        }
       }
     }
   }
@@ -427,20 +586,20 @@ const getNutritionColor = (name) => {
         .overview-value {
           font-size: 32px;
           font-weight: 700;
-          background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+          background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
 
           &.total {
-            background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+            background: linear-gradient(135deg, #2196f3 0%, #0b7dda 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
           }
 
           &.average {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -503,13 +662,13 @@ const getNutritionColor = (name) => {
         bottom: 0;
         width: 2px;
         background-color: rgba(0, 0, 0, 0.3);
-        border-left: 2px dashed #FF6B6B;
+        border-left: 2px dashed #ff6b6b;
         z-index: 10;
       }
 
       .bar-fill {
         height: 100%;
-        background: linear-gradient(90deg, #2196F3 0%, #1976d2 100%);
+        background: linear-gradient(90deg, #2196f3 0%, #1976d2 100%);
         text-align: center;
         line-height: 36px;
         color: white;
@@ -557,10 +716,10 @@ const getNutritionColor = (name) => {
       }
 
       .bar-fill.over-target {
-        background: linear-gradient(90deg, #FF5252 0%, #f44336 100%);
+        background: linear-gradient(90deg, #ff5252 0%, #f44336 100%);
 
         & + .bar-text {
-          color: #FF5252;
+          color: #ff5252;
         }
       }
 
@@ -575,10 +734,9 @@ const getNutritionColor = (name) => {
 // 进度条样式
 :deep(.el-progress) {
   .el-progress-bar__inner {
-    background: linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%);
+    background: linear-gradient(90deg, #ff6b6b 0%, #ff8e53 100%);
     box-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
     transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
 }
-
 </style>

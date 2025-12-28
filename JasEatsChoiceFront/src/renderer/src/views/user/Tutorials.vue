@@ -1,31 +1,32 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { VideoCamera, Document } from '@element-plus/icons-vue';
-import { useRouter } from 'vue-router';
-import api from '../../utils/api.js';
-import { API_CONFIG } from '../../config/index.js';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, onMounted } from 'vue'
+import { VideoCamera, Document } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
+import api from '../../utils/api.js'
+import { API_CONFIG } from '../../config/index.js'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
-const router = useRouter();
+const router = useRouter()
 
 // 返回用户首页
 const goBackToHome = () => {
-  router.push('/user/home');
-};
+  router.push('/user/home')
+}
 
 // 教程数据 - 从后端获取
-const tutorials = ref([]);
+const tutorials = ref([])
 
 // 从后端获取所有教程数据
 const fetchTutorials = () => {
-  api.get(API_CONFIG.tutorial.list)
-    .then(response => {
+  api
+    .get(API_CONFIG.tutorial.list)
+    .then((response) => {
       if (response.data) {
-        tutorials.value = response.data;
+        tutorials.value = response.data
       }
     })
-    .catch(error => {
-      console.error('加载教程列表失败:', error);
+    .catch((error) => {
+      console.error('加载教程列表失败:', error)
       // 失败时使用模拟数据作为备份
       tutorials.value = [
         { id: 1, title: '青木瓜沙拉制作教程', type: 'video', duration: '5:30', views: '12.5k' },
@@ -34,30 +35,32 @@ const fetchTutorials = () => {
         { id: 4, title: '减脂餐制作基础', type: 'article', duration: '12分钟', views: '15.8k' },
         { id: 5, title: '果汁制作小技巧', type: 'video', duration: '4:15', views: '7.3k' },
         { id: 6, title: '均衡饮食营养知识', type: 'article', duration: '15分钟', views: '21.2k' }
-      ];
-    });
-};
+      ]
+    })
+}
 
 // 页面加载时获取教程数据
 onMounted(() => {
-  fetchTutorials();
-});
+  fetchTutorials()
+})
 </script>
 
 <template>
   <div class="tutorials-container">
     <div class="page-header">
-      <common-back-button type="primary" size="small" text="返回首页" @click="goBackToHome" :use-router-back="false" />
+      <common-back-button
+        type="primary"
+        size="small"
+        text="返回首页"
+        @click="goBackToHome"
+        :use-router-back="false"
+      />
       <h2>制作教程与指南</h2>
     </div>
 
     <!-- 当教程数据为空时显示 -->
     <div v-if="tutorials.length === 0" class="empty-tutorials">
-      <el-empty
-        description="暂无教程数据"
-        image="default"
-        :image-size="140"
-      >
+      <el-empty description="暂无教程数据" image="default" :image-size="140">
         <el-button type="primary" @click="fetchTutorials">重新加载</el-button>
       </el-empty>
     </div>
@@ -122,7 +125,9 @@ onMounted(() => {
     justify-content: space-between;
     padding: 20px;
     cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition:
+      transform 0.3s,
+      box-shadow 0.3s;
 
     &:hover {
       transform: translateY(-5px);
@@ -137,7 +142,7 @@ onMounted(() => {
 
       .video-icon {
         font-size: 40px;
-        color: #FF6B6B;
+        color: #ff6b6b;
       }
 
       .article-icon {
@@ -167,7 +172,6 @@ onMounted(() => {
       font-size: 14px;
     }
   }
-
 
   .empty-tutorials {
     text-align: center;

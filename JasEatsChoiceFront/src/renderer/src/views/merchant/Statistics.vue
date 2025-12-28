@@ -1,19 +1,18 @@
-
 <script setup>
-import api from '../../utils/api';
-import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import { use } from 'echarts/core';
-import { LineChart } from 'echarts/charts';
+import api from '../../utils/api'
+import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { use } from 'echarts/core'
+import { LineChart } from 'echarts/charts'
 import {
   TitleComponent,
   TooltipComponent,
   GridComponent,
   DataZoomComponent,
   LegendComponent
-} from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
-import VChart from 'vue-echarts';
+} from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import VChart from 'vue-echarts'
 
 // 注册所需组件
 use([
@@ -24,107 +23,107 @@ use([
   LegendComponent,
   LineChart,
   CanvasRenderer
-]);
+])
 
 // 统计时间范围选项
-const timeRangeOptions = ['today', 'yesterday', 'week', 'month'];
-const activeTimeRange = ref('today');
+const timeRangeOptions = ['today', 'yesterday', 'week', 'month']
+const activeTimeRange = ref('today')
 
 // 图表容器宽度
-const chartContainerWidth = ref(0);
+const chartContainerWidth = ref(0)
 
 // 图表引用
-const chartRef = ref(null);
+const chartRef = ref(null)
 
 // 销售额数据
 
 // 菜品销售数据
 
-
 // 更新当前显示的销售额数据
 
 // 从后端获取统计数据
 const fetchStatisticsData = () => {
-  const merchantId = 1; // 假设商家ID为1，可以根据实际情况从登录信息或路由参数中获取
-  api.get(`/v1/merchant/${merchantId}/statistics`, { params: { timeRange: activeTimeRange.value } })
-    .then(response => {
+  const merchantId = 1 // 假设商家ID为1，可以根据实际情况从登录信息或路由参数中获取
+  api
+    .get(`/v1/merchant/${merchantId}/statistics`, { params: { timeRange: activeTimeRange.value } })
+    .then((response) => {
       if (response.code === '200' && response.data) {
         // 更新基本统计数据
-        currentBasicStats.value = response.data.basicStats;
+        currentBasicStats.value = response.data.basicStats
 
         // 更新订单趋势数据
         if (response.data.orderTrend) {
-          currentOrderTrend.value = response.data.orderTrend;
+          currentOrderTrend.value = response.data.orderTrend
           // 更新图表数据
-          updateChartData();
+          updateChartData()
         }
 
         // 更新菜品销量排行数据
         if (response.data.dishSalesRank) {
-          dishSalesRank.value = response.data.dishSalesRank;
+          dishSalesRank.value = response.data.dishSalesRank
         }
       }
     })
-    .catch(error => {
-      console.error('获取统计数据失败:', error);
+    .catch((error) => {
+      console.error('获取统计数据失败:', error)
       // 如果获取失败，清空数据
-      currentBasicStats.value = { orders: 0, totalAmount: 0.00, avgAmount: 0.00, newCustomers: 0 };
-      currentOrderTrend.value = [];
-      dishSalesRank.value = [];
-      updateChartData();
-    });
-};
+      currentBasicStats.value = { orders: 0, totalAmount: 0.0, avgAmount: 0.0, newCustomers: 0 }
+      currentOrderTrend.value = []
+      dishSalesRank.value = []
+      updateChartData()
+    })
+}
 
 // 时间范围变化时调用的方法
 const changeTimeRange = (range) => {
-  activeTimeRange.value = range;
-  fetchStatisticsData();
-};
+  activeTimeRange.value = range
+  fetchStatisticsData()
+}
 
 // 监听时间范围变化更新数据
-watch(() => activeTimeRange.value, fetchStatisticsData);
+watch(() => activeTimeRange.value, fetchStatisticsData)
 
 // 页面加载时初始化数据
 onMounted(() => {
-  fetchStatisticsData();
+  fetchStatisticsData()
   // 初始化图表容器宽度
   nextTick(() => {
-    updateChartContainerWidth();
-  });
+    updateChartContainerWidth()
+  })
 
   // 监听窗口大小变化
-  window.addEventListener('resize', updateChartContainerWidth);
-});
+  window.addEventListener('resize', updateChartContainerWidth)
+})
 
 // 在组件卸载时移除事件监听器
 onUnmounted(() => {
-  window.removeEventListener('resize', updateChartContainerWidth);
-});
+  window.removeEventListener('resize', updateChartContainerWidth)
+})
 
 // 更新图表容器宽度
 const updateChartContainerWidth = () => {
   nextTick(() => {
     if (chartRef.value && chartRef.value.$el) {
-      chartContainerWidth.value = chartRef.value.$el.clientWidth;
+      chartContainerWidth.value = chartRef.value.$el.clientWidth
     } else if (chartRef.value && chartRef.value.$el === undefined) {
       // 如果 $el 不存在，尝试使用元素本身
-      chartContainerWidth.value = chartRef.value.clientWidth || 0;
+      chartContainerWidth.value = chartRef.value.clientWidth || 0
     }
-  });
-};
+  })
+}
 
 // 基础统计数据 - 按时间范围
 
 // 当前显示的基础统计数据
-const currentBasicStats = ref({ orders: 0, totalAmount: 0.00, avgAmount: 0.00, newCustomers: 0 });
+const currentBasicStats = ref({ orders: 0, totalAmount: 0.0, avgAmount: 0.0, newCustomers: 0 })
 
 // 订单趋势数据 - 按时间范围
 
 // 当前显示的订单趋势数据
-const currentOrderTrend = ref([]);
+const currentOrderTrend = ref([])
 
 // 菜品销量排行数据
-const dishSalesRank = ref([]);
+const dishSalesRank = ref([])
 
 // 配置订单趋势图表
 const orderChartOptions = ref({
@@ -162,13 +161,13 @@ const orderChartOptions = ref({
       }
     }
   ]
-});
+})
 
 // 更新图表数据
 const updateChartData = () => {
-  orderChartOptions.value.xAxis.data = currentOrderTrend.value.map(item => item.time);
-  orderChartOptions.value.series[0].data = currentOrderTrend.value.map(item => item.orders);
-};
+  orderChartOptions.value.xAxis.data = currentOrderTrend.value.map((item) => item.time)
+  orderChartOptions.value.series[0].data = currentOrderTrend.value.map((item) => item.orders)
+}
 
 // 监听数据变化并更新图表
 </script>
@@ -186,7 +185,15 @@ const updateChartData = () => {
           @click="changeTimeRange(range)"
           class="time-range-tag"
         >
-          {{ range === 'today' ? '今日' : range === 'yesterday' ? '昨日' : range === 'week' ? '本周' : '本月' }}
+          {{
+            range === 'today'
+              ? '今日'
+              : range === 'yesterday'
+                ? '昨日'
+                : range === 'week'
+                  ? '本周'
+                  : '本月'
+          }}
         </el-tag>
       </div>
     </div>
@@ -235,9 +242,7 @@ const updateChartData = () => {
             :autoresize="true"
             ref="chartRef"
           />
-          <div v-else-if="chartContainerWidth > 0" class="chart-placeholder">
-            暂时没有数据提供
-          </div>
+          <div v-else-if="chartContainerWidth > 0" class="chart-placeholder">暂时没有数据提供</div>
           <div v-else class="chart-placeholder chart-loading">
             <span class="loading-text">图表加载中...</span>
           </div>
@@ -248,11 +253,7 @@ const updateChartData = () => {
       <div class="dish-sales-section">
         <h4 class="section-title">🏆 菜品销量排行</h4>
         <div v-if="dishSalesRank.length > 0" class="sales-rank-list">
-          <div
-            v-for="(dish, index) in dishSalesRank"
-            :key="dish.name"
-            class="sales-rank-item"
-          >
+          <div v-for="(dish, index) in dishSalesRank" :key="dish.name" class="sales-rank-item">
             <div class="rank-number">{{ index + 1 }}</div>
             <div class="dish-info">
               <div class="dish-name">{{ dish.name }}</div>
@@ -261,9 +262,7 @@ const updateChartData = () => {
             <div class="dish-revenue">¥{{ dish.revenue }}</div>
           </div>
         </div>
-        <div v-else class="no-data-placeholder">
-          暂时没有数据提供
-        </div>
+        <div v-else class="no-data-placeholder">暂时没有数据提供</div>
       </div>
     </div>
   </div>
@@ -360,10 +359,8 @@ const updateChartData = () => {
           color: #909399;
           font-size: 14px;
         }
-
       }
     }
-
 
     .dish-sales-section {
       background-color: #fff;

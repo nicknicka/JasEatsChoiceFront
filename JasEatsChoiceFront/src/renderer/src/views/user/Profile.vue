@@ -28,7 +28,9 @@
             </div>
             <div class="stat-item">
               <span class="stat-label">今日摄入</span>
-              <span class="stat-value calorie-highlight">{{ userInfo.todayCalorie || '0kcal' }}</span>
+              <span class="stat-value calorie-highlight">{{
+                userInfo.todayCalorie || '0kcal'
+              }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">本周均衡度</span>
@@ -36,7 +38,11 @@
             </div>
           </div>
           <div class="action-buttons">
-            <el-button type="primary" size="small" class="upload-avatar-btn" @click="triggerAvatarUpload"
+            <el-button
+              type="primary"
+              size="small"
+              class="upload-avatar-btn"
+              @click="triggerAvatarUpload"
               >📸 更换头像</el-button
             >
             <el-button type="primary" size="small" class="share-btn" @click="shareProfile"
@@ -131,7 +137,9 @@
             <div class="module-item-info">
               <div class="module-item-title">我的地址</div>
               <div class="module-item-desc">
-                共{{ userInfo.addresses || 0 }}个 | 默认地址：{{ userInfo.defaultAddress || '未设置' }}
+                共{{ userInfo.addresses || 0 }}个 | 默认地址：{{
+                  userInfo.defaultAddress || '未设置'
+                }}
               </div>
             </div>
           </div>
@@ -176,7 +184,13 @@
 
     <!-- 编辑资料对话框 -->
     <el-dialog v-model="editProfileDialogVisible" title="编辑资料" width="400px" center>
-      <el-form ref="editFormRef" :model="editForm" :rules="editFormRules" label-width="80px" style="margin-top: 20px">
+      <el-form
+        ref="editFormRef"
+        :model="editForm"
+        :rules="editFormRules"
+        label-width="80px"
+        style="margin-top: 20px"
+      >
         <el-form-item label="昵称" prop="nickname">
           <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
         </el-form-item>
@@ -266,12 +280,11 @@ const userInfo = ref({
 
 // 从本地存储加载真实数据
 onMounted(async () => {
-
   // 从authStore获取userId
   const authStore = useAuthStore()
   let userId = parseInt(authStore.userId || '0', 10)
 
-  console.log('userId:', userId) ;
+  console.log('userId:', userId)
 
   // 检查userId是否有效
   if (isNaN(userId) || userId <= 0) {
@@ -283,7 +296,13 @@ onMounted(async () => {
   }
 
   // 如果当前用户信息为空或不完整，从后端API获取用户信息
-  const isUserInfoEmpty = !userStore.userInfo || Object.keys(userStore.userInfo).length === 0 || !userStore.userInfo.nickname || !userStore.userInfo.phone || !userStore.userInfo.avatar || !userStore.userInfo.avatar.length;
+  const isUserInfoEmpty =
+    !userStore.userInfo ||
+    Object.keys(userStore.userInfo).length === 0 ||
+    !userStore.userInfo.nickname ||
+    !userStore.userInfo.phone ||
+    !userStore.userInfo.avatar ||
+    !userStore.userInfo.avatar.length
 
   if (isUserInfoEmpty) {
     console.log('当前用户信息为空或不完整，从后端API获取用户信息', userStore.userInfo)
@@ -291,11 +310,10 @@ onMounted(async () => {
     userInfo.value = await userStore.fetchUserInfo(userId)
   } else {
     // 使用store中的用户信息
-    userInfo.value = userStore.userInfo;
+    userInfo.value = userStore.userInfo
   }
 
-  console.log('userInfo:', userInfo.value) ;
-
+  console.log('userInfo:', userInfo.value)
 })
 
 // Handle upload button click (for external button)
@@ -316,7 +334,7 @@ const handleAvatarUpload = (file) => {
 
     try {
       // 获取当前登录用户的ID
-      const userId = authStore.userId ;
+      const userId = authStore.userId
       if (!userId) {
         ElMessage.error('用户未登录，请重新登录')
         return
@@ -520,7 +538,10 @@ const saveEditProfile = () => {
         try {
           const userId = parseInt(localStorage.getItem('userId'), 10)
           // 发送PUT请求更新用户资料
-          const response = await api.put(API_CONFIG.user.update.replace('{userId}', userId), editForm.value)
+          const response = await api.put(
+            API_CONFIG.user.update.replace('{userId}', userId),
+            editForm.value
+          )
 
           if (response.success) {
             // 更新本地用户信息
@@ -601,12 +622,8 @@ const editFormRules = ref({
     { required: true, message: '请输入昵称', trigger: 'blur' },
     { min: 2, max: 20, message: '昵称长度在 2 到 20 个字符', trigger: 'blur' }
   ],
-  email: [
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
-  ],
-  location: [
-    { max: 50, message: '所在地长度不超过 50 个字符', trigger: ['blur', 'change'] }
-  ],
+  email: [{ type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }],
+  location: [{ max: 50, message: '所在地长度不超过 50 个字符', trigger: ['blur', 'change'] }],
   height: [
     { type: 'number', message: '请输入有效的身高数值', trigger: ['blur', 'change'] },
     { min: 100, max: 250, message: '身高范围在 100 到 250 cm', trigger: ['blur', 'change'] }
@@ -615,9 +632,7 @@ const editFormRules = ref({
     { type: 'number', message: '请输入有效的体重数值', trigger: ['blur', 'change'] },
     { min: 30, max: 200, message: '体重范围在 30 到 200 kg', trigger: ['blur', 'change'] }
   ],
-  dietGoal: [
-    { required: true, message: '请选择饮食目标', trigger: 'change' }
-  ]
+  dietGoal: [{ required: true, message: '请选择饮食目标', trigger: 'change' }]
 })
 // 编辑表单引用
 const editFormRef = ref(null)
@@ -685,7 +700,6 @@ const copyShareLink = async () => {
 .avatar-container {
   position: relative;
 }
-
 
 .user-avatar {
   background-color: #fff;

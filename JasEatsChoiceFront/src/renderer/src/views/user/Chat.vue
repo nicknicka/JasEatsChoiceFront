@@ -3,15 +3,9 @@
     <div class="chat-header">
       <h3 class="page-title">【聊天消息】</h3>
       <div class="chat-actions">
-        <el-button type="primary" size="small" @click="createNewChat">
-          + 新建聊天
-        </el-button>
-        <el-button type="primary" size="small" @click="openAddFriendDialog">
-          + 加好友
-        </el-button>
-        <el-button type="primary" size="small" @click="createNewGroup">
-          + 新建群聊
-        </el-button>
+        <el-button type="primary" size="small" @click="createNewChat"> + 新建聊天 </el-button>
+        <el-button type="primary" size="small" @click="openAddFriendDialog"> + 加好友 </el-button>
+        <el-button type="primary" size="small" @click="createNewGroup"> + 新建群聊 </el-button>
       </div>
     </div>
 
@@ -22,7 +16,10 @@
           v-for="conversation in sortedConversations"
           :key="conversation.id"
           class="conversation-item"
-          :class="{ active: selectedConversation?.id === conversation.id, 'pinned-conversation': conversation.pinned }"
+          :class="{
+            active: selectedConversation?.id === conversation.id,
+            'pinned-conversation': conversation.pinned
+          }"
           @click="selectConversation(conversation)"
           @contextmenu.prevent="showContextMenu(conversation, $event)"
         >
@@ -52,7 +49,9 @@
             <div class="name-time">
               <span class="name">
                 {{ conversation.name }}
-                <span v-if="conversation.type === 'group'" class="member-count"> ({{ conversation.memberCount || '0' }}人)</span>
+                <span v-if="conversation.type === 'group'" class="member-count">
+                  ({{ conversation.memberCount || '0' }}人)</span
+                >
               </span>
               <span class="time">{{ conversation.time }}</span>
             </div>
@@ -76,7 +75,11 @@
         <div class="menu-item" @click="togglePin(selectedContextConversation)">
           {{ selectedContextConversation.pinned ? '取消置顶' : '置顶会话' }}
         </div>
-        <div class="menu-item" @click="deleteConversation(selectedContextConversation)" style="color: #ff4d4f;">
+        <div
+          class="menu-item"
+          @click="deleteConversation(selectedContextConversation)"
+          style="color: #ff4d4f"
+        >
           删除会话
         </div>
       </div>
@@ -88,27 +91,40 @@
           <div class="conversation-info">
             <div class="name-info">
               <span class="name">{{ selectedConversation.name }}</span>
-              <span v-if="selectedConversation.type === 'group'" class="member-count"> ({{ selectedConversation.memberCount || '0' }}人)</span>
+              <span v-if="selectedConversation.type === 'group'" class="member-count">
+                ({{ selectedConversation.memberCount || '0' }}人)</span
+              >
             </div>
           </div>
           <!-- 群聊操作 - 创建/加入群订单 -->
           <div class="chat-actions" v-if="selectedConversation.type === 'group'">
-            <el-button type="primary" size="small" @click="createGroupOrder" v-if="!groupOrders[selectedConversation.id]">创建群订单</el-button>
+            <el-button
+              type="primary"
+              size="small"
+              @click="createGroupOrder"
+              v-if="!groupOrders[selectedConversation.id]"
+              >创建群订单</el-button
+            >
             <el-button size="small" @click="joinGroupOrder">加入群订单</el-button>
             <el-button size="small" @click="openGroupDetail">群聊详情</el-button>
           </div>
         </div>
 
         <!-- 悬浮订单按钮 -->
-        <div v-if="selectedConversation.type === 'group' && groupOrders[selectedConversation.id]"
-             ref="floatBtnRef"
-             class="floating-order-btn"
-             @click="handleCartClick"
-             @mousedown="startDrag"
-             @selectstart="handleSelectStart">
+        <div
+          v-if="selectedConversation.type === 'group' && groupOrders[selectedConversation.id]"
+          ref="floatBtnRef"
+          class="floating-order-btn"
+          @click="handleCartClick"
+          @mousedown="startDrag"
+          @selectstart="handleSelectStart"
+        >
           <div class="order-btn-inner">
             <el-icon :size="24" color="white"><ShoppingCart /></el-icon>
-            <span class="cart-count" v-if="groupOrders[selectedConversation.id].orderItems.length > 0">
+            <span
+              class="cart-count"
+              v-if="groupOrders[selectedConversation.id].orderItems.length > 0"
+            >
               {{ groupOrders[selectedConversation.id].orderItems.length }}
             </span>
           </div>
@@ -122,7 +138,7 @@
           size="45%"
           :close-on-click-modal="true"
         >
-          <div class="order-overview" style="margin-bottom: 20px;">
+          <div class="order-overview" style="margin-bottom: 20px">
             <div class="overview-item">
               <span class="info-label">群名称：</span>
               <span class="info-value">{{ groupOrders[selectedConversation.id].groupName }}</span>
@@ -138,7 +154,7 @@
                 <el-button
                   type="text"
                   size="small"
-                  style="margin-left: 10px; color: #409EFF;"
+                  style="margin-left: 10px; color: #409eff"
                   @click="changeMerchant"
                   v-if="
                     groupOrders[selectedConversation.id].creator === '我' &&
@@ -152,25 +168,45 @@
             </div>
             <div class="overview-item">
               <span class="info-label">总金额：</span>
-              <span class="info-value">¥{{ groupOrders[selectedConversation.id].totalAmount.toFixed(2) }}</span>
+              <span class="info-value"
+                >¥{{ groupOrders[selectedConversation.id].totalAmount.toFixed(2) }}</span
+              >
             </div>
             <div class="overview-item">
               <span class="info-label">参与人数：</span>
-              <span class="info-value">{{ groupOrders[selectedConversation.id].members.length }}人</span>
+              <span class="info-value"
+                >{{ groupOrders[selectedConversation.id].members.length }}人</span
+              >
             </div>
           </div>
 
           <!-- 快速点餐入口 -->
-          <div class="quick-order-entry" v-if="orderingMerchant && groupOrders[selectedConversation.id].status === 'active'">
+          <div
+            class="quick-order-entry"
+            v-if="orderingMerchant && groupOrders[selectedConversation.id].status === 'active'"
+          >
             <el-button type="primary" size="small" @click="openMerchantSelectDialog">
               + 继续点餐
             </el-button>
           </div>
 
-          <div class="order-items" style="margin-top: 20px;">
-            <h4 class="section-title" v-if="groupOrders[selectedConversation.id].orderItems && groupOrders[selectedConversation.id].orderItems.length > 0">订单商品</h4>
+          <div class="order-items" style="margin-top: 20px">
+            <h4
+              class="section-title"
+              v-if="
+                groupOrders[selectedConversation.id].orderItems &&
+                groupOrders[selectedConversation.id].orderItems.length > 0
+              "
+            >
+              订单商品
+            </h4>
             <div class="item-list">
-              <el-card v-for="item in groupOrders[selectedConversation.id].orderItems" :key="item.id" class="order-item-card" size="small">
+              <el-card
+                v-for="item in groupOrders[selectedConversation.id].orderItems"
+                :key="item.id"
+                class="order-item-card"
+                size="small"
+              >
                 <div class="order-item-header">
                   <span class="item-name">{{ item.name }}</span>
                   <span class="item-quantity">×{{ item.quantity }}</span>
@@ -178,20 +214,40 @@
                 </div>
 
                 <!-- 必选食材 -->
-                <div class="item-ingredients" v-if="item.requiredIngredients && item.requiredIngredients.length > 0">
+                <div
+                  class="item-ingredients"
+                  v-if="item.requiredIngredients && item.requiredIngredients.length > 0"
+                >
                   <div class="ingredient-label">必选食材:</div>
                   <div class="ingredient-list">
-                    <el-tag v-for="ingredient in item.requiredIngredients" :key="ingredient" size="small" type="info" style="margin: 0 4px 4px 0;">
+                    <el-tag
+                      v-for="ingredient in item.requiredIngredients"
+                      :key="ingredient"
+                      size="small"
+                      type="info"
+                      style="margin: 0 4px 4px 0"
+                    >
                       {{ ingredient }}
                     </el-tag>
                   </div>
                 </div>
 
                 <!-- 可选食材 -->
-                <div class="item-ingredients" v-if="item.selectedOptionalIngredients && item.selectedOptionalIngredients.length > 0">
+                <div
+                  class="item-ingredients"
+                  v-if="
+                    item.selectedOptionalIngredients && item.selectedOptionalIngredients.length > 0
+                  "
+                >
                   <div class="ingredient-label">已选可选食材:</div>
                   <div class="ingredient-list">
-                    <el-tag v-for="ingredient in item.selectedOptionalIngredients" :key="ingredient.id || ingredient" size="small" type="success" style="margin: 0 4px 4px 0;">
+                    <el-tag
+                      v-for="ingredient in item.selectedOptionalIngredients"
+                      :key="ingredient.id || ingredient"
+                      size="small"
+                      type="success"
+                      style="margin: 0 4px 4px 0"
+                    >
                       {{ ingredient.name }}
                     </el-tag>
                   </div>
@@ -206,11 +262,19 @@
             </div>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; margin-top: 20px; gap: 10px;">
-            <el-button type="primary" @click="openMerchantSelectDialog" v-if="groupOrders[selectedConversation.id]">
+          <div style="display: flex; justify-content: flex-end; margin-top: 20px; gap: 10px">
+            <el-button
+              type="primary"
+              @click="openMerchantSelectDialog"
+              v-if="groupOrders[selectedConversation.id]"
+            >
               选择商家和商品
             </el-button>
-            <el-button type="success" @click="goToOrderConfirmation" v-if="groupOrders[selectedConversation.id]">
+            <el-button
+              type="success"
+              @click="goToOrderConfirmation"
+              v-if="groupOrders[selectedConversation.id]"
+            >
               去支付
             </el-button>
           </div>
@@ -228,11 +292,24 @@
             }"
           >
             <div class="message-header">
-              <span class="sender-name">{{ message.fromId === userId.toString() ? '我' : message.fromId }}</span>
+              <span class="sender-name">{{
+                message.fromId === userId.toString() ? '我' : message.fromId
+              }}</span>
             </div>
             <div class="message-content">
               {{ message.content }}
-              <div class="message-time">{{ new Date(message.createTime).toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}</div>
+              <div class="message-time">
+                {{
+                  new Date(message.createTime).toLocaleString([], {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })
+                }}
+              </div>
             </div>
           </div>
         </div>
@@ -282,11 +359,9 @@
               :rows="2"
               readonly
             />
-            <el-button
-              type="primary"
-              size="default"
-              @click="showFriendSelectionDialog"
-            >+</el-button>
+            <el-button type="primary" size="default" @click="showFriendSelectionDialog"
+              >+</el-button
+            >
           </div>
         </el-form-item>
       </el-form>
@@ -299,17 +374,13 @@
     </el-dialog>
 
     <!-- 好友选择对话框 -->
-    <el-dialog
-      v-model="friendSelectionDialogVisible"
-      title="选择好友"
-      width="600px"
-    >
+    <el-dialog v-model="friendSelectionDialogVisible" title="选择好友" width="600px">
       <div class="friend-grid">
         <div
           v-for="friend in friends"
           :key="friend.id"
           class="friend-item"
-          :class="{ 'selected': selectedGroupMembers.includes(friend.id) }"
+          :class="{ selected: selectedGroupMembers.includes(friend.id) }"
           @click="toggleFriendSelection(friend)"
         >
           <div class="friend-avatar">{{ friend.avatar }}</div>
@@ -325,16 +396,12 @@
     </el-dialog>
 
     <!-- 新建聊天对话框 -->
-    <el-dialog
-      v-model="newChatDialogVisible"
-      title="新建聊天"
-      width="400px"
-    >
+    <el-dialog v-model="newChatDialogVisible" title="新建聊天" width="400px">
       <el-input
         v-model="searchQuery"
         placeholder="搜索好友"
         @input="searchFriends"
-        style="margin-bottom: 15px;"
+        style="margin-bottom: 15px"
       >
         <template #append>
           <el-button :icon="Search" @click="searchFriends"></el-button>
@@ -346,8 +413,23 @@
           v-for="friend in searchResults"
           :key="friend.id"
           class="friend-item"
-          :class="{ 'disabled': conversations.value && conversations.value.some(conv => conv.id === friend.id && conv.type === 'friend' || conv.type === 'private') }"
-          @click="!(conversations.value && conversations.value.some(conv => conv.id === friend.id && conv.type === 'friend' || conv.type === 'private')) && selectFriendForChat(friend)"
+          :class="{
+            disabled:
+              conversations.value &&
+              conversations.value.some(
+                (conv) =>
+                  (conv.id === friend.id && conv.type === 'friend') || conv.type === 'private'
+              )
+          }"
+          @click="
+            !(
+              conversations.value &&
+              conversations.value.some(
+                (conv) =>
+                  (conv.id === friend.id && conv.type === 'friend') || conv.type === 'private'
+              )
+            ) && selectFriendForChat(friend)
+          "
         >
           <div class="friend-avatar">{{ friend.avatar }}</div>
           <div class="friend-info">
@@ -368,7 +450,7 @@
       title="添加好友"
       :width="selectedUser ? '800px' : '400px'"
     >
-      <div style="display: flex; height: 500px;">
+      <div style="display: flex; height: 500px">
         <div
           :style="{
             flex: selectedUser ? '1' : 'auto',
@@ -376,12 +458,22 @@
             borderRight: selectedUser ? '1px solid #eee' : 'none',
             paddingRight: selectedUser ? '15px' : '0',
             overflowY: 'auto'
-          }">
-
-          <div style="display: flex; align-items: center; margin-bottom: 15px;">
-            <el-dropdown trigger="click" style="margin-right: 8px;" @command="handleSearchTypeChange">
+          }"
+        >
+          <div style="display: flex; align-items: center; margin-bottom: 15px">
+            <el-dropdown
+              trigger="click"
+              style="margin-right: 8px"
+              @command="handleSearchTypeChange"
+            >
               <el-button size="small">
-                {{ searchType === 'phone' ? '手机号' : searchType === 'email' ? '邮箱' : '用户名/昵称' }}
+                {{
+                  searchType === 'phone'
+                    ? '手机号'
+                    : searchType === 'email'
+                      ? '邮箱'
+                      : '用户名/昵称'
+                }}
                 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
               </el-button>
               <template #dropdown>
@@ -396,16 +488,24 @@
             <el-input
               v-model="friendSearchQuery"
               placeholder="搜索内容"
-              style="flex: 1;"
+              style="flex: 1"
               @keyup.enter="searchUsersForAdd"
             >
               <template #append>
-                <el-button :icon="Search" type="primary" size="small" @click="searchUsersForAdd"></el-button>
+                <el-button
+                  :icon="Search"
+                  type="primary"
+                  size="small"
+                  @click="searchUsersForAdd"
+                ></el-button>
               </template>
             </el-input>
           </div>
 
-          <div v-if="addFriendResults.length === 0" style="margin: 20px 0; text-align: center; color: #999;">
+          <div
+            v-if="addFriendResults.length === 0"
+            style="margin: 20px 0; text-align: center; color: #999"
+          >
             暂无搜索结果
           </div>
           <div class="user-list" v-else>
@@ -420,7 +520,13 @@
                 <div class="user-avatar">{{ user.avatar }}</div>
                 <div class="user-info">
                   <div class="user-name">
-                    {{ searchType === 'email' ? user.email : searchType === 'phone' ? user.phone : user.nickname || user.username }}
+                    {{
+                      searchType === 'email'
+                        ? user.email
+                        : searchType === 'phone'
+                          ? user.phone
+                          : user.nickname || user.username
+                    }}
                   </div>
                   <div class="user-detail" v-if="searchType !== 'email' && user.email">
                     <span class="detail-label">邮箱: </span>{{ user.email }}
@@ -429,18 +535,17 @@
                     <span class="detail-label">手机号: </span>{{ user.phone }}
                   </div>
                 </div>
-                <el-button
-                  type="primary"
-                  size="small"
-                  @click.stop="sendFriendRequest(user)"
-                >
+                <el-button type="primary" size="small" @click.stop="sendFriendRequest(user)">
                   加好友
                 </el-button>
               </div>
             </transition-group>
           </div>
 
-          <div v-if="addFriendResults.length > pageSize" style="text-align: center; margin-top: 15px;">
+          <div
+            v-if="addFriendResults.length > pageSize"
+            style="text-align: center; margin-top: 15px"
+          >
             <el-pagination
               v-model:current-page="currentPage"
               v-model:page-size="pageSize"
@@ -451,8 +556,8 @@
           </div>
         </div>
 
-        <div v-if="selectedUser" style="flex: 1; padding-left: 15px;">
-            <div class="user-detail-header">
+        <div v-if="selectedUser" style="flex: 1; padding-left: 15px">
+          <div class="user-detail-header">
             <div class="detail-avatar">{{ selectedUser.avatar }}</div>
             <div class="detail-name">
               {{ selectedUser.nickname || selectedUser.username }}
@@ -487,11 +592,7 @@
     </el-dialog>
 
     <!-- 商家选择对话框 -->
-    <el-dialog
-      v-model="merchantSelectDialogVisible"
-      title="选择商家"
-      width="600px"
-    >
+    <el-dialog v-model="merchantSelectDialogVisible" title="选择商家" width="600px">
       <div class="merchant-list">
         <div
           v-for="merchant in merchants"
@@ -520,20 +621,25 @@
       width="600px"
     >
       <div class="product-list" v-if="selectedMerchant">
-        <div
-          v-for="product in selectedMerchant.products"
-          :key="product.id"
-          class="product-item"
-        >
+        <div v-for="product in selectedMerchant.products" :key="product.id" class="product-item">
           <div class="product-info">
             <h4 class="product-name">{{ product.name }}</h4>
             <p class="product-description">{{ product.description }}</p>
 
             <!-- 必选食材 -->
-            <div class="product-ingredients" v-if="product.requiredIngredients && product.requiredIngredients.length > 0">
+            <div
+              class="product-ingredients"
+              v-if="product.requiredIngredients && product.requiredIngredients.length > 0"
+            >
               <div class="ingredient-label">必选食材:</div>
               <div class="ingredient-list">
-                <el-tag v-for="ingredient in product.requiredIngredients" :key="ingredient" size="small" type="info" style="margin: 0 4px 4px 0;">
+                <el-tag
+                  v-for="ingredient in product.requiredIngredients"
+                  :key="ingredient"
+                  size="small"
+                  type="info"
+                  style="margin: 0 4px 4px 0"
+                >
                   {{ ingredient }}
                 </el-tag>
               </div>
@@ -546,34 +652,45 @@
               type="primary"
               size="small"
               @click="toggleProductSelection(product)"
-              :class="{ 'is-selected': selectedProducts.some(item => item.id === product.id) }"
+              :class="{ 'is-selected': selectedProducts.some((item) => item.id === product.id) }"
             >
-              {{ selectedProducts.some(item => item.id === product.id) ? '已选择' : '选择' }}
+              {{ selectedProducts.some((item) => item.id === product.id) ? '已选择' : '选择' }}
             </el-button>
-            <div class="quantity-control" v-if="selectedProducts.some(item => item.id === product.id)">
-              <el-button
-                size="small"
-                @click="updateProductQuantity(product, -1)"
-              >-</el-button>
-              <span class="quantity">{{ selectedProducts.find(item => item.id === product.id).quantity }}</span>
-              <el-button
-                size="small"
-                @click="updateProductQuantity(product, 1)"
-              >+</el-button>
+            <div
+              class="quantity-control"
+              v-if="selectedProducts.some((item) => item.id === product.id)"
+            >
+              <el-button size="small" @click="updateProductQuantity(product, -1)">-</el-button>
+              <span class="quantity">{{
+                selectedProducts.find((item) => item.id === product.id).quantity
+              }}</span>
+              <el-button size="small" @click="updateProductQuantity(product, 1)">+</el-button>
             </div>
             <!-- 可选食材选择 -->
-            <div class="optional-ingredients" v-if="selectedProducts.some(item => item.id === product.id) && product.optionalIngredients && product.optionalIngredients.length > 0">
+            <div
+              class="optional-ingredients"
+              v-if="
+                selectedProducts.some((item) => item.id === product.id) &&
+                product.optionalIngredients &&
+                product.optionalIngredients.length > 0
+              "
+            >
               <div class="ingredient-label">可选食材:</div>
               <div class="ingredient-list">
                 <el-checkbox-group
                   v-model="productSelectedOptionalIngredients[product.id]"
-                  @change="updateProductOptionalIngredients(product.id, productSelectedOptionalIngredients[product.id])"
+                  @change="
+                    updateProductOptionalIngredients(
+                      product.id,
+                      productSelectedOptionalIngredients[product.id]
+                    )
+                  "
                 >
                   <el-checkbox
                     v-for="ingredient in product.optionalIngredients"
                     :key="ingredient.id"
                     :label="ingredient"
-                    style="margin: 0 8px 8px 0;"
+                    style="margin: 0 8px 8px 0"
                   >
                     {{ ingredient.name }}
                   </el-checkbox>
@@ -582,22 +699,22 @@
             </div>
 
             <el-input
-              v-if="selectedProducts.some(item => item.id === product.id)"
+              v-if="selectedProducts.some((item) => item.id === product.id)"
               v-model="productRemarks[product.id]"
               placeholder="添加备注..."
               size="small"
               type="textarea"
               :rows="1"
               @input="updateProductRemark(product.id, productRemarks[product.id])"
-              style="width: 100%; margin-top: 8px;"
+              style="width: 100%; margin-top: 8px"
             />
             <!-- 加入购物车按钮 -->
             <el-button
-              v-if="selectedProducts.some(item => item.id === product.id)"
+              v-if="selectedProducts.some((item) => item.id === product.id)"
               type="success"
               size="small"
               @click="addProductToCart(product)"
-              style="width: 100%; margin-top: 8px;"
+              style="width: 100%; margin-top: 8px"
             >
               加入购物车
             </el-button>
@@ -614,11 +731,7 @@
     </el-dialog>
 
     <!-- 群聊详情对话框 -->
-    <el-dialog
-      v-model="groupDetailDialogVisible"
-      title="群聊详情"
-      width="500px"
-    >
+    <el-dialog v-model="groupDetailDialogVisible" title="群聊详情" width="500px">
       <div v-if="currentGroupInfo" class="group-detail-content">
         <div class="group-avatar">{{ currentGroupInfo.avatar }}</div>
         <div class="group-name">{{ currentGroupInfo.name }}</div>
@@ -628,7 +741,9 @@
 
         <div class="group-members">
           <div class="section-title">群成员:</div>
-          <div v-for="member in currentGroupInfo.members" :key="member" class="member-item">{{ member }}</div>
+          <div v-for="member in currentGroupInfo.members" :key="member" class="member-item">
+            {{ member }}
+          </div>
         </div>
       </div>
       <template #footer>
@@ -641,460 +756,539 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { ShoppingCart, Search, ArrowDown } from '@element-plus/icons-vue';
-import api from '../../utils/api.js';
-import { decodeJwt } from '../../utils/api.js';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { ShoppingCart, Search, ArrowDown } from '@element-plus/icons-vue'
+import api from '../../utils/api.js'
+import { decodeJwt } from '../../utils/api.js'
 
-const router = useRouter();
+const router = useRouter()
 
 // 当前登录用户ID
-const userId = ref(parseInt(localStorage.getItem('userId') || '1', 10));
-const token = localStorage.getItem('token');
+const userId = ref(parseInt(localStorage.getItem('userId') || '1', 10))
+const token = localStorage.getItem('token')
 if (token) {
-  const decodedToken = decodeJwt(token);
+  const decodedToken = decodeJwt(token)
   if (decodedToken && decodedToken.userId) {
-    userId.value = decodedToken.userId;
+    userId.value = decodedToken.userId
   }
 }
 
 // Context menu state
-const contextMenuVisible = ref(false);
-const selectedContextConversation = ref(null);
-const contextMenuPosition = ref({ x: 0, y: 0 });
+const contextMenuVisible = ref(false)
+const selectedContextConversation = ref(null)
+const contextMenuPosition = ref({ x: 0, y: 0 })
 
 // 统一的聊天会话列表 - 从后端获取
-const conversations = ref([]);
+const conversations = ref([])
 
 // 聊天记录 - 根据不同会话存储不同的聊天记录
-const chatHistory = ref({});
+const chatHistory = ref({})
 
 // 当前显示的聊天记录
-const chatMessages = ref([]);
+const chatMessages = ref([])
 
 // 当前选中的会话
-const selectedConversation = ref(null);
+const selectedConversation = ref(null)
 
 // 模拟群订单数据
 // 群订单 - 改为对象存储，key为群聊会话ID，实现多群订单独立
-const groupOrders = ref({});
+const groupOrders = ref({})
 // 群订单购物车悬浮窗可见性
-const orderDrawerVisible = ref(false);
+const orderDrawerVisible = ref(false)
 
 // 悬浮按钮拖拽功能
-const floatBtnRef = ref(null); // 按钮容器ref
-const isDragging = ref(false);
-const hasDragged = ref(false); // 用于判断是否是拖拽操作还是点击操作
-const startX = ref(0);
-const startY = ref(0);
+const floatBtnRef = ref(null) // 按钮容器ref
+const isDragging = ref(false)
+const hasDragged = ref(false) // 用于判断是否是拖拽操作还是点击操作
+const startX = ref(0)
+const startY = ref(0)
 
 // 拖拽事件处理函数引用，用于移除事件监听器
-let handleMouseMove = null;
-let handleMouseUp = null;
+let handleMouseMove = null
+let handleMouseUp = null
 
 // 点击悬浮按钮处理函数
 const handleCartClick = () => {
   // 如果是拖拽操作后的松绑, 不触发点击
   if (hasDragged.value) {
-    hasDragged.value = false;
-    return;
+    hasDragged.value = false
+    return
   }
 
   // 只有在不是拖拽状态下才打开抽屉
   if (!isDragging.value) {
-    orderDrawerVisible.value = true;
+    orderDrawerVisible.value = true
   }
-};
-
+}
 
 // 拖拽过程中
 const onDrag = (e) => {
-  hasDragged.value = true; // 标记为拖拽操作
+  hasDragged.value = true // 标记为拖拽操作
   if (isDragging.value && floatBtnRef.value) {
-    const floatBtn = floatBtnRef.value;
+    const floatBtn = floatBtnRef.value
     // 计算新位置
-    let newX = e.clientX - startX.value;
-    let newY = e.clientY - startY.value;
+    let newX = e.clientX - startX.value
+    let newY = e.clientY - startY.value
 
     // 限制按钮在视窗内
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const btnWidth = floatBtn.offsetWidth;
-    const btnHeight = floatBtn.offsetHeight;
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight
+    const btnWidth = floatBtn.offsetWidth
+    const btnHeight = floatBtn.offsetHeight
 
-    newX = Math.max(0, Math.min(newX, windowWidth - btnWidth));
-    newY = Math.max(0, Math.min(newY, windowHeight - btnHeight));
+    newX = Math.max(0, Math.min(newX, windowWidth - btnWidth))
+    newY = Math.max(0, Math.min(newY, windowHeight - btnHeight))
 
     // 更新按钮位置
-    floatBtn.style.left = newX + 'px';
-    floatBtn.style.top = newY + 'px';
-    floatBtn.style.bottom = 'auto';
-    floatBtn.style.right = 'auto';
+    floatBtn.style.left = newX + 'px'
+    floatBtn.style.top = newY + 'px'
+    floatBtn.style.bottom = 'auto'
+    floatBtn.style.right = 'auto'
 
-    e.preventDefault();
+    e.preventDefault()
   }
-};
+}
 
 // 声明模块级事件处理器变量
-let handleMouseMoveFn = null;
-let handleMouseUpFn = null;
+let handleMouseMoveFn = null
+let handleMouseUpFn = null
 
 // 开始拖拽
 const startDrag = (e) => {
-  if (!floatBtnRef.value) return;
+  if (!floatBtnRef.value) return
 
-  isDragging.value = true;
+  isDragging.value = true
   // 记录初始位置，确保使用整个按钮容器进行计算
-  startX.value = e.clientX - floatBtnRef.value.offsetLeft;
-  startY.value = e.clientY - floatBtnRef.value.offsetTop;
+  startX.value = e.clientX - floatBtnRef.value.offsetLeft
+  startY.value = e.clientY - floatBtnRef.value.offsetTop
 
   // 将拖拽事件绑定到document以避免阻尼效果
   handleMouseMoveFn = (moveEvent) => {
-    onDrag(moveEvent);
-  };
+    onDrag(moveEvent)
+  }
 
   handleMouseUpFn = () => {
-    stopDrag();
-  };
+    stopDrag()
+  }
 
   // 添加事件监听器
-  document.addEventListener('mousemove', handleMouseMoveFn);
-  document.addEventListener('mouseup', handleMouseUpFn);
+  document.addEventListener('mousemove', handleMouseMoveFn)
+  document.addEventListener('mouseup', handleMouseUpFn)
 
   // 防止默认的文本选择行为
-  e.preventDefault();
-};
+  e.preventDefault()
+}
 
 // 停止拖拽
 const stopDrag = () => {
-  isDragging.value = false;
+  isDragging.value = false
 
   // 移除document上的事件监听器
   if (handleMouseMoveFn) {
-    document.removeEventListener('mousemove', handleMouseMoveFn);
-    handleMouseMoveFn = null;
+    document.removeEventListener('mousemove', handleMouseMoveFn)
+    handleMouseMoveFn = null
   }
   if (handleMouseUpFn) {
-    document.removeEventListener('mouseup', handleMouseUpFn);
-    handleMouseUpFn = null;
+    document.removeEventListener('mouseup', handleMouseUpFn)
+    handleMouseUpFn = null
   }
-};
+}
 
 // 阻止文本选择
 const handleSelectStart = (e) => {
-  e.preventDefault();
-};
+  e.preventDefault()
+}
 
 // 商家选择相关
-const merchantSelectDialogVisible = ref(false);
-const productSelectDialogVisible = ref(false);
-const selectedMerchant = ref(null);
+const merchantSelectDialogVisible = ref(false)
+const productSelectDialogVisible = ref(false)
+const selectedMerchant = ref(null)
 
 // 模拟商家列表 - 包含食材信息
 const merchants = ref([
-  { id: 101, name: '佳食餐馆', avatar: '🏪', type: 'Chinese', products: [
-    { id: 1, name: '麻婆豆腐', price: 18.8, description: '麻辣鲜香', requiredIngredients: ['豆腐', '牛肉末', '豆瓣酱'], optionalIngredients: [{ id: 1, name: '加麻 (+1.0)' }, { id: 2, name: '加辣 (+1.0)' }, { id: 3, name: '加葱花 (+0.5)' }] },
-    { id: 2, name: '宫保鸡丁', price: 22.8, description: '酸甜可口', requiredIngredients: ['鸡肉', '花生', '辣椒'], optionalIngredients: [{ id: 1, name: '加花生 (+2.0)' }, { id: 2, name: '加辣椒 (+1.0)' }] },
-    { id: 3, name: '回锅肉', price: 24.8, description: '经典川菜', requiredIngredients: ['五花肉', '蒜苗', '豆瓣酱'], optionalIngredients: [{ id: 1, name: '加蒜苗 (+1.0)' }, { id: 2, name: '加木耳 (+1.5)' }] }
-  ]},
-  { id: 102, name: '美味小吃店', avatar: '🏪', type: 'Snack', products: [
-    { id: 1, name: '奶茶', price: 12.8, description: '珍珠奶茶', requiredIngredients: ['牛奶', '茶', '珍珠'], optionalIngredients: [{ id: 1, name: '加冰 (+0.0)' }, { id: 2, name: '加珍珠 (+1.0)' }, { id: 3, name: '加椰果 (+1.0)' }] },
-    { id: 2, name: '汉堡', price: 15.8, description: '牛肉汉堡', requiredIngredients: ['面包', '牛肉', '生菜'], optionalIngredients: [{ id: 1, name: '加芝士 (+2.0)' }, { id: 2, name: '加番茄 (+0.5)' }, { id: 3, name: '加酱料 (+0.0)' }] },
-    { id: 3, name: '炸鸡', price: 18.8, description: '香脆炸鸡', requiredIngredients: ['鸡肉', '面粉', '油'], optionalIngredients: [{ id: 1, name: '加番茄酱 (+0.5)' }, { id: 2, name: '加孜然 (+0.5)' }, { id: 3, name: '加辣椒 (+0.5)' }] }
-  ]}
-]);
+  {
+    id: 101,
+    name: '佳食餐馆',
+    avatar: '🏪',
+    type: 'Chinese',
+    products: [
+      {
+        id: 1,
+        name: '麻婆豆腐',
+        price: 18.8,
+        description: '麻辣鲜香',
+        requiredIngredients: ['豆腐', '牛肉末', '豆瓣酱'],
+        optionalIngredients: [
+          { id: 1, name: '加麻 (+1.0)' },
+          { id: 2, name: '加辣 (+1.0)' },
+          { id: 3, name: '加葱花 (+0.5)' }
+        ]
+      },
+      {
+        id: 2,
+        name: '宫保鸡丁',
+        price: 22.8,
+        description: '酸甜可口',
+        requiredIngredients: ['鸡肉', '花生', '辣椒'],
+        optionalIngredients: [
+          { id: 1, name: '加花生 (+2.0)' },
+          { id: 2, name: '加辣椒 (+1.0)' }
+        ]
+      },
+      {
+        id: 3,
+        name: '回锅肉',
+        price: 24.8,
+        description: '经典川菜',
+        requiredIngredients: ['五花肉', '蒜苗', '豆瓣酱'],
+        optionalIngredients: [
+          { id: 1, name: '加蒜苗 (+1.0)' },
+          { id: 2, name: '加木耳 (+1.5)' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 102,
+    name: '美味小吃店',
+    avatar: '🏪',
+    type: 'Snack',
+    products: [
+      {
+        id: 1,
+        name: '奶茶',
+        price: 12.8,
+        description: '珍珠奶茶',
+        requiredIngredients: ['牛奶', '茶', '珍珠'],
+        optionalIngredients: [
+          { id: 1, name: '加冰 (+0.0)' },
+          { id: 2, name: '加珍珠 (+1.0)' },
+          { id: 3, name: '加椰果 (+1.0)' }
+        ]
+      },
+      {
+        id: 2,
+        name: '汉堡',
+        price: 15.8,
+        description: '牛肉汉堡',
+        requiredIngredients: ['面包', '牛肉', '生菜'],
+        optionalIngredients: [
+          { id: 1, name: '加芝士 (+2.0)' },
+          { id: 2, name: '加番茄 (+0.5)' },
+          { id: 3, name: '加酱料 (+0.0)' }
+        ]
+      },
+      {
+        id: 3,
+        name: '炸鸡',
+        price: 18.8,
+        description: '香脆炸鸡',
+        requiredIngredients: ['鸡肉', '面粉', '油'],
+        optionalIngredients: [
+          { id: 1, name: '加番茄酱 (+0.5)' },
+          { id: 2, name: '加孜然 (+0.5)' },
+          { id: 3, name: '加辣椒 (+0.5)' }
+        ]
+      }
+    ]
+  }
+])
 
 // 选中的商品列表 - 包含备注
-const selectedProducts = ref([]);
+const selectedProducts = ref([])
 
 // 更换商家
 const changeMerchant = () => {
-  if (!selectedConversation.value) return;
+  if (!selectedConversation.value) return
 
   // 直接打开商家选择对话框
-  merchantSelectDialogVisible.value = true;
+  merchantSelectDialogVisible.value = true
 
   // 在选择新商家时，会自动覆盖旧的商家信息
   // 订单商品和总金额将在 confirmProductSelection 中重新计算，但我们也可以提前清空
-  const currentOrder = groupOrders.value[selectedConversation.value.id];
+  const currentOrder = groupOrders.value[selectedConversation.value.id]
   if (currentOrder) {
     // 提前清空订单商品和总金额
-    currentOrder.orderItems = [];
-    currentOrder.totalAmount = 0;
+    currentOrder.orderItems = []
+    currentOrder.totalAmount = 0
   }
-};
+}
 
 // 打开商家/商品选择对话框
 const openMerchantSelectDialog = () => {
   if (!selectedConversation.value || !groupOrders.value[selectedConversation.value.id]) {
-    ElMessage.error('请先创建群订单');
-    return;
+    ElMessage.error('请先创建群订单')
+    return
   }
 
   // 如果已经有选中的商家，直接打开商品选择对话框
   if (orderingMerchant.value) {
     // 恢复selectedMerchant，以便商品对话框能正确显示
-    selectedMerchant.value = orderingMerchant.value;
-    productSelectDialogVisible.value = true;
+    selectedMerchant.value = orderingMerchant.value
+    productSelectDialogVisible.value = true
   } else {
     // 否则打开商家选择对话框
-    merchantSelectDialogVisible.value = true;
+    merchantSelectDialogVisible.value = true
   }
-};
+}
 
 // 已选择的下单商家
-const orderingMerchant = ref(null);
+const orderingMerchant = ref(null)
 
 // 选择商家
 const selectMerchant = (merchant) => {
-  selectedMerchant.value = merchant;
-  orderingMerchant.value = merchant; // 标记该商家为群订单的下单商家
-  selectedProducts.value = []; // 清空已选商品
-  productRemarks.value = {}; // 清空商品备注
-  merchantSelectDialogVisible.value = false;
+  selectedMerchant.value = merchant
+  orderingMerchant.value = merchant // 标记该商家为群订单的下单商家
+  selectedProducts.value = [] // 清空已选商品
+  productRemarks.value = {} // 清空商品备注
+  merchantSelectDialogVisible.value = false
 
   // 更新群订单信息
   if (selectedConversation.value && groupOrders.value[selectedConversation.value.id]) {
-    const currentOrder = groupOrders.value[selectedConversation.value.id];
-    currentOrder.merchantId = merchant.id;
-    currentOrder.merchantName = merchant.name;
+    const currentOrder = groupOrders.value[selectedConversation.value.id]
+    currentOrder.merchantId = merchant.id
+    currentOrder.merchantName = merchant.name
   }
 
   // 发送系统消息通知群成员已选择/更换商家
-  const action = groupOrders.value[selectedConversation.value.id].merchantId ? '更换' : '选择';
+  const action = groupOrders.value[selectedConversation.value.id].merchantId ? '更换' : '选择'
   const merchantSelectedMsg = {
     id: chatMessages.value.length + 1,
     sender: '系统',
     content: `已${action}商家：${merchant.name}${action === '更换' ? '，购物车已清空' : '，大家可以开始点餐了'}！`,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  };
-  chatMessages.value.push(merchantSelectedMsg);
+  }
+  chatMessages.value.push(merchantSelectedMsg)
 
   // 更新会话列表的最后一条消息
-  selectedConversation.value.lastMessage = `系统: 已选择商家：${merchant.name}`;
-  selectedConversation.value.time = merchantSelectedMsg.time;
+  selectedConversation.value.lastMessage = `系统: 已选择商家：${merchant.name}`
+  selectedConversation.value.time = merchantSelectedMsg.time
 
   // 打开商品选择对话框
-  productSelectDialogVisible.value = true;
-};
+  productSelectDialogVisible.value = true
+}
 
 // 商品备注
-const productRemarks = ref({});
+const productRemarks = ref({})
 
 // 商品选中的可选食材
-const productSelectedOptionalIngredients = ref({});
+const productSelectedOptionalIngredients = ref({})
 
 // 切换商品选择
 const toggleProductSelection = (product) => {
-  const index = selectedProducts.value.findIndex(item => item.id === product.id);
+  const index = selectedProducts.value.findIndex((item) => item.id === product.id)
   if (index === -1) {
     // 初始化可选食材为空数组
-    productSelectedOptionalIngredients.value[product.id] = productSelectedOptionalIngredients.value[product.id] || [];
+    productSelectedOptionalIngredients.value[product.id] =
+      productSelectedOptionalIngredients.value[product.id] || []
     selectedProducts.value.push({
       ...product,
       quantity: 1,
       remark: productRemarks.value[product.id] || '',
       requiredIngredients: [...product.requiredIngredients], // 复制必选食材
       selectedOptionalIngredients: productSelectedOptionalIngredients.value[product.id] || [] // 已选可选食材
-    });
+    })
   } else {
-    selectedProducts.value.splice(index, 1);
+    selectedProducts.value.splice(index, 1)
   }
-};
+}
 
 // 更新商品备注
 const updateProductRemark = (productId, remark) => {
-  productRemarks.value[productId] = remark;
+  productRemarks.value[productId] = remark
 
   // 更新已选商品列表中的备注
-  const index = selectedProducts.value.findIndex(item => item.id === productId);
+  const index = selectedProducts.value.findIndex((item) => item.id === productId)
   if (index !== -1) {
-    selectedProducts.value[index].remark = remark;
+    selectedProducts.value[index].remark = remark
   }
-};
+}
 
 // 更新商品可选食材
 const updateProductOptionalIngredients = (productId, ingredients) => {
-  productSelectedOptionalIngredients.value[productId] = ingredients;
+  productSelectedOptionalIngredients.value[productId] = ingredients
 
   // 更新已选商品列表中的可选食材
-  const index = selectedProducts.value.findIndex(item => item.id === productId);
+  const index = selectedProducts.value.findIndex((item) => item.id === productId)
   if (index !== -1) {
-    selectedProducts.value[index].selectedOptionalIngredients = ingredients;
+    selectedProducts.value[index].selectedOptionalIngredients = ingredients
   }
-};
+}
 
 // 更新商品数量
 const updateProductQuantity = (product, change) => {
-  const index = selectedProducts.value.findIndex(item => item.id === product.id);
+  const index = selectedProducts.value.findIndex((item) => item.id === product.id)
   if (index !== -1) {
-    selectedProducts.value[index].quantity += change;
+    selectedProducts.value[index].quantity += change
     if (selectedProducts.value[index].quantity <= 0) {
-      selectedProducts.value.splice(index, 1);
+      selectedProducts.value.splice(index, 1)
     }
   }
-};
+}
 
 // 单个商品加入购物车
 const addProductToCart = (product) => {
   // 找到该商品在已选商品列表中的位置
-  const selectedProductIndex = selectedProducts.value.findIndex(item => item.id === product.id);
-  if (selectedProductIndex === -1) return;
+  const selectedProductIndex = selectedProducts.value.findIndex((item) => item.id === product.id)
+  if (selectedProductIndex === -1) return
 
   // 获取完整的商品信息，包括自定义
-  const customizedProduct = selectedProducts.value[selectedProductIndex];
+  const customizedProduct = selectedProducts.value[selectedProductIndex]
 
   // 更新群订单
   if (selectedConversation.value && groupOrders.value[selectedConversation.value.id]) {
-    const currentOrder = groupOrders.value[selectedConversation.value.id];
+    const currentOrder = groupOrders.value[selectedConversation.value.id]
 
     // 检查该商品是否已经在订单中，需要比较ID、可选食材和备注是否完全相同
-    const existingItemIndex = currentOrder.orderItems.findIndex(item =>
-      item.id === customizedProduct.id &&
-      JSON.stringify(item.selectedOptionalIngredients) === JSON.stringify(customizedProduct.selectedOptionalIngredients) &&
-      item.remark === customizedProduct.remark
-    );
+    const existingItemIndex = currentOrder.orderItems.findIndex(
+      (item) =>
+        item.id === customizedProduct.id &&
+        JSON.stringify(item.selectedOptionalIngredients) ===
+          JSON.stringify(customizedProduct.selectedOptionalIngredients) &&
+        item.remark === customizedProduct.remark
+    )
 
     if (existingItemIndex === -1) {
       // 如果没有完全相同的商品，直接添加新的商品项
-      currentOrder.orderItems.push({ ...customizedProduct });
+      currentOrder.orderItems.push({ ...customizedProduct })
     } else {
       // 如果有完全相同的商品，更新现有商品数量
-      currentOrder.orderItems[existingItemIndex].quantity += customizedProduct.quantity;
+      currentOrder.orderItems[existingItemIndex].quantity += customizedProduct.quantity
     }
 
     // 更新总金额
     currentOrder.totalAmount = currentOrder.orderItems.reduce((total, item) => {
-      return total + (item.price * item.quantity);
-    }, 0);
+      return total + item.price * item.quantity
+    }, 0)
 
-    ElMessage.success('商品已加入购物车');
+    ElMessage.success('商品已加入购物车')
   }
 
   // 清空该商品的配置
-  clearProductConfiguration(product.id);
-};
+  clearProductConfiguration(product.id)
+}
 
 // 清空商品配置
 const clearProductConfiguration = (productId) => {
   // 从已选商品列表中移除
-  const index = selectedProducts.value.findIndex(item => item.id === productId);
+  const index = selectedProducts.value.findIndex((item) => item.id === productId)
   if (index !== -1) {
-    selectedProducts.value.splice(index, 1);
+    selectedProducts.value.splice(index, 1)
   }
 
   // 清空可选食材
-  productSelectedOptionalIngredients.value[productId] = [];
+  productSelectedOptionalIngredients.value[productId] = []
 
   // 清空备注
-  productRemarks.value[productId] = '';
-};
+  productRemarks.value[productId] = ''
+}
 
 // 确认选择商品
 const confirmProductSelection = () => {
   if (selectedProducts.value.length === 0) {
-    ElMessage.error('请至少选择一个商品');
-    return;
+    ElMessage.error('请至少选择一个商品')
+    return
   }
 
   // 更新群订单
   if (selectedConversation.value && groupOrders.value[selectedConversation.value.id]) {
-    const currentOrder = groupOrders.value[selectedConversation.value.id];
+    const currentOrder = groupOrders.value[selectedConversation.value.id]
     // 将商品添加到群订单
-    selectedProducts.value.forEach(product => {
+    selectedProducts.value.forEach((product) => {
       // 检查该商品是否已经在订单中，需要比较ID、可选食材和备注是否完全相同
-      const existingItemIndex = currentOrder.orderItems.findIndex(item =>
-        item.id === product.id &&
-        JSON.stringify(item.selectedOptionalIngredients) === JSON.stringify(product.selectedOptionalIngredients) &&
-        item.remark === product.remark
-      );
+      const existingItemIndex = currentOrder.orderItems.findIndex(
+        (item) =>
+          item.id === product.id &&
+          JSON.stringify(item.selectedOptionalIngredients) ===
+            JSON.stringify(product.selectedOptionalIngredients) &&
+          item.remark === product.remark
+      )
 
       if (existingItemIndex === -1) {
         // 如果没有完全相同的商品，直接添加新的商品项
-        currentOrder.orderItems.push({ ...product });
+        currentOrder.orderItems.push({ ...product })
       } else {
         // 如果有完全相同的商品，更新现有商品数量
-        currentOrder.orderItems[existingItemIndex].quantity += product.quantity;
+        currentOrder.orderItems[existingItemIndex].quantity += product.quantity
       }
-    });
+    })
 
     // 更新总金额
     currentOrder.totalAmount = currentOrder.orderItems.reduce((total, item) => {
-      return total + (item.price * item.quantity);
-    }, 0);
+      return total + item.price * item.quantity
+    }, 0)
 
-    ElMessage.success('商品已添加到群订单');
+    ElMessage.success('商品已添加到群订单')
   }
 
   // 关闭对话框
-  productSelectDialogVisible.value = false;
-  selectedProducts.value = [];
-  selectedMerchant.value = null;
-};
+  productSelectDialogVisible.value = false
+  selectedProducts.value = []
+  selectedMerchant.value = null
+}
 
 // 新消息内容
-const newMessage = ref('');
+const newMessage = ref('')
 
 // 排序后的会话列表 - 置顶会话在前，然后按时间降序排列
 const sortedConversations = computed(() => {
   return [...conversations.value].sort((a, b) => {
     // 置顶会话在前
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
+    if (a.pinned && !b.pinned) return -1
+    if (!a.pinned && b.pinned) return 1
 
     // 按时间降序排列
-    return new Date(b.time) - new Date(a.time);
-  });
-});
-
+    return new Date(b.time) - new Date(a.time)
+  })
+})
 
 // 页面加载
 onMounted(async () => {
   // 从后端获取会话列表、好友列表和群列表
   try {
     // 1. 获取会话列表
-    const conversationsResponse = await api.get(`/v1/chat/users/${userId.value}/chat-sessions`);
+    const conversationsResponse = await api.get(`/v1/chat/users/${userId.value}/chat-sessions`)
 
     // 2. 获取好友列表
-    await fetchFriends();
+    await fetchFriends()
 
     // 3. 获取群列表
-    await fetchGroups();
+    await fetchGroups()
 
     // 处理会话列表数据
     if (conversationsResponse.code === '200') {
-      conversations.value = conversationsResponse.data;
+      conversations.value = conversationsResponse.data
 
       // 默认选中第一个会话并加载聊天记录
       if (sortedConversations.value.length > 0) {
-        selectedConversation.value = sortedConversations.value[0];
+        selectedConversation.value = sortedConversations.value[0]
         // 加载对应的聊天记录
-        await loadChatMessages(selectedConversation.value.id);
+        await loadChatMessages(selectedConversation.value.id)
       }
     }
   } catch (error) {
-    console.error('加载数据失败:', error);
-    ElMessage.error('加载数据失败，请稍后重试');
+    console.error('加载数据失败:', error)
+    ElMessage.error('加载数据失败，请稍后重试')
   }
-});
+})
 
 // 点击页面其他地方关闭右键菜单
 const closeContextMenu = () => {
-  contextMenuVisible.value = false;
-  selectedContextConversation.value = null;
-};
+  contextMenuVisible.value = false
+  selectedContextConversation.value = null
+}
 
 // 添加全局点击事件监听器
 onMounted(() => {
-  document.addEventListener('click', closeContextMenu);
-});
+  document.addEventListener('click', closeContextMenu)
+})
 
 // 在组件卸载时移除事件监听器
 onBeforeUnmount(() => {
-  document.removeEventListener('click', closeContextMenu);
-});
+  document.removeEventListener('click', closeContextMenu)
+})
 
 // 加载聊天记录的函数
 const loadChatMessages = async (sessionId) => {
@@ -1102,87 +1296,87 @@ const loadChatMessages = async (sessionId) => {
   if (chatHistory.value[sessionId]) {
     chatMessages.value = Array.isArray(chatHistory.value[sessionId])
       ? chatHistory.value[sessionId]
-      : chatHistory.value[sessionId].records;
-    return;
+      : chatHistory.value[sessionId].records
+    return
   }
 
   // 从后端获取聊天记录
   try {
     // 假设获取聊天记录的API路径为 /api/v1/chat/{sessionId}/messages
-    const response = await api.get(`/v1/chat/${sessionId}/messages`);
+    const response = await api.get(`/v1/chat/${sessionId}/messages`)
 
     if (response.code === '200') {
-      const messages = response.data;
+      const messages = response.data
       // 检查是否是分页对象，如果是则取records属性
-      const messagesArray = messages.records || messages;
-      chatHistory.value[sessionId] = messagesArray;
-      chatMessages.value = messagesArray;
+      const messagesArray = messages.records || messages
+      chatHistory.value[sessionId] = messagesArray
+      chatMessages.value = messagesArray
     }
   } catch (error) {
-    console.error('加载聊天记录失败:', error);
-    ElMessage.error('加载聊天记录失败，请稍后重试');
+    console.error('加载聊天记录失败:', error)
+    ElMessage.error('加载聊天记录失败，请稍后重试')
     // 加载失败时使用空数据
-    chatMessages.value = [];
+    chatMessages.value = []
   }
-};
+}
 
 // 显示右键菜单
 const showContextMenu = (conversation, event) => {
-  selectedContextConversation.value = conversation;
+  selectedContextConversation.value = conversation
   contextMenuPosition.value = {
     x: event.clientX,
     y: event.clientY
-  };
-  contextMenuVisible.value = true;
-};
+  }
+  contextMenuVisible.value = true
+}
 
 // 切换置顶状态
 const togglePin = (conversation) => {
-  conversation.pinned = !conversation.pinned;
+  conversation.pinned = !conversation.pinned
   // 更新localStorage或其他持久化存储
-  contextMenuVisible.value = false; // 关闭右键菜单
-  selectedContextConversation.value = null;
+  contextMenuVisible.value = false // 关闭右键菜单
+  selectedContextConversation.value = null
   ElMessage({
     message: conversation.pinned ? '会话已置顶' : '会话已取消置顶',
     type: 'success'
-  });
-};
+  })
+}
 
 // 删除会话
 const deleteConversation = (conversation) => {
-  const index = conversations.value.findIndex(item => item.id === conversation.id);
+  const index = conversations.value.findIndex((item) => item.id === conversation.id)
   if (index !== -1) {
-    conversations.value.splice(index, 1);
+    conversations.value.splice(index, 1)
     // 更新localStorage或其他持久化存储
-    contextMenuVisible.value = false; // 关闭右键菜单
-    selectedContextConversation.value = null;
+    contextMenuVisible.value = false // 关闭右键菜单
+    selectedContextConversation.value = null
     // 如果删除的是当前选中的会话，清空选中状态
     if (selectedConversation.value?.id === conversation.id) {
-      selectedConversation.value = null;
+      selectedConversation.value = null
     }
     ElMessage({
       message: '会话已删除',
       type: 'success'
-    });
+    })
   }
-};
+}
 
 // 选择会话
 const selectConversation = async (conversation) => {
-  selectedConversation.value = conversation;
+  selectedConversation.value = conversation
 
   // 切换会话时，重置商家和商品选择状态
-  selectedMerchant.value = null;
-  orderingMerchant.value = null;
+  selectedMerchant.value = null
+  orderingMerchant.value = null
 
   // 清空未读消息
   if (conversation.unreadCount > 0) {
-    conversation.unreadCount = 0;
-    ElMessage.success('消息已标记为已读');
+    conversation.unreadCount = 0
+    ElMessage.success('消息已标记为已读')
   }
 
   // 根据会话ID加载对应的聊天记录
-  await loadChatMessages(conversation.id);
+  await loadChatMessages(conversation.id)
 
   // 加载群订单信息（如果是群聊）
   if (conversation.type === 'group') {
@@ -1190,7 +1384,7 @@ const selectConversation = async (conversation) => {
     // groupOrders.value[conversation.id] = await axios.get(`/api/group-orders/${conversation.id}`);
 
     // 检查是否有未完成的订单需要恢复
-    const pendingOrder = JSON.parse(sessionStorage.getItem('pendingOrder'));
+    const pendingOrder = JSON.parse(sessionStorage.getItem('pendingOrder'))
     if (pendingOrder && pendingOrder.fromChat) {
       // 检查是否是同一个群的订单
       if (pendingOrder.groupName === conversation.name) {
@@ -1205,27 +1399,27 @@ const selectConversation = async (conversation) => {
           totalAmount: pendingOrder.totalAmount,
           status: 'active',
           createTime: new Date().toISOString()
-        };
+        }
         // 可以选择自动打开订单抽屉
         // orderDrawerVisible.value = true;
-        ElMessage.info('已恢复未完成的订单');
+        ElMessage.info('已恢复未完成的订单')
       }
     }
   }
-};
+}
 
 // 好友列表数据 - 从后端获取
-const friends = ref([]);
+const friends = ref([])
 
 // 群列表数据 - 从后端获取
-const groups = ref([]);
+const groups = ref([])
 
 // 从后端获取好友列表
 const fetchFriends = async () => {
   try {
-    const response = await api.get(`/v1/contacts/friends?userId=${userId.value}`);
+    const response = await api.get(`/v1/contacts/friends?userId=${userId.value}`)
     if (response.code === '200') {
-      friends.value = response.data.map(contact => ({
+      friends.value = response.data.map((contact) => ({
         id: contact.targetId,
         name: '好友', // 需要从用户信息接口获取真实名称
         avatar: '👤', // 需要从用户信息接口获取真实头像
@@ -1233,19 +1427,19 @@ const fetchFriends = async () => {
         time: '',
         unreadCount: 0,
         type: 'friend'
-      }));
+      }))
     }
   } catch (error) {
-    console.error('获取好友列表失败:', error);
+    console.error('获取好友列表失败:', error)
   }
-};
+}
 
 // 从后端获取群列表
 const fetchGroups = async () => {
   try {
-    const response = await api.get(`/v1/groups/my?userId=${userId.value}`);
+    const response = await api.get(`/v1/groups/my?userId=${userId.value}`)
     if (response.code === '200') {
-      groups.value = response.data.map(group => ({
+      groups.value = response.data.map((group) => ({
         id: group.id,
         name: group.groupName,
         avatar: '👥',
@@ -1253,136 +1447,134 @@ const fetchGroups = async () => {
         time: '',
         unreadCount: 0,
         type: 'group'
-      }));
+      }))
     }
   } catch (error) {
-    console.error('获取群列表失败:', error);
+    console.error('获取群列表失败:', error)
   }
-};
+}
 
 // 好友搜索相关
-const searchQuery = ref('');
-const searchResults = ref([]);
-const searchDialogVisible = ref(false);
+const searchQuery = ref('')
+const searchResults = ref([])
+const searchDialogVisible = ref(false)
 
 // 新建聊天对话框可见性
-const newChatDialogVisible = ref(false);
+const newChatDialogVisible = ref(false)
 
 // 打开新建聊天对话框
 const createNewChat = () => {
-  newChatDialogVisible.value = true;
+  newChatDialogVisible.value = true
   // 默认显示所有好友
-  searchResults.value = [...friends.value];
-};
+  searchResults.value = [...friends.value]
+}
 
 // 搜索好友
 const searchFriends = () => {
   if (!searchQuery.value) {
-    searchResults.value = [...friends.value];
+    searchResults.value = [...friends.value]
   } else {
-    searchResults.value = friends.value.filter(friend =>
-      friend.name.includes(searchQuery.value)
-    );
+    searchResults.value = friends.value.filter((friend) => friend.name.includes(searchQuery.value))
   }
-};
+}
 
 // 选择好友开始聊天
 const selectFriendForChat = (friend) => {
   // 检查是否已有该好友的会话
-  const existingConversation = conversations.value.find(conv => conv.id === friend.id);
+  const existingConversation = conversations.value.find((conv) => conv.id === friend.id)
 
   if (existingConversation) {
     // 如果已有会话，直接切换到该会话
-    selectedConversation.value = existingConversation;
+    selectedConversation.value = existingConversation
   } else {
     // 创建新的会话
     const newConversation = {
       ...friend,
       lastMessage: '开始聊天吧！',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+    }
 
     // 添加到会话列表
-    conversations.value.unshift(newConversation);
-    selectedConversation.value = newConversation;
+    conversations.value.unshift(newConversation)
+    selectedConversation.value = newConversation
 
     // 初始化聊天历史
-    chatHistory.value[newConversation.id] = [];
+    chatHistory.value[newConversation.id] = []
   }
 
   // 关闭对话框
-  newChatDialogVisible.value = false;
-  searchQuery.value = '';
-};
+  newChatDialogVisible.value = false
+  searchQuery.value = ''
+}
 
 // 加好友相关
-const addFriendDialogVisible = ref(false);
-const friendSearchQuery = ref('');
-const addFriendResults = ref([]); // 所有搜索结果
-const searchType = ref('nickname'); // 默认搜索类型：用户名/昵称
-const currentPage = ref(1); // 当前页码
-const pageSize = ref(7); // 每页最多显示7个
-const selectedUser = ref(null); // 选中的用户详情 // 搜索类型：nickname, phone, email
+const addFriendDialogVisible = ref(false)
+const friendSearchQuery = ref('')
+const addFriendResults = ref([]) // 所有搜索结果
+const searchType = ref('nickname') // 默认搜索类型：用户名/昵称
+const currentPage = ref(1) // 当前页码
+const pageSize = ref(7) // 每页最多显示7个
+const selectedUser = ref(null) // 选中的用户详情 // 搜索类型：nickname, phone, email
 
 // 分页后的用户列表
 const paginatedUsers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return addFriendResults.value.slice(start, end);
-});
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return addFriendResults.value.slice(start, end)
+})
 
 // 打开加好友对话框
 const openAddFriendDialog = () => {
-  selectedUser.value = null; // 重置选中用户
-  addFriendResults.value = [];
-  friendSearchQuery.value = '';
-  searchType.value = 'nickname'; // 默认搜索类型：用户名/昵称
-  currentPage.value = 1; // 重置页码
-  addFriendDialogVisible.value = true;
-};
+  selectedUser.value = null // 重置选中用户
+  addFriendResults.value = []
+  friendSearchQuery.value = ''
+  searchType.value = 'nickname' // 默认搜索类型：用户名/昵称
+  currentPage.value = 1 // 重置页码
+  addFriendDialogVisible.value = true
+}
 
 // 处理搜索类型变更
 const handleSearchTypeChange = (command) => {
-  searchType.value = command;
-  searchUsersForAdd(); // 切换类型后自动搜索
-};
+  searchType.value = command
+  searchUsersForAdd() // 切换类型后自动搜索
+}
 
 // 显示用户详情
 const showUserDetails = (user) => {
   // 如果点击的是已经选中的用户，则取消选中
   if (selectedUser.value && selectedUser.value.id === user.id) {
-    selectedUser.value = null;
+    selectedUser.value = null
   } else {
-    selectedUser.value = user;
+    selectedUser.value = user
   }
-};
+}
 
 // 关闭用户详情
 const closeUserDetails = () => {
-  selectedUser.value = null;
-};
+  selectedUser.value = null
+}
 
 // 搜索用户（用于加好友）
 const searchUsersForAdd = async () => {
   if (!friendSearchQuery.value) {
-    addFriendResults.value = [];
-    return;
+    addFriendResults.value = []
+    return
   }
 
   try {
     // 构建搜索参数
-    let searchParams = new URLSearchParams();
-    searchParams.append('keyword', encodeURIComponent(friendSearchQuery.value));
+    let searchParams = new URLSearchParams()
+    searchParams.append('keyword', encodeURIComponent(friendSearchQuery.value))
     if (searchType.value) {
-      searchParams.append('searchType', searchType.value);
+      searchParams.append('searchType', searchType.value)
     }
 
     // 从后端搜索用户
-    const response = await api.get(`/v1/users/search?${searchParams.toString()}`);
+    const response = await api.get(`/v1/users/search?${searchParams.toString()}`)
 
     if (response.code === '200') {
       // 将后端返回的用户数据转换为前端需要的格式
-      addFriendResults.value = response.data.map(user => ({
+      addFriendResults.value = response.data.map((user) => ({
         id: user.userId,
         nickname: user.nickname,
         username: user.username,
@@ -1390,18 +1582,18 @@ const searchUsersForAdd = async () => {
         email: user.email,
         avatar: '👤', // 默认头像，实际项目中可使用用户头像字段
         isFriend: false // 默认设为非好友，可根据实际情况优化
-      }));
-      currentPage.value = 1; // 搜索后重置到第一页
+      }))
+      currentPage.value = 1 // 搜索后重置到第一页
     } else {
-      ElMessage.error('搜索用户失败');
-      addFriendResults.value = [];
+      ElMessage.error('搜索用户失败')
+      addFriendResults.value = []
     }
   } catch (error) {
-    console.error('搜索用户失败:', error);
-    ElMessage.error('搜索用户失败');
-    addFriendResults.value = [];
+    console.error('搜索用户失败:', error)
+    ElMessage.error('搜索用户失败')
+    addFriendResults.value = []
   }
-};
+}
 
 // 发送好友请求
 const sendFriendRequest = async (user) => {
@@ -1409,32 +1601,32 @@ const sendFriendRequest = async (user) => {
     // 向后端发送好友请求
     const response = await api.post(`/v1/contacts/friends/request`, {
       userId: userId.value, // 当前登录用户ID
-      targetId: user.id, // 目标用户ID
-    });
+      targetId: user.id // 目标用户ID
+    })
 
     if (response.code === '200') {
       // 使用用户的昵称或用户名，若都没有则使用邮箱或手机号
-      const userName = user.nickname || user.username || user.email || user.phone || '未知用户';
-      ElMessage.success(`已向 ${userName} 发送好友请求`);
-      addFriendDialogVisible.value = false;
-      addFriendResults.value = [];
-      friendSearchQuery.value = '';
+      const userName = user.nickname || user.username || user.email || user.phone || '未知用户'
+      ElMessage.success(`已向 ${userName} 发送好友请求`)
+      addFriendDialogVisible.value = false
+      addFriendResults.value = []
+      friendSearchQuery.value = ''
     } else {
-      ElMessage.error('发送好友请求失败: ' + response.message);
+      ElMessage.error('发送好友请求失败: ' + response.message)
     }
   } catch (error) {
-    console.error('发送好友请求失败:', error);
-    ElMessage.error('发送好友请求失败');
+    console.error('发送好友请求失败:', error)
+    ElMessage.error('发送好友请求失败')
   }
-};
+}
 
 // 群详情相关
-const groupDetailDialogVisible = ref(false);
-const currentGroupInfo = ref(null);
+const groupDetailDialogVisible = ref(false)
+const currentGroupInfo = ref(null)
 
 // 打开群详情
 const openGroupDetail = () => {
-  if (!selectedConversation.value || selectedConversation.value.type !== 'group') return;
+  if (!selectedConversation.value || selectedConversation.value.type !== 'group') return
 
   // 模拟群详情数据
   currentGroupInfo.value = {
@@ -1445,73 +1637,73 @@ const openGroupDetail = () => {
     members: ['我', '张三', '李四', '王五', '赵六'], // 模拟群成员
     creator: '我', // 模拟群创建者
     createdAt: '2024-01-15 10:30:00' // 模拟创建时间
-  };
+  }
 
-  groupDetailDialogVisible.value = true;
-};
+  groupDetailDialogVisible.value = true
+}
 
 // 新建群聊对话框可见性
-const groupDialogVisible = ref(false);
+const groupDialogVisible = ref(false)
 // 新建群聊表单数据
 const groupForm = ref({
   name: '',
   members: '' // 选中的成员名称，用逗号分隔
-});
+})
 
 // 好友选择对话框可见性
-const friendSelectionDialogVisible = ref(false);
+const friendSelectionDialogVisible = ref(false)
 // 选中的群成员ID数组
-const selectedGroupMembers = ref([]);
+const selectedGroupMembers = ref([])
 
 // 新建群聊
 const createNewGroup = () => {
-  groupDialogVisible.value = true;
+  groupDialogVisible.value = true
   // 重置选择
-  selectedGroupMembers.value = [];
-  groupForm.value.members = '';
-};
+  selectedGroupMembers.value = []
+  groupForm.value.members = ''
+}
 
 // 显示好友选择对话框
 const showFriendSelectionDialog = () => {
-  friendSelectionDialogVisible.value = true;
-};
+  friendSelectionDialogVisible.value = true
+}
 
 // 切换好友选择状态
 const toggleFriendSelection = (friend) => {
-  const index = selectedGroupMembers.value.indexOf(friend.id);
+  const index = selectedGroupMembers.value.indexOf(friend.id)
   if (index === -1) {
-    selectedGroupMembers.value.push(friend.id);
+    selectedGroupMembers.value.push(friend.id)
   } else {
-    selectedGroupMembers.value.splice(index, 1);
+    selectedGroupMembers.value.splice(index, 1)
   }
-};
+}
 
 // 确认好友选择
 const confirmFriendSelection = () => {
   // 将选中的好友ID转换为好友名称，用逗号分隔
   const selectedFriendNames = friends.value
-    .filter(friend => selectedGroupMembers.value.includes(friend.id))
-    .map(friend => friend.name);
+    .filter((friend) => selectedGroupMembers.value.includes(friend.id))
+    .map((friend) => friend.name)
 
-  groupForm.value.members = selectedFriendNames.join(', ');
-  friendSelectionDialogVisible.value = false;
-};
+  groupForm.value.members = selectedFriendNames.join(', ')
+  friendSelectionDialogVisible.value = false
+}
 
 // 创建群聊
 const handleCreateGroup = () => {
   if (!groupForm.value.name.trim()) {
-    ElMessage.error('请输入群名称');
-    return;
+    ElMessage.error('请输入群名称')
+    return
   }
 
   // 生成唯一ID
-  const newGroupId = Date.now();
+  const newGroupId = Date.now()
 
   // 计算成员数量，去除空格并过滤空字符串
   const memberNames = groupForm.value.members
     .split(',')
-    .map(name => name.trim())
-    .filter(name => name);
+    .map((name) => name.trim())
+    .filter((name) => name)
 
   // 创建新群聊
   const newGroup = {
@@ -1524,13 +1716,13 @@ const handleCreateGroup = () => {
     unreadCount: 0,
     memberCount: memberNames.length + 1, // 包括创建者
     pinned: false
-  };
+  }
 
   // 添加到会话列表
-  conversations.value.push(newGroup);
+  conversations.value.push(newGroup)
 
   // 初始化聊天历史
-  chatHistory.value[newGroupId] = [];
+  chatHistory.value[newGroupId] = []
 
   // 添加系统消息
   const systemMsg = {
@@ -1538,42 +1730,42 @@ const handleCreateGroup = () => {
     sender: '系统',
     content: `群聊 "${newGroup.name}" 已创建`,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  };
-  chatHistory.value[newGroupId].push(systemMsg);
+  }
+  chatHistory.value[newGroupId].push(systemMsg)
 
   // 更新会话的最后一条消息
-  newGroup.lastMessage = systemMsg.content;
+  newGroup.lastMessage = systemMsg.content
 
   // 关闭对话框
-  groupDialogVisible.value = false;
+  groupDialogVisible.value = false
 
   // 重置表单
   groupForm.value = {
     name: '',
     members: ''
-  };
+  }
 
-  ElMessage.success('群聊已创建');
-};
+  ElMessage.success('群聊已创建')
+}
 
 // 取消创建群聊
 const cancelCreateGroup = () => {
-  groupDialogVisible.value = false;
+  groupDialogVisible.value = false
   // 重置表单
   groupForm.value = {
     name: '',
     members: ''
-  };
+  }
   // 重置选中的成员
-  selectedGroupMembers.value = [];
+  selectedGroupMembers.value = []
   // 关闭好友选择对话框（如果打开的话）
-  friendSelectionDialogVisible.value = false;
-};
+  friendSelectionDialogVisible.value = false
+}
 
 // 发送消息
 const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedConversation.value) {
-    return;
+    return
   }
 
   // 创建新消息对象
@@ -1582,34 +1774,34 @@ const sendMessage = async () => {
     toId: selectedConversation.value.id, // 会话ID作为接收者
     msgType: selectedConversation.value.type || 'single', // 消息类型，默认single
     content: newMessage.value.trim() // 消息内容
-  };
+  }
 
   try {
     // 发送消息到后端
-    const response = await api.post('/v1/chat/messages', messageData);
+    const response = await api.post('/v1/chat/messages', messageData)
 
     if (response.code === '200') {
       // 如果后端返回消息对象，使用后端返回的消息
-      const sentMessage = response.data;
+      const sentMessage = response.data
 
       // 添加到聊天记录
-      chatMessages.value.push(sentMessage);
+      chatMessages.value.push(sentMessage)
 
       // 更新会话列表的最后一条消息
-      selectedConversation.value.lastMessage = sentMessage.content;
-      selectedConversation.value.time = sentMessage.time;
+      selectedConversation.value.lastMessage = sentMessage.content
+      selectedConversation.value.time = sentMessage.time
 
       // 将消息保存到对应的聊天历史中
-      chatHistory.value[selectedConversation.value.id] = chatMessages.value;
+      chatHistory.value[selectedConversation.value.id] = chatMessages.value
 
       // 清空输入框
-      newMessage.value = '';
+      newMessage.value = ''
 
-      ElMessage.success('消息发送成功');
+      ElMessage.success('消息发送成功')
     }
   } catch (error) {
-    console.error('发送消息失败:', error);
-    ElMessage.error('发送消息失败，请稍后重试');
+    console.error('发送消息失败:', error)
+    ElMessage.error('发送消息失败，请稍后重试')
 
     // 如果发送失败，可以选择将消息添加到本地聊天记录中，并标记为发送失败
     const failedMessage = {
@@ -1619,22 +1811,22 @@ const sendMessage = async () => {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isRead: true,
       status: 'failed' // 标记为发送失败
-    };
+    }
 
     // 添加到聊天记录
-    chatMessages.value.push(failedMessage);
+    chatMessages.value.push(failedMessage)
 
     // 更新会话列表的最后一条消息
-    selectedConversation.value.lastMessage = failedMessage.content;
-    selectedConversation.value.time = failedMessage.time;
+    selectedConversation.value.lastMessage = failedMessage.content
+    selectedConversation.value.time = failedMessage.time
 
     // 将消息保存到对应的聊天历史中
-    chatHistory.value[selectedConversation.value.id] = chatMessages.value;
+    chatHistory.value[selectedConversation.value.id] = chatMessages.value
 
     // 清空输入框
-    newMessage.value = '';
+    newMessage.value = ''
   }
-};
+}
 
 // 创建群订单
 const createGroupOrder = () => {
@@ -1650,13 +1842,13 @@ const createGroupOrder = () => {
       totalAmount: 0.0,
       status: 'active', // 订单状态：active（活动）、closed（已关闭）、paid（已支付）
       createTime: new Date().toISOString()
-    };
+    }
 
     // 这里可以添加实际的API请求
     // await axios.post('/api/group-orders', order);
 
-    groupOrders.value[selectedConversation.value.id] = order;
-    ElMessage.success('群订单已创建');
+    groupOrders.value[selectedConversation.value.id] = order
+    ElMessage.success('群订单已创建')
 
     // 更新群聊消息
     const orderMsg = {
@@ -1664,29 +1856,30 @@ const createGroupOrder = () => {
       sender: '系统',
       content: '我创建了一个群订单，大家可以加入并添加商品',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    chatMessages.value.push(orderMsg);
+    }
+    chatMessages.value.push(orderMsg)
 
     // 更新会话列表的最后一条消息
-    selectedConversation.value.lastMessage = '系统: 我创建了一个群订单';
-    selectedConversation.value.time = orderMsg.time;
+    selectedConversation.value.lastMessage = '系统: 我创建了一个群订单'
+    selectedConversation.value.time = orderMsg.time
   } else {
-    ElMessage.error('请先选择一个群聊');
+    ElMessage.error('请先选择一个群聊')
   }
-};
+}
 
 // 加入群订单
 const joinGroupOrder = () => {
   // 加入一个已存在的群订单
   if (selectedConversation.value) {
     // 检查是否当前有群订单
-    const conversationOrder = groupOrders.value[selectedConversation.value.id];
+    const conversationOrder = groupOrders.value[selectedConversation.value.id]
     if (conversationOrder) {
-      if (conversationOrder.status === 'active') { // 只有活动状态的订单才能加入
+      if (conversationOrder.status === 'active') {
+        // 只有活动状态的订单才能加入
         // 检查是否已经在群订单中
         if (!conversationOrder.members.includes('我')) {
-          conversationOrder.members.push('我');
-          ElMessage.success('已加入群订单');
+          conversationOrder.members.push('我')
+          ElMessage.success('已加入群订单')
 
           // 更新群聊消息
           const joinMsg = {
@@ -1694,41 +1887,40 @@ const joinGroupOrder = () => {
             sender: '系统',
             content: '我加入了群订单',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-          chatMessages.value.push(joinMsg);
+          }
+          chatMessages.value.push(joinMsg)
 
           // 更新会话列表的最后一条消息
-          selectedConversation.value.lastMessage = '系统: 我加入了群订单';
-          selectedConversation.value.lastTime = joinMsg.time;
+          selectedConversation.value.lastMessage = '系统: 我加入了群订单'
+          selectedConversation.value.lastTime = joinMsg.time
         } else {
-          ElMessage.warning('你已经在群订单中了');
+          ElMessage.warning('你已经在群订单中了')
         }
       } else {
-        ElMessage.error('该群订单已关闭或已支付，无法加入');
+        ElMessage.error('该群订单已关闭或已支付，无法加入')
       }
     } else {
-      ElMessage.error('当前群没有订单，请先创建群订单');
+      ElMessage.error('当前群没有订单，请先创建群订单')
     }
   } else {
-    ElMessage.error('请先选择一个群聊');
+    ElMessage.error('请先选择一个群聊')
   }
-};
-
+}
 
 // 跳转到订单确认页
 const goToOrderConfirmation = () => {
   // 存储群订单信息到会话存储
   if (selectedConversation.value && groupOrders.value[selectedConversation.value.id]) {
-    const currentOrder = groupOrders.value[selectedConversation.value.id];
+    const currentOrder = groupOrders.value[selectedConversation.value.id]
 
     // 检查购物车是否为空
     if (!currentOrder.orderItems || currentOrder.orderItems.length === 0) {
-      ElMessage.warning('购物车为空，无法进行订单确认');
-      return;
+      ElMessage.warning('购物车为空，无法进行订单确认')
+      return
     }
 
     const pendingOrder = {
-      cartItems: currentOrder.orderItems.map(item => ({
+      cartItems: currentOrder.orderItems.map((item) => ({
         ...item,
         price: item.price || 22.2, // 使用商品自身价格或默认价格
         remark: item.remark || '' // 添加商品备注
@@ -1739,16 +1931,16 @@ const goToOrderConfirmation = () => {
       orderId: currentOrder.orderId, // 添加群订单ID
       creator: currentOrder.creator, // 添加订单创建人
       members: currentOrder.members // 添加订单成员列表
-    };
+    }
 
-    sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
+    sessionStorage.setItem('pendingOrder', JSON.stringify(pendingOrder))
 
     // 跳转到订单确认页
-    router.push('/user/home/order-confirmation');
+    router.push('/user/home/order-confirmation')
   } else {
-    ElMessage.error('当前没有群订单');
+    ElMessage.error('当前没有群订单')
   }
-};
+}
 </script>
 
 <style scoped lang="less">
@@ -1782,7 +1974,7 @@ const goToOrderConfirmation = () => {
       width: 37%; /* 固定宽度 */
       border: 1px solid #e4e7ed;
       border-radius: 4px;
-      overflow : hidden;
+      overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
 
@@ -1895,7 +2087,7 @@ const goToOrderConfirmation = () => {
 
         .unread-count {
           background-color: #f56c6c;
-          width: 10px ;
+          width: 10px;
           height: 10px;
           color: #fff;
           border-radius: 50%;
@@ -2362,12 +2554,14 @@ const goToOrderConfirmation = () => {
   }
 
   /* 新建聊天和加好友对话框样式 */
-  .friend-list, .user-list {
+  .friend-list,
+  .user-list {
     max-height: 300px;
     overflow-y: auto;
   }
 
-  .friend-item, .user-item {
+  .friend-item,
+  .user-item {
     display: flex;
     align-items: center;
     padding: 12px;
@@ -2380,15 +2574,18 @@ const goToOrderConfirmation = () => {
     }
   }
 
-  .friend-avatar, .user-avatar {
+  .friend-avatar,
+  .user-avatar {
     font-size: 28px;
     margin-right: 12px;
   }
 
-  .friend-info, .user-info {
+  .friend-info,
+  .user-info {
     flex: 1;
 
-    .friend-name, .user-name {
+    .friend-name,
+    .user-name {
       font-weight: 500;
       font-size: 14px;
     }

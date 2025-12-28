@@ -47,7 +47,10 @@
             />
           </el-form-item>
           <el-form-item label="联系方式" prop="contact">
-            <el-input v-model="feedback.contact" placeholder="请留下您的联系方式，以便我们及时回复" />
+            <el-input
+              v-model="feedback.contact"
+              placeholder="请留下您的联系方式，以便我们及时回复"
+            />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="submitFeedback">提交反馈</el-button>
@@ -60,34 +63,34 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { ChatDotRound } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import { ref } from 'vue'
+import { ChatDotRound } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 // 反馈表单数据
 const feedback = ref({
   title: '',
   content: '',
   contact: ''
-});
+})
 
 // 提交反馈
 const submitFeedback = () => {
   // 表单验证
   if (!feedback.value.title || !feedback.value.content) {
-    ElMessage.warning('请填写反馈标题和内容');
-    return;
+    ElMessage.warning('请填写反馈标题和内容')
+    return
   }
 
   // 模拟提交反馈
-  console.log('提交的反馈:', feedback.value);
+  console.log('提交的反馈:', feedback.value)
 
   // 重置表单
-  resetForm();
+  resetForm()
 
   // 提示成功
-  ElMessage.success('反馈已提交，我们会尽快处理');
-};
+  ElMessage.success('反馈已提交，我们会尽快处理')
+}
 
 // 重置表单
 const resetForm = () => {
@@ -95,8 +98,8 @@ const resetForm = () => {
     title: '',
     content: '',
     contact: ''
-  };
-};
+  }
+}
 </script>
 
 <style scoped lang="less">

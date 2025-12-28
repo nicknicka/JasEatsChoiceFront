@@ -1,22 +1,22 @@
 <script setup>
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
+const router = useRouter()
 
 const loginForm = reactive({
   username: '',
   password: '',
   rememberMe: false
-});
+})
 
 const handleLogin = () => {
   // Here you would implement actual login logic (API call, authentication, etc.)
-  console.log('Logging in with:', loginForm);
+  console.log('Logging in with:', loginForm)
 
   // For demo purposes, we'll just simulate a successful login and redirect to user home
-  router.push('/user/home');
-};
+  router.push('/user/home')
+}
 </script>
 
 <template>
@@ -33,27 +33,26 @@ const handleLogin = () => {
         </el-form-item>
 
         <el-form-item label="密码" required>
-          <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" show-password />
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="请输入密码"
+            show-password
+          />
         </el-form-item>
 
         <el-form-item>
           <el-checkbox v-model="loginForm.rememberMe">记住我</el-checkbox>
-          <el-link type="primary" :underline="false" class="forgot-password">
-            忘记密码？
-          </el-link>
+          <el-link type="primary" :underline="false" class="forgot-password"> 忘记密码？ </el-link>
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" block @click="handleLogin">
-            登录
-          </el-button>
+          <el-button type="primary" block @click="handleLogin"> 登录 </el-button>
         </el-form-item>
 
         <el-form-item class="register-link">
           <span>没有账号？</span>
-          <el-link type="primary" :underline="false">
-            立即注册
-          </el-link>
+          <el-link type="primary" :underline="false"> 立即注册 </el-link>
         </el-form-item>
       </el-form>
     </div>
@@ -83,7 +82,7 @@ const handleLogin = () => {
 
     h1 {
       margin: 12px 0 0 0;
-      color: #FF6B6B;
+      color: #ff6b6b;
       font-size: 28px;
     }
   }

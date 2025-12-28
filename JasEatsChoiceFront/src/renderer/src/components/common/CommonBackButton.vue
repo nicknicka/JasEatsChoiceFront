@@ -1,10 +1,5 @@
 <template>
-  <el-button
-    :type="type"
-    :size="size"
-    @click="handleClick"
-    :class="className"
-  >
+  <el-button :type="type" :size="size" @click="handleClick" :class="className">
     <el-icon><ArrowLeft /></el-icon>
     {{ text }}
   </el-button>

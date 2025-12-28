@@ -1,10 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
-const route = useRoute();
-const orderId = ref(null);
+const route = useRoute()
+const orderId = ref(null)
 // 模拟订单详情数据
 const orderDetail = ref({
   id: 1,
@@ -13,27 +13,27 @@ const orderDetail = ref({
   user: '小明',
   phone: '138XXXX8888',
   address: '公司地址',
-  total: 78.00,
+  total: 78.0,
   time: '2024-11-21 10:30',
   items: [
     { name: '宫保鸡丁', price: 28, quantity: 1 },
     { name: '麻婆豆腐', price: 18, quantity: 1 },
     { name: '米饭', price: 2, quantity: 2 }
   ]
-});
+})
 
 // 订单状态映射
 const orderStatusMap = {
-  'pending': { text: '待处理', icon: '🔴', type: 'danger' },
-  'preparing': { text: '准备中', icon: '🟡', type: 'warning' },
-  'completed': { text: '已完成', icon: '✅', type: 'success' }
-};
+  pending: { text: '待处理', icon: '🔴', type: 'danger' },
+  preparing: { text: '准备中', icon: '🟡', type: 'warning' },
+  completed: { text: '已完成', icon: '✅', type: 'success' }
+}
 
 // 页面加载时获取订单详情
 onMounted(() => {
   // 实际应用中可以根据orderId从API获取真实数据
-  orderId.value = route.params.id;
-});
+  orderId.value = route.params.id
+})
 </script>
 
 <template>
@@ -52,7 +52,8 @@ onMounted(() => {
       <div class="info-item">
         <label class="info-label">订单状态：</label>
         <el-tag :type="orderStatusMap[orderDetail.status].type">
-          {{ orderStatusMap[orderDetail.status].icon }} {{ orderStatusMap[orderDetail.status].text }}
+          {{ orderStatusMap[orderDetail.status].icon }}
+          {{ orderStatusMap[orderDetail.status].text }}
         </el-tag>
       </div>
       <div class="info-item">

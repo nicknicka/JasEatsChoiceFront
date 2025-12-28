@@ -1,50 +1,57 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
-import { API_CONFIG } from '../../config/index.js';
-import { ElMessage } from 'element-plus';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
+import { API_CONFIG } from '../../config/index.js'
+import { ElMessage } from 'element-plus'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
 // 订单详情数据
-const orderDetail = ref(null);
+const orderDetail = ref(null)
 
 onMounted(() => {
   // 从路由参数获取订单ID
-  const orderId = parseInt(route.params.id);
+  const orderId = parseInt(route.params.id)
 
   // 从API获取订单详情
-  axios.get(API_CONFIG.baseURL + API_CONFIG.order.detail + orderId)
-    .then(response => {
+  axios
+    .get(API_CONFIG.baseURL + API_CONFIG.order.detail + orderId)
+    .then((response) => {
       if (response.data && response.data.success) {
-        orderDetail.value = response.data.data;
+        orderDetail.value = response.data.data
       } else {
         // 如果API返回错误，跳回订单列表并提示
-        router.push('/user/home/orders');
-        ElMessage.error('订单详情获取失败');
+        router.push('/user/home/orders')
+        ElMessage.error('订单详情获取失败')
       }
     })
-    .catch(error => {
-      console.error('加载订单详情失败:', error);
+    .catch((error) => {
+      console.error('加载订单详情失败:', error)
       // 如果请求失败，跳回订单列表并提示
-      router.push('/user/home/orders');
-      ElMessage.error('订单详情获取失败');
-    });
-});
+      router.push('/user/home/orders')
+      ElMessage.error('订单详情获取失败')
+    })
+})
 
 // 返回订单列表
 const backToOrders = () => {
-  router.push('/user/home/orders');
-};
+  router.push('/user/home/orders')
+}
 </script>
 
 <template>
   <div class="order-detail-container">
     <div class="page-header">
-      <common-back-button type="text" size="small" text="返回订单列表" @click="backToOrders" :use-router-back="false" />
+      <common-back-button
+        type="text"
+        size="small"
+        text="返回订单列表"
+        @click="backToOrders"
+        :use-router-back="false"
+      />
       <h3 class="page-title">订单详情</h3>
     </div>
 
@@ -63,13 +70,25 @@ const backToOrders = () => {
         <div class="info-row">
           <span class="info-label">订单状态:</span>
           <el-tag
-            :type="orderDetail.status === 'processing' ? 'warning' :
-                  orderDetail.status === 'delivered' ? 'success' :
-                  orderDetail.status === 'completed' ? 'info' : 'danger'"
+            :type="
+              orderDetail.status === 'processing'
+                ? 'warning'
+                : orderDetail.status === 'delivered'
+                  ? 'success'
+                  : orderDetail.status === 'completed'
+                    ? 'info'
+                    : 'danger'
+            "
           >
-            {{ orderDetail.status === 'processing' ? '处理中' :
-               orderDetail.status === 'delivered' ? '已送达' :
-               orderDetail.status === 'completed' ? '已完成' : '已取消' }}
+            {{
+              orderDetail.status === 'processing'
+                ? '处理中'
+                : orderDetail.status === 'delivered'
+                  ? '已送达'
+                  : orderDetail.status === 'completed'
+                    ? '已完成'
+                    : '已取消'
+            }}
           </el-tag>
         </div>
         <div class="info-row">
@@ -104,13 +123,25 @@ const backToOrders = () => {
               </div>
               <div class="item-status">
                 <el-tag
-                  :type="item.status === 'preparing' ? 'warning' :
-                        item.status === 'delivered' ? 'success' :
-                        item.status === 'completed' ? 'info' : 'danger'"
+                  :type="
+                    item.status === 'preparing'
+                      ? 'warning'
+                      : item.status === 'delivered'
+                        ? 'success'
+                        : item.status === 'completed'
+                          ? 'info'
+                          : 'danger'
+                  "
                 >
-                  {{ item.status === 'preparing' ? '制作中' :
-                     item.status === 'delivered' ? '已送达' :
-                     item.status === 'completed' ? '已完成' : '已取消' }}
+                  {{
+                    item.status === 'preparing'
+                      ? '制作中'
+                      : item.status === 'delivered'
+                        ? '已送达'
+                        : item.status === 'completed'
+                          ? '已完成'
+                          : '已取消'
+                  }}
                 </el-tag>
               </div>
             </div>

@@ -3,24 +3,18 @@
     <el-card class="merchant-detail-card">
       <!-- 返回按钮 -->
       <div class="back-button-container">
-        <common-back-button/>
+        <common-back-button />
       </div>
 
       <!-- 商家头部信息 -->
       <div class="merchant-header">
         <div class="header-left">
           <div class="merchant-name-main">{{ merchant.name }}</div>
-          <el-button
-            type="text"
-            size="small"
-            class="favorite-button"
-            @click="toggleFavorite"
-          >
+          <el-button type="text" size="small" class="favorite-button" @click="toggleFavorite">
             {{ isFavorite ? '❤️' : '🤍' }} {{ isFavorite ? '已收藏' : '收藏' }}
           </el-button>
         </div>
-        <div class="header-right">
-        </div>
+        <div class="header-right"></div>
       </div>
 
       <!-- 商家Banner区 -->
@@ -34,13 +28,7 @@
       <div class="merchant-basic-info">
         <div class="basic-info-section">
           <div class="merchant-rating-main">
-            <el-rate
-              v-model="merchant.rating"
-              :disabled="true"
-              show-text
-              :max="5"
-              :precision="1"
-            />
+            <el-rate v-model="merchant.rating" :disabled="true" show-text :max="5" :precision="1" />
           </div>
           <div class="merchant-location">
             <el-icon class="location-icon">📍</el-icon>
@@ -83,10 +71,22 @@
         </div>
 
         <!-- 招牌菜 -->
-        <div v-if="activeMenuTab !== 'comments' && menuItems.some(item => item.menuId === activeMenuTab && item.category === 'signature')" class="dish-category-section">
+        <div
+          v-if="
+            activeMenuTab !== 'comments' &&
+            menuItems.some((item) => item.menuId === activeMenuTab && item.category === 'signature')
+          "
+          class="dish-category-section"
+        >
           <h3 class="category-title">🔥 招牌菜</h3>
           <div class="dish-grid">
-            <div class="dish-card" v-for="item in menuItems.filter(item => item.menuId === activeMenuTab && item.category === 'signature')" :key="item.id">
+            <div
+              class="dish-card"
+              v-for="item in menuItems.filter(
+                (item) => item.menuId === activeMenuTab && item.category === 'signature'
+              )"
+              :key="item.id"
+            >
               <div class="dish-image">{{ item.image || '🍱' }}</div>
               <div class="dish-name">{{ item.name }}</div>
               <div class="dish-price">¥{{ calculateRealTimePrice(item).toFixed(2) }}</div>
@@ -97,7 +97,12 @@
                 <div class="ingredient-section">
                   <span class="ingredient-title">必选食材:</span>
                   <div class="ingredient-list">
-                    <span class="ingredient-item" v-for="ingredient in item.requiredIngredients" :key="ingredient">{{ ingredient }}</span>
+                    <span
+                      class="ingredient-item"
+                      v-for="ingredient in item.requiredIngredients"
+                      :key="ingredient"
+                      >{{ ingredient }}</span
+                    >
                   </div>
                 </div>
 
@@ -110,7 +115,8 @@
                       v-model="ingredient.selected"
                       class="ingredient-checkbox"
                     >
-                      {{ ingredient.name }} <span class="ingredient-price">(+¥{{ ingredient.price.toFixed(2) }})</span>
+                      {{ ingredient.name }}
+                      <span class="ingredient-price">(+¥{{ ingredient.price.toFixed(2) }})</span>
                     </el-checkbox>
                   </div>
                 </div>
@@ -123,16 +129,11 @@
                   :min="1"
                   :max="10"
                   label="数量"
-                  style="width: 100%;"
+                  style="width: 100%"
                 />
               </div>
 
-              <el-button
-                type="primary"
-                size="small"
-                @click="addMenuItem(item)"
-                style="width: 100%;"
-              >
+              <el-button type="primary" size="small" @click="addMenuItem(item)" style="width: 100%">
                 {{ viewMode === 'order' ? '立即购买' : '加入购物车' }}
               </el-button>
             </div>
@@ -140,10 +141,22 @@
         </div>
 
         <!-- 主食 -->
-        <div v-if="activeMenuTab !== 'comments' && menuItems.some(item => item.menuId === activeMenuTab && item.category === 'staple')" class="dish-category-section">
+        <div
+          v-if="
+            activeMenuTab !== 'comments' &&
+            menuItems.some((item) => item.menuId === activeMenuTab && item.category === 'staple')
+          "
+          class="dish-category-section"
+        >
           <h3 class="category-title">🍚 主食</h3>
           <div class="dish-grid">
-            <div class="dish-card" v-for="item in menuItems.filter(item => item.menuId === activeMenuTab && item.category === 'staple')" :key="item.id">
+            <div
+              class="dish-card"
+              v-for="item in menuItems.filter(
+                (item) => item.menuId === activeMenuTab && item.category === 'staple'
+              )"
+              :key="item.id"
+            >
               <div class="dish-image">🍚</div>
               <div class="dish-name">{{ item.name }}</div>
               <div class="dish-price">¥{{ calculateRealTimePrice(item).toFixed(2) }}</div>
@@ -153,7 +166,12 @@
                 <div class="ingredient-section">
                   <span class="ingredient-title">必选食材:</span>
                   <div class="ingredient-list">
-                    <span class="ingredient-item" v-for="ingredient in item.requiredIngredients" :key="ingredient">{{ ingredient }}</span>
+                    <span
+                      class="ingredient-item"
+                      v-for="ingredient in item.requiredIngredients"
+                      :key="ingredient"
+                      >{{ ingredient }}</span
+                    >
                   </div>
                 </div>
 
@@ -166,7 +184,8 @@
                       v-model="ingredient.selected"
                       class="ingredient-checkbox"
                     >
-                      {{ ingredient.name }} <span class="ingredient-price">(+¥{{ ingredient.price.toFixed(2) }})</span>
+                      {{ ingredient.name }}
+                      <span class="ingredient-price">(+¥{{ ingredient.price.toFixed(2) }})</span>
                     </el-checkbox>
                   </div>
                 </div>
@@ -179,16 +198,11 @@
                   :min="1"
                   :max="10"
                   label="数量"
-                  style="width: 100%;"
+                  style="width: 100%"
                 />
               </div>
 
-              <el-button
-                type="primary"
-                size="small"
-                @click="addMenuItem(item)"
-                style="width: 100%;"
-              >
+              <el-button type="primary" size="small" @click="addMenuItem(item)" style="width: 100%">
                 {{ viewMode === 'order' ? '立即购买' : '加入购物车' }}
               </el-button>
             </div>
@@ -196,10 +210,22 @@
         </div>
 
         <!-- 饮品 -->
-        <div v-if="activeMenuTab !== 'comments' && menuItems.some(item => item.menuId === activeMenuTab && item.category === 'drink')" class="dish-category-section">
+        <div
+          v-if="
+            activeMenuTab !== 'comments' &&
+            menuItems.some((item) => item.menuId === activeMenuTab && item.category === 'drink')
+          "
+          class="dish-category-section"
+        >
           <h3 class="category-title">🥤 饮品</h3>
           <div class="dish-grid">
-            <div class="dish-card" v-for="item in menuItems.filter(item => item.menuId === activeMenuTab && item.category === 'drink')" :key="item.id">
+            <div
+              class="dish-card"
+              v-for="item in menuItems.filter(
+                (item) => item.menuId === activeMenuTab && item.category === 'drink'
+              )"
+              :key="item.id"
+            >
               <div class="dish-image">🥤</div>
               <div class="dish-name">{{ item.name }}</div>
               <div class="dish-price">¥{{ calculateRealTimePrice(item).toFixed(2) }}</div>
@@ -209,7 +235,12 @@
                 <div class="ingredient-section">
                   <span class="ingredient-title">必选食材:</span>
                   <div class="ingredient-list">
-                    <span class="ingredient-item" v-for="ingredient in item.requiredIngredients" :key="ingredient">{{ ingredient }}</span>
+                    <span
+                      class="ingredient-item"
+                      v-for="ingredient in item.requiredIngredients"
+                      :key="ingredient"
+                      >{{ ingredient }}</span
+                    >
                   </div>
                 </div>
 
@@ -222,7 +253,8 @@
                       v-model="ingredient.selected"
                       class="ingredient-checkbox"
                     >
-                      {{ ingredient.name }} <span class="ingredient-price">(+¥{{ ingredient.price.toFixed(2) }})</span>
+                      {{ ingredient.name }}
+                      <span class="ingredient-price">(+¥{{ ingredient.price.toFixed(2) }})</span>
                     </el-checkbox>
                   </div>
                 </div>
@@ -235,16 +267,11 @@
                   :min="1"
                   :max="10"
                   label="数量"
-                  style="width: 100%;"
+                  style="width: 100%"
                 />
               </div>
 
-              <el-button
-                type="primary"
-                size="small"
-                @click="addMenuItem(item)"
-                style="width: 100%;"
-              >
+              <el-button type="primary" size="small" @click="addMenuItem(item)" style="width: 100%">
                 {{ viewMode === 'order' ? '立即购买' : '加入购物车' }}
               </el-button>
             </div>
@@ -267,12 +294,7 @@
                   <span class="user-name">{{ comment.userName }}</span>
                   <span class="comment-date">{{ comment.date }}</span>
                 </div>
-                <el-rate
-                  v-model="comment.rating"
-                  :disabled="true"
-                  size="small"
-                  show-text
-                />
+                <el-rate v-model="comment.rating" :disabled="true" size="small" show-text />
               </div>
               <div class="comment-content">
                 {{ comment.comment }}
@@ -285,7 +307,11 @@
                   size="small"
                   @click="comment.expandReplies = !comment.expandReplies"
                 >
-                  {{ comment.expandReplies ? '▼ 收起回复' : '▶ 查看回复 (' + comment.replies.length + ')' }}
+                  {{
+                    comment.expandReplies
+                      ? '▼ 收起回复'
+                      : '▶ 查看回复 (' + comment.replies.length + ')'
+                  }}
                 </el-button>
               </div>
 
@@ -315,22 +341,19 @@
       </div>
 
       <!-- 立即下单快捷操作区（仅在order模式下显示） -->
-      <div
-        v-if="viewMode === 'order' && hasMenus"
-        class="quick-order-section"
-      >
-        <el-button type="primary" size="large" class="quick-order-button" @click="goToOrderConfirmation">
+      <div v-if="viewMode === 'order' && hasMenus" class="quick-order-section">
+        <el-button
+          type="primary"
+          size="large"
+          class="quick-order-button"
+          @click="goToOrderConfirmation"
+        >
           进入订单确认页
         </el-button>
       </div>
 
       <!-- 可拖动悬浮购物车 -->
-      <div
-        ref="cartBallRef"
-        class="draggable-cart-ball"
-        @mousedown="startDrag"
-        @click="viewCart"
-      >
+      <div ref="cartBallRef" class="draggable-cart-ball" @mousedown="startDrag" @click="viewCart">
         <div class="cart-icon">🛒</div>
         <el-badge :value="cartTotalQuantity" class="cart-badge" />
         <div class="cart-amount">¥{{ cartTotalAmount.toFixed(2) }}</div>
@@ -355,8 +378,17 @@
             <div class="cart-item-info">
               <div class="cart-item-name">{{ item.name }}</div>
               <!-- Optional ingredients display -->
-              <div v-if="item.selectedOptionalIngredients && item.selectedOptionalIngredients.length > 0" class="cart-item-ingredients">
-                <span v-for="(ingredient, idx) in item.selectedOptionalIngredients" :key="idx" class="ingredient-tag">
+              <div
+                v-if="
+                  item.selectedOptionalIngredients && item.selectedOptionalIngredients.length > 0
+                "
+                class="cart-item-ingredients"
+              >
+                <span
+                  v-for="(ingredient, idx) in item.selectedOptionalIngredients"
+                  :key="idx"
+                  class="ingredient-tag"
+                >
                   +{{ ingredient.name }} (¥{{ ingredient.price.toFixed(2) }})
                 </span>
               </div>
@@ -365,11 +397,7 @@
                 <div class="note-display" v-if="!item.isEditingNote">
                   <span v-if="item.note" class="note-text">{{ item.note }}</span>
                   <span v-else class="note-empty">暂无备注</span>
-                  <el-button
-                    size="small"
-                    class="edit-note-btn"
-                    @click="item.isEditingNote = true"
-                  >
+                  <el-button size="small" class="edit-note-btn" @click="item.isEditingNote = true">
                     <el-icon class="edit-icon">✏️</el-icon>
                   </el-button>
                 </div>
@@ -384,19 +412,10 @@
                     autofocus
                   />
                   <div class="note-actions">
-                    <el-button
-                      size="small"
-                      type="primary"
-                      @click="confirmNote(item)"
-                    >
+                    <el-button size="small" type="primary" @click="confirmNote(item)">
                       确认
                     </el-button>
-                    <el-button
-                      size="small"
-                      @click="cancelNote(item)"
-                    >
-                      取消
-                    </el-button>
+                    <el-button size="small" @click="cancelNote(item)"> 取消 </el-button>
                   </div>
                 </div>
               </div>
@@ -406,22 +425,19 @@
               <el-button
                 type="text"
                 size="small"
-                @click="cartItems[index].quantity--; if (cartItems[index].quantity <= 0) cartItems.splice(index, 1)"
+                @click="
+                  cartItems[index].quantity--
+                  if (cartItems[index].quantity <= 0) cartItems.splice(index, 1)
+                "
               >
                 -
               </el-button>
               <span class="quantity">{{ item.quantity }}</span>
-              <el-button
-                type="text"
-                size="small"
-                @click="cartItems[index].quantity++"
-              >
+              <el-button type="text" size="small" @click="cartItems[index].quantity++">
                 +
               </el-button>
             </div>
-            <div class="cart-item-total">
-              ¥{{ item.totalPrice.toFixed(2) }}
-            </div>
+            <div class="cart-item-total">¥{{ item.totalPrice.toFixed(2) }}</div>
           </div>
           <div class="cart-total">
             <div class="total-text">总计:</div>
@@ -444,17 +460,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import axios from 'axios';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import axios from 'axios'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
 // 引入API配置
-import { API_CONFIG } from '../../config/index.js';
+import { API_CONFIG } from '../../config/index.js'
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
 // 商家信息
 const merchant = ref({
@@ -466,19 +482,19 @@ const merchant = ref({
   status: '',
   tags: [],
   image: ''
-});
+})
 
 // 收藏状态
-const isFavorite = ref(false);
+const isFavorite = ref(false)
 
 // 当前视图模式: details(查看详情) / order(立即下单)
-const viewMode = ref(route.query.viewMode || 'order'); // 默认值改为order以显示立即下单按钮
+const viewMode = ref(route.query.viewMode || 'order') // 默认值改为order以显示立即下单按钮
 
 // 提交订单并导航到订单确认页
 const submitOrder = () => {
   if (cartItems.value.length === 0) {
-    ElMessage.warning('请先添加商品到购物车');
-    return;
+    ElMessage.warning('请先添加商品到购物车')
+    return
   }
 
   // 将订单信息存储到会话存储
@@ -486,31 +502,29 @@ const submitOrder = () => {
     merchant: merchant.value,
     cartItems: cartItems.value,
     totalAmount: cartItems.value.reduce((total, item) => total + item.totalPrice, 0)
-  };
-  sessionStorage.setItem('pendingOrder', JSON.stringify(orderInfo));
+  }
+  sessionStorage.setItem('pendingOrder', JSON.stringify(orderInfo))
 
   // 关闭购物车
-  closeCart();
+  closeCart()
 
   // 导航到订单确认页面
-  router.push({ path: '/user/home/order-confirmation' });
-};
+  router.push({ path: '/user/home/order-confirmation' })
+}
 // 菜单类型标签
-const activeMenuTab = ref('comments'); // 默认显示用户评价
+const activeMenuTab = ref('comments') // 默认显示用户评价
 
 // 菜单类型数据
-const menuTabs = ref([
-  { value: 'comments', label: '用户评价' }
-]);
+const menuTabs = ref([{ value: 'comments', label: '用户评价' }])
 
 // 标记商家是否有菜单
-const hasMenus = ref(false);
+const hasMenus = ref(false)
 
 // 计算当前选中的菜单名称
 const currentMenuName = computed(() => {
-  const activeTab = menuTabs.value.find(tab => tab.value === activeMenuTab.value);
-  return activeTab ? activeTab.label : '';
-});
+  const activeTab = menuTabs.value.find((tab) => tab.value === activeMenuTab.value)
+  return activeTab ? activeTab.label : ''
+})
 
 // 评价数据
 const comments = ref([
@@ -564,7 +578,7 @@ const comments = ref([
     replies: [],
     expandReplies: false
   }
-]);
+])
 
 // 菜单数据
 const menuItems = ref([
@@ -679,62 +693,67 @@ const menuItems = ref([
       { id: 902, name: '夹鸡蛋', price: 1.0 }
     ]
   }
-]);
+])
 
 // 组件挂载时加载商家信息和恢复购物车
 onMounted(() => {
-  const savedMerchant = sessionStorage.getItem('selectedMerchant');
+  const savedMerchant = sessionStorage.getItem('selectedMerchant')
   if (savedMerchant) {
     // 从会话存储获取商家基本信息
-    const baseMerchantInfo = JSON.parse(savedMerchant);
-    merchant.value = { ...baseMerchantInfo };
+    const baseMerchantInfo = JSON.parse(savedMerchant)
+    merchant.value = { ...baseMerchantInfo }
 
     // 从后端获取完整的商家详情和菜品信息
-    loadMerchantDetails(baseMerchantInfo.id);
+    loadMerchantDetails(baseMerchantInfo.id)
 
     // 加载当前商家的独立购物车
     if (!cartItemsByMerchant.value[merchant.value.id]) {
-      cartItemsByMerchant.value[merchant.value.id] = [];
+      cartItemsByMerchant.value[merchant.value.id] = []
     }
-    cartItems.value = cartItemsByMerchant.value[merchant.value.id];
+    cartItems.value = cartItemsByMerchant.value[merchant.value.id]
   } else {
     // 如果没有商家信息，返回商家列表
-    router.push('/user/home/merchants');
-    return;
+    router.push('/user/home/merchants')
+    return
   }
 
   // 恢复购物车数据（当从订单确认页返回且未完成支付时）
-  const pendingOrder = sessionStorage.getItem('pendingOrder');
+  const pendingOrder = sessionStorage.getItem('pendingOrder')
   if (pendingOrder) {
-    const parsedOrder = JSON.parse(pendingOrder);
-    if (parsedOrder.cartItems && parsedOrder.cartItems.length > 0 && parsedOrder.merchant.id === merchant.value.id) {
+    const parsedOrder = JSON.parse(pendingOrder)
+    if (
+      parsedOrder.cartItems &&
+      parsedOrder.cartItems.length > 0 &&
+      parsedOrder.merchant.id === merchant.value.id
+    ) {
       // 清空当前购物车
-      cartItemsByMerchant.value[merchant.value.id] = [];
+      cartItemsByMerchant.value[merchant.value.id] = []
       // 恢复购物车项目
-      parsedOrder.cartItems.forEach(item => {
+      parsedOrder.cartItems.forEach((item) => {
         // 确保购物车项目有必要的属性
         const cartItem = {
           ...item,
           note: item.note || '',
           tempNote: item.tempNote || '',
           isEditingNote: item.isEditingNote || false
-        };
-        cartItemsByMerchant.value[merchant.value.id].push(cartItem);
-      });
+        }
+        cartItemsByMerchant.value[merchant.value.id].push(cartItem)
+      })
       // 更新当前购物车引用
-      cartItems.value = cartItemsByMerchant.value[merchant.value.id];
+      cartItems.value = cartItemsByMerchant.value[merchant.value.id]
       // 更新购物车统计信息
-      updateCartStats();
+      updateCartStats()
     }
   }
-});
+})
 
 // 从后端加载完整的商家详情和菜品信息
 const loadMerchantDetails = (merchantId) => {
-  axios.get(API_CONFIG.baseURL + API_CONFIG.merchant.detail, {
-    params: { merchantId }
-  })
-    .then(response => {
+  axios
+    .get(API_CONFIG.baseURL + API_CONFIG.merchant.detail, {
+      params: { merchantId }
+    })
+    .then((response) => {
       // 假设后端返回的数据结构如下：
       // {
       //   data: {
@@ -748,16 +767,16 @@ const loadMerchantDetails = (merchantId) => {
         merchant.value = {
           ...merchant.value,
           ...response.data.merchant
-        };
+        }
 
         // 更新菜单信息
         if (response.data.menus && response.data.menus.length > 0) {
           // 为菜单项目添加必要的属性
-          const allMenuItems = [];
+          const allMenuItems = []
 
           // 遍历所有菜单
-          response.data.menus.forEach(menu => {
-            menu.dishes.forEach(dish => {
+          response.data.menus.forEach((menu) => {
+            menu.dishes.forEach((dish) => {
               allMenuItems.push({
                 ...dish,
                 menuId: menu.menuId, // 保存菜单ID
@@ -768,211 +787,218 @@ const loadMerchantDetails = (merchantId) => {
                 note: '', // 添加备注字段
                 tempNote: '', // 添加临时备注字段
                 isEditingNote: false // 添加编辑状态字段
-              });
-            });
-          });
+              })
+            })
+          })
 
-          menuItems.value = allMenuItems;
+          menuItems.value = allMenuItems
 
           // 确保可选食材有selected属性
-          menuItems.value.forEach(item => {
-            item.optionalIngredients.forEach(ingredient => {
-              ingredient.selected = ingredient.selected || false;
-            });
-          });
+          menuItems.value.forEach((item) => {
+            item.optionalIngredients.forEach((ingredient) => {
+              ingredient.selected = ingredient.selected || false
+            })
+          })
 
           // 根据后端返回的菜单生成标签
-          menuTabs.value = response.data.menus.map(menu => ({
+          menuTabs.value = response.data.menus.map((menu) => ({
             value: menu.menuId,
             label: menu.menuName
-          }));
+          }))
 
           // 添加用户评价标签
-          menuTabs.value.push({ value: 'comments', label: '用户评价' });
+          menuTabs.value.push({ value: 'comments', label: '用户评价' })
 
           // 默认激活第一个菜单
-          activeMenuTab.value = response.data.menus[0].menuId;
+          activeMenuTab.value = response.data.menus[0].menuId
 
-          hasMenus.value = true;
+          hasMenus.value = true
         } else {
           // 商家没有菜单
-          menuItems.value = [];
-          menuTabs.value = [{ value: 'comments', label: '用户评价' }];
-          activeMenuTab.value = 'comments';
-          hasMenus.value = false;
+          menuItems.value = []
+          menuTabs.value = [{ value: 'comments', label: '用户评价' }]
+          activeMenuTab.value = 'comments'
+          hasMenus.value = false
         }
       }
     })
-    .catch(error => {
-      console.error('加载商家详情和菜单失败:', error);
+    .catch((error) => {
+      console.error('加载商家详情和菜单失败:', error)
       // 失败时使用模拟数据作为备份
-      ElMessage.warning('加载商家详情失败，将使用模拟数据');
+      ElMessage.warning('加载商家详情失败，将使用模拟数据')
       // 设置hasMenus为true，因为模拟数据有菜单
-      hasMenus.value = true;
-    });
-};
+      hasMenus.value = true
+    })
+}
 
 // 切换收藏状态
 const toggleFavorite = () => {
-  isFavorite.value = !isFavorite.value;
-  ElMessage.success(isFavorite.value ? `${merchant.value.name} 已加入收藏` : `${merchant.value.name} 已取消收藏`);
+  isFavorite.value = !isFavorite.value
+  ElMessage.success(
+    isFavorite.value ? `${merchant.value.name} 已加入收藏` : `${merchant.value.name} 已取消收藏`
+  )
   // 这里可以添加真实的收藏逻辑，比如保存到数据库或本地存储
-  console.log('收藏状态:', isFavorite.value);
-};
+  console.log('收藏状态:', isFavorite.value)
+}
 
 // 购物车数据 - 每个商家有独立的购物车
-const cartItemsByMerchant = ref({});
+const cartItemsByMerchant = ref({})
 
 // 当前商家的购物车数据
-const cartItems = ref([]);
+const cartItems = ref([])
 
 // 购物车显示状态
-const cartVisible = ref(false);
+const cartVisible = ref(false)
 
 // 计算购物车总数量（当前商家购物车所有商品数量之和）
-const cartTotalQuantity = ref(0);
+const cartTotalQuantity = ref(0)
 
 // 计算购物车总金额（当前商家购物车总金额）
-const cartTotalAmount = ref(0);
+const cartTotalAmount = ref(0)
 
 // 可拖动购物车相关
-const cartBallRef = ref(null);
-let isDragging = false;
-let hasDragged = false; // 标记是否有实际拖动
-let justDragged = false; // 标记刚刚结束拖动
-let startX = 0;
-let startY = 0;
-let initialX = 0;
-let initialY = 0;
+const cartBallRef = ref(null)
+let isDragging = false
+let hasDragged = false // 标记是否有实际拖动
+let justDragged = false // 标记刚刚结束拖动
+let startX = 0
+let startY = 0
+let initialX = 0
+let initialY = 0
 
 // 开始拖动
 const startDrag = (e) => {
-  if (!cartBallRef.value) return;
+  if (!cartBallRef.value) return
 
   // 阻止文本选择和默认事件
-  e.preventDefault();
-  e.stopPropagation();
+  e.preventDefault()
+  e.stopPropagation()
 
-  isDragging = true;
-  startX = e.clientX;
-  startY = e.clientY;
+  isDragging = true
+  startX = e.clientX
+  startY = e.clientY
 
   // 获取购物车球的初始位置
-  const rect = cartBallRef.value.getBoundingClientRect();
-  initialX = rect.left;
-  initialY = rect.top;
+  const rect = cartBallRef.value.getBoundingClientRect()
+  initialX = rect.left
+  initialY = rect.top
 
   // 添加事件监听
-  document.addEventListener('mousemove', onDrag);
-  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('mousemove', onDrag)
+  document.addEventListener('mouseup', stopDrag)
 }
 
 // 拖动中
 const onDrag = (e) => {
-  if (!isDragging || !cartBallRef.value) return;
+  if (!isDragging || !cartBallRef.value) return
 
-  hasDragged = true; // 设置为已拖动
+  hasDragged = true // 设置为已拖动
 
-  const dx = e.clientX - startX;
-  const dy = e.clientY - startY;
+  const dx = e.clientX - startX
+  const dy = e.clientY - startY
 
   // 计算新位置
-  let newX = initialX + dx;
-  let newY = initialY + dy;
+  let newX = initialX + dx
+  let newY = initialY + dy
 
   // 限制在视窗内
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
-  const cartWidth = cartBallRef.value.offsetWidth;
-  const cartHeight = cartBallRef.value.offsetHeight;
+  const windowWidth = window.innerWidth
+  const windowHeight = window.innerHeight
+  const cartWidth = cartBallRef.value.offsetWidth
+  const cartHeight = cartBallRef.value.offsetHeight
 
-  newX = Math.max(0, Math.min(newX, windowWidth - cartWidth));
-  newY = Math.max(0, Math.min(newY, windowHeight - cartHeight));
+  newX = Math.max(0, Math.min(newX, windowWidth - cartWidth))
+  newY = Math.max(0, Math.min(newY, windowHeight - cartHeight))
 
   // 更新位置
-  cartBallRef.value.style.left = `${newX}px`;
-  cartBallRef.value.style.top = `${newY}px`;
+  cartBallRef.value.style.left = `${newX}px`
+  cartBallRef.value.style.top = `${newY}px`
 }
 
 // 停止拖动
 const stopDrag = () => {
   // 重置拖动状态
-  const wasDragging = hasDragged;
-  isDragging = false;
-  hasDragged = false;
+  const wasDragging = hasDragged
+  isDragging = false
+  hasDragged = false
 
-  document.removeEventListener('mousemove', onDrag);
-  document.removeEventListener('mouseup', stopDrag);
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('mouseup', stopDrag)
 
   // 如果有拖动，标记刚刚结束拖动
   if (wasDragging) {
-    justDragged = true;
+    justDragged = true
     // 设置一个短暂的延迟来重置标记，确保click事件能检测到
     setTimeout(() => {
-      justDragged = false;
-    }, 100);
+      justDragged = false
+    }, 100)
   }
 }
 
 // 更新购物车统计信息 - 使用当前商家的购物车
 const updateCartStats = () => {
-  if (!merchant.value || !merchant.value.id) return;
+  if (!merchant.value || !merchant.value.id) return
 
   // 确保当前购物车引用正确
-  cartItems.value = cartItemsByMerchant.value[merchant.value.id];
+  cartItems.value = cartItemsByMerchant.value[merchant.value.id]
 
-  cartTotalQuantity.value = cartItems.value.reduce((total, item) => total + item.quantity, 0);
-  cartTotalAmount.value = cartItems.value.reduce((total, item) => total + item.totalPrice, 0);
-};
+  cartTotalQuantity.value = cartItems.value.reduce((total, item) => total + item.quantity, 0)
+  cartTotalAmount.value = cartItems.value.reduce((total, item) => total + item.totalPrice, 0)
+}
 
 // 更新购物车 - 使用当前商家的购物车
 const updateCart = (item) => {
-  if (!merchant.value || !merchant.value.id) return;
+  if (!merchant.value || !merchant.value.id) return
 
   // 获取当前商家的购物车
-  const currentMerchantCart = cartItemsByMerchant.value[merchant.value.id];
+  const currentMerchantCart = cartItemsByMerchant.value[merchant.value.id]
 
   // 检查是否有相同的商品和相同的可选食材组合
-  const existingItem = currentMerchantCart.find(cartItem =>
-    cartItem.id === item.id &&
-    JSON.stringify(cartItem.selectedOptionalIngredients) === JSON.stringify(item.selectedOptionalIngredients)
-  );
+  const existingItem = currentMerchantCart.find(
+    (cartItem) =>
+      cartItem.id === item.id &&
+      JSON.stringify(cartItem.selectedOptionalIngredients) ===
+        JSON.stringify(item.selectedOptionalIngredients)
+  )
 
   if (existingItem) {
     // 如果存在相同的组合，增加数量
-    existingItem.quantity += item.quantity;
-    existingItem.totalPrice += item.totalPrice;
+    existingItem.quantity += item.quantity
+    existingItem.totalPrice += item.totalPrice
   } else {
     // 如果不存在，添加新的购物车项目
-    currentMerchantCart.push({ ...item });
+    currentMerchantCart.push({ ...item })
   }
 
   // 更新购物车统计信息
-  updateCartStats();
-};
+  updateCartStats()
+}
 
 // 初始化数量和可选食材选中状态
-menuItems.value.forEach(item => {
-  item.quantity = 1;
-  item.optionalIngredients.forEach(ingredient => {
-    ingredient.selected = false;
-  });
-});
+menuItems.value.forEach((item) => {
+  item.quantity = 1
+  item.optionalIngredients.forEach((ingredient) => {
+    ingredient.selected = false
+  })
+})
 
 // 计算实时价格函数
 const calculateRealTimePrice = (item) => {
-  if (!item) return 0;
+  if (!item) return 0
   const optionalTotal = item.optionalIngredients.reduce((sum, ingredient) => {
-    return sum + (ingredient.selected ? ingredient.price : 0);
-  }, 0);
-  return item.price + optionalTotal;
-};
+    return sum + (ingredient.selected ? ingredient.price : 0)
+  }, 0)
+  return item.price + optionalTotal
+}
 
 // 添加菜单项到购物车
 const addMenuItem = (item) => {
   // 计算选中的可选食材
-  const selectedOptionalIngredients = item.optionalIngredients.filter(ingredient => ingredient.selected);
-  const totalPrice = item.price + selectedOptionalIngredients.reduce((sum, ingredient) => sum + ingredient.price, 0);
+  const selectedOptionalIngredients = item.optionalIngredients.filter(
+    (ingredient) => ingredient.selected
+  )
+  const totalPrice =
+    item.price + selectedOptionalIngredients.reduce((sum, ingredient) => sum + ingredient.price, 0)
 
   // 创建购物车项目
   const cartItem = {
@@ -982,49 +1008,49 @@ const addMenuItem = (item) => {
     totalPrice: totalPrice * item.quantity,
     note: '', // Add note property
     tempNote: '', // Add temporary note property for input
-    isEditingNote: false, // Add editing state
-  };
+    isEditingNote: false // Add editing state
+  }
 
-  updateCart(cartItem);
-  ElMessage.success(`${item.name} 已加入购物车`);
+  updateCart(cartItem)
+  ElMessage.success(`${item.name} 已加入购物车`)
 
   // 清空配置：重置数量为1，取消选中所有可选食材
-  item.quantity = 1;
-  item.optionalIngredients.forEach(ingredient => {
-    ingredient.selected = false;
-  });
+  item.quantity = 1
+  item.optionalIngredients.forEach((ingredient) => {
+    ingredient.selected = false
+  })
 
   // 这里可以添加真实的购物车逻辑，比如保存到数据库或本地存储
-  console.log('加入购物车:', cartItem);
-};
+  console.log('加入购物车:', cartItem)
+}
 
 // 查看购物车
 const viewCart = () => {
   // 如果正在拖动、已经拖动或刚刚结束拖动，不打开购物车
   if (isDragging || hasDragged || justDragged) {
-    return;
+    return
   }
-  cartVisible.value = true;
-};
+  cartVisible.value = true
+}
 
 // 关闭购物车
 const closeCart = () => {
-  cartVisible.value = false;
-};
+  cartVisible.value = false
+}
 
 // 确认添加备注
 const confirmNote = (item) => {
-  item.note = item.tempNote;
-  item.isEditingNote = false; // Exit edit mode
-  ElMessage.success('备注已保存');
-};
+  item.note = item.tempNote
+  item.isEditingNote = false // Exit edit mode
+  ElMessage.success('备注已保存')
+}
 
 // 取消添加备注
 const cancelNote = (item) => {
-  item.tempNote = item.note; // Reset temp note to current note
-  item.isEditingNote = false; // Exit edit mode
-  ElMessage.info('已取消备注修改');
-};
+  item.tempNote = item.note // Reset temp note to current note
+  item.isEditingNote = false // Exit edit mode
+  ElMessage.info('已取消备注修改')
+}
 
 // 跳转到订单确认页
 const goToOrderConfirmation = () => {
@@ -1038,11 +1064,11 @@ const goToOrderConfirmation = () => {
     groupName: '默认订单群',
     // 这里可以替换为实际的用户名，假设从用户信息中获取
     userName: '当前用户' // 示例值，实际应从登录信息中获取
-  };
-  sessionStorage.setItem('pendingOrder', JSON.stringify(orderInfo));
+  }
+  sessionStorage.setItem('pendingOrder', JSON.stringify(orderInfo))
 
-  router.push('/user/home/order-confirmation');
-};
+  router.push('/user/home/order-confirmation')
+}
 
 // 监听滚动事件的代码已合并到上面的onMounted钩子中
 </script>
@@ -1535,9 +1561,9 @@ const goToOrderConfirmation = () => {
   }
 
   .cart-items {
-    max-height: 400px;  // 设置购物车最大高度
-    overflow-y: auto;  // 超出部分显示滚动条
-    padding-right: 8px;  // 为滚动条预留空间
+    max-height: 400px; // 设置购物车最大高度
+    overflow-y: auto; // 超出部分显示滚动条
+    padding-right: 8px; // 为滚动条预留空间
     .cart-item {
       display: flex;
       justify-content: space-between;

@@ -98,7 +98,7 @@ const viewRecipeDetails = (recipe) => {
 // 更新收藏状态
 const updateRecipe = (updatedRecipe) => {
   // 在myRecipes数组中找到对应的食谱并更新
-  const index = myRecipes.value.findIndex(recipe => recipe.id === updatedRecipe.id)
+  const index = myRecipes.value.findIndex((recipe) => recipe.id === updatedRecipe.id)
   if (index !== -1) {
     myRecipes.value[index] = updatedRecipe
   }
@@ -266,10 +266,7 @@ const deleteRecipe = (id) => {
   />
 
   <!-- 添加食谱组件 -->
-  <AddRecipe
-    v-model:visible="addDialogVisible"
-    @add-recipe="handleAddRecipe"
-  />
+  <AddRecipe v-model:visible="addDialogVisible" @add-recipe="handleAddRecipe" />
 </template>
 
 <style lang="less">
@@ -456,8 +453,7 @@ const deleteRecipe = (id) => {
     justify-content: space-between;
     align-items: center;
     width: 700px;
-	border: 1px solid red ;
+    border: 1px solid red;
   }
-
 }
 </style>

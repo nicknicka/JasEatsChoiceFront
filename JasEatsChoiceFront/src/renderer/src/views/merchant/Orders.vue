@@ -1,36 +1,39 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import axios from 'axios';
-import { API_CONFIG } from '../../config/index.js';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import axios from 'axios'
+import { API_CONFIG } from '../../config/index.js'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
 // 订单状态映射
 const orderStatusMap = {
   1: { text: '待处理', icon: '🔴', type: 'danger' },
   2: { text: '准备中', icon: '🟡', type: 'warning' },
   5: { text: '已完成', icon: '✅', type: 'success' }
-};
+}
 
 // 订单数据
-const orders = ref([]);
+const orders = ref([])
 
 // 当前选中的状态筛选
-const activeStatusFilter = ref('all');
+const activeStatusFilter = ref('all')
 
 // 搜索关键词
-const searchKeyword = ref('');
+const searchKeyword = ref('')
 
 // 筛选后的订单
-const filteredOrders = ref([]);
+const filteredOrders = ref([])
 
 // 订单概览统计
 const orderOverview = computed(() => {
-  const total = filteredOrders.value.length;
-  const totalAmount = filteredOrders.value.reduce((sum, order) => sum + (order.totalAmount ? order.totalAmount : 0), 0);
-  const pendingCount = filteredOrders.value.filter(order => order.status === 1).length;
-  const preparingCount = filteredOrders.value.filter(order => order.status === 2).length;
-  const completedCount = filteredOrders.value.filter(order => order.status === 5).length;
+  const total = filteredOrders.value.length
+  const totalAmount = filteredOrders.value.reduce(
+    (sum, order) => sum + (order.totalAmount ? order.totalAmount : 0),
+    0
+  )
+  const pendingCount = filteredOrders.value.filter((order) => order.status === 1).length
+  const preparingCount = filteredOrders.value.filter((order) => order.status === 2).length
+  const completedCount = filteredOrders.value.filter((order) => order.status === 5).length
 
   return {
     total,
@@ -38,127 +41,129 @@ const orderOverview = computed(() => {
     pendingCount,
     preparingCount,
     completedCount
-  };
-});
+  }
+})
 
 // 更新筛选
 const updateFilter = () => {
-  filteredOrders.value = orders.value.filter(order => {
+  filteredOrders.value = orders.value.filter((order) => {
     // 状态筛选
-    const statusMatch = activeStatusFilter.value === 'all' || order.status === parseInt(activeStatusFilter.value);
+    const statusMatch =
+      activeStatusFilter.value === 'all' || order.status === parseInt(activeStatusFilter.value)
 
     // 搜索筛选
-    const searchMatch = !searchKeyword.value ||
-      order.id.toString().includes(searchKeyword.value);
+    const searchMatch = !searchKeyword.value || order.id.toString().includes(searchKeyword.value)
 
-    return statusMatch && searchMatch;
-  });
-};
+    return statusMatch && searchMatch
+  })
+}
 
 // 查看订单详情
-import { useRouter, useRoute } from 'vue-router';
-const router = useRouter();
-const route = useRoute();
+import { useRouter, useRoute } from 'vue-router'
+const router = useRouter()
+const route = useRoute()
 
 // 初始化时从URL获取搜索参数并加载订单数据
 onMounted(() => {
   // 模拟商家ID，实际应用中应从登录信息获取
-  const merchantId = 1;
+  const merchantId = 1
 
   // 从API获取订单数据
-  axios.get(`${API_CONFIG.baseURL}/v1/orders/merchant/${merchantId}`)
-    .then(response => {
+  axios
+    .get(`${API_CONFIG.baseURL}/v1/orders/merchant/${merchantId}`)
+    .then((response) => {
       if (response.data && response.data.success) {
-        orders.value = response.data.data;
-        updateFilter();
+        orders.value = response.data.data
+        updateFilter()
       }
     })
-    .catch(error => {
-      console.error('加载订单失败:', error);
-      ElMessage.error('加载订单失败');
-    });
+    .catch((error) => {
+      console.error('加载订单失败:', error)
+      ElMessage.error('加载订单失败')
+    })
 
-  const searchParam = route.query.search;
+  const searchParam = route.query.search
   if (searchParam) {
-    searchKeyword.value = searchParam;
-    updateFilter();
+    searchKeyword.value = searchParam
+    updateFilter()
   }
-});
+})
 
 const viewOrderDetails = (order) => {
   // 标记为已读
   if (order.unread) {
-    order.unread = false;
-    updateFilter();
-    ElMessage.success('订单已标记为已读');
+    order.unread = false
+    updateFilter()
+    ElMessage.success('订单已标记为已读')
   }
 
   // 导航到订单详情页
-  router.push(`/merchant/home/order-detail/${order.id}`);
-};
+  router.push(`/merchant/home/order-detail/${order.id}`)
+}
 
 // 更新订单状态
 const updateOrderStatus = (order, newStatus) => {
   // 调用后端API更新状态
-  axios.put(`${API_CONFIG.baseURL}/api/v1/orders/${order.id}/status`, null, {
-    params: {
-      status: newStatus
-    }
-  })
-  .then(response => {
-    if (response.data && response.data.success) {
-      order.status = newStatus;
-      updateFilter();
-      ElMessage.success(`订单状态已更新为${orderStatusMap[newStatus].text}`);
-    } else {
-      ElMessage.error('更新订单状态失败');
-    }
-  })
-  .catch(error => {
-    console.error('更新订单状态失败:', error);
-    ElMessage.error('更新订单状态失败');
-  });
-};
+  axios
+    .put(`${API_CONFIG.baseURL}/api/v1/orders/${order.id}/status`, null, {
+      params: {
+        status: newStatus
+      }
+    })
+    .then((response) => {
+      if (response.data && response.data.success) {
+        order.status = newStatus
+        updateFilter()
+        ElMessage.success(`订单状态已更新为${orderStatusMap[newStatus].text}`)
+      } else {
+        ElMessage.error('更新订单状态失败')
+      }
+    })
+    .catch((error) => {
+      console.error('更新订单状态失败:', error)
+      ElMessage.error('更新订单状态失败')
+    })
+}
 
 // 取消订单前添加确认
 const cancelOrder = (order) => {
   ElMessageBox.confirm('确定要取消此订单吗?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning',
+    type: 'warning'
   })
-  .then(() => {
-    // 调用更新订单状态API，6表示已取消
-    updateOrderStatus(order, 6);
-  })
-  .catch(() => {
-    ElMessage.info('已取消订单取消操作');
-  });
-};
+    .then(() => {
+      // 调用更新订单状态API，6表示已取消
+      updateOrderStatus(order, 6)
+    })
+    .catch(() => {
+      ElMessage.info('已取消订单取消操作')
+    })
+}
 
 // 删除订单前添加确认
 const deleteOrder = (order) => {
   ElMessageBox.confirm('确定要删除此订单吗?', '删除确认', {
     confirmButtonText: '确定删除',
     cancelButtonText: '取消',
-    type: 'error',
+    type: 'error'
   })
-  .then(() => {
-    // 从订单列表中删除
-    const index = orders.value.findIndex(item => item.id === order.id);
-    if (index !== -1) {
-      orders.value.splice(index, 1);
-      updateFilter();
-      ElMessage.success('订单已删除');
-    }
-  })
-  .catch(() => {
-    ElMessage.info('已取消订单删除操作');
-  });
-};
+    .then(() => {
+      // 从订单列表中删除
+      const index = orders.value.findIndex((item) => item.id === order.id)
+      if (index !== -1) {
+        orders.value.splice(index, 1)
+        updateFilter()
+        ElMessage.success('订单已删除')
+      }
+    })
+    .catch(() => {
+      ElMessage.info('已取消订单删除操作')
+    })
+}
 
 // 页面加载时初始化筛选
-updateFilter();
+updateFilter()
 </script>
 
 <template>
@@ -193,7 +198,7 @@ updateFilter();
         <el-input
           v-model="searchKeyword"
           placeholder="输入订单号/用户名称..."
-          style="width: 300px;"
+          style="width: 300px"
           @input="updateFilter"
         />
       </div>
@@ -208,7 +213,10 @@ updateFilter();
           :key="status"
           :type="activeStatusFilter === status ? 'primary' : 'info'"
           effect="plain"
-          @click="activeStatusFilter = status; updateFilter()"
+          @click="
+            activeStatusFilter = status
+            updateFilter()
+          "
           class="status-tag"
         >
           {{ status === 'all' ? '全部' : orderStatusMap[status].text }}
@@ -217,11 +225,7 @@ updateFilter();
       </div>
 
       <div class="orders-list">
-        <div
-          v-for="order in filteredOrders"
-          :key="order.id"
-          class="order-item"
-        >
+        <div v-for="order in filteredOrders" :key="order.id" class="order-item">
           <div class="order-left">
             <div class="order-basic-info">
               <div class="order-no">订单号：{{ order.id }}</div>
@@ -243,11 +247,7 @@ updateFilter();
             </div>
 
             <div class="order-actions">
-              <el-button
-                type="primary"
-                size="small"
-                @click="viewOrderDetails(order)"
-              >
+              <el-button type="primary" size="small" @click="viewOrderDetails(order)">
                 📝 查看详情
               </el-button>
 
@@ -278,11 +278,7 @@ updateFilter();
               >
                 🗑️ 取消订单
               </el-button>
-              <el-button
-                type="danger"
-                size="small"
-                @click="deleteOrder(order)"
-              >
+              <el-button type="danger" size="small" @click="deleteOrder(order)">
                 🗑️ 删除订单
               </el-button>
             </div>
@@ -336,19 +332,22 @@ updateFilter();
         margin-bottom: 16px;
       }
 
-      .overview-stats, .status-stats {
+      .overview-stats,
+      .status-stats {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(30%, 1fr));  // 网格布局，每行自动填充，最小宽度200px
+        grid-template-columns: repeat(
+          auto-fill,
+          minmax(30%, 1fr)
+        ); // 网格布局，每行自动填充，最小宽度200px
         gap: 24px;
         font-size: 14px;
         margin-bottom: 16px;
       }
 
-      
       .stat-item {
-        display: block;  // 重置为块级元素以适应网格布局
-        margin-right: 0;  // 清除之前的右边距
-        margin-bottom: 0;  // 清除之前的下边距
+        display: block; // 重置为块级元素以适应网格布局
+        margin-right: 0; // 清除之前的右边距
+        margin-bottom: 0; // 清除之前的下边距
       }
     }
   }

@@ -8,9 +8,7 @@
             <span class="chat-indicator">{{ fromSingleChat ? '👤 ' : '👥 ' }}</span>
             来自{{ fromSingleChat ? '单聊' : '群聊' }}的订单确认
           </template>
-          <template v-else>
-            订单确认
-          </template>
+          <template v-else> 订单确认 </template>
         </h2>
       </div>
 
@@ -31,12 +29,16 @@
             </div>
             <div class="overview-item">
               <span class="info-label">{{ isGroupOrder ? '群名称' : '用户名' }}：</span>
-              <span class="info-value">{{ isGroupOrder ? orderInfo.groupName : orderInfo.userName || '未知用户' }}</span>
+              <span class="info-value">{{
+                isGroupOrder ? orderInfo.groupName : orderInfo.userName || '未知用户'
+              }}</span>
             </div>
             <div class="overview-item paid-amount">
               <span class="info-label">已支付金额：</span>
               <span class="info-value">{{ orderInfo.totalPaid.toFixed(2) }}元</span>
-              <span class="payee-info" v-if="orderInfo.paidItems.length > 0">({{ orderInfo.paidItems[0].payee }}·个人支付)</span>
+              <span class="payee-info" v-if="orderInfo.paidItems.length > 0"
+                >({{ orderInfo.paidItems[0].payee }}·个人支付)</span
+              >
             </div>
             <div class="overview-item unpaid-amount">
               <span class="info-label">未支付金额：</span>
@@ -56,21 +58,48 @@
                 <div class="item-details">
                   <span class="item-quantity">×{{ item.quantity }}</span>
                   <span class="item-price">→ {{ item.price.toFixed(2) }}元/份</span>
-                  <span class="item-total">→ {{ (item.totalPrice || item.total || item.price * item.quantity).toFixed(2) }}元</span>
+                  <span class="item-total"
+                    >→
+                    {{
+                      (item.totalPrice || item.total || item.price * item.quantity).toFixed(2)
+                    }}元</span
+                  >
                 </div>
 
                 <!-- 食材组成 -->
-                <div class="item-ingredients" v-if="item.requiredIngredients || item.selectedOptionalIngredients">
-                  <div v-if="item.requiredIngredients && item.requiredIngredients.length > 0" class="ingredient-group">
+                <div
+                  class="item-ingredients"
+                  v-if="item.requiredIngredients || item.selectedOptionalIngredients"
+                >
+                  <div
+                    v-if="item.requiredIngredients && item.requiredIngredients.length > 0"
+                    class="ingredient-group"
+                  >
                     <span class="ingredient-label">必选食材:</span>
                     <div class="ingredient-list">
-                      <span class="ingredient-item" v-for="ingredient in item.requiredIngredients" :key="ingredient">{{ ingredient }}</span>
+                      <span
+                        class="ingredient-item"
+                        v-for="ingredient in item.requiredIngredients"
+                        :key="ingredient"
+                        >{{ ingredient }}</span
+                      >
                     </div>
                   </div>
-                  <div v-if="item.selectedOptionalIngredients && item.selectedOptionalIngredients.length > 0" class="ingredient-group">
+                  <div
+                    v-if="
+                      item.selectedOptionalIngredients &&
+                      item.selectedOptionalIngredients.length > 0
+                    "
+                    class="ingredient-group"
+                  >
                     <span class="ingredient-label">可选食材:</span>
                     <div class="ingredient-list">
-                      <span class="ingredient-item" v-for="ingredient in item.selectedOptionalIngredients" :key="ingredient.id || ingredient">{{ ingredient.name || ingredient }}</span>
+                      <span
+                        class="ingredient-item"
+                        v-for="ingredient in item.selectedOptionalIngredients"
+                        :key="ingredient.id || ingredient"
+                        >{{ ingredient.name || ingredient }}</span
+                      >
                     </div>
                   </div>
                 </div>
@@ -100,21 +129,45 @@
                 <div class="item-details">
                   <span class="item-quantity">×{{ item.quantity }}</span>
                   <span class="item-price">→ {{ item.price.toFixed(2) }}元/份</span>
-                  <span class="item-total">→ {{ (item.totalPrice || item.price * item.quantity).toFixed(2) }}元</span>
+                  <span class="item-total"
+                    >→ {{ (item.totalPrice || item.price * item.quantity).toFixed(2) }}元</span
+                  >
                 </div>
 
                 <!-- 食材组成 -->
-                <div class="item-ingredients" v-if="item.requiredIngredients || item.selectedOptionalIngredients">
-                  <div v-if="item.requiredIngredients && item.requiredIngredients.length > 0" class="ingredient-group">
+                <div
+                  class="item-ingredients"
+                  v-if="item.requiredIngredients || item.selectedOptionalIngredients"
+                >
+                  <div
+                    v-if="item.requiredIngredients && item.requiredIngredients.length > 0"
+                    class="ingredient-group"
+                  >
                     <span class="ingredient-label">必选食材:</span>
                     <div class="ingredient-list">
-                      <span class="ingredient-item" v-for="ingredient in item.requiredIngredients" :key="ingredient">{{ ingredient }}</span>
+                      <span
+                        class="ingredient-item"
+                        v-for="ingredient in item.requiredIngredients"
+                        :key="ingredient"
+                        >{{ ingredient }}</span
+                      >
                     </div>
                   </div>
-                  <div v-if="item.selectedOptionalIngredients && item.selectedOptionalIngredients.length > 0" class="ingredient-group">
+                  <div
+                    v-if="
+                      item.selectedOptionalIngredients &&
+                      item.selectedOptionalIngredients.length > 0
+                    "
+                    class="ingredient-group"
+                  >
                     <span class="ingredient-label">可选食材:</span>
                     <div class="ingredient-list">
-                      <span class="ingredient-item" v-for="ingredient in item.selectedOptionalIngredients" :key="ingredient.id || ingredient">{{ ingredient.name || ingredient }}</span>
+                      <span
+                        class="ingredient-item"
+                        v-for="ingredient in item.selectedOptionalIngredients"
+                        :key="ingredient.id || ingredient"
+                        >{{ ingredient.name || ingredient }}</span
+                      >
                     </div>
                   </div>
                 </div>
@@ -138,15 +191,28 @@
             <el-collapse-transition>
               <div v-show="isPriceDetailsOpen" class="price-details-container">
                 <div class="price-details">
-                  <div class="detail-item" v-for="(item, index) in orderInfo.unpaidItems" :key="index">
+                  <div
+                    class="detail-item"
+                    v-for="(item, index) in orderInfo.unpaidItems"
+                    :key="index"
+                  >
                     <span class="item-name">{{ item.name }} ×{{ item.quantity }}</span>
-                    <span class="item-amount">¥{{ (item.totalPrice || (item.price * item.quantity)).toFixed(2) }}</span>
+                    <span class="item-amount"
+                      >¥{{ (item.totalPrice || item.price * item.quantity).toFixed(2) }}</span
+                    >
                   </div>
 
                   <!-- 优惠信息 -->
-                  <div v-if="orderInfo.originalTotal && orderInfo.originalTotal > orderInfo.totalUnpaid" class="detail-item discount-item">
+                  <div
+                    v-if="
+                      orderInfo.originalTotal && orderInfo.originalTotal > orderInfo.totalUnpaid
+                    "
+                    class="detail-item discount-item"
+                  >
                     <span class="item-name">优惠:</span>
-                    <span class="item-amount discount-amount">-¥{{ (orderInfo.originalTotal - orderInfo.totalUnpaid).toFixed(2) }}</span>
+                    <span class="item-amount discount-amount"
+                      >-¥{{ (orderInfo.originalTotal - orderInfo.totalUnpaid).toFixed(2) }}</span
+                    >
                   </div>
                 </div>
               </div>
@@ -154,12 +220,9 @@
 
             <!-- 折叠按钮 -->
             <div class="price-details-toggle">
-              <el-button
-                type="text"
-                size="small"
-                @click="isPriceDetailsOpen = !isPriceDetailsOpen"
-              >
-                {{ isPriceDetailsOpen ? '▲' : '▶' }} {{ isPriceDetailsOpen ? '收起详情' : '展开详情' }}
+              <el-button type="text" size="small" @click="isPriceDetailsOpen = !isPriceDetailsOpen">
+                {{ isPriceDetailsOpen ? '▲' : '▶' }}
+                {{ isPriceDetailsOpen ? '收起详情' : '展开详情' }}
               </el-button>
             </div>
           </div>
@@ -191,7 +254,11 @@
             >
               <div class="option-icon">{{ option.icon }}</div>
               <div class="option-name">{{ option.name }}</div>
-              <el-radio v-model="selectedPaymentMethod.id" :label="option.id" class="option-radio"></el-radio>
+              <el-radio
+                v-model="selectedPaymentMethod.id"
+                :label="option.id"
+                class="option-radio"
+              ></el-radio>
             </div>
           </div>
         </div>
@@ -209,7 +276,9 @@
             </div>
             <div v-else>
               <span class="discount-used-text">已使用</span>
-              <el-button type="text" class="cancel-discount" @click="cancelDiscount">取消</el-button>
+              <el-button type="text" class="cancel-discount" @click="cancelDiscount"
+                >取消</el-button
+              >
             </div>
           </div>
         </div>
@@ -234,7 +303,7 @@
       class="draggable-cart-ball"
       @mousedown="startDrag"
       @click="viewCart"
-      style="display: none;"
+      style="display: none"
     >
       <div class="cart-icon">🛒</div>
       <el-badge :value="cartItems.length" class="cart-badge" />
@@ -253,12 +322,7 @@
     </div>
 
     <!-- 购物车弹窗 -->
-    <el-dialog
-      v-model="cartVisible"
-      title="我的购物车"
-      width="500px"
-      @close="closeCart"
-    >
+    <el-dialog v-model="cartVisible" title="我的购物车" width="500px" @close="closeCart">
       <div v-if="cartItems.length === 0" class="empty-cart">
         <div class="empty-cart-icon">🛒</div>
         <div class="empty-cart-text">购物车是空的</div>
@@ -268,8 +332,15 @@
           <div class="cart-item-info">
             <div class="cart-item-name">{{ item.name }}</div>
             <!-- Optional ingredients display -->
-            <div v-if="item.selectedOptionalIngredients && item.selectedOptionalIngredients.length > 0" class="cart-item-ingredients">
-              <span v-for="(ingredient, idx) in item.selectedOptionalIngredients" :key="idx" class="ingredient-tag">
+            <div
+              v-if="item.selectedOptionalIngredients && item.selectedOptionalIngredients.length > 0"
+              class="cart-item-ingredients"
+            >
+              <span
+                v-for="(ingredient, idx) in item.selectedOptionalIngredients"
+                :key="idx"
+                class="ingredient-tag"
+              >
                 +{{ ingredient.name }} (¥{{ ingredient.price.toFixed(2) }})
               </span>
             </div>
@@ -290,22 +361,17 @@
             <el-button
               type="text"
               size="small"
-              @click="cartItems[index].quantity--; if (cartItems[index].quantity <= 0) cartItems.splice(index, 1)"
+              @click="
+                cartItems[index].quantity--
+                if (cartItems[index].quantity <= 0) cartItems.splice(index, 1)
+              "
             >
               -
             </el-button>
             <span class="quantity-value">{{ item.quantity }}</span>
-            <el-button
-              type="text"
-              size="small"
-              @click="cartItems[index].quantity++"
-            >
-              +
-            </el-button>
+            <el-button type="text" size="small" @click="cartItems[index].quantity++"> + </el-button>
           </div>
-          <div class="cart-item-total">
-            ¥{{ item.totalPrice.toFixed(2) }}
-          </div>
+          <div class="cart-item-total">¥{{ item.totalPrice.toFixed(2) }}</div>
         </div>
         <div class="cart-total">
           <div class="total-text">总计:</div>
@@ -325,11 +391,7 @@
     </el-dialog>
 
     <!-- AA支付模态框 -->
-    <el-dialog
-      v-model="aaPaymentModalVisible"
-      title="AA支付确认"
-      width="400px"
-    >
+    <el-dialog v-model="aaPaymentModalVisible" title="AA支付确认" width="400px">
       <div class="aa-payment-content">
         <div class="aa-info">
           <div class="info-item">
@@ -355,11 +417,7 @@
     </el-dialog>
 
     <!-- 自定义分摊模态框 -->
-    <el-dialog
-      v-model="customShareModalVisible"
-      title="自定义分摊"
-      width="500px"
-    >
+    <el-dialog v-model="customShareModalVisible" title="自定义分摊" width="500px">
       <div class="custom-share-content">
         <div class="custom-info">
           <div class="info-item">
@@ -369,11 +427,7 @@
         </div>
 
         <div class="share-list">
-          <div
-            class="share-item"
-            v-for="(share, index) in customShares"
-            :key="index"
-          >
+          <div class="share-item" v-for="(share, index) in customShares" :key="index">
             <div class="member-name">{{ share.member }}</div>
             <el-input-number
               v-model="share.amount"
@@ -393,23 +447,22 @@
         </div>
       </template>
     </el-dialog>
-
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { useRouter } from 'vue-router';
-import CommonBackButton from '../../components/common/CommonBackButton.vue';
+import { ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
+import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
-const router = useRouter();
+const router = useRouter()
 
 // 从会话存储获取订单信息
-const pendingOrder = JSON.parse(sessionStorage.getItem('pendingOrder')) || {};
+const pendingOrder = JSON.parse(sessionStorage.getItem('pendingOrder')) || {}
 
 // 检查订单是否为空
-const isEmptyOrder = !pendingOrder.cartItems || pendingOrder.cartItems.length === 0;
+const isEmptyOrder = !pendingOrder.cartItems || pendingOrder.cartItems.length === 0
 
 // 订单信息（将购物车商品作为未支付订单）
 const orderInfo = ref({
@@ -420,116 +473,121 @@ const orderInfo = ref({
   paidItems: [],
   unpaidItems: pendingOrder.cartItems || [],
   totalPaid: 0.0,
-  totalUnpaid: pendingOrder.totalAmount || (pendingOrder.cartItems || []).reduce((total, item) => total + (item.totalPrice || item.price * item.quantity), 0)
-});
+  totalUnpaid:
+    pendingOrder.totalAmount ||
+    (pendingOrder.cartItems || []).reduce(
+      (total, item) => total + (item.totalPrice || item.price * item.quantity),
+      0
+    )
+})
 
 // 如果订单为空，返回上一页并提示
 if (isEmptyOrder) {
-  ElMessage.warning('购物车为空，无法进行订单确认');
-  router.back();
+  ElMessage.warning('购物车为空，无法进行订单确认')
+  router.back()
 }
 
 // 购物车数据（用于悬浮购物车显示）
-const cartItems = ref(pendingOrder.cartItems || []);
-const totalAmount = ref(pendingOrder.totalAmount || 0);
-const cartVisible = ref(false);
+const cartItems = ref(pendingOrder.cartItems || [])
+const totalAmount = ref(pendingOrder.totalAmount || 0)
+const cartVisible = ref(false)
 
 // 可拖动购物车相关
-const cartBallRef = ref(null);
-let isDragging = false;
-let startX = 0;
-let startY = 0;
-let initialX = 0;
-let initialY = 0;
+const cartBallRef = ref(null)
+let isDragging = false
+let startX = 0
+let startY = 0
+let initialX = 0
+let initialY = 0
 
 // 开始拖动
 const startDrag = (e) => {
-  if (!cartBallRef.value) return;
+  if (!cartBallRef.value) return
 
-  isDragging = true;
-  startX = e.clientX;
-  startY = e.clientY;
+  isDragging = true
+  startX = e.clientX
+  startY = e.clientY
 
   // 获取购物车球的初始位置
-  const rect = cartBallRef.value.getBoundingClientRect();
-  initialX = rect.left;
-  initialY = rect.top;
+  const rect = cartBallRef.value.getBoundingClientRect()
+  initialX = rect.left
+  initialY = rect.top
 
   // 添加事件监听
-  document.addEventListener('mousemove', onDrag);
-  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('mousemove', onDrag)
+  document.addEventListener('mouseup', stopDrag)
 
   // 阻止点击事件
-  e.stopPropagation();
+  e.stopPropagation()
 }
 
 // 拖动中
 const onDrag = (e) => {
-  if (!isDragging || !cartBallRef.value) return;
+  if (!isDragging || !cartBallRef.value) return
 
-  const dx = e.clientX - startX;
-  const dy = e.clientY - startY;
+  const dx = e.clientX - startX
+  const dy = e.clientY - startY
 
   // 计算新位置
-  let newX = initialX + dx;
-  let newY = initialY + dy;
+  let newX = initialX + dx
+  let newY = initialY + dy
 
   // 限制在视窗内
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
-  const cartWidth = cartBallRef.value.offsetWidth;
-  const cartHeight = cartBallRef.value.offsetHeight;
+  const windowWidth = window.innerWidth
+  const windowHeight = window.innerHeight
+  const cartWidth = cartBallRef.value.offsetWidth
+  const cartHeight = cartBallRef.value.offsetHeight
 
-  newX = Math.max(0, Math.min(newX, windowWidth - cartWidth));
-  newY = Math.max(0, Math.min(newY, windowHeight - cartHeight));
+  newX = Math.max(0, Math.min(newX, windowWidth - cartWidth))
+  newY = Math.max(0, Math.min(newY, windowHeight - cartHeight))
 
   // 更新位置
-  cartBallRef.value.style.left = `${newX}px`;
-  cartBallRef.value.style.top = `${newY}px`;
+  cartBallRef.value.style.left = `${newX}px`
+  cartBallRef.value.style.top = `${newY}px`
 }
 
 // 停止拖动
 const stopDrag = () => {
-  isDragging = false;
-  document.removeEventListener('mousemove', onDrag);
-  document.removeEventListener('mouseup', stopDrag);
+  isDragging = false
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('mouseup', stopDrag)
 }
 
 // 查看购物车
 const viewCart = () => {
   if (!isDragging) {
-    cartVisible.value = true;
+    cartVisible.value = true
   }
 }
 
 // 关闭购物车
 const closeCart = () => {
-  cartVisible.value = false;
+  cartVisible.value = false
 }
 
 // 更新订单信息
 const updateOrderInfo = () => {
   // 更新订单信息
-  orderInfo.value.unpaidItems = cartItems.value;
-  orderInfo.value.totalUnpaid = cartItems.reduce((total, item) => total + item.totalPrice, 0);
+  orderInfo.value.unpaidItems = cartItems.value
+  orderInfo.value.totalUnpaid = cartItems.reduce((total, item) => total + item.totalPrice, 0)
 
   // 保存更新后的购物车到会话存储
-  const updatedOrder = { ...pendingOrder };
-  updatedOrder.cartItems = cartItems.value;
-  updatedOrder.totalAmount = orderInfo.value.totalUnpaid;
-  sessionStorage.setItem('pendingOrder', JSON.stringify(updatedOrder));
+  const updatedOrder = { ...pendingOrder }
+  updatedOrder.cartItems = cartItems.value
+  updatedOrder.totalAmount = orderInfo.value.totalUnpaid
+  sessionStorage.setItem('pendingOrder', JSON.stringify(updatedOrder))
 
   // 关闭购物车并提示
-  closeCart();
-  ElMessage.success('订单已更新');
+  closeCart()
+  ElMessage.success('订单已更新')
 }
 
 // 检测订单类型：群聊订单或单独订单
-const isGroupOrder = ref(orderInfo.value.groupName !== '默认订单群');
+const isGroupOrder = ref(orderInfo.value.groupName !== '默认订单群')
 // 检测是否来自聊天（群聊或单聊）
-const fromChat = ref(pendingOrder.fromChat || false);
+const fromChat = ref(pendingOrder.fromChat || false)
 // 检测是否来自单聊
-const fromSingleChat = ref(fromChat.value && !isGroupOrder.value);
+const fromSingleChat = ref(fromChat.value && !isGroupOrder.value)
 
 // 支付方式 - 根据订单类型和身份动态显示
 // 仅订单发起者可以看到AA支付和自定义分摊
@@ -538,104 +596,105 @@ const paymentMethods = ref(
     ? [
         { id: 1, name: '个人下单', icon: '👤' },
         // 仅订单发起者显示其他支付方式
-        ...(orderInfo.value.creator === '我' ? [
-          { id: 2, name: '统一提交集中支付', icon: '🧮' },
-          { id: 3, name: 'AA自动拆分', icon: '🎉' },
-          { id: 4, name: '自定义分摊', icon: '📝' }
-        ] : [])
+        ...(orderInfo.value.creator === '我'
+          ? [
+              { id: 2, name: '统一提交集中支付', icon: '🧮' },
+              { id: 3, name: 'AA自动拆分', icon: '🎉' },
+              { id: 4, name: '自定义分摊', icon: '📝' }
+            ]
+          : [])
       ]
     : [
         { id: 1, name: '个人支付', icon: '💳' },
         { id: 2, name: '他人代付', icon: '🤝' }
       ]
-);
+)
 
 // 更新默认选中支付方式
-const selectedPaymentMethod = ref(paymentMethods.value[0]);
+const selectedPaymentMethod = ref(paymentMethods.value[0])
 
 // AA支付相关
-const aaPaymentModalVisible = ref(false);
-const aaShareAmount = ref(0);
+const aaPaymentModalVisible = ref(false)
+const aaShareAmount = ref(0)
 
 // 自定义分摊相关
-const customShareModalVisible = ref(false);
-const customShares = ref([]);
+const customShareModalVisible = ref(false)
+const customShares = ref([])
 
 // 计算AA支付每人金额
 const calculateAAShare = () => {
   if (orderInfo.value && orderInfo.value.totalUnpaid && orderInfo.value.members.length > 0) {
-    const share = orderInfo.value.totalUnpaid / orderInfo.value.members.length;
-    aaShareAmount.value = parseFloat(share.toFixed(2));
+    const share = orderInfo.value.totalUnpaid / orderInfo.value.members.length
+    aaShareAmount.value = parseFloat(share.toFixed(2))
   }
-};
+}
 
 // 初始化自定义分摊
 const initCustomShares = () => {
   if (orderInfo.value && orderInfo.value.members.length > 0) {
-    customShares.value = orderInfo.value.members.map(member => ({
+    customShares.value = orderInfo.value.members.map((member) => ({
       member,
       amount: parseFloat((orderInfo.value.totalUnpaid / orderInfo.value.members.length).toFixed(2))
-    }));
+    }))
   }
-};
+}
 
 // 打开AA支付模态框
 const openAAPaymentModal = () => {
-  calculateAAShare();
-  aaPaymentModalVisible.value = true;
-};
+  calculateAAShare()
+  aaPaymentModalVisible.value = true
+}
 
 // 打开自定义分摊模态框
 const openCustomShareModal = () => {
-  initCustomShares();
-  customShareModalVisible.value = true;
-};
+  initCustomShares()
+  customShareModalVisible.value = true
+}
 
 // 确认AA支付
 const confirmAAPayment = () => {
   // 这里可以添加AA支付的实际逻辑
-  aaPaymentModalVisible.value = false;
-  ElMessage.success('AA支付已发起，将自动为每位成员创建支付订单');
+  aaPaymentModalVisible.value = false
+  ElMessage.success('AA支付已发起，将自动为每位成员创建支付订单')
 
   // 清除会话存储中的未完成订单
-  sessionStorage.removeItem('pendingOrder');
+  sessionStorage.removeItem('pendingOrder')
 
   // 跳转到订单列表页
   setTimeout(() => {
-    router.push('/user/home/orders');
-  }, 1500);
-};
+    router.push('/user/home/orders')
+  }, 1500)
+}
 
 // 确认自定义分摊
 const confirmCustomShare = () => {
   // 验证分摊总额是否等于订单总额
-  const totalShare = customShares.value.reduce((sum, share) => sum + share.amount, 0);
+  const totalShare = customShares.value.reduce((sum, share) => sum + share.amount, 0)
   if (Math.abs(totalShare - orderInfo.value.totalUnpaid) > 0.01) {
-    ElMessage.error('分摊总额必须等于订单总额');
-    return;
+    ElMessage.error('分摊总额必须等于订单总额')
+    return
   }
 
   // 这里可以添加自定义分摊的实际逻辑
-  customShareModalVisible.value = false;
-  ElMessage.success('自定义分摊已发起，将为每位成员创建对应金额的支付订单');
+  customShareModalVisible.value = false
+  ElMessage.success('自定义分摊已发起，将为每位成员创建对应金额的支付订单')
 
   // 清除会话存储中的未完成订单
-  sessionStorage.removeItem('pendingOrder');
+  sessionStorage.removeItem('pendingOrder')
 
   // 跳转到订单列表页
   setTimeout(() => {
-    router.push('/user/home/orders');
-  }, 1500);
-};
+    router.push('/user/home/orders')
+  }, 1500)
+}
 
 // 更新自定义分摊金额
 const updateCustomShare = (index, amount) => {
-  customShares.value[index].amount = parseFloat(amount);
-};
-
+  customShares.value[index].amount = parseFloat(amount)
+}
 
 // 平台币余额
-const platformBalance = ref(125.0);
+const platformBalance = ref(125.0)
 
 // 可用优惠
 const discounts = ref([
@@ -646,56 +705,59 @@ const discounts = ref([
     available: true,
     used: false
   }
-]);
+])
 
 // 已选择的优惠
-const selectedDiscount = ref(null);
+const selectedDiscount = ref(null)
 
 // 价格详情折叠状态
-const isPriceDetailsOpen = ref(true);
+const isPriceDetailsOpen = ref(true)
 
 // 使用优惠
 const useDiscount = () => {
-  const discount = discounts.value[0];
-  if (!discount || !discount.available || discount.used) return;
+  const discount = discounts.value[0]
+  if (!discount || !discount.available || discount.used) return
 
   // 应用优惠
-  selectedDiscount.value = discount;
-  discount.used = true;
+  selectedDiscount.value = discount
+  discount.used = true
 
   // 保存原价
   if (!orderInfo.value.originalTotal) {
-    orderInfo.value.originalTotal = orderInfo.value.totalUnpaid;
+    orderInfo.value.originalTotal = orderInfo.value.totalUnpaid
   }
 
   // 更新订单金额
-  const discountAmount = Math.min(discount.amount, orderInfo.value.totalUnpaid);
-  orderInfo.value.totalUnpaid -= discountAmount;
+  const discountAmount = Math.min(discount.amount, orderInfo.value.totalUnpaid)
+  orderInfo.value.totalUnpaid -= discountAmount
 
-  ElMessage.success('优惠已使用');
-};
+  ElMessage.success('优惠已使用')
+}
 
 // 取消使用优惠
 const cancelDiscount = () => {
-  if (!selectedDiscount.value) return;
+  if (!selectedDiscount.value) return
 
   // 恢复订单金额
-  const discountAmount = Math.min(selectedDiscount.value.amount, orderInfo.value.totalUnpaid + selectedDiscount.value.amount);
-  orderInfo.value.totalUnpaid += discountAmount;
+  const discountAmount = Math.min(
+    selectedDiscount.value.amount,
+    orderInfo.value.totalUnpaid + selectedDiscount.value.amount
+  )
+  orderInfo.value.totalUnpaid += discountAmount
 
   // 移除原价记录
-  delete orderInfo.value.originalTotal;
+  delete orderInfo.value.originalTotal
 
   // 标记优惠为未使用
-  selectedDiscount.value.used = false;
-  selectedDiscount.value = null;
+  selectedDiscount.value.used = false
+  selectedDiscount.value = null
 
-  ElMessage.success('优惠已取消');
-};
+  ElMessage.success('优惠已取消')
+}
 
 const confirmOrder = () => {
   // 根据不同支付方式处理
-  switch(selectedPaymentMethod.value.id) {
+  switch (selectedPaymentMethod.value.id) {
     case 2: // 统一提交集中支付
       // 普通支付流程
       ElMessageBox.confirm('请确认订单信息无误后支付', '订单确认', {
@@ -703,27 +765,27 @@ const confirmOrder = () => {
         cancelButtonText: '取消',
         type: 'warning'
       })
-      .then(() => {
-        // 清除会话存储中的未完成订单
-        sessionStorage.removeItem('pendingOrder');
+        .then(() => {
+          // 清除会话存储中的未完成订单
+          sessionStorage.removeItem('pendingOrder')
 
-        ElMessage.success('支付成功！您的订单正在处理中');
-        setTimeout(() => {
-          router.push('/user/home/orders');
-        }, 1500);
-      })
-      .catch(() => {
-        ElMessage.info('已取消支付');
-      });
-      break;
+          ElMessage.success('支付成功！您的订单正在处理中')
+          setTimeout(() => {
+            router.push('/user/home/orders')
+          }, 1500)
+        })
+        .catch(() => {
+          ElMessage.info('已取消支付')
+        })
+      break
 
     case 3: // AA自动拆分
-      openAAPaymentModal();
-      break;
+      openAAPaymentModal()
+      break
 
     case 4: // 自定义分摊
-      openCustomShareModal();
-      break;
+      openCustomShareModal()
+      break
 
     case 2: // 他人代付
       // 现有他人代付逻辑保持不变
@@ -733,20 +795,20 @@ const confirmOrder = () => {
         inputPattern: /^1[3456789]\d{9}$|^[\u4e00-\u9fa5]{2,8}$/,
         inputErrorMessage: '请输入有效的手机号码或2-8位中文昵称'
       })
-      .then(({ value }) => {
-        // 这里可以添加发送代付请求的逻辑
-        // 清除会话存储中的未完成订单
-        sessionStorage.removeItem('pendingOrder');
+        .then(({ value }) => {
+          // 这里可以添加发送代付请求的逻辑
+          // 清除会话存储中的未完成订单
+          sessionStorage.removeItem('pendingOrder')
 
-        ElMessage.success(`代付请求已发送给${value}！`);
-        setTimeout(() => {
-          router.push('/user/home/orders');
-        }, 1500);
-      })
-      .catch(() => {
-        ElMessage.info('已取消代付');
-      });
-      break;
+          ElMessage.success(`代付请求已发送给${value}！`)
+          setTimeout(() => {
+            router.push('/user/home/orders')
+          }, 1500)
+        })
+        .catch(() => {
+          ElMessage.info('已取消代付')
+        })
+      break
 
     default: // 个人支付
       // 普通支付流程
@@ -755,21 +817,21 @@ const confirmOrder = () => {
         cancelButtonText: '取消',
         type: 'warning'
       })
-      .then(() => {
-        // 清除会话存储中的未完成订单
-        sessionStorage.removeItem('pendingOrder');
+        .then(() => {
+          // 清除会话存储中的未完成订单
+          sessionStorage.removeItem('pendingOrder')
 
-        ElMessage.success('支付成功！您的订单正在处理中');
-        setTimeout(() => {
-          router.push('/user/home/orders');
-        }, 1500);
-      })
-      .catch(() => {
-        ElMessage.info('已取消支付');
-      });
-      break;
+          ElMessage.success('支付成功！您的订单正在处理中')
+          setTimeout(() => {
+            router.push('/user/home/orders')
+          }, 1500)
+        })
+        .catch(() => {
+          ElMessage.info('已取消支付')
+        })
+      break
   }
-};
+}
 </script>
 
 <style scoped lang="less">
@@ -889,7 +951,8 @@ const confirmOrder = () => {
                 }
               }
 
-              .payee-info, .payment-note {
+              .payee-info,
+              .payment-note {
                 font-size: 13px;
                 color: #909399;
                 margin-left: 10px;

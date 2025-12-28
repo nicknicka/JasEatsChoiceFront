@@ -89,7 +89,13 @@ const saveNewRecipe = () => {
 </script>
 
 <template>
-  <el-dialog :model-value="visible" @update:model-value="val => emit('update:visible', val)" title="添加新食谱" width="500px" top="10%">
+  <el-dialog
+    :model-value="visible"
+    @update:model-value="(val) => emit('update:visible', val)"
+    title="添加新食谱"
+    width="500px"
+    top="10%"
+  >
     <div class="add-recipe-form">
       <el-form :model="newRecipe" label-width="80px" status-icon>
         <el-form-item label="名称" prop="name" required>
@@ -106,11 +112,7 @@ const saveNewRecipe = () => {
         </el-form-item>
 
         <el-form-item label="卡路里" prop="calories" required>
-          <el-input
-            v-model="newRecipe.calories"
-            type="number"
-            placeholder="请输入卡路里"
-          />
+          <el-input v-model="newRecipe.calories" type="number" placeholder="请输入卡路里" />
         </el-form-item>
 
         <el-form-item label="准备时间" prop="time" required>

@@ -1,7 +1,6 @@
-
 <script setup>
-import { ref, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 
 // 模拟对话列表
 const conversationList = ref([
@@ -32,7 +31,7 @@ const conversationList = ref([
     time: '2024-11-21 13:45',
     unreadCount: 0
   }
-]);
+])
 
 // 模拟聊天记录
 const chatMessages = ref([
@@ -50,36 +49,36 @@ const chatMessages = ref([
     time: '2024-11-21 14:31',
     isRead: true
   }
-]);
+])
 
 // 当前选中的对话
-const selectedConversation = ref(null);
+const selectedConversation = ref(null)
 
 // 新消息内容
-const newMessage = ref('');
+const newMessage = ref('')
 
 // 页面加载
 onMounted(() => {
   // 默认选中第一个对话
   if (conversationList.value.length > 0) {
-    selectedConversation.value = conversationList.value[0];
+    selectedConversation.value = conversationList.value[0]
   }
-});
+})
 
 // 选择对话
 const selectConversation = (conversation) => {
-  selectedConversation.value = conversation;
+  selectedConversation.value = conversation
   // 清空未读消息
   if (conversation.unreadCount > 0) {
-    conversation.unreadCount = 0;
-    ElMessage.success('消息已标记为已读');
+    conversation.unreadCount = 0
+    ElMessage.success('消息已标记为已读')
   }
-};
+}
 
 // 发送消息
 const sendMessage = () => {
   if (!newMessage.value.trim() || !selectedConversation.value) {
-    return;
+    return
   }
 
   // 创建新消息
@@ -89,18 +88,18 @@ const sendMessage = () => {
     content: newMessage.value.trim(),
     time: new Date().toISOString().slice(0, 19).replace('T', ' '),
     isRead: true
-  };
+  }
 
   // 添加到聊天记录
-  chatMessages.value.push(message);
+  chatMessages.value.push(message)
 
   // 更新对话列表的最后一条消息
-  selectedConversation.value.lastMessage = message.content;
-  selectedConversation.value.time = message.time;
+  selectedConversation.value.lastMessage = message.content
+  selectedConversation.value.time = message.time
 
   // 清空输入框
-  newMessage.value = '';
-};
+  newMessage.value = ''
+}
 </script>
 
 <template>
@@ -153,7 +152,10 @@ const sendMessage = () => {
             v-for="message in chatMessages"
             :key="message.id"
             class="message-item"
-            :class="{ 'user-message': message.sender === 'user', 'merchant-message': message.sender === 'merchant' }"
+            :class="{
+              'user-message': message.sender === 'user',
+              'merchant-message': message.sender === 'merchant'
+            }"
           >
             <div class="message-content">
               {{ message.content }}
