@@ -1,10 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { API_CONFIG } from '../../config/index.js'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from './../../store/authStore'
 import { useUserStore } from './../../store/userStore'
+// 新增图标导入
+import { ArrowDown, WarningFilled, CircleCheckFilled } from '@element-plus/icons-vue'
 
 // 卡路里统计数据
 const calorieData = ref({
@@ -29,6 +31,14 @@ const calorieData = ref({
     { name: '脂肪', value: 0, unit: 'g' }
   ]
 })
+
+// 健康建议显示状态
+const showAdvice = ref(false)
+
+// 切换健康建议显示/隐藏
+const toggleAdvice = () => {
+  showAdvice.value = !showAdvice.value
+}
 
 // 推荐营养目标（根据膳食指南）
 const recommendedGoals = ref({
@@ -196,9 +206,24 @@ onMounted(() => {
   axios
     .get(`${API_CONFIG.baseURL}${API_CONFIG.diet.week.replace('{userId}', userId)}`)
     .then((response) => {
-      if (response.data && response.data.code === '200') {
-        // 直接使用后端返回的每周数据
-        calorieData.value.weekly = response.data.data
+      console.log('本周卡路里统计:', response.data)
+      if (
+        response.data &&
+        response.data.code === '200' &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
+        // 确保每个项目都有day和consumed属性，与模板结构一致
+        const processedWeekly = response.data.data.map(item => ({
+          day: item.day || '',
+          consumed: item.consumed || 0
+        }))
+
+        // 使用处理后的每周数据
+        calorieData.value.weekly = processedWeekly
+      } else {
+        // 如果数据格式不正确，保留默认模拟数据
+        console.warn('本周卡路里统计数据格式不正确，将使用默认模拟数据')
       }
     })
     .catch((error) => {
@@ -215,7 +240,7 @@ const getNutritionPercentage = (value, name) => {
   let percentage = goal > 0 ? (value / goal) * 100 : 0
   // 不再限制百分比在0-100之间，允许超过
   // 四舍五入保留两位小数
-  return Math.round(percentage * 100) / 100
+  return (Math.round(percentage * 100) / 100)
 }
 
 // 判断是否为极端值 - 与健康提示阈值一致
@@ -259,6 +284,46 @@ const getNutritionColor = (name, percentage) => {
     return normalColors[name] || normalColors.default
   }
 }
+
+// 动态计算健康建议
+const healthAdvice = computed(() => {
+  const advice = []
+
+  // 遍历所有营养元素
+  calorieData.value.nutrition.forEach(item => {
+    const { name, value } = item
+    const percent = getNutritionPercentage(value, name)
+
+    // 根据不同情况生成建议
+    if (name === '蛋白质') {
+      if (percent > 200) {
+        advice.push('蛋白质摄入已超过推荐值2倍，长期过量摄入可能加重肾脏负担')
+      } else if (percent > 150) {
+        advice.push('蛋白质摄入已超过推荐值1.5倍，建议合理搭配饮食')
+      } else if (percent < 70) {
+        advice.push('蛋白质摄入不足，建议增加鸡蛋、牛奶、瘦肉等高蛋白食物')
+      }
+    } else if (name === '碳水化合物') {
+      if (percent > 200) {
+        advice.push('碳水化合物摄入已超过推荐值2倍，长期过量可能导致血糖波动')
+      } else if (percent > 150) {
+        advice.push('碳水化合物摄入已超过推荐值1.5倍，建议增加膳食纤维摄入')
+      } else if (percent < 70) {
+        advice.push('碳水化合物摄入不足，建议增加主食摄入，保证能量供应')
+      }
+    } else if (name === '脂肪') {
+      if (percent > 200) {
+        advice.push('脂肪摄入已超过推荐值2倍，长期过量摄入会增加健康风险')
+      } else if (percent > 150) {
+        advice.push('脂肪摄入已超过推荐值1.5倍，建议适当减少油炸食品摄入')
+      } else if (percent < 70) {
+        advice.push('脂肪摄入不足，建议适量摄入健康脂肪如坚果、鱼类等')
+      }
+    }
+  })
+
+  return advice
+})
 </script>
 
 <template>
@@ -314,11 +379,42 @@ const getNutritionColor = (name, percentage) => {
               </div>
             </div>
             <el-progress
-              :percentage="getNutritionPercentage(item.value, item.name)"
+              :percentage="Math.min(getNutritionPercentage(item.value, item.name),100)"
               :color="getNutritionColor(item.name, getNutritionPercentage(item.value, item.name))"
-              :format="(percent) => (percent > 200 ? '严重超出' : `${percent}%`)"
-              :class="{ 'extreme-progress': getNutritionPercentage(item.value, item.name) > 200 }"
-            />
+              :stroke-width="21"
+              :text-inside="true"
+              :class="[
+                { 'extreme-progress': getNutritionPercentage(item.value, item.name) > 200 },
+                `${item.name}-progress`,
+                { 'zero-progress': Math.min(getNutritionPercentage(item.value, item.name), 100) === 0 }
+              ]"
+            >
+              <span>
+              {{ getNutritionPercentage(item.value, item.name) === 0 ? '0%' : (getNutritionPercentage(item.value, item.name) > 200 ? '严重超出' : getNutritionPercentage(item.value, item.name) + '%')}}
+              </span>
+            </el-progress>
+          </div>
+
+          <!-- 饮食健康建议部分 -->
+          <div class="health-advice-section">
+            <div class="advice-header" @click="toggleAdvice">
+              <el-icon class="arrow-icon" :class="{ 'rotate': showAdvice }"><ArrowDown /></el-icon>
+              <span class="advice-title">饮食健康建议</span>
+            </div>
+
+            <div
+              :class="['advice-content', { 'show': showAdvice }]"
+            >
+              <div v-for="advice in healthAdvice" :key="advice" class="advice-item">
+                <el-icon class="advice-icon"><WarningFilled /></el-icon>
+                <span>{{ advice }}</span>
+              </div>
+
+              <div v-if="healthAdvice.length === 0" class="advice-empty">
+                <el-icon class="empty-icon"><CircleCheckFilled /></el-icon>
+                <span>您的营养摄入在推荐范围内，保持均衡饮食哦！</span>
+              </div>
+            </div>
           </div>
         </div>
       </el-card>
@@ -427,7 +523,7 @@ const getNutritionColor = (name, percentage) => {
 
     .overview-card {
       flex: 1;
-      min-width: 250px;
+      min-width: 200px;
       background: rgba(255, 255, 255, 0.95) !important;
       border-radius: 16px !important;
       padding: 24px !important;
@@ -481,6 +577,13 @@ const getNutritionColor = (name, percentage) => {
     background: rgba(255, 255, 255, 0.95) !important;
     border-radius: 16px !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: translateY(0);
+
+    &:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+    }
 
     .card-header {
       font-size: 18px;
@@ -526,12 +629,17 @@ const getNutritionColor = (name, percentage) => {
         margin-left: 6px; // 与实际值保持间距
       }
 
-      // 严重超出的进度条文本样式
+      // 严重超出的进度条样式
       :deep(.extreme-progress) {
         .el-progress__text {
           color: #ff6b6b !important; // 红色文本
           font-weight: 700 !important; // 加粗
           font-size: 16px !important; // 增大字号
+        }
+
+        // 进度条光晕效果
+        .el-progress-bar {
+          filter: drop-shadow(0 0 12px rgba(255, 107, 107, 0.6));
         }
       }
     }
@@ -560,7 +668,7 @@ const getNutritionColor = (name, percentage) => {
 
     .overview-card {
       flex: 1;
-      min-width: 250px;
+      min-width: 200px;
       background: rgba(255, 255, 255, 0.95) !important;
       border-radius: 16px !important;
       padding: 24px !important;
@@ -613,6 +721,13 @@ const getNutritionColor = (name, percentage) => {
     background: rgba(255, 255, 255, 0.95) !important;
     border-radius: 16px !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: translateY(0);
+
+    &:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+    }
 
     .card-header {
       font-size: 18px;
@@ -731,12 +846,168 @@ const getNutritionColor = (name, percentage) => {
   }
 }
 
-// 进度条样式
+// 进度条样式 - 所有进度条通用
 :deep(.el-progress) {
+  --el-progress-transition-duration: 3s; // 使用CSS变量控制动画持续时间
+  transition: transform 0.3s ease; // 添加容器过渡动画
+  transform-origin: center center; // 设置变换原点为中心
+
   .el-progress-bar__inner {
-    background: linear-gradient(90deg, #ff6b6b 0%, #ff8e53 100%);
-    box-shadow: 0 0 10px rgba(255, 107, 107, 0.4);
-    transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition:
+      width var(--el-progress-transition-duration) cubic-bezier(0.25, 0.8, 0.25, 1);
+    min-width: 30px; /* 为0%进度条设置最小宽度，确保文本可见 */
   }
+
+  // 进度条容器悬浮时等比例放大
+  &:hover {
+    transform: scale(1.05); // 等比例缩放，1.05倍大小
+  }
+
+  // 进度条容器默认无光晕，仅悬浮时显示
+  .el-progress-bar {
+    filter: none;
+    transition: filter 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); // 添加光晕过渡动画
+  }
+
+  // 蛋白质进度条 - 蓝色光晕
+  &.蛋白质-progress:hover .el-progress-bar {
+    filter: drop-shadow(0 0 18px rgba(33, 150, 243, 0.6));
+  }
+
+  // 碳水化合物进度条 - 绿色光晕
+  &.碳水化合物-progress:hover .el-progress-bar {
+    filter: drop-shadow(0 0 18px rgba(76, 175, 80, 0.6));
+  }
+
+  // 脂肪进度条 - 橙色光晕
+  &.脂肪-progress:hover .el-progress-bar {
+    filter: drop-shadow(0 0 18px rgba(255, 152, 0, 0.6));
+  }
+
+  // 0%进度条样式优化
+  &.zero-progress {
+    .el-progress__text {
+      color: #666; /* 更醒目的文本颜色 */
+      font-weight: 600; /* 加粗文本 */
+    }
+
+    .el-progress-bar__inner {
+      background-color: #e5e7eb; /* 浅灰色背景，增强对比度 */
+    }
+  }
+
+  // 严重超出进度条的基础样式 - 默认小光晕
+  &.extreme-progress {
+    .el-progress-bar {
+      filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.4)); // 默认小光晕
+    }
+  }
+
+  // 针对各种类型的严重超出进度条，设置更具特异性的hover效果
+  &.蛋白质-progress.extreme-progress:hover .el-progress-bar {
+    filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.8));
+  }
+
+  &.碳水化合物-progress.extreme-progress:hover .el-progress-bar {
+    filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.8));
+  }
+
+  &.脂肪-progress.extreme-progress:hover .el-progress-bar {
+    filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.8));
+  }
+}
+
+// 饮食健康建议样式
+.nutrition-chart .health-advice-section {
+  margin-top: 20px; /* 减小上边距 */
+  border-top: 1px solid #f0f0f0;
+  padding-top: 16px; /* 减小内边距 */
+}
+
+.health-advice-section .advice-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  transition: all 0.3s ease;
+  padding: 12px 0;
+
+  &:hover {
+    color: #409eff; /* 更柔和的蓝色 */
+  }
+}
+
+.advice-header .arrow-icon {
+  transition: transform 0.3s ease;
+
+  &.rotate {
+    transform: rotate(180deg);
+  }
+}
+
+.nutrition-chart .health-advice-section .advice-content {
+  margin-top: 16px;
+  padding-left: 28px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+
+  &.show {
+    max-height: 300px; /* 足够大的高度容纳内容 */
+    opacity: 1;
+    animation: fadeIn 0.3s ease;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.advice-content .advice-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: #666;
+  line-height: 22px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.advice-item .advice-icon {
+  color: #ff9800;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.advice-content .advice-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #4caf50;
+  padding: 16px;
+  background-color: #f6fff6;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.advice-empty .empty-icon {
+  font-size: 18px;
+  flex-shrink: 0;
 }
 </style>
