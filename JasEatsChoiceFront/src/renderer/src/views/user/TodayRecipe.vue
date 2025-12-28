@@ -1505,11 +1505,16 @@ const filteredRecipes = computed(() => {
       padding-top: 20px;
       border-top: 1px solid #eef2f7;
 
+      /* 让所有按钮和下拉触发元素在一行显示 */
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px; /* 统一间距 */
+
       .el-button {
-        margin-left: 8px;
         font-size: 14px;
         padding: 6px 16px;
         border-radius: 8px;
+        margin: 0;
       }
     }
 
@@ -1727,10 +1732,9 @@ const filteredRecipes = computed(() => {
 
   .add-recipe-section {
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
     margin-bottom: 24px;
-    margin-left: 24px;
     gap: 12px; /* 统一按钮间距 */
 
     .el-button {

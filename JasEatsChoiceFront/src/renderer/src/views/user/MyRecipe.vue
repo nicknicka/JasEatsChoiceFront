@@ -191,7 +191,7 @@ const deleteRecipe = (id) => {
         v-for="recipe in filteredRecipes"
         :key="recipe.id"
         class="recipe-card"
-        :class="recipe.type"
+        :class="[recipe.type, { 'recipe-card-favorited': recipe.favorite }]"
       >
         <template #header>
           <div class="card-header">
@@ -209,16 +209,18 @@ const deleteRecipe = (id) => {
               }}
             </span>
             {{ recipe.name }}
-            <el-button type="text" size="small" @click="toggleFavorite(recipe)">
-              <span
-                :style="{
-                  color: recipe.favorite ? '#FFD700' : '#C0C4CC',
-                  fontSize: '20px'
-                }"
+            <!-- 右上角收藏按钮 -->
+            <div class="card-favorite">
+              <el-button
+                type="text"
+                size="small"
+                :class="{ 'favorite-btn': recipe.favorite }"
+                style="padding: 0; margin: 0; font-size: 18px"
+                @click="toggleFavorite(recipe)"
               >
                 {{ recipe.favorite ? '⭐' : '☆' }}
-              </span>
-            </el-button>
+              </el-button>
+            </div>
           </div>
         </template>
         <div class="recipe-items">
@@ -301,40 +303,84 @@ const deleteRecipe = (id) => {
   }
 
   .recipe-card {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    margin-bottom: 16px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+
+    &.recipe-card-favorited {
+      border: 2px solid #ffd700 !important;
+      box-shadow:
+        0 8px 30px rgba(255, 215, 0, 0.15),
+        0 0 0 3px rgba(255, 215, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &::before {
+        background: linear-gradient(90deg, #ffd700 0%, #ffed4e 100%);
+      }
+    }
 
     &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      transform: translateY(-6px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+      border-color: rgba(255, 255, 255, 1) !important;
     }
 
     .card-header {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
       font-size: 20px;
       font-weight: 700;
+      color: #2c3e50;
+      padding: 20px 24px !important;
 
       .meal-icon {
-        font-size: 28px;
+        font-size: 32px;
         padding: 10px;
-        background-color: rgba(0, 0, 0, 0.05);
         border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
       }
     }
 
     .recipe-items {
-      margin: 20px 0;
+      margin: 24px;
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
+
+      .el-tag {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+      }
     }
 
     .recipe-stats {
+      margin: 0 24px;
       display: flex;
       gap: 20px;
 
@@ -347,9 +393,32 @@ const deleteRecipe = (id) => {
     }
 
     .recipe-actions {
-      text-align: right;
-      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+      margin: 20px 24px 24px;
+      gap: 8px; /* 统一间距 */
+
+      .el-button {
+        font-size: 14px;
+        padding: 6px 16px;
+        border-radius: 8px;
+        margin: 0;
+      }
     }
+  }
+
+  // 右上角收藏按钮样式
+  .card-favorite {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  // 收藏按钮样式
+  .favorite-btn {
+    color: #ffd700 !important; // 收藏状态用金色，确保覆盖默认样式
+    font-weight: bold;
   }
 
   /* 添加食谱表单样式 */
@@ -371,32 +440,52 @@ const deleteRecipe = (id) => {
     &.早餐 {
       border-left: 4px solid #ffc107;
 
+      &::before {
+        background: linear-gradient(90deg, #ffc107 0%, #ffeb3b 100%);
+      }
+
       .meal-icon {
-        color: #ffc107;
+        background: linear-gradient(135deg, #ffc107 0%, #ffeb3b 100%) !important;
+        color: #333 !important;
       }
     }
 
     &.午餐 {
       border-left: 4px solid #4caf50;
 
+      &::before {
+        background: linear-gradient(90deg, #4caf50 0%, #8bc34a 100%);
+      }
+
       .meal-icon {
-        color: #4caf50;
+        background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%) !important;
+        color: white !important;
       }
     }
 
     &.晚餐 {
       border-left: 4px solid #2196f3;
 
+      &::before {
+        background: linear-gradient(90deg, #2196f3 0%, #64b5f6 100%);
+      }
+
       .meal-icon {
-        color: #2196f3;
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%) !important;
+        color: white !important;
       }
     }
 
     &.加餐 {
       border-left: 4px solid #1e88e5;
 
+      &::before {
+        background: linear-gradient(90deg, #1e88e5 0%, #42a5f5 100%);
+      }
+
       .meal-icon {
-        color: #1e88e5;
+        background: linear-gradient(135deg, #1e88e5 0%, #42a5f5 100%) !important;
+        color: white !important;
       }
     }
   }

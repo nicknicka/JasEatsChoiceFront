@@ -16,7 +16,6 @@ const calorieData = ref({
     target: 2000 // 默认值，将从API获取
   },
   weekly: [
-    // 默认模拟数据（API加载前显示）
     { day: '周一', consumed: 0 },
     { day: '周二', consumed: 0 },
     { day: '周三', consumed: 0 },
@@ -148,54 +147,6 @@ onMounted(() => {
         calorieData.value.nutrition[0].value = totalProtein // 蛋白质
         calorieData.value.nutrition[1].value = totalCarbs // 碳水化合物
         calorieData.value.nutrition[2].value = totalFat // 脂肪
-
-        // 检查异常值并提供不同健康提示
-        const checkExtremeValues = () => {
-          // 计算各营养的百分比
-          const fatPercent = getNutritionPercentage(totalFat, '脂肪')
-          const proteinPercent = getNutritionPercentage(totalProtein, '蛋白质')
-          const carbsPercent = getNutritionPercentage(totalCarbs, '碳水化合物')
-          const caloriesPercent = (totalCalories / calorieData.value.today.target) * 100
-
-          let messages = []
-
-          // 脂肪异常提示
-          if (fatPercent > 200) {
-            messages.push('脂肪摄入已超过推荐值2倍，长期过量摄入会增加健康风险')
-          } else if (fatPercent > 150) {
-            messages.push('脂肪摄入已超过推荐值1.5倍，建议适当减少')
-          }
-
-          // 蛋白质异常提示
-          if (proteinPercent > 200) {
-            messages.push('蛋白质摄入已超过推荐值2倍，长期过量摄入可能加重肾脏负担')
-          } else if (proteinPercent > 150) {
-            messages.push('蛋白质摄入已超过推荐值1.5倍，建议合理搭配饮食')
-          }
-
-          // 碳水化合物异常提示
-          if (carbsPercent > 200) {
-            messages.push('碳水化合物摄入已超过推荐值2倍，长期过量可能导致血糖波动')
-          } else if (carbsPercent > 150) {
-            messages.push('碳水化合物摄入已超过推荐值1.5倍，建议增加膳食纤维摄入')
-          }
-
-          // 总卡路里异常提示
-          if (caloriesPercent > 200) {
-            messages.push('总卡路里摄入已超过推荐值2倍，长期过量会导致体重增加')
-          } else if (caloriesPercent > 150) {
-            messages.push('总卡路里摄入已超过推荐值1.5倍，建议适当增加运动量')
-          }
-
-          // 显示所有提示
-          if (messages.length > 0) {
-            messages.forEach((msg) => {
-              ElMessage.warning(msg)
-            })
-          }
-        }
-
-        checkExtremeValues()
       }
     })
     .catch((error) => {
@@ -214,7 +165,7 @@ onMounted(() => {
         Array.isArray(response.data.data)
       ) {
         // 确保每个项目都有day和consumed属性，与模板结构一致
-        const processedWeekly = response.data.data.map(item => ({
+        const processedWeekly = response.data.data.map((item) => ({
           day: item.day || '',
           consumed: item.consumed || 0
         }))
@@ -240,7 +191,17 @@ const getNutritionPercentage = (value, name) => {
   let percentage = goal > 0 ? (value / goal) * 100 : 0
   // 不再限制百分比在0-100之间，允许超过
   // 四舍五入保留两位小数
-  return (Math.round(percentage * 100) / 100)
+  return Math.round(percentage * 100) / 100
+}
+
+// 获取卡路里百分比
+const getCaloriePercentage = (consumed) => {
+  // 避免除以0
+  let percentage =
+    calorieData.value.today.target > 0 ? (consumed / calorieData.value.today.target) * 100 : 0
+  // 不再限制百分比在0-100之间，允许超过
+  // 四舍五入保留两位小数
+  return Math.round(percentage * 100) / 100
 }
 
 // 判断是否为极端值 - 与健康提示阈值一致
@@ -285,12 +246,23 @@ const getNutritionColor = (name, percentage) => {
   }
 }
 
+// 获取卡路里进度条颜色 - 基于百分比动态变化
+const getCalorieColor = (percentage) => {
+  if (percentage > 200) {
+    return '#FF6B6B' // 危险红色
+  } else if (percentage > 100) {
+    return '#FFC107' // 警告黄色
+  } else {
+    return '#2196F3' // 正常蓝色
+  }
+}
+
 // 动态计算健康建议
 const healthAdvice = computed(() => {
   const advice = []
 
   // 遍历所有营养元素
-  calorieData.value.nutrition.forEach(item => {
+  calorieData.value.nutrition.forEach((item) => {
     const { name, value } = item
     const percent = getNutritionPercentage(value, name)
 
@@ -379,18 +351,27 @@ const healthAdvice = computed(() => {
               </div>
             </div>
             <el-progress
-              :percentage="Math.min(getNutritionPercentage(item.value, item.name),100)"
+              :percentage="Math.min(getNutritionPercentage(item.value, item.name), 100)"
               :color="getNutritionColor(item.name, getNutritionPercentage(item.value, item.name))"
               :stroke-width="21"
               :text-inside="true"
               :class="[
                 { 'extreme-progress': getNutritionPercentage(item.value, item.name) > 200 },
                 `${item.name}-progress`,
-                { 'zero-progress': Math.min(getNutritionPercentage(item.value, item.name), 100) === 0 }
+                {
+                  'zero-progress':
+                    Math.min(getNutritionPercentage(item.value, item.name), 100) === 0
+                }
               ]"
             >
               <span>
-              {{ getNutritionPercentage(item.value, item.name) === 0 ? '0%' : (getNutritionPercentage(item.value, item.name) > 200 ? '严重超出' : getNutritionPercentage(item.value, item.name) + '%')}}
+                {{
+                  getNutritionPercentage(item.value, item.name) === 0
+                    ? '0%'
+                    : getNutritionPercentage(item.value, item.name) > 200
+                      ? '严重超出'
+                      : getNutritionPercentage(item.value, item.name) + '%'
+                }}
               </span>
             </el-progress>
           </div>
@@ -398,13 +379,11 @@ const healthAdvice = computed(() => {
           <!-- 饮食健康建议部分 -->
           <div class="health-advice-section">
             <div class="advice-header" @click="toggleAdvice">
-              <el-icon class="arrow-icon" :class="{ 'rotate': showAdvice }"><ArrowDown /></el-icon>
+              <el-icon class="arrow-icon" :class="{ rotate: showAdvice }"><ArrowDown /></el-icon>
               <span class="advice-title">饮食健康建议</span>
             </div>
 
-            <div
-              :class="['advice-content', { 'show': showAdvice }]"
-            >
+            <div :class="['advice-content', { show: showAdvice }]">
               <div v-for="advice in healthAdvice" :key="advice" class="advice-item">
                 <el-icon class="advice-icon"><WarningFilled /></el-icon>
                 <span>{{ advice }}</span>
@@ -464,35 +443,39 @@ const healthAdvice = computed(() => {
         </template>
         <div class="weekly-chart">
           <div v-for="item in calorieData.weekly" :key="item.day" class="weekly-bar">
-            <div class="bar-label">{{ item.day }}</div>
-            <div class="bar-container">
-              <!-- 目标线指示器 -->
-              <div
-                class="bar-target-line"
-                :style="{ left: `100%` }"
-                :title="`目标: ${calorieData.today.target} kcal`"
-              ></div>
-
-              <div
-                class="bar-fill"
-                :style="{
-                  // 确保目标值不为0以避免NaN，同时当进度为0时设置min-width为24px以显示进度条
-                  width:
-                    (
-                      (calorieData.today.target > 0
-                        ? (item.consumed / calorieData.today.target) * 100
-                        : 0) || 0
-                    ).toFixed(2) + '%',
-                  minWidth: '24px'
-                }"
-                :class="{ 'over-target': item.consumed > calorieData.today.target }"
-                :title="`已摄入: ${item.consumed} kcal`"
-              >
-                <span class="bar-value">{{ item.consumed }}</span>
-              </div>
-
-              <!-- 显示具体数值，无论进度条长度 -->
+            <!-- 与营养摄入比例相同的信息布局：周几和卡路里值同行 -->
+            <div class="weekly-info">
+              <div class="bar-label">{{ item.day }}</div>
               <div class="bar-text">{{ item.consumed }} kcal</div>
+            </div>
+
+            <!-- 进度条容器 -->
+            <div class="bar-container">
+              <!-- 完全匹配营养摄入比例的进度条实现 -->
+              <el-progress
+                :percentage="Math.min(Math.round(getCaloriePercentage(item.consumed)), 100)"
+                :color="getCalorieColor(getCaloriePercentage(item.consumed))"
+                :stroke-width="21"
+                :text-inside="true"
+                :class="[
+                  { 'extreme-progress': getCaloriePercentage(item.consumed) > 200 },
+                  'calorie-progress',
+                  {
+                    'zero-progress':
+                      Math.min(Math.round(getCaloriePercentage(item.consumed)), 100) === 0
+                  }
+                ]"
+              >
+                <span>
+                  {{
+                    getCaloriePercentage(item.consumed) === 0
+                      ? '0%'
+                      : getCaloriePercentage(item.consumed) > 200
+                        ? '严重超出'
+                        : Math.round(getCaloriePercentage(item.consumed)) + '%'
+                  }}
+                </span>
+              </el-progress>
             </div>
           </div>
         </div>
@@ -751,96 +734,39 @@ const healthAdvice = computed(() => {
         margin-bottom: 0;
       }
 
-      .bar-label {
-        margin-bottom: 16px;
-        font-weight: 600;
+      // 与营养摄入比例相同的信息布局
+      .weekly-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
         font-size: 14px;
-        color: #555;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-weight: 600;
+
+        .bar-label {
+          color: #555;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .bar-text {
+          font-weight: 700;
+          font-size: 14px;
+          color: #333;
+        }
       }
 
       .bar-container {
         width: 100%;
-        height: 36px;
+        height: 21px; /* 与 stroke-width 保持一致 */
         background-color: #f0f0f0;
-        border-radius: 18px;
-        overflow: hidden;
+        border-radius: 11px; /* 保持与高度的比例 */
         box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08);
         position: relative;
       }
 
-      // 目标线指示器
+      // 目标线指示器已移除
       .bar-target-line {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background-color: rgba(0, 0, 0, 0.3);
-        border-left: 2px dashed #ff6b6b;
-        z-index: 10;
-      }
-
-      .bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #2196f3 0%, #1976d2 100%);
-        text-align: center;
-        line-height: 36px;
-        color: white;
-        font-weight: 700;
-        font-size: 14px;
-        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-        position: relative;
-        z-index: 5;
-      }
-
-      // 进度条内部的数值，在窄进度条上隐藏
-      .bar-value {
-        display: inline-block;
-        visibility: hidden;
-      }
-
-      // 窄进度条时隐藏内部数值
-      .bar-fill {
-        min-width: 24px;
-
-        &:hover .bar-value {
-          visibility: visible;
-        }
-      }
-
-      // 显示在容器外部的具体数值
-      .bar-text {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-weight: 700;
-        font-size: 14px;
-        color: #333;
-        background-color: white;
-        padding: 0 8px;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        z-index: 15;
-      }
-
-      .bar-fill:hover {
-        background: linear-gradient(90deg, #1976d2 0%, #1565c0 100%);
-        box-shadow: 0 0 12px rgba(33, 150, 243, 0.4);
-      }
-
-      .bar-fill.over-target {
-        background: linear-gradient(90deg, #ff5252 0%, #f44336 100%);
-
-        & + .bar-text {
-          color: #ff5252;
-        }
-      }
-
-      .bar-fill.over-target:hover {
-        background: linear-gradient(90deg, #f44336 0%, #d32f2f 100%);
-        box-shadow: 0 0 12px rgba(244, 67, 54, 0.4);
+        display: none;
       }
     }
   }
@@ -853,9 +779,13 @@ const healthAdvice = computed(() => {
   transform-origin: center center; // 设置变换原点为中心
 
   .el-progress-bar__inner {
-    transition:
-      width var(--el-progress-transition-duration) cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: width var(--el-progress-transition-duration) cubic-bezier(0.25, 0.8, 0.25, 1);
     min-width: 30px; /* 为0%进度条设置最小宽度，确保文本可见 */
+    border-radius: 10.5px 0 0 10.5px !important; /* 保持进度条与容器的圆角一致 */
+  }
+
+  .el-progress__text {
+    transform-origin: center center; // 设置文本变换原点为中心，确保缩放时居中
   }
 
   // 进度条容器悬浮时等比例放大
@@ -882,6 +812,11 @@ const healthAdvice = computed(() => {
   // 脂肪进度条 - 橙色光晕
   &.脂肪-progress:hover .el-progress-bar {
     filter: drop-shadow(0 0 18px rgba(255, 152, 0, 0.6));
+  }
+
+  // 卡路里进度条 - 蓝色光晕
+  &.calorie-progress:hover .el-progress-bar {
+    filter: drop-shadow(0 0 18px rgba(33, 150, 243, 0.6));
   }
 
   // 0%进度条样式优化
@@ -913,6 +848,11 @@ const healthAdvice = computed(() => {
   }
 
   &.脂肪-progress.extreme-progress:hover .el-progress-bar {
+    filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.8));
+  }
+
+  // 严重超出的卡路里进度条，设置hover效果
+  &.calorie-progress.extreme-progress:hover .el-progress-bar {
     filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.8));
   }
 }
@@ -954,7 +894,9 @@ const healthAdvice = computed(() => {
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition: max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+  transition:
+    max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+    opacity 0.3s ease;
 
   &.show {
     max-height: 300px; /* 足够大的高度容纳内容 */
