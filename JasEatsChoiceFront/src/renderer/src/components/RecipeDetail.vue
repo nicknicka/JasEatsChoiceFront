@@ -97,6 +97,12 @@ const getMealTypeName = (type) => {
         </span>
       </div>
       <div class="detail-item">
+        <span class="detail-label">烹饪时间:</span>
+        <span class="detail-value">
+          {{ recipe.cookTime || '未设置' }}
+        </span>
+      </div>
+      <div class="detail-item">
         <span class="detail-label">菜品:</span>
         <div class="detail-value dish-list">
           <div
@@ -170,17 +176,15 @@ const getMealTypeName = (type) => {
     margin-bottom: 20px;
 
     .detail-label {
-      font-weight: 700;
-      font-size: 16px;
-      color: #2c3e50;
+      font-weight: 600;
+      font-size: 15px;
+      color: #555;
       margin-right: 12px;
-      padding: 8px 16px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 24px;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      padding: 6px 14px;
+      background: #f5f5f5;
+      border-radius: 18px;
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
       display: inline-block;
     }
 
@@ -191,49 +195,54 @@ const getMealTypeName = (type) => {
 
     /* 餐型值样式 */
     .detail-item:first-child .detail-value {
-      font-size: 20px;
-      font-weight: 700;
-      color: #2196f3;
-      margin-left: 8px;
-      text-shadow: 1px 1px 3px rgba(33, 150, 243, 0.2);
+      font-size: 18px;
+      font-weight: 600;
+      color: #4a90e2;
+      margin-left: 6px;
+    }
+
+    /* 烹饪时间值样式 */
+    .detail-item:nth-child(2) .detail-value {
+      font-size: 14px;
+      color: #888;
     }
 
     .nutrition-info {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 16px;
-      padding: 20px;
-      background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
-      border-radius: 12px;
-      border: 1px solid #ffebee;
-      margin-top: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      padding: 16px;
+      background: #fafafa;
+      border-radius: 10px;
+      border: 1px solid #eee;
+      margin-top: 10px;
     }
 
     .nutrition-item {
       margin-bottom: 0;
-      padding: 12px 16px;
+      padding: 10px 14px;
       background: white;
-      border-radius: 8px;
-      border: 1px solid #ffcdd2;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
       transition: all 0.3s ease;
 
       &:hover {
-        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
-        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-color: #d0d0d0;
       }
 
       .nutrition-label {
-        font-weight: 600;
-        font-size: 14px;
-        color: #757575;
+        font-weight: 500;
+        font-size: 13px;
+        color: #666;
         display: block;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
       }
 
       .nutrition-value {
-        color: #ff5252;
-        font-weight: 700;
-        font-size: 20px;
+        color: #4a90e2;
+        font-weight: 600;
+        font-size: 18px;
         margin-left: 0;
       }
     }
@@ -242,35 +251,33 @@ const getMealTypeName = (type) => {
     .dish-list {
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      margin-top: 16px;
-      max-height: 200px; /* 调整为你需要的最大高度 */
-      overflow-y: auto; /* 超过最大高度时显示垂直滚动条 */
-      padding-right: 10px; /* 为滚动条预留空间 */
+      gap: 20px;
+      margin-top: 14px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 10px;
     }
 
     .dish-item {
-      padding: 20px;
-      background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
-      border-radius: 12px;
-      border-left: 5px solid #2196f3;
-      border: 1px solid #e3f2fd;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      padding: 18px;
+      background: white;
+      border-radius: 10px;
+      border-left: 4px solid #4a90e2;
+      border: 1px solid #e8e8e8;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
       &:hover {
-        box-shadow: 0 8px 24px rgba(33, 150, 243, 0.15);
-        transform: translateY(-2px);
-        border-color: #1976d2;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+        border-color: #c4e1ff;
       }
 
       /* 待添加菜品样式 */
       &.empty-dish {
-        background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%) !important;
+        background: #fafafa !important;
         border: 1px dashed #ccc !important;
-        border-left: 5px solid #9e9e9e !important;
-        opacity: 0.7;
-        box-shadow: none !important;
+        border-left: 4px solid #aaa !important;
+        opacity: 0.8;
 
         &:hover {
           transform: none !important;
@@ -285,50 +292,50 @@ const getMealTypeName = (type) => {
     }
 
     .dish-name {
-      font-size: 18px;
-      font-weight: 700;
-      margin: 0 0 14px 0;
-      color: #2c3e50;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      color: #333;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
 
       &::before {
         content: '🍽️';
-        font-size: 22px;
+        font-size: 20px;
       }
     }
 
     .dish-ingredients {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
       margin-top: 8px;
     }
 
     .dish-ingredients .el-tag {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      color: white;
-      font-weight: 500;
-      opacity: 0.9;
-      transition: all 0.2s ease;
+      background: white;
+      border: 1px solid #ddd;
+      color: #666;
+      font-weight: 400;
+      opacity: 1;
+      font-size: 13px;
 
       &:hover {
-        opacity: 1;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
+        background: #f5f5f5;
+        border-color: #ccc;
+        transform: none;
       }
     }
 
     .no-ingredients {
-      margin-top: 12px;
+      margin-top: 10px;
     }
 
     .no-ingredients .el-tag {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      border: none;
-      color: white;
+      background: white;
+      border: 1px solid #ffd4d4;
+      color: #ff6b6b;
     }
   }
 }
