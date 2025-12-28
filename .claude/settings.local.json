@@ -296,7 +296,9 @@
       "Bash(./gradlew bootRun:*)",
       "Bash(mvn clean compile)",
       "Bash(./mvnw:*)",
-      "Bash(npm run format)"
+      "Bash(npm run format)",
+      "Bash(npm run check)",
+      "Bash(npm run format:*)"
     ],
     "deny": [],
     "ask": []

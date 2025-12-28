@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+
 import { ArrowDown } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { API_CONFIG } from '../../config'
@@ -92,20 +93,28 @@ const loadMyRecipes = () => {
       }
     })
     .then((response) => {
-      console.log('加载我的食谱成功:', response);
+      console.log('加载我的食谱成功:', response)
       if (response.data?.code === '200' && response.data?.data) {
-        myRecipes.value = response.data.data.map(recipe => ({
+        myRecipes.value = response.data.data.map((recipe) => ({
           ...recipe,
           // 确保食谱数据格式一致
-          items: recipe.items ? (typeof recipe.items === 'string' ? JSON.parse(recipe.items) : recipe.items) : [],
-          ingredients: recipe.ingredients ? (typeof recipe.ingredients === 'string' ? JSON.parse(recipe.ingredients) : recipe.ingredients) : [],
+          items: recipe.items
+            ? typeof recipe.items === 'string'
+              ? JSON.parse(recipe.items)
+              : recipe.items
+            : [],
+          ingredients: recipe.ingredients
+            ? typeof recipe.ingredients === 'string'
+              ? JSON.parse(recipe.ingredients)
+              : recipe.ingredients
+            : [],
           time: recipe.time || '30分钟' // 默认值
         }))
       } else {
         myRecipes.value = []
       }
       loadingFailed.value = false
-      console.log('加载我的食谱成功:', myRecipes.value);
+      console.log('加载我的食谱成功:', myRecipes.value)
     })
     .catch((error) => {
       console.error('加载我的食谱失败:', error)
@@ -169,6 +178,33 @@ const updateRecipe = (updatedRecipe) => {
 
   // 更新详情对话框中的食谱
   selectedRecipe.value = updatedRecipe
+}
+
+// 更新烹饪时间
+const handleUpdateCookTime = (newCookTime) => {
+  if (selectedRecipe.value) {
+    // 更新本地数据
+    selectedRecipe.value.cookTime = newCookTime
+
+    // 在myRecipes数组中找到对应的食谱并更新
+    const index = myRecipes.value.findIndex((recipe) => recipe.id === selectedRecipe.value.id)
+    if (index !== -1) {
+      myRecipes.value[index].cookTime = newCookTime
+    }
+
+    // 调用后端API更新食谱
+    axios
+      .put(API_CONFIG.baseURL + API_CONFIG.recipe.update + selectedRecipe.value.id, {
+        ...selectedRecipe.value,
+        cookTime: newCookTime
+      })
+      .then((response) => {
+        console.log('更新烹饪时间成功:', response)
+      })
+      .catch((error) => {
+        console.error('更新烹饪时间失败:', error)
+      })
+  }
 }
 
 // 替换菜品
@@ -485,6 +521,157 @@ const openAddDialog = () => {
   addDialogVisible.value = true
 }
 
+// 订单导入相关
+const orders = ref([])
+const importDialogVisible = ref(false)
+const selectedOrder = ref(null)
+
+// 从订单导入食谱
+const importFromOrders = () => {
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
+
+  let userId = null
+
+  // 获取用户ID
+  if (authStore.userId) {
+    userId = authStore.userId
+  } else if (userStore.userInfo?.userId) {
+    userId = userStore.userInfo.userId
+  } else {
+    ElMessage.error('无法获取用户ID')
+    return
+  }
+
+  // 获取用户订单
+  axios
+    .get(`${API_CONFIG.baseURL}${API_CONFIG.order.list}${userId}`)
+    .then((response) => {
+      if (response.data?.code === '200' && response.data?.data) {
+        orders.value = response.data.data
+        importDialogVisible.value = true
+      } else {
+        ElMessage.warning('暂无订单数据')
+      }
+    })
+    .catch((error) => {
+      console.error('获取订单失败:', error)
+      ElMessage.error('获取订单失败，请稍后重试')
+    })
+}
+
+// 确认从订单导入食谱
+const confirmImportFromOrder = () => {
+  if (!selectedOrder.value) return
+
+  // 构造新食谱数据
+  const newRecipe = {
+    name: `从订单导入 - ${selectedOrder.value.orderNo}`,
+    type: '晚餐', // 默认餐型
+    items: selectedOrder.value.items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      ingredients: [],
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0
+    })),
+    calories: 0,
+    time: '30分钟', // 默认时间
+    favorite: false
+  }
+
+  // 计算总热量
+  newRecipe.calories = selectedOrder.value.items.reduce(
+    (sum, item) => sum + (item.calories || 0),
+    0
+  )
+
+  // 调用添加食谱API
+  axios
+    .post(`${API_CONFIG.baseURL}${API_CONFIG.recipe.add}`, newRecipe)
+    .then((response) => {
+      if (response.data?.code === '200' && response.data?.data) {
+        ElMessage.success('从订单导入食谱成功')
+        importDialogVisible.value = false
+        selectedOrder.value = null
+        loadMyRecipes() // 重新加载食谱列表
+      } else {
+        ElMessage.error('导入食谱失败')
+      }
+    })
+    .catch((error) => {
+      console.error('导入食谱失败:', error)
+      ElMessage.error('导入食谱失败，请稍后重试')
+    })
+}
+
+// 导出食谱到饮食记录
+const exportToDietRecord = () => {
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
+
+  let userId = null
+
+  // 获取用户ID
+  if (authStore.userId) {
+    userId = authStore.userId
+  } else if (userStore.userInfo?.userId) {
+    userId = userStore.userInfo.userId
+  } else {
+    ElMessage.error('无法获取用户ID')
+    return
+  }
+
+  // 确认导出
+  ElMessageBox.confirm(
+    `确定要将选中的 ${selectedRecipes.value.length} 个食谱导出到饮食记录吗？`,
+    '提示',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info'
+    }
+  )
+    .then(() => {
+      // 批量导出
+      const exportPromises = selectedRecipes.value.map((recipeId) => {
+        // 找到对应的食谱
+        const recipe = myRecipes.value.find((r) => r.id === recipeId)
+        if (!recipe) return Promise.resolve()
+
+        // 构造饮食记录数据
+        const dietRecord = {
+          userId,
+          recipeId,
+          recordDate: new Date().toISOString().split('T')[0], // 今天的日期
+          calories: recipe.calories,
+          name: recipe.name
+        }
+
+        // 调用添加饮食记录API
+        return axios.post(`${API_CONFIG.baseURL}${API_CONFIG.diet.add}`, dietRecord)
+      })
+
+      // 处理所有请求
+      Promise.all(exportPromises)
+        .then((responses) => {
+          const successCount = responses.filter((res) => res?.data?.code === '200').length
+          ElMessage.success(`成功导出 ${successCount} 个食谱到饮食记录`)
+          selectedRecipes.value = [] // 清空选择
+        })
+        .catch((error) => {
+          console.error('导出失败:', error)
+          ElMessage.error('导出失败，请稍后重试')
+        })
+    })
+    .catch(() => {
+      // 取消导出
+      ElMessage.info('已取消导出')
+    })
+}
+
 // 获取标签类型
 const getTagType = (type) => {
   switch (type) {
@@ -505,25 +692,6 @@ const getTagType = (type) => {
       return 'info'
   }
 }
-
-// 删除食谱
-const deleteRecipe = (id) => {
-  ElMessageBox.confirm('确定要删除该食谱吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  })
-    .then(() => {
-      const index = myRecipes.value.findIndex((recipe) => recipe.id === id)
-      if (index !== -1) {
-        myRecipes.value.splice(index, 1)
-        ElMessage.success('食谱已删除')
-      }
-    })
-    .catch(() => {
-      ElMessage.info('已取消删除')
-    })
-}
 </script>
 
 <template>
@@ -543,142 +711,164 @@ const deleteRecipe = (id) => {
           <el-option label="晚餐" value="晚餐" />
           <el-option label="加餐" value="加餐" />
         </el-select>
-
-        <!-- 批量管理按钮 -->
-        <el-button
-          type="danger"
-          size="small"
-          :disabled="selectedRecipes.length === 0"
-          @click="batchDeleteRecipes"
-        >
-          🗑️ 批量删除
-        </el-button>
-
-        <el-button
-          type="warning"
-          size="small"
-          :disabled="selectedRecipes.length === 0"
-          @click="batchFavoriteRecipes"
-        >
-          ⭐ 批量收藏
-        </el-button>
-
-        <el-button type="primary" size="small" @click="openAddDialog">
-          <span>➕</span>
-          添加食谱
-        </el-button>
       </div>
+    </div>
+
+    <!-- 添加食谱和批量管理按钮 -->
+    <div class="add-recipe-section">
+      <el-button type="primary" size="small" @click="openAddDialog"> ➕ 添加食谱 </el-button>
+
+      <el-button
+        type="danger"
+        size="small"
+        :disabled="selectedRecipes.length === 0"
+        @click="batchDeleteRecipes"
+      >
+        🗑️ 批量删除
+      </el-button>
+
+      <el-button
+        type="warning"
+        size="small"
+        :disabled="selectedRecipes.length === 0"
+        @click="batchFavoriteRecipes"
+      >
+        ⭐ 批量收藏
+      </el-button>
+
+      <!-- 新增功能按钮 -->
+      <el-button type="success" size="small" @click="importFromOrders"> 📥 从订单导入 </el-button>
+
+      <el-button
+        type="info"
+        size="small"
+        :disabled="selectedRecipes.length === 0"
+        @click="exportToDietRecord"
+      >
+        📤 导出到饮食记录
+      </el-button>
     </div>
 
     <!-- 食谱列表 -->
     <div class="recipe-grid">
       <el-checkbox-group v-model="selectedRecipes">
+        <!-- 食谱卡片 -->
         <el-card
           v-for="recipe in filteredRecipes"
           :key="recipe.id"
           class="recipe-card"
           :class="[recipe.type, { 'recipe-card-favorited': recipe.favorite }]"
         >
-        <template #header>
-          <div class="card-header">
-            <!-- 批量选择复选框 -->
-            <div class="checkbox-wrapper">
-              <el-checkbox :label="recipe.id"></el-checkbox>
+          <template #header>
+            <div class="card-header">
+              <!-- 批量选择复选框 -->
+              <div class="checkbox-wrapper">
+                <el-checkbox :label="recipe.id"></el-checkbox>
+              </div>
+              <span :class="`meal-icon ${recipe.type}`">
+                {{
+                  recipe.type === '早餐'
+                    ? '🥣'
+                    : recipe.type === '午餐'
+                      ? '🍚'
+                      : recipe.type === '晚餐'
+                        ? '🍱'
+                        : recipe.type === '加餐'
+                          ? '🍪'
+                          : '🍴'
+                }}
+              </span>
+              {{ recipe.name }}
+              <!-- 右上角收藏按钮 -->
+              <div class="card-favorite">
+                <el-button
+                  type="text"
+                  size="small"
+                  :class="{ 'favorite-btn': recipe.favorite }"
+                  style="padding: 0; margin: 0; font-size: 18px"
+                  @click="toggleFavorite(recipe)"
+                >
+                  {{ recipe.favorite ? '⭐' : '☆' }}
+                </el-button>
+              </div>
             </div>
-            <span :class="`meal-icon ${recipe.type}`">
-              {{
-                recipe.type === '早餐'
-                  ? '🥣'
-                  : recipe.type === '午餐'
-                    ? '🍚'
-                    : recipe.type === '晚餐'
-                      ? '🍱'
-                      : recipe.type === '加餐'
-                        ? '🍪'
-                        : '🍴'
-              }}
-            </span>
-            {{ recipe.name }}
-            <!-- 右上角收藏按钮 -->
-            <div class="card-favorite">
-              <el-button
-                type="text"
-                size="small"
-                :class="{ 'favorite-btn': recipe.favorite }"
-                style="padding: 0; margin: 0; font-size: 18px"
-                @click="toggleFavorite(recipe)"
-              >
-                {{ recipe.favorite ? '⭐' : '☆' }}
+          </template>
+          <div class="recipe-items">
+            <el-tag
+              v-for="(item, index) in recipe.items || recipe.ingredients || ['暂无食材信息']"
+              :key="index"
+              :type="getTagType(recipe.type)"
+            >
+              {{ typeof item === 'string' ? item : item.name }}
+            </el-tag>
+          </div>
+          <div class="recipe-stats">
+            <div class="stat-item">
+              <span>🔥</span>
+              <span>{{ recipe.calories }} kcal</span>
+            </div>
+            <div class="stat-item">
+              <span>⏰</span>
+              <span>{{ recipe.time }}</span>
+            </div>
+          </div>
+          <div class="recipe-actions">
+            <el-button type="text" size="small" @click="viewRecipeDetails(recipe)"
+              >查看详情</el-button
+            >
+            <el-button type="text" size="small" @click="addDish(recipe)">添加菜品</el-button>
+            <el-button type="text" size="small" @click="openImportMerchantDish(recipe)"
+              >导入商家菜品</el-button
+            >
+            <!-- 替换菜品按钮：仅在有菜品时显示 -->
+            <el-dropdown
+              v-if="
+                (recipe.items && recipe.items.length > 0) ||
+                (recipe.ingredients && recipe.ingredients.length > 0)
+              "
+              trigger="click"
+            >
+              <el-button type="text" size="small">
+                替换菜品
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
               </el-button>
-            </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-for="dish in recipe.items || recipe.ingredients || []"
+                    :key="dish.id || dish"
+                    @click="replaceDish(recipe, dish)"
+                  >
+                    {{ typeof dish === 'object' ? dish.name : dish }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            <el-dropdown
+              v-if="
+                (recipe.items && recipe.items.length > 0) ||
+                (recipe.ingredients && recipe.ingredients.length > 0)
+              "
+              trigger="click"
+            >
+              <el-button type="text" size="small">
+                删除菜品
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-for="dish in recipe.items || recipe.ingredients || []"
+                    :key="dish.id || dish"
+                    @click="deleteDish(recipe, dish)"
+                  >
+                    {{ typeof dish === 'object' ? dish.name : dish }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
-        </template>
-        <div class="recipe-items">
-          <el-tag
-            v-for="(item, index) in recipe.items || recipe.ingredients || ['暂无食材信息']"
-            :key="index"
-            :type="getTagType(recipe.type)"
-          >
-            {{ typeof item === 'string' ? item : item.name }}
-          </el-tag>
-        </div>
-        <div class="recipe-stats">
-          <div class="stat-item">
-            <span>🔥</span>
-            <span>{{ recipe.calories }} kcal</span>
-          </div>
-          <div class="stat-item">
-            <span>⏰</span>
-            <span>{{ recipe.time }}</span>
-          </div>
-        </div>
-        <div class="recipe-actions">
-          <el-button type="text" size="small" @click="viewRecipeDetails(recipe)"
-            >查看详情</el-button
-          >
-          <el-button type="text" size="small" @click="addDish(recipe)">添加菜品</el-button>
-          <el-button type="text" size="small" @click="openImportMerchantDish(recipe)"
-            >导入商家菜品</el-button>
-          <el-button type="danger" size="small" @click="deleteRecipe(recipe.id)"
-            >删除食谱</el-button
-          >
-          <!-- 替换菜品按钮：仅在有菜品时显示 -->
-          <el-dropdown v-if="(recipe.items && recipe.items.length > 0) || (recipe.ingredients && recipe.ingredients.length > 0)" trigger="click">
-            <el-button type="text" size="small">
-              替换菜品
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item
-                  v-for="dish in (recipe.items || recipe.ingredients) || []"
-                  :key="dish.id || dish"
-                  @click="replaceDish(recipe, dish)"
-                >
-                  {{ typeof dish === 'object' ? dish.name : dish }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <el-dropdown v-if="(recipe.items && recipe.items.length > 0) || (recipe.ingredients && recipe.ingredients.length > 0)" trigger="click">
-            <el-button type="text" size="small">
-              删除菜品
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item
-                  v-for="dish in (recipe.items || recipe.ingredients) || []"
-                  :key="dish.id || dish"
-                  @click="deleteDish(recipe, dish)"
-                >
-                  {{ typeof dish === 'object' ? dish.name : dish }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
-      </el-card>
+        </el-card>
       </el-checkbox-group>
     </div>
 
@@ -694,6 +884,7 @@ const deleteRecipe = (id) => {
     v-model:visible="detailDialogVisible"
     v-model:recipe="selectedRecipe"
     @update:recipe="updateRecipe"
+    @update:cook-time="handleUpdateCookTime"
   />
 
   <!-- 替换菜品对话框 -->
@@ -748,6 +939,52 @@ const deleteRecipe = (id) => {
 
   <!-- 添加食谱组件 -->
   <AddRecipe v-model:visible="addDialogVisible" @add-recipe="handleAddRecipe" />
+
+  <!-- 从订单导入对话框 -->
+  <el-dialog
+    v-model="importDialogVisible"
+    title="从订单导入食谱"
+    width="600px"
+    top="10%"
+    @close="selectedOrder = null"
+  >
+    <div v-if="orders.length > 0">
+      <el-select
+        v-model="selectedOrder"
+        placeholder="请选择要导入的订单"
+        style="width: 100%"
+        size="large"
+      >
+        <el-option
+          v-for="order in orders"
+          :key="order.id"
+          :label="`订单号: ${order.orderNo} (${new Date(order.createTime).toLocaleString()})`"
+          :value="order"
+        />
+      </el-select>
+
+      <div v-if="selectedOrder" style="margin-top: 20px">
+        <h4>订单详情:</h4>
+        <p>订单号: {{ selectedOrder.orderNo }}</p>
+        <p>创建时间: {{ new Date(selectedOrder.createTime).toLocaleString() }}</p>
+        <h5>菜品:</h5>
+        <el-tag
+          v-for="(item, index) in selectedOrder.items"
+          :key="index"
+          type="info"
+          style="margin: 2px"
+        >
+          {{ item.name }} ({{ item.quantity }})
+        </el-tag>
+      </div>
+    </div>
+    <div v-else>暂无订单数据</div>
+
+    <template #footer>
+      <el-button @click="importDialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="confirmImportFromOrder">导入</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <style lang="less">
@@ -778,7 +1015,8 @@ const deleteRecipe = (id) => {
     display: grid;
     grid-template-columns: 1fr; /* 单列显示 */
     gap: 20px;
-    width: 100%;
+    max-width: calc(100% - 80px); /* 调整宽度，预留左右边距 */
+    margin: 0 auto; /* 居中显示 */
   }
 
   .recipe-card {
@@ -900,6 +1138,21 @@ const deleteRecipe = (id) => {
       display: none !important;
     }
     margin-right: 10px;
+  }
+
+  // 添加食谱按钮样式
+  .add-recipe-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 12px; /* 统一按钮间距 */
+
+    .el-button {
+      border-radius: 24px !important;
+      padding: 10px 24px !important;
+      font-weight: 600 !important;
+    }
   }
 
   // 收藏按钮样式
