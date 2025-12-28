@@ -10,6 +10,8 @@ import { useAuthStore } from '../../store/authStore'
 import RecipeDetail from '../../components/RecipeDetail.vue'
 import AddDish from '../../components/AddDish.vue'
 import ImportMerchantDish from '../../components/ImportMerchantDish.vue'
+import AddRecipe from '../../components/recipe/AddRecipe.vue'
+import { useUserStore } from '../../store/userStore'
 
 // 我的食谱数据
 const myRecipes = ref([])
