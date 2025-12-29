@@ -33,204 +33,233 @@
         <el-dialog
           title="添加饮食记录"
           v-model="addRecordDialogVisible"
-          width="520px"
+          width="720px"
           top="8%"
           transition="dialog-fade"
           class="add-diet-dialog"
         >
           <el-form ref="addRecordFormRef" :model="addRecordForm" label-width="120px">
             <!-- 餐次选择 -->
-            <el-form-item label="餐次" required>
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><ListIcon /></el-icon>
-                  <span>餐&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;次</span>
-                </div>
-              </template>
-              <el-select
-                v-model="addRecordForm.mealType"
-                placeholder="请选择餐次"
-                size="large"
-              >
-                <el-option
-                  v-for="mealOption in mealTypeOptions"
-                  :key="mealOption.value"
-                  :label="mealOption.label"
-                  :value="mealOption.value"
-                >
-                  <template #default>
-                    <div class="select-option">
-                      <el-icon v-if="mealOption.value === 'breakfast'"><Sunrise /></el-icon>
-                      <el-icon v-else-if="mealOption.value === 'lunch'"><Sunny /></el-icon>
-                      <el-icon v-else-if="mealOption.value === 'dinner'"><Moon /></el-icon>
-                      <el-icon v-else-if="mealOption.value === 'snack'"><Coffee /></el-icon>
-                      <span>{{ mealOption.label }}</span>
+            <el-row justify="center">
+              <el-col :xs="24" :sm="20">
+                <el-form-item label="餐次" required>
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><ListIcon /></el-icon>
+                      <span>餐&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;次</span>
                     </div>
                   </template>
-                </el-option>
-              </el-select>
-            </el-form-item>
+                  <el-select
+                    v-model="addRecordForm.mealType"
+                    placeholder="请选择餐次"
+                    size="large"
+                  >
+                    <el-option
+                      v-for="mealOption in mealTypeOptions"
+                      :key="mealOption.value"
+                      :label="mealOption.label"
+                      :value="mealOption.value"
+                    >
+                      <template #default>
+                        <div class="select-option">
+                          <el-icon v-if="mealOption.value === 'breakfast'"><Sunrise /></el-icon>
+                          <el-icon v-else-if="mealOption.value === 'lunch'"><Sunny /></el-icon>
+                          <el-icon v-else-if="mealOption.value === 'dinner'"><Moon /></el-icon>
+                          <el-icon v-else-if="mealOption.value === 'snack'"><Coffee /></el-icon>
+                          <span>{{ mealOption.label }}</span>
+                        </div>
+                      </template>
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
             <!-- 时间选择 -->
-            <el-form-item label="时间" required>
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><ClockIcon /></el-icon>
-                  <span>时&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;间</span>
-                </div>
-              </template>
-              <el-time-picker
-                v-model="addRecordForm.time"
-                type="time"
-                placeholder="选择时间"
-                format="HH:mm"
-                value-format="HH:mm"
-                style="width: 100%"
-                size="large"
-              >
-              </el-time-picker>
-            </el-form-item>
+            <el-row justify="center">
+              <el-col :xs="24" :sm="20">
+                <el-form-item label="时间" required>
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><ClockIcon /></el-icon>
+                      <span>时&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;间</span>
+                    </div>
+                  </template>
+                  <el-time-picker
+                    v-model="addRecordForm.time"
+                    type="time"
+                    placeholder="选择时间"
+                    format="HH:mm"
+                    value-format="HH:mm"
+                    style="width: 100%"
+                    size="large"
+                  >
+                  </el-time-picker>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
             <!-- 食物名称 -->
-            <el-form-item label="食物名称" required>
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><ForkSpoonIcon /></el-icon>
-                  <span>食物名称</span>
-                </div>
-              </template>
-              <el-input
-                v-model="addRecordForm.foodName"
-                placeholder="请输入食物名称"
-                size="large"
-                @input="handleFoodNameInput"
-              >
-                <template #prefix-icon>
-                  <el-icon class="input-prefix-icon"><ForkSpoonIcon /></el-icon>
-                </template>
-              </el-input>
-            </el-form-item>
+            <el-row justify="center">
+              <el-col :xs="24" :sm="20">
+                <el-form-item label="食物名称" required>
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><ForkSpoonIcon /></el-icon>
+                      <span>食物名称</span>
+                    </div>
+                  </template>
+                  <el-input
+                    v-model="addRecordForm.foodName"
+                    placeholder="请输入食物名称"
+                    size="large"
+                    @input="handleFoodNameInput"
+                  >
+                    <template #prefix-icon>
+                      <el-icon class="input-prefix-icon"><ForkSpoonIcon /></el-icon>
+                    </template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
-            <!-- 卡路里输入 -->
-            <el-form-item label="卡路里" required>
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><ScaleIcon /></el-icon>
-                  <span>卡&nbsp;路&nbsp;&nbsp;里</span>
-                </div>
-              </template>
-              <el-input-number
-                v-model="addRecordForm.calories"
-                :min="0"
-                :step="10"
-                placeholder="请输入卡路里"
-                size="large"
-                style="width: 100%"
-              >
-                <template #increase-icon>
-                  <el-icon class="input-number-icon"><Plus /></el-icon>
-                </template>
-                <template #decrease-icon>
-                  <el-icon class="input-number-icon"><Minus /></el-icon>
-                </template>
-              </el-input-number>
-            </el-form-item>
+            <!-- 营养成分输入区 -->
+            <el-row justify="center" :gutter="20">
+              <el-col :xs="24" :sm="10">
+                <!-- 卡路里输入 -->
+                <el-form-item label="卡路里" required>
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><ScaleIcon /></el-icon>
+                      <span>卡&nbsp;路&nbsp;&nbsp;里</span>
+                    </div>
+                  </template>
+                  <el-input-number
+                    v-model="addRecordForm.calories"
+                    :min="0"
+                    :step="10"
+                    placeholder="请输入卡路里"
+                    size="large"
+                    style="width: 100%"
+                  >
+                    <template #increase-icon>
+                      <el-icon class="input-number-icon"><Plus /></el-icon>
+                    </template>
+                    <template #decrease-icon>
+                      <el-icon class="input-number-icon"><Minus /></el-icon>
+                    </template>
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
 
-            <!-- 蛋白质输入 -->
-            <el-form-item label="蛋白质(g)">
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><MilkTea /></el-icon>
-                  <span>蛋&nbsp;白&nbsp;&nbsp;质</span>
-                </div>
-              </template>
-              <el-input-number
-                v-model="addRecordForm.protein"
-                :min="0"
-                :step="0.1"
-                placeholder="请输入蛋白质含量"
-                size="large"
-                style="width: 100%"
-              >
-                <template #increase-icon>
-                  <el-icon class="input-number-icon"><Plus /></el-icon>
-                </template>
-                <template #decrease-icon>
-                  <el-icon class="input-number-icon"><Minus /></el-icon>
-                </template>
-              </el-input-number>
-            </el-form-item>
+              <el-col :xs="24" :sm="10">
+                <!-- 蛋白质输入 -->
+                <el-form-item label="蛋白质(g)">
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><MilkTea /></el-icon>
+                      <span>蛋&nbsp;白&nbsp;&nbsp;质</span>
+                    </div>
+                  </template>
+                  <el-input-number
+                    v-model="addRecordForm.protein"
+                    :min="0"
+                    :step="0.1"
+                    placeholder="请输入蛋白质含量"
+                    size="large"
+                    style="width: 100%"
+                  >
+                    <template #increase-icon>
+                      <el-icon class="input-number-icon"><Plus /></el-icon>
+                    </template>
+                    <template #decrease-icon>
+                      <el-icon class="input-number-icon"><Minus /></el-icon>
+                    </template>
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
-            <!-- 脂肪输入 -->
-            <el-form-item label="脂肪(g)">
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><Timer /></el-icon>
-                  <span>脂&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;肪</span>
-                </div>
-              </template>
-              <el-input-number
-                v-model="addRecordForm.fat"
-                :min="0"
-                :step="0.1"
-                placeholder="请输入脂肪含量"
-                size="large"
-                style="width: 100%"
-              >
-                <template #increase-icon>
-                  <el-icon class="input-number-icon"><Plus /></el-icon>
-                </template>
-                <template #decrease-icon>
-                  <el-icon class="input-number-icon"><Minus /></el-icon>
-                </template>
-              </el-input-number>
-            </el-form-item>
+            <el-row justify="center" :gutter="20" style="margin-top: 20px;">
+              <el-col :xs="24" :sm="10">
+                <!-- 脂肪输入 -->
+                <el-form-item label="脂肪(g)">
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><Timer /></el-icon>
+                      <span>脂&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;肪</span>
+                    </div>
+                  </template>
+                  <el-input-number
+                    v-model="addRecordForm.fat"
+                    :min="0"
+                    :step="0.1"
+                    placeholder="请输入脂肪含量"
+                    size="large"
+                    style="width: 100%"
+                  >
+                    <template #increase-icon>
+                      <el-icon class="input-number-icon"><Plus /></el-icon>
+                    </template>
+                    <template #decrease-icon>
+                      <el-icon class="input-number-icon"><Minus /></el-icon>
+                    </template>
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
 
-            <!-- 碳水化合物输入 -->
-            <el-form-item label="碳水化合物(g)">
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><Food /></el-icon>
-                  <span>碳&nbsp;水&nbsp;化&nbsp;合&nbsp;物</span>
-                </div>
-              </template>
-              <el-input-number
-                v-model="addRecordForm.carbohydrate"
-                :min="0"
-                :step="0.1"
-                placeholder="请输入碳水化合物含量"
-                size="large"
-                style="width: 100%"
-              >
-                <template #increase-icon>
-                  <el-icon class="input-number-icon"><Plus /></el-icon>
-                </template>
-                <template #decrease-icon>
-                  <el-icon class="input-number-icon"><Minus /></el-icon>
-                </template>
-              </el-input-number>
-            </el-form-item>
+              <el-col :xs="24" :sm="10">
+                <!-- 碳水化合物输入 -->
+                <el-form-item label="碳水化合物(g)">
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><Food /></el-icon>
+                      <span>碳&nbsp;水&nbsp;化&nbsp;合&nbsp;物</span>
+                    </div>
+                  </template>
+                  <el-input-number
+                    v-model="addRecordForm.carbohydrate"
+                    :min="0"
+                    :step="0.1"
+                    placeholder="请输入碳水化合物含量"
+                    size="large"
+                    style="width: 100%"
+                  >
+                    <template #increase-icon>
+                      <el-icon class="input-number-icon"><Plus /></el-icon>
+                    </template>
+                    <template #decrease-icon>
+                      <el-icon class="input-number-icon"><Minus /></el-icon>
+                    </template>
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
             <!-- 描述 -->
-            <el-form-item label="描述">
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><DocumentIcon /></el-icon>
-                  <span>描&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;述</span>
-                </div>
-              </template>
-              <el-input
-                v-model="addRecordForm.description"
-                type="textarea"
-                placeholder="请输入描述（如：份量、做法等）"
-                :rows="4"
-                size="large"
-              >
-                <template #prefix-icon>
-                  <el-icon class="input-prefix-icon"><DocumentIcon /></el-icon>
-                </template>
-              </el-input>
-            </el-form-item>
+            <el-row justify="center">
+              <el-col :xs="24" :sm="20">
+                <el-form-item label="描述">
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><DocumentIcon /></el-icon>
+                      <span>描&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;述</span>
+                    </div>
+                  </template>
+                  <el-input
+                    v-model="addRecordForm.description"
+                    type="textarea"
+                    placeholder="请输入描述（如：份量、做法等）"
+                    :rows="4"
+                    size="large"
+                  >
+                    <template #prefix-icon>
+                      <el-icon class="input-prefix-icon"><DocumentIcon /></el-icon>
+                    </template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
           </el-form>
 
           <template #footer>
@@ -253,194 +282,224 @@
         <el-dialog
           title="编辑饮食记录"
           v-model="editRecordDialogVisible"
-          width="520px"
+          width="720px"
           top="8%"
           transition="dialog-fade"
           class="add-diet-dialog"
         >
           <el-form ref="editRecordFormRef" :model="editRecordForm" label-width="120px">
-            <el-form-item label="餐次" required>
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><ListIcon /></el-icon>
-                  <span>餐&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;次</span>
-                </div>
-              </template>
-              <el-select v-model="editRecordForm.mealType" placeholder="请选择餐次" size="large">
-                <el-option
-                  v-for="mealOption in mealTypeOptions"
-                  :key="mealOption.value"
-                  :label="mealOption.label"
-                  :value="mealOption.value"
-                >
-                  <template #default>
-                    <div class="select-option">
-                      <el-icon v-if="mealOption.value === 'breakfast'"><Sunrise /></el-icon>
-                      <el-icon v-else-if="mealOption.value === 'lunch'"><Sunny /></el-icon>
-                      <el-icon v-else-if="mealOption.value === 'dinner'"><Moon /></el-icon>
-                      <el-icon v-else-if="mealOption.value === 'snack'"><Coffee /></el-icon>
-                      <span>{{ mealOption.label }}</span>
+            <!-- 餐次选择 -->
+            <el-row justify="center">
+              <el-col :xs="24" :sm="20">
+                <el-form-item label="餐次" required>
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><ListIcon /></el-icon>
+                      <span>餐&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;次</span>
                     </div>
                   </template>
-                </el-option>
-              </el-select>
-            </el-form-item>
+                  <el-select v-model="editRecordForm.mealType" placeholder="请选择餐次" size="large">
+                    <el-option
+                      v-for="mealOption in mealTypeOptions"
+                      :key="mealOption.value"
+                      :label="mealOption.label"
+                      :value="mealOption.value"
+                    >
+                      <template #default>
+                        <div class="select-option">
+                          <el-icon v-if="mealOption.value === 'breakfast'"><Sunrise /></el-icon>
+                          <el-icon v-else-if="mealOption.value === 'lunch'"><Sunny /></el-icon>
+                          <el-icon v-else-if="mealOption.value === 'dinner'"><Moon /></el-icon>
+                          <el-icon v-else-if="mealOption.value === 'snack'"><Coffee /></el-icon>
+                          <span>{{ mealOption.label }}</span>
+                        </div>
+                      </template>
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
-            <el-form-item label="时间" required>
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><ClockIcon /></el-icon>
-                  <span>时&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;间</span>
-                </div>
-              </template>
-              <el-time-picker
-                v-model="editRecordForm.time"
-                type="time"
-                placeholder="选择时间"
-                format="HH:mm"
-                value-format="HH:mm"
-                style="width: 100%"
-                size="large"
-              >
-              </el-time-picker>
-            </el-form-item>
+            <!-- 时间选择 -->
+            <el-row justify="center">
+              <el-col :xs="24" :sm="20">
+                <el-form-item label="时间" required>
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><ClockIcon /></el-icon>
+                      <span>时&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;间</span>
+                    </div>
+                  </template>
+                  <el-time-picker
+                    v-model="editRecordForm.time"
+                    type="time"
+                    placeholder="选择时间"
+                    format="HH:mm"
+                    value-format="HH:mm"
+                    style="width: 100%"
+                    size="large"
+                  >
+                  </el-time-picker>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
-            <el-form-item label="食物名称" required>
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><ForkSpoonIcon /></el-icon>
-                  <span>食物名称</span>
-                </div>
-              </template>
-              <el-input
-                v-model="editRecordForm.foodName"
-                placeholder="请输入食物名称"
-                size="large"
-              >
-                <template #prefix-icon>
-                  <el-icon class="input-prefix-icon"><ForkSpoonIcon /></el-icon>
-                </template>
-              </el-input>
-            </el-form-item>
+            <!-- 食物名称 -->
+            <el-row justify="center">
+              <el-col :xs="24" :sm="20">
+                <el-form-item label="食物名称" required>
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><ForkSpoonIcon /></el-icon>
+                      <span>食物名称</span>
+                    </div>
+                  </template>
+                  <el-input
+                    v-model="editRecordForm.foodName"
+                    placeholder="请输入食物名称"
+                    size="large"
+                  >
+                    <template #prefix-icon>
+                      <el-icon class="input-prefix-icon"><ForkSpoonIcon /></el-icon>
+                    </template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
-            <el-form-item label="卡路里" required>
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><ScaleIcon /></el-icon>
-                  <span>卡路里</span>
-                </div>
-              </template>
-              <el-input-number
-                v-model="editRecordForm.calories"
-                :min="0"
-                :step="10"
-                placeholder="请输入卡路里"
-                size="large"
-                style="width: 100%"
-              >
-                <template #increase-icon>
-                  <el-icon class="input-number-icon"><Plus /></el-icon>
-                </template>
-                <template #decrease-icon>
-                  <el-icon class="input-number-icon"><Minus /></el-icon>
-                </template>
-              </el-input-number>
-            </el-form-item>
+            <!-- 营养成分输入区 -->
+            <el-row justify="center" :gutter="20">
+              <el-col :xs="24" :sm="10">
+                <el-form-item label="卡路里" required>
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><ScaleIcon /></el-icon>
+                      <span>卡路里</span>
+                    </div>
+                  </template>
+                  <el-input-number
+                    v-model="editRecordForm.calories"
+                    :min="0"
+                    :step="10"
+                    placeholder="请输入卡路里"
+                    size="large"
+                    style="width: 100%"
+                  >
+                    <template #increase-icon>
+                      <el-icon class="input-number-icon"><Plus /></el-icon>
+                    </template>
+                    <template #decrease-icon>
+                      <el-icon class="input-number-icon"><Minus /></el-icon>
+                    </template>
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
 
-            <!-- 蛋白质输入 -->
-            <el-form-item label="蛋白质(g)">
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><MilkTea /></el-icon>
-                  <span>蛋&nbsp;白&nbsp;&nbsp;质</span>
-                </div>
-              </template>
-              <el-input-number
-                v-model="editRecordForm.protein"
-                :min="0"
-                :step="0.1"
-                placeholder="请输入蛋白质含量"
-                size="large"
-                style="width: 100%"
-              >
-                <template #increase-icon>
-                  <el-icon class="input-number-icon"><Plus /></el-icon>
-                </template>
-                <template #decrease-icon>
-                  <el-icon class="input-number-icon"><Minus /></el-icon>
-                </template>
-              </el-input-number>
-            </el-form-item>
+              <el-col :xs="24" :sm="10">
+                <el-form-item label="蛋白质(g)">
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><MilkTea /></el-icon>
+                      <span>蛋&nbsp;白&nbsp;&nbsp;质</span>
+                    </div>
+                  </template>
+                  <el-input-number
+                    v-model="editRecordForm.protein"
+                    :min="0"
+                    :step="0.1"
+                    placeholder="请输入蛋白质含量"
+                    size="large"
+                    style="width: 100%"
+                  >
+                    <template #increase-icon>
+                      <el-icon class="input-number-icon"><Plus /></el-icon>
+                    </template>
+                    <template #decrease-icon>
+                      <el-icon class="input-number-icon"><Minus /></el-icon>
+                    </template>
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
-            <!-- 脂肪输入 -->
-            <el-form-item label="脂肪(g)">
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><Timer /></el-icon>
-                  <span>脂&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;肪</span>
-                </div>
-              </template>
-              <el-input-number
-                v-model="editRecordForm.fat"
-                :min="0"
-                :step="0.1"
-                placeholder="请输入脂肪含量"
-                size="large"
-                style="width: 100%"
-              >
-                <template #increase-icon>
-                  <el-icon class="input-number-icon"><Plus /></el-icon>
-                </template>
-                <template #decrease-icon>
-                  <el-icon class="input-number-icon"><Minus /></el-icon>
-                </template>
-              </el-input-number>
-            </el-form-item>
+            <el-row justify="center" :gutter="20" style="margin-top: 20px;">
+              <el-col :xs="24" :sm="10">
+                <el-form-item label="脂肪(g)">
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><Timer /></el-icon>
+                      <span>脂&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;肪</span>
+                    </div>
+                  </template>
+                  <el-input-number
+                    v-model="editRecordForm.fat"
+                    :min="0"
+                    :step="0.1"
+                    placeholder="请输入脂肪含量"
+                    size="large"
+                    style="width: 100%"
+                  >
+                    <template #increase-icon>
+                      <el-icon class="input-number-icon"><Plus /></el-icon>
+                    </template>
+                    <template #decrease-icon>
+                      <el-icon class="input-number-icon"><Minus /></el-icon>
+                    </template>
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
 
-            <!-- 碳水化合物输入 -->
-            <el-form-item label="碳水化合物(g)">
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><Food /></el-icon>
-                  <span>碳&nbsp;水&nbsp;化&nbsp;合&nbsp;物</span>
-                </div>
-              </template>
-              <el-input-number
-                v-model="editRecordForm.carbohydrate"
-                :min="0"
-                :step="0.1"
-                placeholder="请输入碳水化合物含量"
-                size="large"
-                style="width: 100%"
-              >
-                <template #increase-icon>
-                  <el-icon class="input-number-icon"><Plus /></el-icon>
-                </template>
-                <template #decrease-icon>
-                  <el-icon class="input-number-icon"><Minus /></el-icon>
-                </template>
-              </el-input-number>
-            </el-form-item>
+              <el-col :xs="24" :sm="10">
+                <el-form-item label="碳水化合物(g)">
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><Food /></el-icon>
+                      <span>碳&nbsp;水&nbsp;化&nbsp;合&nbsp;物</span>
+                    </div>
+                  </template>
+                  <el-input-number
+                    v-model="editRecordForm.carbohydrate"
+                    :min="0"
+                    :step="0.1"
+                    placeholder="请输入碳水化合物含量"
+                    size="large"
+                    style="width: 100%"
+                  >
+                    <template #increase-icon>
+                      <el-icon class="input-number-icon"><Plus /></el-icon>
+                    </template>
+                    <template #decrease-icon>
+                      <el-icon class="input-number-icon"><Minus /></el-icon>
+                    </template>
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
+            </el-row>
 
-            <el-form-item label="描述">
-              <template #label>
-                <div class="form-item-label">
-                  <el-icon class="label-icon"><DocumentIcon /></el-icon>
-                  <span>描&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;述</span>
-                </div>
-              </template>
-              <el-input
-                v-model="editRecordForm.description"
-                type="textarea"
-                placeholder="请输入描述（如：份量、做法等）"
-                :rows="4"
-                size="large"
-              >
-                <template #prefix-icon>
-                  <el-icon class="input-prefix-icon"><DocumentIcon /></el-icon>
-                </template>
-              </el-input>
-            </el-form-item>
+            <!-- 描述 -->
+            <el-row justify="center">
+              <el-col :xs="24" :sm="20">
+                <el-form-item label="描述">
+                  <template #label>
+                    <div class="form-item-label">
+                      <el-icon class="label-icon"><DocumentIcon /></el-icon>
+                      <span>描&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;述</span>
+                    </div>
+                  </template>
+                  <el-input
+                    v-model="editRecordForm.description"
+                    type="textarea"
+                    placeholder="请输入描述（如：份量、做法等）"
+                    :rows="4"
+                    size="large"
+                  >
+                    <template #prefix-icon>
+                      <el-icon class="input-prefix-icon"><DocumentIcon /></el-icon>
+                    </template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
           </el-form>
 
           <template #footer>
