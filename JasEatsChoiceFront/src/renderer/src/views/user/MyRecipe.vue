@@ -754,7 +754,7 @@ const getTagType = (type) => {
     </div>
 
     <!-- 食谱列表 -->
-    <div class="recipe-grid">
+    <div class="recipe-list">
       <el-checkbox-group v-model="selectedRecipes">
         <!-- 食谱卡片 -->
         <el-card
@@ -1015,16 +1015,22 @@ const getTagType = (type) => {
     }
   }
 
-  .recipe-grid {
-    display: grid;
-    grid-template-columns: 1fr; /* 单列显示 */
-    gap: 20px;
-    max-width: calc(100% - 80px); /* 调整宽度，预留左右边距 */
-    margin: 0 auto; /* 居中显示 */
+  .recipe-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 25px;
+
+    .recipe-card {
+      flex: 1 1 100%;
+      max-width: 100%;
+      min-width: 317px;
+      box-sizing: border-box;
+      margin: 0;
+    }
   }
 
   .recipe-card {
-    margin-bottom: 16px !important;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%) !important;
     border-radius: 20px !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);

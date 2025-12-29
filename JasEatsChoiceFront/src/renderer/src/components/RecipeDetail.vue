@@ -153,13 +153,35 @@ const getMealTypeName = (type) => {
   }
   return mealTypeMap[type] || type
 }
+
+// 格式化烹饪时间显示
+const formatCookTime = (time) => {
+  if (!time) return '未设置'
+
+  const [hours, minutes] = time.split(':').map(Number)
+
+  if (hours === 0 && minutes === 0) {
+    return '0'
+  }
+
+  let formatted = ''
+  if (hours > 0) {
+    formatted += `${hours} 小时`
+  }
+
+  if (minutes > 0) {
+    formatted += (formatted ? ' ' : '') + `${minutes} 分钟`
+  }
+
+  return formatted
+}
 </script>
 
 <template>
   <el-dialog
     :model-value="props.visible"
     :title="recipe ? `${recipe.name} 详情` : '食谱详情'"
-    width="800px"
+    width="600px"
     top="5%"
     @update:model-value="emit('update:visible', $event)"
     @close="handleClose"
@@ -178,7 +200,7 @@ const getMealTypeName = (type) => {
               <span class="info-label">烹饪时间:</span>
               <div class="cook-time-control">
                 <div v-if="!isEditingCookTime" class="cook-time-display">
-                  <span class="time-text">{{ recipe.cookTime || '未设置' }}</span>
+                  <span class="time-text">{{ formatCookTime(recipe.cookTime) }}</span>
                   <el-button
                     type="primary"
                     size="small"
@@ -319,15 +341,15 @@ const getMealTypeName = (type) => {
 /* 食谱详情对话框样式 */
 .recipe-details {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  padding: 24px;
+  padding: 16px;
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
 /* 食谱头部区域 */
 .recipe-header-section {
-  margin-bottom: 28px;
-  padding-bottom: 20px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
   border-bottom: 2px solid #f0f2f5;
 }
 
@@ -336,10 +358,10 @@ const getMealTypeName = (type) => {
 }
 
 .recipe-main-title {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
   color: #2c3e50;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -419,14 +441,14 @@ const getMealTypeName = (type) => {
 .recipe-content-section {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 16px;
 }
 
 .section-title {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   color: #2c3e50;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   padding-left: 8px;
   border-left: 4px solid #667eea;
 }
@@ -442,13 +464,13 @@ const getMealTypeName = (type) => {
 
 .nutrition-card-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
 .nutrition-card {
   background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-  padding: 24px;
+  padding: 16px;
   border-radius: 14px;
   text-align: center;
   border: 2px solid #e2e8f0;
@@ -475,7 +497,7 @@ const getMealTypeName = (type) => {
 }
 
 .nutrition-value {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: #667eea;
 }
@@ -483,7 +505,7 @@ const getMealTypeName = (type) => {
 /* 菜品列表 */
 .dishes-section {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-  padding: 24px;
+  padding: 16px;
   border-radius: 16px;
   border: 2px solid #e6ecf5;
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08);
