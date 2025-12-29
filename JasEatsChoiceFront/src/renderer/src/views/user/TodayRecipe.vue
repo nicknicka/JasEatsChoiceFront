@@ -10,6 +10,7 @@ import { useAuthStore } from '../../store/authStore'
 import RecipeDetail from '../../components/RecipeDetail.vue'
 import AddDish from '../../components/AddDish.vue'
 import ImportMerchantDish from '../../components/ImportMerchantDish.vue'
+import AddRecipe from '../../components/recipe/AddRecipe.vue'
 
 // 餐型图标映射
 const getMealIcon = (type) => {
@@ -266,33 +267,40 @@ const replacementDishes = ref([
   { id: 6, name: '炒青菜', type: 'dinner', nutrition: '15kcal/100g' }
 ])
 
-// 添加菜单
-const addMenuVisible = ref(false)
-const menuFormRef = ref(null) // 表单ref
-const newMenu = ref({
-  name: '',
-  type: '',
-  items: []
-})
-
-// 处理添加食谱对话框关闭事件
-const handleAddMenuClose = () => {
-  // 重置表单验证状态
-  if (menuFormRef.value) {
-    menuFormRef.value.resetFields()
-  }
-  // 重置表单数据
-  newMenu.value = {
-    name: '',
-    type: '',
-    items: []
-  }
-}
+// 添加食谱对话框
+const addRecipeVisible = ref(false)
 
 // 查看详情
 const viewRecipeDetails = (recipe) => {
   selectedRecipe.value = recipe
   detailDialogVisible.value = true
+}
+
+// 更新烹饪时间
+const handleUpdateCookTime = (newCookTime) => {
+  if (selectedRecipe.value) {
+    // 更新本地数据
+    selectedRecipe.value.cookTime = newCookTime
+
+    // 在todayRecipes数组中找到对应的食谱并更新
+    const index = todayRecipes.value.findIndex((recipe) => recipe.id === selectedRecipe.value.id)
+    if (index !== -1) {
+      todayRecipes.value[index].cookTime = newCookTime
+    }
+
+    // 调用后端API更新食谱
+    axios
+      .put(API_CONFIG.baseURL + API_CONFIG.recipe.update + selectedRecipe.value.id, {
+        ...selectedRecipe.value,
+        cookTime: newCookTime
+      })
+      .then((response) => {
+        console.log('更新烹饪时间成功:', response)
+      })
+      .catch((error) => {
+        console.error('更新烹饪时间失败:', error)
+      })
+  }
 }
 
 // 替换菜品
@@ -728,48 +736,54 @@ const batchFavoriteRecipes = () => {
 
 // 添加新菜单
 const addNewMenu = () => {
-  if (newMenu.value.name.trim() && newMenu.value.type.trim()) {
-    const menuData = {
-      name: newMenu.value.name.trim(),
-      type: newMenu.value.type.trim().toLowerCase(),
-      items: [],
-      userId: authStore.userId
-    }
+  // 这个函数已经被AddRecipe组件替换
+}
 
-    // 调用后端API添加食谱 - 将items转换为JSON字符串
-    const menuDataWithStringItems = {
-      ...menuData,
-      items: JSON.stringify(menuData.items)
-    }
+// 处理从AddRecipe组件添加的新食谱
+const handleAddRecipe = (newRecipeData) => {
+  const authStore = useAuthStore()
 
-    axios
-      .post(API_CONFIG.baseURL + API_CONFIG.recipe.add, menuDataWithStringItems)
-      .then((response) => {
-        // 检查返回的数据是否有效
-        if (response.data.data) {
-          // 确保返回的食谱有items数组并已解析
-          const newRecipe = {
-            ...response.data.data,
-            items:
-              typeof response.data.data.items === 'string'
-                ? JSON.parse(response.data.data.items)
-                : response.data.data.items || []
-          }
-          // 将返回的食谱添加到本地列表
-          todayRecipes.value.push(newRecipe)
-          ElMessage.success('菜单已添加')
-
-          // 关闭模态框（会自动触发@close事件进行重置）
-          addMenuVisible.value = false
-        } else {
-          ElMessage.error('添加菜单失败: 服务器返回无效数据')
-        }
-      })
-      .catch((error) => {
-        console.error('添加菜单失败:', error)
-        ElMessage.error('添加菜单失败')
-      })
+  // 准备食谱数据 - 将type转换为小写
+  const recipeData = {
+    ...newRecipeData,
+    type: newRecipeData.type.toLowerCase(), // 保持与系统一致的小写格式
+    items: newRecipeData.ingredients || [], // 映射字段
+    userId: authStore.userId || 0 // 使用当前用户ID
   }
+
+  // 调用后端API添加食谱 - 将items转换为JSON字符串
+  const recipeDataWithStringItems = {
+    ...recipeData,
+    items: JSON.stringify(recipeData.items)
+  }
+
+  axios
+    .post(API_CONFIG.baseURL + API_CONFIG.recipe.add, recipeDataWithStringItems)
+    .then((response) => {
+      // 检查返回的数据是否有效
+      if (response.data.data) {
+        // 确保返回的食谱有items数组并已解析
+        const newRecipe = {
+          ...response.data.data,
+          items:
+            typeof response.data.data.items === 'string'
+              ? JSON.parse(response.data.data.items)
+              : response.data.data.items || [],
+          isFavorite: response.data.data.favorite || false // 映射收藏字段
+        }
+
+        // 将返回的食谱添加到本地列表
+        todayRecipes.value.push(newRecipe)
+        ElMessage.success('食谱已添加')
+
+      } else {
+        ElMessage.error('添加食谱失败: 服务器返回无效数据')
+      }
+    })
+    .catch((error) => {
+      console.error('添加食谱失败:', error)
+      ElMessage.error('添加食谱失败')
+    })
 }
 
 // 处理自定义菜品替换
@@ -978,7 +992,7 @@ const filteredRecipes = computed(() => {
 
     <!-- 添加菜单按钮和布局切换 -->
     <div class="add-recipe-section">
-      <el-button type="primary" size="small" @click="addMenuVisible = true">
+      <el-button type="primary" size="small" @click="addRecipeVisible = true">
         ➕ 添加食谱
       </el-button>
 
@@ -1106,6 +1120,7 @@ const filteredRecipes = computed(() => {
     v-model:visible="detailDialogVisible"
     :recipe="selectedRecipe"
     @close="selectedRecipe = null"
+    @update:cook-time="handleUpdateCookTime"
   ></RecipeDetail>
 
   <!-- 替换菜品对话框 -->
@@ -1215,43 +1230,7 @@ const filteredRecipes = computed(() => {
   </el-dialog>
 
   <!-- 添加食谱对话框 -->
-  <el-dialog
-    v-model="addMenuVisible"
-    title="添加新食谱"
-    width="400px"
-    top="20%"
-    @close="handleAddMenuClose"
-  >
-    <el-form ref="menuFormRef" :model="newMenu" class="add-menu-form">
-      <el-form-item label="食谱名称" prop="name" required>
-        <el-input v-model="newMenu.name" placeholder="请输入食谱名称（如：下午茶、夜宵）" />
-      </el-form-item>
-
-      <el-form-item label="类型标识" prop="type" required>
-        <el-select v-model="newMenu.type" placeholder="请选择类型标识" style="width: 100%">
-          <el-option label="早餐 (breakfast)" value="breakfast" />
-          <el-option label="午餐 (lunch)" value="lunch" />
-          <el-option label="晚餐 (dinner)" value="dinner" />
-          <el-option label="下午茶 (afternoon_tea)" value="afternoon_tea" />
-          <el-option label="夜宵 (night_snack)" value="night_snack" />
-          <el-option label="上午加餐 (morning_snack)" value="morning_snack" />
-          <el-option label="早午餐 (brunch)" value="brunch" />
-          <el-option label="宵夜 (midnight_snack)" value="midnight_snack" />
-        </el-select>
-      </el-form-item>
-    </el-form>
-
-    <template #footer>
-      <el-button @click="addMenuVisible = false">取消</el-button>
-      <el-button
-        type="primary"
-        :disabled="!newMenu.name.trim() || !newMenu.type.trim()"
-        @click="addNewMenu"
-      >
-        确定
-      </el-button>
-    </template>
-  </el-dialog>
+  <AddRecipe v-model:visible="addRecipeVisible" @add-recipe="handleAddRecipe" />
 </template>
 
 <style scoped lang="less">

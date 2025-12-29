@@ -97,7 +97,7 @@ const getThemeColor = () => {
 
 // 计算营养数据
 const nutritionData = computed(() => {
-  if (!props.recipe || !props.recipe.items) {
+  if (!props.recipe) {
     return {
       calories: 0,
       protein: 0,
@@ -106,12 +106,21 @@ const nutritionData = computed(() => {
     }
   }
 
-  // 确保items是数组
-  const items = Array.isArray(props.recipe.items)
-    ? props.recipe.items
-    : typeof props.recipe.items === 'string'
-      ? JSON.parse(props.recipe.items)
-      : []
+  // 确保items是数组，优先使用recipe.items，如果为空则使用recipe.ingredients
+  let items = []
+  if (props.recipe.items) {
+    items = Array.isArray(props.recipe.items)
+      ? props.recipe.items
+      : typeof props.recipe.items === 'string'
+        ? JSON.parse(props.recipe.items)
+        : []
+  } else if (props.recipe.ingredients) {
+    items = Array.isArray(props.recipe.ingredients)
+      ? props.recipe.ingredients
+      : typeof props.recipe.ingredients === 'string'
+        ? JSON.parse(props.recipe.ingredients)
+        : []
+  }
 
   return items.reduce(
     (acc, dish) => {
@@ -273,9 +282,11 @@ const formatCookTime = (time) => {
           <div class="section-title">菜品组成</div>
           <div class="dish-list-container">
             <div
-              v-for="(item, index) in recipe.items && recipe.items.length > 0
+              v-for="(item, index) in (recipe.items && recipe.items.length > 0)
                 ? recipe.items
-                : ['待添加菜品']"
+                : (recipe.ingredients && recipe.ingredients.length > 0
+                  ? recipe.ingredients
+                  : ['待添加菜品'])"
               :key="index"
               class="dish-card-item"
               :class="{ 'empty-dish-card': typeof item === 'string' }"

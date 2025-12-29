@@ -114,4 +114,40 @@ public class CalorieRecordController {
         List<CalorieRecord> records = calorieRecordService.list(queryWrapper);
         return ResponseResult.success(records);
     }
+
+    /**
+     * 获取今日营养摄入统计
+     */
+    @GetMapping("/user/{userId}/today-summary")
+    public ResponseResult<?> getTodayNutritionSummary(@PathVariable Long userId) {
+        LambdaQueryWrapper<CalorieRecord> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CalorieRecord::getUserId, userId);
+
+        // 查询今日的所有记录
+        LocalDate today = LocalDate.now();
+        LocalDateTime startTime = today.atStartOfDay(); // 当天00:00:00
+        LocalDateTime endTime = today.atTime(LocalTime.MAX); // 当天23:59:59
+        queryWrapper.between(CalorieRecord::getRecordTime, startTime, endTime);
+
+        List<CalorieRecord> records = calorieRecordService.list(queryWrapper);
+
+        // 计算营养总和
+        double totalCalorie = records.stream().mapToInt(CalorieRecord::getCalorie).sum();
+        double totalProtein = records.stream().mapToDouble(record -> record.getProtein() != null ? record.getProtein() : 0).sum();
+        double totalFat = records.stream().mapToDouble(record -> record.getFat() != null ? record.getFat() : 0).sum();
+        double totalCarbohydrate = records.stream().mapToDouble(record -> record.getCarbohydrate() != null ? record.getCarbohydrate() : 0).sum();
+        double totalFiber = records.stream().mapToDouble(record -> record.getFiber() != null ? record.getFiber() : 0).sum();
+        double totalSodium = records.stream().mapToDouble(record -> record.getSodium() != null ? record.getSodium() : 0).sum();
+
+        // 构建结果
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalCalorie", totalCalorie);
+        summary.put("totalProtein", totalProtein);
+        summary.put("totalFat", totalFat);
+        summary.put("totalCarbohydrate", totalCarbohydrate);
+        summary.put("totalFiber", totalFiber);
+        summary.put("totalSodium", totalSodium);
+
+        return ResponseResult.success(summary);
+    }
 }

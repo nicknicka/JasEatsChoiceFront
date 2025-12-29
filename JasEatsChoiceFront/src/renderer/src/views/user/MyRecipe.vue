@@ -87,7 +87,7 @@ const loadMyRecipes = () => {
 
   // 通过API从后端获取我的食谱数据
   axios
-    .get(`${API_CONFIG.baseURL}${API_CONFIG.recipe.favorite}`, {
+    .get(`${API_CONFIG.baseURL}${API_CONFIG.recipe.all}`, {
       params: {
         userId: userId
       }
@@ -155,7 +155,33 @@ const filteredRecipes = computed(() => {
 
 // 切换收藏状态
 const toggleFavorite = (recipe) => {
+  // 更新本地状态
   recipe.favorite = !recipe.favorite
+
+  // 立即同步到后端
+  axios
+    .put(`${API_CONFIG.baseURL}${API_CONFIG.recipe.toggleFavorite}${recipe.id}`, {
+      favorite: recipe.favorite
+    })
+    .then((response) => {
+      console.log('更新收藏状态成功:', response)
+      if (response.data?.code !== '200') {
+        recipe.favorite = !recipe.favorite // 恢复状态
+        ElMessage.error('更新收藏状态失败');
+      } else {
+        // 显示成功消息
+        if (recipe.favorite) {
+          ElMessage.success('已收藏到我的食谱');
+        } else {
+          ElMessage.success('已取消收藏');
+        }
+      }
+    })
+    .catch((error) => {
+      console.error('更新收藏状态失败:', error)
+      recipe.favorite = !recipe.favorite // 恢复状态
+      ElMessage.error('更新收藏状态失败，请检查网络');
+    });
 }
 
 // 食谱详情组件相关
@@ -172,12 +198,43 @@ const viewRecipeDetails = (recipe) => {
 const updateRecipe = (updatedRecipe) => {
   // 在myRecipes数组中找到对应的食谱并更新
   const index = myRecipes.value.findIndex((recipe) => recipe.id === updatedRecipe.id)
-  if (index !== -1) {
-    myRecipes.value[index] = updatedRecipe
-  }
+  if (index === -1) return
 
-  // 更新详情对话框中的食谱
-  selectedRecipe.value = updatedRecipe
+  // 保存原始状态
+  const originalRecipe = {...myRecipes.value[index]};
+
+  // 更新本地状态
+  myRecipes.value[index] = updatedRecipe;
+  selectedRecipe.value = updatedRecipe;
+
+  // 立即同步到后端
+  axios
+    .put(`${API_CONFIG.baseURL}${API_CONFIG.recipe.toggleFavorite}${updatedRecipe.id}`, {
+      favorite: updatedRecipe.favorite
+    })
+    .then((response) => {
+      console.log('更新收藏状态成功:', response)
+      if (response.data?.code !== '200') {
+        // 如果后端返回失败，恢复本地状态
+        myRecipes.value[index] = originalRecipe;
+        selectedRecipe.value = originalRecipe;
+        ElMessage.error('更新收藏状态失败');
+      } else {
+        // 显示成功消息
+        if (updatedRecipe.favorite) {
+          ElMessage.success('已收藏到我的食谱');
+        } else {
+          ElMessage.success('已取消收藏');
+        }
+      }
+    })
+    .catch((error) => {
+      console.error('更新收藏状态失败:', error)
+      // 请求失败时恢复本地状态
+      myRecipes.value[index] = originalRecipe;
+      selectedRecipe.value = originalRecipe;
+      ElMessage.error('更新收藏状态失败，请检查网络');
+    });
 }
 
 // 更新烹饪时间
@@ -672,6 +729,26 @@ const exportToDietRecord = () => {
     })
 }
 
+// 计算食谱菜品
+const calculateRecipeItems = (recipe) => {
+  // 检查recipe是否存在
+  if (!recipe) return ['待添加菜品']
+
+  // 检查items数组
+  const hasItems = recipe.items && Array.isArray(recipe.items) && recipe.items.length > 0
+
+  // 检查ingredients数组
+  const hasIngredients = recipe.ingredients && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0
+
+  if (hasItems) {
+    return recipe.items
+  } else if (hasIngredients) {
+    return recipe.ingredients
+  } else {
+    return ['待添加菜品']
+  }
+}
+
 // 获取标签类型
 const getTagType = (type) => {
   switch (type) {
@@ -767,7 +844,7 @@ const getTagType = (type) => {
             <div class="card-header">
               <!-- 批量选择复选框 -->
               <div class="checkbox-wrapper">
-                <el-checkbox :label="recipe.id"></el-checkbox>
+                <el-checkbox :value="recipe.id"> </el-checkbox>
               </div>
               <span :class="`meal-icon ${recipe.type}`">
                 {{
@@ -799,9 +876,9 @@ const getTagType = (type) => {
           </template>
           <div class="recipe-items">
             <el-tag
-              v-for="(item, index) in recipe.items || recipe.ingredients || ['暂无食材信息']"
+              v-for="(item, index) in calculateRecipeItems(recipe)"
               :key="index"
-              :type="getTagType(recipe.type)"
+              :type="calculateRecipeItems(recipe).length > 1 || calculateRecipeItems(recipe)[0] !== '待添加菜品' ? getTagType(recipe.type) : 'warning'"
             >
               {{ typeof item === 'string' ? item : item.name }}
             </el-tag>
@@ -1019,14 +1096,14 @@ const getTagType = (type) => {
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 25px;
+    gap: 60px !important; /* 增加食谱卡片之间的上下间距 */
 
     .recipe-card {
       flex: 1 1 100%;
       max-width: 100%;
       min-width: 317px;
       box-sizing: border-box;
-      margin: 0;
+      margin: 20px 0 !important; /* 再增加一个margin来确保间距 */
     }
   }
 

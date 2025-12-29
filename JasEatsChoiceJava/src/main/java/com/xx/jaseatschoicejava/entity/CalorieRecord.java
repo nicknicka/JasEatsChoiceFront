@@ -37,6 +37,26 @@ public class CalorieRecord {
     @ApiModelProperty(value = "卡路里摄入量")
     private Integer calorie; // 卡路里摄入量
 
+    @TableField("protein")
+    @ApiModelProperty(value = "蛋白质含量(g)")
+    private Double protein; // 蛋白质含量(g)
+
+    @TableField("fat")
+    @ApiModelProperty(value = "脂肪含量(g)")
+    private Double fat; // 脂肪含量(g)
+
+    @TableField("carbohydrate")
+    @ApiModelProperty(value = "碳水化合物含量(g)")
+    private Double carbohydrate; // 碳水化合物含量(g)
+
+    @TableField("fiber")
+    @ApiModelProperty(value = "膳食纤维含量(g)")
+    private Double fiber; // 膳食纤维含量(g)
+
+    @TableField("sodium")
+    @ApiModelProperty(value = "钠含量(mg)")
+    private Double sodium; // 钠含量(mg)
+
     @TableField("meal_time")
     @ApiModelProperty(value = "用餐时间类型（如：早餐、午餐、晚餐、加餐）")
     private String mealTime; // 用餐时间类型（如：早餐、午餐、晚餐、加餐）

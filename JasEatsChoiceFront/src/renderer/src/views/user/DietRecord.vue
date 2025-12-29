@@ -85,6 +85,73 @@
             </div>
           </template>
         </el-dialog>
+
+        <!-- 编辑记录弹窗 -->
+        <el-dialog title="编辑饮食记录" v-model="editRecordDialogVisible" width="480px" transition="dialog-slide-up">
+          <el-form ref="editRecordFormRef" :model="editRecordForm" label-width="80px">
+            <el-form-item label="餐次" required>
+              <el-select v-model="editRecordForm.mealType" placeholder="请选择餐次">
+                <el-option
+                  v-for="option in mealTypeOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="时间" required>
+              <el-time-picker
+                v-model="editRecordForm.time"
+                type="time"
+                placeholder="选择时间"
+                format="HH:mm"
+                value-format="HH:mm"
+                style="width: 100%"
+              >
+              </el-time-picker>
+            </el-form-item>
+
+            <el-form-item label="食物名称" required>
+              <el-input v-model="editRecordForm.foodName" placeholder="请输入食物名称"></el-input>
+            </el-form-item>
+
+            <el-form-item label="卡路里" required>
+              <el-input-number
+                v-model="editRecordForm.calories"
+                :min="0"
+                placeholder="请输入卡路里"
+              ></el-input-number>
+            </el-form-item>
+
+            <el-form-item label="描述">
+              <el-input
+                v-model="editRecordForm.description"
+                type="textarea"
+                placeholder="请输入描述"
+                :rows="3"
+              ></el-input>
+            </el-form-item>
+          </el-form>
+
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button @click="closeEditRecordDialog">取消</el-button>
+              <el-button type="primary" @click="submitEditRecordForm">确定</el-button>
+            </div>
+          </template>
+        </el-dialog>
+
+        <!-- 删除确认弹窗 -->
+        <el-dialog title="删除确认" v-model="deleteConfirmVisible" width="360px" transition="dialog-slide-up">
+          <div>您确定要删除这条饮食记录吗？</div>
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button @click="deleteConfirmVisible = false">取消</el-button>
+              <el-button type="danger" @click="submitDeleteRecord">确定删除</el-button>
+            </div>
+          </template>
+        </el-dialog>
       </div>
     </div>
 
@@ -142,6 +209,15 @@
                   <span class="calories-text">{{ record.calories }}</span>
                   <span class="calories-unit">kcal</span>
                 </div>
+                <!-- 记录操作按钮 -->
+                <div v-if="hoverRecord === record.id" class="record-actions">
+                  <el-button type="text" size="small" @click="openEditRecordDialog(record)">
+                    编辑
+                  </el-button>
+                  <el-button type="text" size="small" @click="openDeleteConfirm(record)">
+                    删除
+                  </el-button>
+                </div>
               </div>
             </div>
           </Transition>
@@ -184,6 +260,15 @@
                 <div class="record-calories">
                   <span class="calories-text">{{ record.calories }}</span>
                   <span class="calories-unit">kcal</span>
+                </div>
+                <!-- 记录操作按钮 -->
+                <div v-if="hoverRecord === record.id" class="record-actions">
+                  <el-button type="text" size="small" @click="openEditRecordDialog(record)">
+                    编辑
+                  </el-button>
+                  <el-button type="text" size="small" @click="openDeleteConfirm(record)">
+                    删除
+                  </el-button>
                 </div>
               </div>
             </div>
@@ -228,6 +313,15 @@
                   <span class="calories-text">{{ record.calories }}</span>
                   <span class="calories-unit">kcal</span>
                 </div>
+                <!-- 记录操作按钮 -->
+                <div v-if="hoverRecord === record.id" class="record-actions">
+                  <el-button type="text" size="small" @click="openEditRecordDialog(record)">
+                    编辑
+                  </el-button>
+                  <el-button type="text" size="small" @click="openDeleteConfirm(record)">
+                    删除
+                  </el-button>
+                </div>
               </div>
             </div>
           </Transition>
@@ -270,6 +364,15 @@
                 <div class="record-calories">
                   <span class="calories-text">{{ record.calories }}</span>
                   <span class="calories-unit">kcal</span>
+                </div>
+                <!-- 记录操作按钮 -->
+                <div v-if="hoverRecord === record.id" class="record-actions">
+                  <el-button type="text" size="small" @click="openEditRecordDialog(record)">
+                    编辑
+                  </el-button>
+                  <el-button type="text" size="small" @click="openDeleteConfirm(record)">
+                    删除
+                  </el-button>
                 </div>
               </div>
             </div>
@@ -423,6 +526,28 @@ const addRecordForm = ref({
   description: ''
 })
 
+// 编辑记录弹窗可见性
+const editRecordDialogVisible = ref(false)
+
+// 编辑记录表单引用
+const editRecordFormRef = ref(null)
+
+// 编辑记录表单数据
+const editRecordForm = ref({
+  id: '',
+  mealType: 'breakfast',
+  time: '',
+  foodName: '',
+  calories: 0,
+  description: ''
+})
+
+// 删除确认弹窗可见性
+const deleteConfirmVisible = ref(false)
+
+// 当前要删除的记录ID
+const currentDeleteId = ref('')
+
 // 餐次类型选项
 const mealTypeOptions = [
   { value: 'breakfast', label: '早餐' },
@@ -434,10 +559,11 @@ const mealTypeOptions = [
 // 打开添加记录弹窗
 const openAddRecordDialog = () => {
   addRecordDialogVisible.value = true
-  // 重置表单
+  // 重置表单并设置时间默认值为当前系统时间
+  const currentTime = new Date().toTimeString().slice(0, 5);
   addRecordForm.value = {
     mealType: 'breakfast',
-    time: '',
+    time: currentTime,
     foodName: '',
     calories: 0,
     description: ''
@@ -447,6 +573,11 @@ const openAddRecordDialog = () => {
 // 关闭添加记录弹窗
 const closeAddRecordDialog = () => {
   addRecordDialogVisible.value = false
+}
+
+// 关闭编辑记录弹窗
+const closeEditRecordDialog = () => {
+  editRecordDialogVisible.value = false
 }
 
 // 提交添加记录表单
@@ -471,8 +602,8 @@ const submitAddRecordForm = async () => {
       dinner: '晚餐',
       snack: '加餐'
     }
-    // 合并日期和时间为LocalDateTime格式
-    const recordTime = new Date(`${selectedDate.value}T${addRecordForm.value.time}`).toISOString()
+    // 合并日期和时间为时间字符串格式，避免时区转换
+    const recordTime = `${selectedDate.value}T${addRecordForm.value.time}:00`
 
     const requestData = {
       userId: userInfo.userId,
@@ -492,6 +623,97 @@ const submitAddRecordForm = async () => {
   } catch (error) {
     console.error('添加记录失败:', error)
     ElMessage.error('添加记录失败，请稍后重试')
+  }
+}
+
+// 打开编辑记录弹窗并填充数据
+const openEditRecordDialog = (record) => {
+  editRecordDialogVisible.value = true
+  // 填充编辑表单数据
+  editRecordForm.value = {
+    id: record.id,
+    mealType: record.mealType,
+    time: record.time,
+    foodName: record.foodName,
+    calories: record.calories,
+    description: record.description || ''
+  }
+}
+
+// 提交编辑记录表单
+const submitEditRecordForm = async () => {
+  try {
+    // 表单验证
+    if (!editRecordFormRef.value) return
+    await editRecordFormRef.value.validate()
+
+    // 这里需要获取当前登录用户的ID，假设已经存储在localStorage中
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+    if (!userInfo || !userInfo.userId) {
+      ElMessage.error('未找到用户信息，请先登录')
+      return
+    }
+
+    // 构建请求数据
+    // 转换餐次类型为中文
+    const mealTimeMap = {
+      breakfast: '早餐',
+      lunch: '午餐',
+      dinner: '晚餐',
+      snack: '加餐'
+    }
+    // 合并日期和时间为时间字符串格式，避免时区转换
+    const recordTime = `${selectedDate.value}T${editRecordForm.value.time}:00`
+
+    const requestData = {
+      id: editRecordForm.value.id,
+      userId: userInfo.userId,
+      mealTime: mealTimeMap[editRecordForm.value.mealType],
+      foodName: editRecordForm.value.foodName,
+      calorie: editRecordForm.value.calories, // 注意后端字段是单数形式
+      description: editRecordForm.value.description,
+      recordTime: recordTime
+    }
+
+    // 调用后端API编辑记录
+    await api.put(API_CONFIG.diet.update, requestData)
+
+    // 编辑成功后，关闭弹窗并刷新记录
+    closeEditRecordDialog()
+    fetchDietRecords(selectedDate.value)
+  } catch (error) {
+    console.error('编辑记录失败:', error)
+    ElMessage.error('编辑记录失败，请稍后重试')
+  }
+}
+
+// 打开删除确认弹窗
+const openDeleteConfirm = (record) => {
+  currentDeleteId.value = record.id
+  deleteConfirmVisible.value = true
+}
+
+// 提交删除记录
+const submitDeleteRecord = async () => {
+  try {
+    if (!currentDeleteId.value) return
+
+    // 这里需要获取当前登录用户的ID，假设已经存储在localStorage中
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+    if (!userInfo || !userInfo.userId) {
+      ElMessage.error('未找到用户信息，请先登录')
+      return
+    }
+
+    // 调用后端API删除记录
+    await api.delete(API_CONFIG.diet.delete.replace('{id}', currentDeleteId.value))
+
+    // 删除成功后，关闭弹窗并刷新记录
+    deleteConfirmVisible.value = false
+    fetchDietRecords(selectedDate.value)
+  } catch (error) {
+    console.error('删除记录失败:', error)
+    ElMessage.error('删除记录失败，请稍后重试')
   }
 }
 
@@ -742,6 +964,35 @@ onMounted(() => {
 .record-calories {
   text-align: right;
   margin-left: 24px;
+}
+
+/* 记录操作按钮 */
+.record-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 24px;
+  flex-shrink: 0;
+}
+
+/* 弹窗滑入动画 */
+.dialog-slide-up-enter-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform-origin: center bottom;
+}
+
+.dialog-slide-up-leave-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform-origin: center top;
+}
+
+.dialog-slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+.dialog-slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
 }
 
 .calories-text {

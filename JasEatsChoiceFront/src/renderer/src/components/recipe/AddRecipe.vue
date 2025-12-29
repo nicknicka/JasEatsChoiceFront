@@ -20,13 +20,8 @@ const closeDialog = () => {
 const newRecipe = ref({
   name: '',
   type: '早餐',
-  calories: '',
   time: '',
-  favorite: false,
-  details: '',
-  ingredients: '',
-  steps: '',
-  dishComposition: []
+  details: '', // 食谱描述字段
 })
 
 // 重置表单
@@ -34,13 +29,8 @@ const resetForm = () => {
   newRecipe.value = {
     name: '',
     type: '早餐',
-    calories: '',
     time: '',
-    favorite: false,
     details: '',
-    ingredients: '',
-    steps: '',
-    dishComposition: []
   }
 }
 
@@ -49,15 +39,6 @@ const saveNewRecipe = () => {
   // 简单的表单验证
   if (!newRecipe.value.name.trim()) {
     ElMessage.warning('请填写食谱名称')
-    return
-  }
-
-  if (
-    !newRecipe.value.calories ||
-    isNaN(newRecipe.value.calories) ||
-    newRecipe.value.calories <= 0
-  ) {
-    ElMessage.warning('请输入有效的卡路里数值')
     return
   }
 
@@ -72,13 +53,8 @@ const saveNewRecipe = () => {
     id: Date.now(), // 使用时间戳作为唯一ID
     name: newRecipe.value.name,
     type: newRecipe.value.type,
-    calories: Number(newRecipe.value.calories),
     time: newRecipe.value.time,
-    favorite: newRecipe.value.favorite,
     details: newRecipe.value.details,
-    ingredients: newRecipe.value.ingredients.split('\n').filter((item) => item.trim()),
-    steps: newRecipe.value.steps.split('\n').filter((item) => item.trim()),
-    dishComposition: newRecipe.value.dishComposition
   }
 
   // 发送添加事件
@@ -111,10 +87,6 @@ const saveNewRecipe = () => {
           </el-select>
         </el-form-item>
 
-        <el-form-item label="卡路里" prop="calories" required>
-          <el-input v-model="newRecipe.calories" type="number" placeholder="请输入卡路里" />
-        </el-form-item>
-
         <el-form-item label="准备时间" prop="time" required>
           <el-time-picker
             v-model="newRecipe.time"
@@ -134,28 +106,6 @@ const saveNewRecipe = () => {
             :rows="3"
             placeholder="请输入食谱详情"
           />
-        </el-form-item>
-
-        <el-form-item label="食谱组成" prop="ingredients">
-          <el-input
-            v-model="newRecipe.ingredients"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入主要食材，每行一个"
-          />
-        </el-form-item>
-
-        <el-form-item label="烹饪步骤" prop="steps">
-          <el-input
-            v-model="newRecipe.steps"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入烹饪步骤，每行一个"
-          />
-        </el-form-item>
-
-        <el-form-item label="收藏">
-          <el-switch v-model="newRecipe.favorite" />
         </el-form-item>
       </el-form>
     </div>

@@ -91,29 +91,22 @@ onMounted(() => {
       console.error('加载用户偏好失败:', error)
     })
 
-  // 获取今日食谱
+  // 获取今日饮食记录并计算营养摄入
+  // 获取当前日期字符串，格式为YYYY-MM-DD
+  const currentDate = new Date().toISOString().split('T')[0]
+
+  // 根据用户ID和日期获取饮食记录
   axios
-    .get(`${API_CONFIG.baseURL}${API_CONFIG.recipe.today}`, {
-      params: {
-        userId: userId
-      }
-    })
+    .get(`${API_CONFIG.baseURL}${API_CONFIG.diet.date.replace('{userId}', userId)}${currentDate}`)
     .then((response) => {
-      console.log('今日食谱:', response.data)
+      console.log('今日饮食记录:', response.data)
       if (
         response.data &&
         response.data.code === '200' &&
-        response.data.data.recipes &&
-        response.data.data.recipes.length > 0
+        response.data.data &&
+        Array.isArray(response.data.data)
       ) {
-        const recipes = response.data.data.recipes
-        // 确保食谱有items数组
-        const processedRecipes = recipes
-          .filter((recipe) => recipe && recipe.id) // 确保食谱存在且有id
-          .map((recipe) => ({
-            ...recipe,
-            items: typeof recipe.items === 'string' ? JSON.parse(recipe.items) : recipe.items || []
-          }))
+        const records = response.data.data
 
         // 计算今日总营养摄入
         let totalCalories = 0
@@ -121,24 +114,14 @@ onMounted(() => {
         let totalCarbs = 0
         let totalFat = 0
 
-        // 遍历食谱和菜品计算营养
-        processedRecipes.forEach((recipe) => {
-          if (recipe && recipe.items) {
-            recipe.items.forEach((dish) => {
-              totalCalories += dish?.calories || 0
-              totalProtein += dish?.protein || 0
-              totalCarbs += dish?.carbs || 0
-              totalFat += dish?.fat || 0
-            })
-          }
+        // 遍历饮食记录计算营养总和
+        records.forEach((record) => {
+          totalCalories += record?.calorie || 0
+          totalProtein += record?.protein || 0
+          totalCarbs += record?.carbohydrate || 0
+          totalFat += record?.fat || 0
         })
 
-        //        console.log('今日总营养摄入:', {
-        //          totalCalories,
-        //          totalProtein,
-        //          totalCarbs,
-        //          totalFat
-        //        });
         // 更新今日卡路里数据
         calorieData.value.today.consumed = totalCalories
         calorieData.value.today.remaining = calorieData.value.today.target - totalCalories
@@ -150,7 +133,7 @@ onMounted(() => {
       }
     })
     .catch((error) => {
-      console.error('加载今日食谱失败:', error)
+      console.error('加载今日饮食记录失败:', error)
     })
 
   // 直接从后端获取本周卡路里统计
