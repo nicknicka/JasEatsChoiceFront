@@ -1460,6 +1460,7 @@ onMounted(() => {
 /* 表单字段样式 */
 :deep(.el-form-item) {
   margin-bottom: 32px; /* 增加字段间距 */
+  align-items: center; /* 垂直居中对齐 */
 }
 
 /* 选择器选项样式 */
