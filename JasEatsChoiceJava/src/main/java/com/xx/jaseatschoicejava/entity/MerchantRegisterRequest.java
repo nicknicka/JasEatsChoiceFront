@@ -1,10 +1,11 @@
 package com.xx.jaseatschoicejava.entity;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Data;
 
 /**
  * 商家注册请求参数
  */
+@Data
 public class MerchantRegisterRequest {
     /**
      * 商家名称
@@ -45,68 +46,4 @@ public class MerchantRegisterRequest {
      * 验证码会话key
      */
     private String captchaKey;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getBusinessLicense() {
-        return businessLicense;
-    }
-
-    public void setBusinessLicense(String businessLicense) {
-        this.businessLicense = businessLicense;
-    }
-
-    public String[] getBusinessScope() {
-        return businessScope;
-    }
-
-    public void setBusinessScope(String[] businessScope) {
-        this.businessScope = businessScope;
-    }
-
-    public String getContactName() {
-        return contactName;
-    }
-
-    public void setContactName(String contactName) {
-        this.contactName = contactName;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getCaptcha() {
-        return captcha;
-    }
-
-    public void setCaptcha(String captcha) {
-        this.captcha = captcha;
-    }
-
-    public String getCaptchaKey() {
-        return captchaKey;
-    }
-
-    public void setCaptchaKey(String captchaKey) {
-        this.captchaKey = captchaKey;
-    }
 }

@@ -94,7 +94,6 @@ public class AIController {
         response.put("protein", 20.3);   // 模拟蛋白质(g)
         response.put("fat", 15.7);       // 模拟脂肪(g)
         response.put("carbohydrate", 40.2); // 模拟碳水化合物(g)
-        response.put("fiber", 5.8);      // 模拟膳食纤维(g)
 
         return ResponseResult.success(response);
     }

@@ -1,6 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import {
+  Food as SilverwareIcon,
+  DataAnalysis as ScaleIcon,
+  Bowl as BowlIcon
+} from '@element-plus/icons-vue'
 
 // 接收从父组件传递的 props
 const props = defineProps({
@@ -15,7 +20,7 @@ const props = defineProps({
 })
 
 // 定义事件
-const emit = defineEmits(['close', 'add'])
+const emit = defineEmits(['close', 'add', 'update:visible'])
 
 // 新菜品输入
 const newDish = ref({
@@ -107,15 +112,23 @@ const resetForm = () => {
 
 <template>
   <el-dialog
-    v-model="props.visible"
+    :model-value="visible"
     :title="recipe ? `为${recipe.name}添加菜品` : '添加菜品'"
-    width="500px"
-    top="20%"
+    width="520px"
+    top="10%"
+    @update:model-value="emit('update:visible', $event)"
     @close="handleClose"
+    transition="dialog-fade"
   >
     <div v-if="recipe" class="add-dish-form">
       <el-form class="form-container">
         <el-form-item label="菜品名称" class="is-required">
+          <template #label>
+            <div class="form-item-label">
+              <el-icon class="label-icon"><SilverwareIcon /></el-icon>
+              <span>菜品名称</span>
+            </div>
+          </template>
           <el-input
             v-model="newDish.name"
             placeholder="请输入新菜品名称"
@@ -131,6 +144,12 @@ const resetForm = () => {
 
         <!-- 食材输入区域 -->
         <el-form-item label="食材（非必选）">
+          <template #label>
+            <div class="form-item-label">
+              <el-icon class="label-icon"><BowlIcon /></el-icon>
+              <span>食材（非必选）</span>
+            </div>
+          </template>
           <div class="ingredients-input">
             <el-input
               v-model="newIngredient"
@@ -155,41 +174,51 @@ const resetForm = () => {
 
         <!-- 营养数据编辑 -->
         <el-form-item label="营养数据">
+          <template #label>
+            <div class="form-item-label">
+              <el-icon class="label-icon"><ScaleIcon /></el-icon>
+              <span>营养数据</span>
+            </div>
+          </template>
           <div class="nutrition-edit-section">
             <div class="nutrition-input-group">
+              <div class="nutrition-label">卡路里</div>
               <el-input-number
                 v-model="newDish.calories"
                 :min="0"
                 :precision="0"
-                style="width: 150px"
-                placeholder="卡路里 (kcal)"
+                style="width: 100%"
+                placeholder="(kcal)"
               />
             </div>
             <div class="nutrition-input-group">
+              <div class="nutrition-label">蛋白质</div>
               <el-input-number
                 v-model="newDish.protein"
                 :min="0"
                 :precision="1"
-                style="width: 150px"
-                placeholder="蛋白质 (g)"
+                style="width: 100%"
+                placeholder="(g)"
               />
             </div>
             <div class="nutrition-input-group">
+              <div class="nutrition-label">碳水化合物</div>
               <el-input-number
                 v-model="newDish.carbs"
                 :min="0"
                 :precision="1"
-                style="width: 150px"
-                placeholder="碳水化合物 (g)"
+                style="width: 100%"
+                placeholder="(g)"
               />
             </div>
             <div class="nutrition-input-group">
+              <div class="nutrition-label">脂肪</div>
               <el-input-number
                 v-model="newDish.fat"
                 :min="0"
                 :precision="1"
-                style="width: 150px"
-                placeholder="脂肪 (g)"
+                style="width: 100%"
+                placeholder="(g)"
               />
             </div>
           </div>
@@ -205,89 +234,227 @@ const resetForm = () => {
 </template>
 
 <style scoped>
-/* 添加菜品对话框样式 */
+/* 表单容器 */
 .add-dish-form {
+  padding: 30px 0;
+  max-width: 460px;
+  margin: 0 auto;
+
   .form-container {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-    padding: 24px;
-    border-radius: 12px;
-    border: 1px solid #e3f2fd;
+    background: white;
+    padding: 0;
+    border-radius: 0;
+    border: none;
   }
 
-  /* 表单标签样式 */
-  .el-form-item__label {
-    font-weight: 700 !important;
-    font-size: 14px !important;
-    color: #2c3e50 !important;
+  /* 表单字段样式 */
+  :deep(.el-form-item) {
+    margin-bottom: 32px; /* 增加字段间距 */
   }
+}
 
-  /* 必填项红色星号 */
-  .el-form-item.is-required > .el-form-item__label::before {
-    color: #ff4d4f;
-    font-weight: 700;
+/* 自定义Dialog样式 */
+:deep(.el-dialog__header) {
+  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  padding: 24px 28px;
+}
+
+:deep(.el-dialog__title) {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+:deep(.el-dialog__body) {
+  padding: 32px 28px;
+}
+
+/* 表单标签样式 */
+:deep(.el-form-item__label) {
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  color: #555 !important;
+}
+
+/* 带图标的标签样式 */
+.form-item-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.label-icon {
+  font-size: 18px;
+  color: #667eea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+/* 输入框样式 */
+:deep(.el-input__wrapper),
+:deep(.el-select__wrapper),
+:deep(.el-textarea__inner) {
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.el-input__wrapper:hover),
+:deep(.el-select__wrapper:hover) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+:deep(.el-input__wrapper.is-focus),
+:deep(.el-select__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+/* 食材输入区域样式 */
+.ingredients-input {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start; /* 改为顶部对齐 */
+  margin-top: 4px;
+  padding-top: 2px; /* 添加顶部内边距，微调对齐 */
+}
+
+/* 添加食材按钮样式 */
+:deep(.ingredients-input .el-button) {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    transform: translateY(-2px);
   }
+}
 
-  /* 输入框样式 */
-  .el-input__wrapper {
-    border-radius: 8px !important;
-    border: 1px solid #d9d9d9 !important;
-    transition: all 0.3s ease !important;
+/* 食材列表样式 */
+.ingredients-list {
+  margin-top: 16px;
 
-    &:focus-within {
-      border-color: #667eea !important;
-      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1) !important;
-    }
-  }
-
-  /* 食材输入区域样式 */
-  .ingredients-input {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-
-  /* 添加食材按钮样式 */
-  .ingredients-input .el-button {
+  :deep(.el-tag) {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
     color: white;
-    border-radius: 8px;
+    opacity: 0.9;
     transition: all 0.3s ease;
+    margin-bottom: 8px;
 
     &:hover {
-      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+      opacity: 1;
+      transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      transform: translateY(-2px);
-    }
-  }
-
-  /* 食材列表样式 */
-  .ingredients-list {
-    .el-tag {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      color: white;
-      opacity: 0.9;
-      transition: all 0.2s ease;
-
-      &:hover {
-        opacity: 1;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
-      }
     }
   }
 }
 
 /* 营养编辑区域样式 */
 .nutrition-edit-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 20px;
 }
 
 .nutrition-input-group {
-  margin-bottom: 8px;
+  margin-bottom: 0;
+
+  :deep(.el-input-number) {
+    width: 100%;
+    border-radius: 8px;
+  }
+
+  :deep(.el-input-number__wrapper) {
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    &:hover {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    &.is-focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+  }
+
+  /* 营养数据标签 */
+  .nutrition-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 8px;
+  }
+}
+
+/* 弹窗动画 */
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.dialog-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+}
+
+.dialog-fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+/* 按钮样式 */
+:deep(.dialog-footer) {
+  text-align: center;
+  padding: 0 28px 24px;
+}
+
+:deep(.dialog-footer .el-button) {
+  padding: 10px 28px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.dialog-footer .el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+:deep(.dialog-footer .el-button--primary:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+}
+
+:deep(.dialog-footer .el-button--default) {
+  border-color: #e5e7eb;
+}
+
+:deep(.dialog-footer .el-button--default:hover) {
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
 }
 </style>

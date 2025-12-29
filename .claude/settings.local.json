@@ -298,7 +298,12 @@
       "Bash(./mvnw:*)",
       "Bash(npm run format)",
       "Bash(npm run check)",
-      "Bash(npm run format:*)"
+      "Bash(npm run format:*)",
+      "Bash(npm run electron:build)",
+      "Bash(npm run electron:serve)",
+      "Bash(npm run dev:front:*)",
+      "Bash(npm run dev:front)",
+      "Bash(npm run --prefix JasEatsChoiceFront:*)"
     ],
     "deny": [],
     "ask": []

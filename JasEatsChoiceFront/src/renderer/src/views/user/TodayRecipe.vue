@@ -279,6 +279,9 @@ const viewRecipeDetails = (recipe) => {
 // 更新烹饪时间
 const handleUpdateCookTime = (newCookTime) => {
   if (selectedRecipe.value) {
+    // 保存原始值，用于失败时恢复
+    const originalCookTime = selectedRecipe.value.cookTime
+
     // 更新本地数据
     selectedRecipe.value.cookTime = newCookTime
 
@@ -296,9 +299,60 @@ const handleUpdateCookTime = (newCookTime) => {
       })
       .then((response) => {
         console.log('更新烹饪时间成功:', response)
+        ElMessage.success('烹饪时间已更新')
       })
       .catch((error) => {
         console.error('更新烹饪时间失败:', error)
+        // 显示错误信息给用户
+        ElMessage.error('更新烹饪时间失败，请稍后重试')
+        // 恢复到原始值
+        selectedRecipe.value.cookTime = originalCookTime
+        // 在todayRecipes数组中恢复原始值
+        if (index !== -1) {
+          todayRecipes.value[index].cookTime = originalCookTime
+        }
+      })
+  }
+}
+
+// 更新食谱详情
+const handleUpdateDetails = (newDetails) => {
+  if (selectedRecipe.value) {
+    // 保存原始值，用于失败时恢复
+    const originalDetails = selectedRecipe.value.details
+
+    // 更新本地数据
+    selectedRecipe.value.details = newDetails
+
+    // 在todayRecipes数组中找到对应的食谱并更新
+    const index = todayRecipes.value.findIndex((recipe) => recipe.id === selectedRecipe.value.id)
+    if (index !== -1) {
+      todayRecipes.value[index].details = newDetails
+    }
+
+    // 调用后端API更新食谱
+    axios
+      .put(API_CONFIG.baseURL + API_CONFIG.recipe.update + selectedRecipe.value.id, {
+        ...selectedRecipe.value,
+        details: newDetails
+      })
+      .then((response) => {
+        console.log('更新食谱详情成功:', response)
+        ElMessage.success('食谱详情已更新')
+      })
+      .catch((error) => {
+        console.error('更新食谱详情失败:', error)
+        // 显示错误信息给用户
+        ElMessage.error('更新食谱详情失败，请稍后重试')
+        // 恢复到原始值
+        if (selectedRecipe.value) {
+          selectedRecipe.value.details = originalDetails
+        }
+        // 在todayRecipes数组中恢复原始值
+        const index = todayRecipes.value.findIndex((recipe) => recipe.id === selectedRecipe.value.id)
+        if (index !== -1) {
+          todayRecipes.value[index].details = originalDetails
+        }
       })
   }
 }
@@ -1121,6 +1175,7 @@ const filteredRecipes = computed(() => {
     :recipe="selectedRecipe"
     @close="selectedRecipe = null"
     @update:cook-time="handleUpdateCookTime"
+    @update:details="handleUpdateDetails"
   ></RecipeDetail>
 
   <!-- 替换菜品对话框 -->

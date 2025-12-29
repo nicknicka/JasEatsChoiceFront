@@ -136,8 +136,6 @@ public class CalorieRecordController {
         double totalProtein = records.stream().mapToDouble(record -> record.getProtein() != null ? record.getProtein() : 0).sum();
         double totalFat = records.stream().mapToDouble(record -> record.getFat() != null ? record.getFat() : 0).sum();
         double totalCarbohydrate = records.stream().mapToDouble(record -> record.getCarbohydrate() != null ? record.getCarbohydrate() : 0).sum();
-        double totalFiber = records.stream().mapToDouble(record -> record.getFiber() != null ? record.getFiber() : 0).sum();
-        double totalSodium = records.stream().mapToDouble(record -> record.getSodium() != null ? record.getSodium() : 0).sum();
 
         // 构建结果
         Map<String, Object> summary = new HashMap<>();
@@ -145,8 +143,6 @@ public class CalorieRecordController {
         summary.put("totalProtein", totalProtein);
         summary.put("totalFat", totalFat);
         summary.put("totalCarbohydrate", totalCarbohydrate);
-        summary.put("totalFiber", totalFiber);
-        summary.put("totalSodium", totalSodium);
 
         return ResponseResult.success(summary);
     }

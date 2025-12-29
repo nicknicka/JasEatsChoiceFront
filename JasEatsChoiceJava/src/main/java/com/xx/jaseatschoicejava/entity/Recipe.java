@@ -51,6 +51,9 @@ public class Recipe {
     @ApiModelProperty(value = "脂肪")
     private Integer fat;
 
+    @ApiModelProperty(value = "食谱详情")
+    private String detail;
+
     @ApiModelProperty(value = "烹饪时间")
     private String cookTime;
 

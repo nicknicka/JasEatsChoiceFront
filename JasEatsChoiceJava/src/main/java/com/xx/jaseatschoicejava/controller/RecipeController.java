@@ -121,4 +121,16 @@ public class RecipeController {
         }
     }
 
+    /**
+     * 根据ID获取食谱详情
+     */
+    @GetMapping("/{id}")
+    public ResponseResult<?> getRecipeDetail(@PathVariable Long id) {
+        Recipe recipe = recipeService.getById(id);
+        if (recipe != null) {
+            return ResponseResult.success(recipe);
+        }
+        return ResponseResult.fail("404", "食谱不存在");
+    }
+
 }

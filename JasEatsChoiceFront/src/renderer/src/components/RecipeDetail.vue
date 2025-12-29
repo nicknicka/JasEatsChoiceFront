@@ -15,7 +15,7 @@ const props = defineProps({
 })
 
 // 定义事件
-const emit = defineEmits(['close', 'update:visible', 'update:cookTime'])
+const emit = defineEmits(['close', 'update:visible', 'update:cookTime', 'update:details'])
 
 // 处理关闭事件
 const handleClose = () => {
@@ -27,6 +27,10 @@ const handleClose = () => {
 const isEditingCookTime = ref(false)
 const cookTimeValue = ref(null)
 
+// 食谱详情编辑相关变量
+const isEditingDetails = ref(false)
+const detailsValue = ref('')
+
 // 监听recipe变化，初始化烹饪时间
 watch(
   () => props.recipe?.cookTime,
@@ -36,6 +40,15 @@ watch(
     } else {
       cookTimeValue.value = '00:00'
     }
+  },
+  { immediate: true }
+)
+
+// 监听recipe变化，初始化食谱详情
+watch(
+  () => props.recipe?.details,
+  (newVal) => {
+    detailsValue.value = newVal || ''
   },
   { immediate: true }
 )
@@ -55,7 +68,6 @@ const saveCookTime = () => {
   // 通知父组件更新烹饪时间
   emit('update:cookTime', cookTimeValue.value)
   isEditingCookTime.value = false
-  ElMessage.success('烹饪时间已更新')
 }
 
 // 取消编辑烹饪时间
@@ -63,6 +75,30 @@ const cancelEditCookTime = () => {
   // 恢复原始值
   cookTimeValue.value = props.recipe?.cookTime || '00:00'
   isEditingCookTime.value = false
+}
+
+// 开始编辑食谱详情
+const startEditDetails = () => {
+  isEditingDetails.value = true
+}
+
+// 保存食谱详情
+const saveDetails = () => {
+  if (!detailsValue.value) {
+    ElMessage.warning('请输入食谱详情')
+    return
+  }
+
+  // 通知父组件更新食谱详情
+  emit('update:details', detailsValue.value)
+  isEditingDetails.value = false
+}
+
+// 取消编辑食谱详情
+const cancelEditDetails = () => {
+  // 恢复原始值
+  detailsValue.value = props.recipe?.details || ''
+  isEditingDetails.value = false
 }
 
 // 根据食谱类型获取颜色主题
@@ -250,6 +286,7 @@ const formatCookTime = (time) => {
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -337,6 +374,42 @@ const formatCookTime = (time) => {
             </div>
           </div>
         </div>
+
+        <!-- 食谱详情信息 -->
+        <div class="details-section">
+          <div class="section-title">食谱详情</div>
+          <div class="details-content">
+            <div v-if="!isEditingDetails" class="details-display">
+              <span class="details-text">{{ detailsValue || '暂无详情' }}</span>
+              <span class="edit-details-text" @click="startEditDetails">编辑</span>
+            </div>
+
+            <div v-else class="details-editor">
+              <el-input
+                v-model="detailsValue"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入食谱详情"
+                size="default"
+                style="width: 100%"
+              />
+
+              <div class="editor-action-buttons">
+                <el-button type="primary" size="small" class="save-btn" @click="saveDetails">
+                  保存
+                </el-button>
+                <el-button
+                  type="default"
+                  size="small"
+                  class="cancel-btn"
+                  @click="cancelEditDetails"
+                >
+                  取消
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -413,6 +486,41 @@ const formatCookTime = (time) => {
 .cook-time-control {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+/* 食谱详情控制 */
+.details-control {
+  width: 100%;
+  max-width: 600px;
+}
+
+.details-display {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.details-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4a5568;
+  white-space: pre-wrap;
+}
+
+.edit-details-btn {
+  align-self: flex-start;
+  border-radius: 20px;
+  padding: 6px 18px;
+}
+
+.details-editor {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
@@ -520,6 +628,70 @@ const formatCookTime = (time) => {
   border-radius: 16px;
   border: 2px solid #e6ecf5;
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08);
+}
+
+/* 食谱详情 */
+.details-section {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+  padding: 16px;
+  border-radius: 16px;
+  border: 2px solid #e6ecf5;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08);
+  margin-top: 16px;
+}
+
+.details-content {
+  margin-top: 12px;
+}
+
+.details-display {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.details-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4a5568;
+  white-space: pre-wrap;
+}
+
+.edit-details-btn {
+  align-self: flex-start;
+  border-radius: 20px;
+  padding: 6px 18px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.edit-details-text {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  cursor: pointer;
+  color: #667eea;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.details-display:hover .edit-details-text {
+  opacity: 1;
+}
+
+.details-section:hover .edit-details-btn {
+  opacity: 1;
+}
+
+.details-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .dish-list-container {
@@ -633,15 +805,17 @@ const formatCookTime = (time) => {
   padding: 12px 36px;
   font-weight: 600;
   font-size: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #e3f2fd 0%, #f8f9ff 100%);
   border: none;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  color: #333333;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
   transition: all 0.3s ease;
 }
 
 .dialog-footer .el-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+  background: linear-gradient(135deg, #d1ecf1 0%, #e6f7ff 100%);
 }
 
 /* 不同主题颜色适配 */

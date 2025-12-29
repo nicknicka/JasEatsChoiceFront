@@ -36,7 +36,7 @@ const props = defineProps({
 })
 
 // 定义事件
-const emit = defineEmits(['close', 'import'])
+const emit = defineEmits(['close', 'import', 'update:visible'])
 
 // 商家列表和选中商家
 const selectedMerchant = ref(null)
@@ -88,10 +88,11 @@ const resetState = () => {
 
 <template>
   <el-dialog
-    v-model="props.visible"
+    :model-value="visible"
     title="导入商家菜品"
     width="600px"
     top="10%"
+    @update:model-value="emit('update:visible', $event)"
     @close="handleClose"
   >
     <div class="import-merchant-dish-container">
