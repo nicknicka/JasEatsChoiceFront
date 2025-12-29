@@ -248,10 +248,10 @@ updateFilter()
                 :key="status"
                 :type="activeStatusFilter === status ? 'primary' : 'info'"
                 effect="plain"
-                @click="
-                  activeStatusFilter = status
-                  updateFilter()
-                "
+                @click="() => {
+                  activeStatusFilter = status;
+                  updateFilter();
+                }"
                 class="filter-tag"
               >
                 {{ status === 'all' ? '全部' : status === 'unreplied' ? '未回复' : '已回复' }}
@@ -264,10 +264,10 @@ updateFilter()
                 :key="rating"
                 :type="activeRatingFilter === rating ? 'primary' : 'info'"
                 effect="plain"
-                @click="
-                  activeRatingFilter = rating
-                  updateFilter()
-                "
+                @click="() => {
+                  activeRatingFilter = rating;
+                  updateFilter();
+                }"
                 class="filter-tag"
               >
                 {{ rating === 'all' ? '全部' : `${rating}分` }}
@@ -368,12 +368,12 @@ updateFilter()
             <el-empty description="暂无评价">
               <el-button
                 type="primary"
-                @click="
-                  activeStatusFilter = 'all'
-                  activeRatingFilter = 'all'
-                  searchKeyword = ''
-                  updateFilter()
-                "
+                @click="() => {
+                  activeStatusFilter = 'all';
+                  activeRatingFilter = 'all';
+                  searchKeyword = '';
+                  updateFilter();
+                }"
               >
                 清除筛选条件
               </el-button>

@@ -213,10 +213,10 @@ updateFilter()
           :key="status"
           :type="activeStatusFilter === status ? 'primary' : 'info'"
           effect="plain"
-          @click="
-            activeStatusFilter = status
-            updateFilter()
-          "
+          @click="() => {
+            activeStatusFilter = status;
+            updateFilter();
+          }"
           class="status-tag"
         >
           {{ status === 'all' ? '全部' : orderStatusMap[status].text }}

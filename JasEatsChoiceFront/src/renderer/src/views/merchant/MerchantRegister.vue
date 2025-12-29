@@ -59,10 +59,10 @@
                   <el-button
                     size="small"
                     block
-                    @click="
-                      isAddingCustomScope = false
-                      customBusinessScope = ''
-                    "
+                    @click="() => {
+                      isAddingCustomScope = false;
+                      customBusinessScope = '';
+                    }"
                   >
                     取消
                   </el-button>

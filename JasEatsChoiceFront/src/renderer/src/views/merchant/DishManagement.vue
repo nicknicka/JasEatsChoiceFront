@@ -422,10 +422,10 @@ const getDishCheckedState = (dish) => {
           :key="status"
           :type="activeStatusFilter === status ? 'primary' : 'info'"
           effect="plain"
-          @click="
-            activeStatusFilter = status
-            updateFilter()
-          "
+          @click="() => {
+            activeStatusFilter = status;
+            updateFilter();
+          }"
           class="status-filter"
         >
           {{ status === 'all' ? '全部菜品' : dishStatusMap[status].text }}

@@ -716,37 +716,41 @@ const getTagType = (type) => {
 
     <!-- 添加食谱和批量管理按钮 -->
     <div class="add-recipe-section">
-      <el-button type="primary" size="small" @click="openAddDialog"> ➕ 添加食谱 </el-button>
+      <!-- 第一行按钮 -->
+      <div class="button-row">
+        <el-button type="primary" size="small" @click="openAddDialog"> ➕ 添加食谱 </el-button>
+        <el-button type="success" size="small" @click="importFromOrders"> 📥 从订单导入 </el-button>
+      </div>
 
-      <el-button
-        type="danger"
-        size="small"
-        :disabled="selectedRecipes.length === 0"
-        @click="batchDeleteRecipes"
-      >
-        🗑️ 批量删除
-      </el-button>
+      <!-- 第二行按钮 -->
+      <div class="button-row">
+        <el-button
+          type="danger"
+          size="small"
+          :disabled="selectedRecipes.length === 0"
+          @click="batchDeleteRecipes"
+        >
+          🗑️ 批量删除
+        </el-button>
 
-      <el-button
-        type="warning"
-        size="small"
-        :disabled="selectedRecipes.length === 0"
-        @click="batchFavoriteRecipes"
-      >
-        ⭐ 批量收藏
-      </el-button>
+        <el-button
+          type="warning"
+          size="small"
+          :disabled="selectedRecipes.length === 0"
+          @click="batchFavoriteRecipes"
+        >
+          ⭐ 批量收藏
+        </el-button>
 
-      <!-- 新增功能按钮 -->
-      <el-button type="success" size="small" @click="importFromOrders"> 📥 从订单导入 </el-button>
-
-      <el-button
-        type="info"
-        size="small"
-        :disabled="selectedRecipes.length === 0"
-        @click="exportToDietRecord"
-      >
-        📤 导出到饮食记录
-      </el-button>
+        <el-button
+          type="info"
+          size="small"
+          :disabled="selectedRecipes.length === 0"
+          @click="exportToDietRecord"
+        >
+          📤 导出到饮食记录
+        </el-button>
+      </div>
     </div>
 
     <!-- 食谱列表 -->
@@ -1143,15 +1147,21 @@ const getTagType = (type) => {
   // 添加食谱按钮样式
   .add-recipe-section {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     margin-bottom: 24px;
-    gap: 12px; /* 统一按钮间距 */
+    gap: 12px; /* 行与行之间的间距 */
 
-    .el-button {
-      border-radius: 24px !important;
-      padding: 10px 24px !important;
-      font-weight: 600 !important;
+    .button-row {
+      display: flex;
+      gap: 12px; /* 按钮之间的间距 */
+
+      .el-button {
+        border-radius: 24px !important;
+        padding: 10px 24px !important;
+        font-weight: 600 !important;
+      }
     }
   }
 

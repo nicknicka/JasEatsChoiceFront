@@ -318,10 +318,10 @@ const toggleSelectAll = () => {
           :key="status"
           :type="activeStatusFilter === status ? 'primary' : 'info'"
           effect="plain"
-          @click="
-            activeStatusFilter = status
-            updateFilter()
-          "
+          @click="() => {
+            activeStatusFilter = status;
+            updateFilter();
+          }"
           class="status-filter"
         >
           {{

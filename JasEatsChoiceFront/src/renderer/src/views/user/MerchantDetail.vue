@@ -425,10 +425,7 @@
               <el-button
                 type="text"
                 size="small"
-                @click="
-                  cartItems[index].quantity--
-                  if (cartItems[index].quantity <= 0) cartItems.splice(index, 1)
-                "
+                @click="() => { cartItems[index].quantity--; if (cartItems[index].quantity <= 0) cartItems.splice(index, 1); }"
               >
                 -
               </el-button>
