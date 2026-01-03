@@ -146,4 +146,18 @@ public class CalorieRecordController {
 
         return ResponseResult.success(summary);
     }
+
+    /**
+     * 更新卡路里记录
+     */
+    @PutMapping
+    public ResponseResult<?> updateCalorieRecord(@RequestBody CalorieRecord record) {
+        log.info("更新记录: {}", record);
+        boolean success = calorieRecordService.updateById(record);
+        if (success) {
+            return ResponseResult.success("更新记录成功");
+        }
+        log.info("更新记录失败");
+        return ResponseResult.fail("500", "更新记录失败");
+    }
 }

@@ -156,7 +156,7 @@ const filteredMerchants = computed(() => {
     <div class="search-filter-section">
       <el-input
         v-model="searchKeyword"
-        placeholder="搜索商家名称..."
+        placeholder="搜索商家名称、类型或特色..."
         clearable
         class="search-input"
       >
@@ -189,6 +189,15 @@ const filteredMerchants = computed(() => {
             :value="option.value"
           />
         </el-select>
+
+        <el-button
+          type="default"
+          size="small"
+          @click="resetFilters"
+          class="reset-btn"
+        >
+          重置
+        </el-button>
       </div>
     </div>
 
@@ -278,33 +287,99 @@ const filteredMerchants = computed(() => {
   padding: 0 20px 20px 20px;
 
   h2 {
-    font-size: 24px;
-    margin: 0 0 20px 0;
+    font-size: 32px;
+    margin: 0 0 32px 20px;
+    color: #1a202c;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+
+    // 添加装饰性下划线
+    &::after {
+      content: "";
+      display: block;
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(135deg, #23d160 0%, #20c997 100%);
+      border-radius: 2px;
+      margin-top: 12px;
+    }
   }
 
   .search-filter-section {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    flex-direction: column; // 修改为垂直布局
+    gap: 20px; // 搜索框和筛选区之间的间距
+    margin-bottom: 32px;
+    padding: 30px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); // 渐变背景
+    border-radius: 20px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08); // 更明显的阴影
 
     .search-input {
-      width: 300px;
+      width: 100%;
+
+      :deep(.el-input__inner) {
+        border-radius: 14px;
+        border: none; /* 去掉搜索框的方形边框 */
+        height: 56px;
+        font-size: 15px;
+        padding-left: 17px;
+        padding-right: 21px;
+        transition: all 0.3s ease;
+        background-color: #ffffff;
+      }
+
+      :deep(.el-input__prefix) {
+        left: 20px;
+        top: 50%;
+      }
+
+      /* 搜索图标样式 */
+      :deep(.el-input__prefix-inner .el-input__icon) {
+        color: #94a3b8;
+        font-size: 20px;
+      }
+
+      :deep(.el-input__suffix-inner .el-icon-circle-close) {
+        font-size: 20px;
+        color: #cbd5e1;
+      }
     }
 
     .filter-row {
       display: flex;
       gap: 15px;
+      justify-content: center; /* 居中对齐 */
+      align-items: center; /* 垂直居中 */
     }
 
-    .type-select {
-      .el-select__input {
-        border-radius: 4px;
-        border: 1px solid #dcdfe6;
+    /* 重置按钮样式 */
+    .reset-btn {
+      flex-shrink: 0;
+      border-radius: 14px;
+      height: 56px;
+      font-size: 15px;
+      padding: 0 32px;
+      transition: all 0.3s ease;
+      /* 确保按钮文本居中 */
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    :deep(.el-select) {
+      flex: 1;
+      min-width: 180px;
+
+      :deep(.el-select__wrapper) {
+        border-radius: 14px;
+        border: 2px solid #e2e8f0;
+        height: 56px;
+        transition: all 0.3s ease;
+      }
+
+      :deep(.el-select__input) {
+        font-size: 15px;
       }
     }
   }

@@ -509,7 +509,7 @@ const recommendations = ref([])
     </div>
 
     <!-- 推荐列表 -->
-    <div class="recommend-grid" v-else-if="recommendations.length > 0">
+    <transition-group name="recommend-card" tag="div" class="recommend-grid" v-else-if="recommendations.length > 0">
       <el-card v-for="item in recommendations" :key="item.id" class="recommend-card">
         <div class="card-header">
           <div class="dish-image">{{ item.image }}</div>
@@ -537,18 +537,11 @@ const recommendations = ref([])
           </el-tag>
         </div>
 
-        <div class="reason-section">
-          <div class="reason-title">推荐理由</div>
-          <div class="reason-text" v-if="item.reason && item.reason.trim() !== ''">
-            {{ item.reason }}
-          </div>
-          <div class="reason-text empty-reason" v-else>为您精选的优质美食推荐</div>
+        <div class="rating">
+          <el-rate v-model="item.rating" :disabled="true" show-text />
         </div>
 
         <div class="card-actions">
-          <div class="rating">
-            <el-rate v-model="item.rating" :disabled="true" show-text />
-          </div>
           <el-button
             type="primary"
             size="small"
@@ -567,7 +560,7 @@ const recommendations = ref([])
           >
         </div>
       </el-card>
-    </div>
+    </transition-group>
 
     <!-- 空状态提示 -->
     <div class="empty-state" v-else>
@@ -685,29 +678,52 @@ const recommendations = ref([])
       }
     }
 
+    .rating {
+      margin-bottom: 24px;
+
+      :deep(.el-rate__text) {
+        font-size: 14px;
+        color: #e6a23c;
+      }
+
+      :deep(.el-rate__icon) {
+        font-size: 16px;
+      }
+    }
+
     .card-actions {
       display: flex;
-      justify-content: space-between;
+      justify-content: center; // 居中显示按钮
       align-items: center;
+      gap: 15px; // 按钮间距
       padding-top: 16px;
       border-top: 1px solid #f0f0f0;
-
-      .rating {
-        :deep(.el-rate__text) {
-          font-size: 14px;
-          color: #e6a23c;
-        }
-
-        :deep(.el-rate__icon) {
-          font-size: 16px;
-        }
-      }
 
       .el-button {
         border-radius: 8px;
         font-weight: 500;
       }
     }
+  }
+
+  /* 推荐卡片过渡动画 */
+  .recommend-card-move {
+    transition: all 0.5s ease;
+  }
+
+  .recommend-card-enter-active,
+  .recommend-card-leave-active {
+    transition: opacity 0.3s ease, transform 0.5s ease;
+  }
+
+  .recommend-card-enter-from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .recommend-card-leave-to {
+    opacity: 0;
+    transform: translateY(-20px);
   }
 
   // 加载中样式

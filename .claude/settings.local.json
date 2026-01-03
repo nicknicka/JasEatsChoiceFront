@@ -306,7 +306,8 @@
       "Bash(npm run --prefix JasEatsChoiceFront:*)",
       "Bash(git stash pop:*)",
       "Bash(git checkout HEAD:*)",
-      "Bash(git stash clear:*)"
+      "Bash(git stash clear:*)",
+      "Bash(mvn clean:*)"
     ],
     "deny": [],
     "ask": []

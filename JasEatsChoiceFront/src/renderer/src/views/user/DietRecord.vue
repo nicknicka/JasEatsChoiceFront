@@ -854,13 +854,6 @@ const deleteConfirmVisible = ref(false)
 // 当前要删除的记录ID
 const currentDeleteId = ref('')
 
-// 餐次类型选项
-const mealTypeOptions = [
-  { value: 'breakfast', label: '早餐' },
-  { value: 'lunch', label: '午餐' },
-  { value: 'dinner', label: '晚餐' },
-  { value: 'snack', label: '加餐' }
-]
 
 // 打开添加记录弹窗
 const openAddRecordDialog = () => {
@@ -971,8 +964,8 @@ const submitEditRecordForm = async () => {
     const recordTime = `${selectedDate.value}T${editRecordForm.value.time}:00`
 
     const requestData = {
-      id: editRecordForm.value.id,
-      userId: userInfo.userId,
+      id: Number(editRecordForm.value.id), // 确保id是数字类型
+      userId: Number(userInfo.userId), // 确保userId是数字类型
       mealTime: mealTypeToChinese(editRecordForm.value.mealType),
       foodName: editRecordForm.value.foodName,
       calorie: editRecordForm.value.calories, // 注意后端字段是单数形式
@@ -984,8 +977,9 @@ const submitEditRecordForm = async () => {
     }
 
     // 调用后端API编辑记录
-    await api.put(API_CONFIG.diet.update, requestData)
-
+    console.log('发送的请求数据:', requestData) // 调试
+    const response = await api.put(API_CONFIG.diet.update, requestData)
+    console.log('编辑记录响应数据:', response)
     // 编辑成功后，关闭弹窗并刷新记录
     closeEditRecordDialog()
     fetchDietRecords(selectedDate.value)
@@ -1016,7 +1010,7 @@ const submitDeleteRecord = async () => {
     }
 
     // 调用后端API删除记录
-    await api.delete(API_CONFIG.diet.delete.replace('{id}', currentDeleteId.value))
+    await api.delete(API_CONFIG.diet.delete.replace('{id}', Number(currentDeleteId.value)))
 
     // 删除成功后，关闭弹窗并刷新记录
     deleteConfirmVisible.value = false

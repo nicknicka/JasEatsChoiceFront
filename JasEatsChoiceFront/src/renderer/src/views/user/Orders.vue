@@ -12,9 +12,16 @@ const route = useRoute()
 // 用户订单数据
 const orders = ref([])
 
+// 加载状态
+const loading = ref(false)
+
 // 加载用户订单数据
 const loadOrders = () => {
+  // 显示加载状态
+  loading.value = true
+
   const userId = parseInt(localStorage.getItem('userId') || '1', 10) // 临时使用固定用户ID
+
   axios
     .get(API_CONFIG.baseURL + API_CONFIG.order.list + userId)
     .then((response) => {
@@ -83,6 +90,10 @@ const loadOrders = () => {
       ]
       ElMessage.error('加载订单失败，将显示默认数据')
     })
+    .finally(() => {
+      // 隐藏加载状态
+      loading.value = false
+    })
 }
 
 // 订单状态筛选
@@ -97,6 +108,16 @@ const orderStatusMap = {
   delivered: '已送达',
   completed: '已完成',
   cancelled: '已取消'
+}
+
+// 订单状态标签样式映射
+const statusTagTypeMap = {
+  processing: 'warning',
+  pending: 'primary',
+  pendingComment: 'info',
+  delivered: 'success',
+  completed: 'info',
+  cancelled: 'danger'
 }
 
 // 组件挂载时加载数据
@@ -154,15 +175,7 @@ const cancelOrder = (order) => {
     <!-- 订单筛选 -->
     <div class="order-filters">
       <el-button
-        v-for="status in [
-          'all',
-          'processing',
-          'pending',
-          'pendingComment',
-          'delivered',
-          'completed',
-          'cancelled'
-        ]"
+        v-for="status in Object.keys(orderStatusMap)"
         :key="status"
         type="primary"
         :plain="activeStatus !== status"
@@ -174,7 +187,7 @@ const cancelOrder = (order) => {
     </div>
 
     <!-- 订单列表 -->
-    <div class="order-list">
+    <div class="order-list" v-loading="loading" element-loading-text="加载中...">
       <el-card v-for="order in filteredOrders" :key="order.id" class="order-card">
         <div class="order-header">
           <div class="order-info">
@@ -183,21 +196,7 @@ const cancelOrder = (order) => {
             <div class="order-time">时间: {{ order.time }}</div>
           </div>
           <div class="order-status">
-            <el-tag
-              :type="
-                order.status === 'processing'
-                  ? 'warning'
-                  : order.status === 'pending'
-                    ? 'primary'
-                    : order.status === 'pendingComment'
-                      ? 'info'
-                      : order.status === 'delivered'
-                        ? 'success'
-                        : order.status === 'completed'
-                          ? 'info'
-                          : 'danger'
-              "
-            >
+            <el-tag :type="statusTagTypeMap[order.status]">
               {{ orderStatusMap[order.status] }}
             </el-tag>
           </div>
@@ -234,7 +233,7 @@ const cancelOrder = (order) => {
     </div>
 
     <!-- 空数据提示 -->
-    <el-empty v-if="orders.length === 0" description="暂无订单"></el-empty>
+    <el-empty v-if="filteredOrders.length === 0" description="暂无订单"></el-empty>
   </div>
 </template>
 
