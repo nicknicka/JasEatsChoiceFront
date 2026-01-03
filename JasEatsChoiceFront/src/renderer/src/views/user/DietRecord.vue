@@ -776,7 +776,7 @@ const fetchDietRecords = async (date) => {
         mealType: mealTypeToEnglish(record.mealTime),
         mealTypeName: record.mealTime,
         time: record.recordTime ? record.recordTime.split('T')[1].substring(0, 5) : '',
-        foodName: record.foodName || '', // 使用直接存储的食物名称
+        foodName: record.foodName || '暂未定义食物名称', // 使用直接存储的食物名称
         calories: record.calorie,
         protein: record.protein || 0,
         fat: record.fat || 0,
@@ -785,6 +785,7 @@ const fetchDietRecords = async (date) => {
       }))
     }
 
+    console.log('获取的饮食记录数据:', dietRecords.value)
     // 更新总卡路里
     updateTotalCalories()
   } catch (error) {
@@ -964,7 +965,7 @@ const submitEditRecordForm = async () => {
     const recordTime = `${selectedDate.value}T${editRecordForm.value.time}:00`
 
     const requestData = {
-      id: Number(editRecordForm.value.id), // 确保id是数字类型
+      id: editRecordForm.value.id, // 直接作为字符串处理，不需要转换为数字
       userId: Number(userInfo.userId), // 确保userId是数字类型
       mealTime: mealTypeToChinese(editRecordForm.value.mealType),
       foodName: editRecordForm.value.foodName,
@@ -1010,7 +1011,7 @@ const submitDeleteRecord = async () => {
     }
 
     // 调用后端API删除记录
-    await api.delete(API_CONFIG.diet.delete.replace('{id}', Number(currentDeleteId.value)))
+    await api.delete(API_CONFIG.diet.delete.replace('{id}', currentDeleteId.value))
 
     // 删除成功后，关闭弹窗并刷新记录
     deleteConfirmVisible.value = false

@@ -153,11 +153,30 @@ public class CalorieRecordController {
     @PutMapping
     public ResponseResult<?> updateCalorieRecord(@RequestBody CalorieRecord record) {
         log.info("更新记录: {}", record);
-        boolean success = calorieRecordService.updateById(record);
-        if (success) {
+
+        // 检查记录是否存在
+        if (record.getId() == null) {
+            log.error("更新失败，记录ID为空");
+            return ResponseResult.fail("400", "记录ID不能为空");
+        }
+
+        boolean exists = calorieRecordService.getById(record.getId()) != null;
+        if (!exists) {
+            log.error("更新失败，记录不存在，ID: {}", record.getId());
+            return ResponseResult.fail("404", "记录不存在");
+        }
+
+        boolean updated = calorieRecordService.updateById(record);
+
+        // 检查是否真的更新了数据
+        if (updated) {
+            log.info("更新记录成功，ID: {}", record.getId());
             return ResponseResult.success("更新记录成功");
         }
-        log.info("更新记录失败");
-        return ResponseResult.fail("500", "更新记录失败");
+
+        // 没有更新任何行的情况，可能是字段未变化
+        log.info("更新记录已完成，数据未变化，ID: {}", record.getId());
+        return ResponseResult.success("数据未变化");
+
     }
 }

@@ -1,6 +1,7 @@
 package com.xx.jaseatschoicejava.entity;
 
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.annotations.ApiModel;
@@ -21,9 +22,9 @@ import java.time.LocalDateTime;
 @ApiModel(description = "卡路里摄入记录实体")
 public class CalorieRecord {
 
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     @ApiModelProperty(value = "记录ID")
-    private Long id; // 记录ID
+    private String id; // 记录ID
 
     @TableField("user_id")
     @ApiModelProperty(value = "用户ID")

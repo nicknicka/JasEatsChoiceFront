@@ -7,7 +7,7 @@
     :style="{ cursor: clickToEnlarge ? 'pointer' : 'default' }"
     v-bind="$attrs"
   >
-    <!-- 加载状态 -->
+    <!-- 加载状态：仅当有头像URL且未加载完成时显示 -->
     <el-skeleton
       v-if="avatarUrl && !isLoaded"
       :size="size"
@@ -25,6 +25,11 @@
       v-loading="isLoading"
       element-loading-text="加载中..."
     >
+      <!-- 默认显示：当头像URL为空时显示 -->
+      <div class="avatar-error-class">
+        {{ (fallbackText || '?').charAt(0) }}
+      </div>
+
       <template #error>
         <div class="avatar-error-class">
           {{ (fallbackText || '?').charAt(0) }}
@@ -245,16 +250,13 @@ const handleCloseDialog = () => {
   border-radius: 50%; /* 确保是圆形 */
   /* 添加一个白色的细边框，让头像和渐变背景有区分 */
   border: 3px solid rgba(255, 255, 255, 0.95);
-  /* 添加动态光效 */
-  box-shadow:
-    0 0 20px rgba(255, 255, 255, 0.8),
-    0 0 40px rgba(100, 200, 255, 0.3),
-    0 0 60px rgba(255, 180, 100, 0.2);
+  /* 移除多重发光阴影，避免与外层模糊背景冲突 */
+  box-shadow: none;
 }
 
 .avatar-error-class {
   background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  box-shadow: none;
   /* 渐变文字效果 */
   -webkit-background-clip: text;
   background-clip: text;
