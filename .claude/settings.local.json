@@ -303,7 +303,10 @@
       "Bash(npm run electron:serve)",
       "Bash(npm run dev:front:*)",
       "Bash(npm run dev:front)",
-      "Bash(npm run --prefix JasEatsChoiceFront:*)"
+      "Bash(npm run --prefix JasEatsChoiceFront:*)",
+      "Bash(git stash pop:*)",
+      "Bash(git checkout HEAD:*)",
+      "Bash(git stash clear:*)"
     ],
     "deny": [],
     "ask": []

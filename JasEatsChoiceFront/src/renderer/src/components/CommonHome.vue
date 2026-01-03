@@ -41,36 +41,61 @@ const userRole = ref('user') // 'user' 或 'merchant'
 
 // 提供更新用户信息的方法给子组件
 const updateSidebarAvatar = (avatarUrl) => {
-  userStore.userInfo.avatar = avatarUrl
+  if (userStore.userInfo) {
+    userStore.userInfo.avatar = avatarUrl
+  }
 }
 provide('updateSidebarAvatar', updateSidebarAvatar)
 
 // 预定义菜单数据
 const menuData = {
-  // 用户端菜单 - 按功能模块重新排序：首页 → 饮食服务 → 推荐/查找 → 个人中心 → 消息交流 → 设置
+  // 用户端菜单 - 分组折叠版本
   user: [
     { index: '1', name: '首页', icon: HomeFilled, path: '/user/home' }, // 首页入口
-    { index: '4', name: '今日食谱', icon: Calendar, path: '/user/home/today-recipe' }, // 饮食服务模块
+    // 推荐与发现分组
     {
-      index: '5',
-      name: '卡路里统计',
-      icon: DataAnalysis,
-      path: '/user/home/calorie'
+      index: 'group-1',
+      name: '推荐与发现',
+      icon: Menu,
+      children: [
+        { index: '2', name: '我的推荐', icon: Menu, path: '/user/home/recommend' },
+        { index: '3', name: '商家查找', icon: Shop, path: '/user/home/merchants' }
+      ]
     },
-    { index: '6', name: '我的食谱', icon: Document, path: '/user/home/my-recipe' },
-    { index: '61', name: '饮食记录', icon: Calendar, path: '/user/home/diet-record' },
-    { index: '2', name: '我的推荐', icon: Menu, path: '/user/home/recommend' }, // 推荐查找模块
-    { index: '3', name: '商家查找', icon: Shop, path: '/user/home/merchants' },
-    { index: '7', name: '用户中心', icon: User, path: '/user/home/profile' }, // 个人中心模块
-    { index: '8', name: '查看订单', icon: List, path: '/user/home/orders' },
+    // 饮食管理分组
     {
-      index: '9',
-      name: '消息中心',
-      icon: Message,
-      path: '/user/home/message-center'
-    }, // 消息交流模块
-    { index: '11', name: '聊天消息', icon: ChatDotRound, path: '/user/home/chat' },
-    { index: '10', name: 'AI饮食助手', icon: ChatDotRound, path: '/user/home/ai' },
+      index: 'group-2',
+      name: '饮食管理',
+      icon: Calendar,
+      children: [
+        { index: '4', name: '今日食谱', icon: Calendar, path: '/user/home/today-recipe' },
+        { index: '61', name: '饮食记录', icon: Calendar, path: '/user/home/diet-record' },
+        { index: '5', name: '卡路里统计', icon: DataAnalysis, path: '/user/home/calorie' },
+        { index: '6', name: '我的食谱', icon: Document, path: '/user/home/my-recipe' }
+      ]
+    },
+    // 个人中心分组
+    {
+      index: 'group-3',
+      name: '个人中心',
+      icon: User,
+      children: [
+        { index: '7', name: '用户中心', icon: User, path: '/user/home/profile' },
+        { index: '8', name: '查看订单', icon: List, path: '/user/home/orders' }
+      ]
+    },
+    // 智能助手分组
+    {
+      index: 'group-4',
+      name: '智能助手',
+      icon: ChatDotRound,
+      children: [
+        { index: '9', name: '消息中心', icon: Message, path: '/user/home/message-center' },
+        { index: '11', name: '聊天消息', icon: ChatDotRound, path: '/user/home/chat' },
+        { index: '10', name: 'AI饮食助手', icon: ChatDotRound, path: '/user/home/ai' }
+      ]
+    },
+    // 设置菜单
     {
       index: '12',
       name: '设置',
@@ -117,7 +142,7 @@ const currentMenu = computed(() => {
   return menuData[userRole.value] ? menuData[userRole.value] : menuData.user || []
 })
 
-// 根据当前路由计算并设置激活的菜单项索引
+// 根据当前路由计算并设置激活的菜单项索引 - 支持分组菜单
 const updateActiveMenuIndex = () => {
   const currentPath = router.currentRoute.value.path
   console.log('当前路由:', currentPath)
@@ -139,14 +164,20 @@ const updateActiveMenuIndex = () => {
     return
   }
 
-  // 查找当前路由对应的菜单项 - 按路径长度降序排序，确保更长的路径优先匹配
-  const sortedMenuItems = [...currentMenu.value].sort((a, b) => b.path.length - a.path.length)
-
-  for (const menuItem of sortedMenuItems) {
-    // 检查当前路由是否以菜单项的path开头
-    if (currentPath.startsWith(menuItem.path)) {
+  // 查找当前路由对应的菜单项 - 包括分组内的子菜单
+  for (const menuItem of currentMenu.value) {
+    // 如果是分组菜单，检查其子菜单
+    if (menuItem.children) {
+      for (const childItem of menuItem.children) {
+        if (currentPath.startsWith(childItem.path)) {
+          activeMenuIndex.value = childItem.index
+          return
+        }
+      }
+    }
+    // 如果是普通菜单，直接检查
+    else if (currentPath.startsWith(menuItem.path)) {
       activeMenuIndex.value = menuItem.index
-      // console.log("匹配到的菜单项:", menuItem);
       return
     }
   }
@@ -156,16 +187,46 @@ const updateActiveMenuIndex = () => {
   console.log('未匹配到菜单项，默认激活第一个')
 }
 
-// 菜单点击事件处理
+// 菜单点击事件处理 - 支持分组菜单
 const handleMenuSelect = (index) => {
-  const menuItem = currentMenu.value.find((item) => item.index === index)
-  if (menuItem) {
-    navigateTo(menuItem.path)
+  // 查找菜单项，包括分组内的子菜单
+  let targetMenuItem = null
+
+  // 遍历当前菜单
+  for (const menuItem of currentMenu.value) {
+    // 如果是分组菜单，查找其子菜单
+    if (menuItem.children) {
+      targetMenuItem = menuItem.children.find(childItem => childItem.index === index)
+      if (targetMenuItem) break
+    }
+    // 如果是普通菜单，直接比较
+    else if (menuItem.index === index) {
+      targetMenuItem = menuItem
+      break
+    }
+  }
+
+  // 如果找到目标菜单，进行跳转
+  if (targetMenuItem) {
+    navigateTo(targetMenuItem.path)
   }
 }
 
 // 头像放大弹窗
 const showLargeAvatar = ref(false)
+
+// 菜单栏宽度状态
+const sidebarWidth = ref('150px')
+
+// 监听菜单展开事件
+const handleMenuOpen = () => {
+  sidebarWidth.value = '220px' // 展开时增宽
+}
+
+// 监听菜单关闭事件
+const handleMenuClose = () => {
+  sidebarWidth.value = '150px' // 关闭时恢复原宽度
+}
 
 // 头像点击事件处理
 const handleAvatarClick = () => {
@@ -375,7 +436,7 @@ const handleSearch = (value) => {
 
     <div class="main-content">
       <!-- 左侧菜单栏 -->
-      <el-aside width="168px" class="sidebar-menu">
+      <el-aside :width="sidebarWidth" class="sidebar-menu">
         <div class="avatar-section">
           <CommonAvatar
             :size="80"
@@ -395,18 +456,47 @@ const handleSearch = (value) => {
           v-model:default-active="activeMenuIndex"
           class="menu-list"
           @select="handleMenuSelect"
+          @open="handleMenuOpen"
+          @close="handleMenuClose"
         >
-          <el-menu-item
-            v-for="menuItem in currentMenu"
-            :key="menuItem.index"
-            :index="menuItem.index"
-            :class="{ 'setting-menu': menuItem.isSetting }"
-          >
-            <el-icon>
-              <component :is="menuItem.icon" />
-            </el-icon>
-            <template #title>{{ menuItem.name }}</template>
-          </el-menu-item>
+          <!-- 遍历菜单，区分分组菜单和普通菜单项 -->
+          <template v-for="menuItem in currentMenu" :key="menuItem.index">
+            <!-- 分组菜单 -->
+            <el-sub-menu
+              v-if="menuItem.children"
+              :index="menuItem.index"
+            >
+              <template #title>
+                <el-icon>
+                  <component :is="menuItem.icon" />
+                </el-icon>
+                <span>{{ menuItem.name }}</span>
+              </template>
+              <!-- 分组下的子菜单 -->
+              <el-menu-item
+                v-for="childItem in menuItem.children"
+                :key="childItem.index"
+                :index="childItem.index"
+              >
+                <el-icon>
+                  <component :is="childItem.icon" />
+                </el-icon>
+                <template #title>{{ childItem.name }}</template>
+              </el-menu-item>
+            </el-sub-menu>
+
+            <!-- 普通菜单项 -->
+            <el-menu-item
+              v-else
+              :index="menuItem.index"
+              :class="{ 'setting-menu': menuItem.isSetting }"
+            >
+              <el-icon>
+                <component :is="menuItem.icon" />
+              </el-icon>
+              <template #title>{{ menuItem.name }}</template>
+            </el-menu-item>
+          </template>
         </el-menu>
       </el-aside>
 
@@ -494,6 +584,7 @@ const handleSearch = (value) => {
 .sidebar-menu {
   background-color: #fff;
   border-right: 1px solid #eee;
+  transition: width 0.3s ease-in-out; /* 添加平滑过渡动画 */
 
   .avatar-section {
     text-align: center;
