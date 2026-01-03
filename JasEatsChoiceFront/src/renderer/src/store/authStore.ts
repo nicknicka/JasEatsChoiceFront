@@ -29,8 +29,15 @@ export const useAuthStore = defineStore('auth', {
     },
 
     setMerchantId(newMerchantId: string) {
-      this.merchantId = newMerchantId
-      localStorage.setItem('auth_merchantId', newMerchantId)
+      // 只存储有效的商家ID
+      if (newMerchantId && String(newMerchantId) !== 'null' && String(newMerchantId) !== '') {
+        this.merchantId = newMerchantId
+        localStorage.setItem('auth_merchantId', newMerchantId)
+      } else {
+        // 如果是无效值，清除商家ID
+        this.merchantId = ''
+        localStorage.removeItem('auth_merchantId')
+      }
     },
 
     setCurrentRole(newRole: string) {
