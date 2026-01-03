@@ -42,7 +42,7 @@ public class CalorieRecordController {
      * 根据用户ID获取卡路里记录
      */
     @GetMapping("/user/{userId}")
-    public ResponseResult<?> getRecordsByUserId(@PathVariable Long userId) {
+    public ResponseResult<?> getRecordsByUserId(@PathVariable String userId) {
         LambdaQueryWrapper<CalorieRecord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CalorieRecord::getUserId, userId);
         queryWrapper.orderByDesc(CalorieRecord::getRecordTime); // 按记录时间降序排列
@@ -54,7 +54,7 @@ public class CalorieRecordController {
      * 根据用户ID获取本周卡路里记录统计
      */
     @GetMapping("/user/{userId}/week")
-    public ResponseResult<?> getWeeklyRecordsByUserId(@PathVariable Long userId) {
+    public ResponseResult<?> getWeeklyRecordsByUserId(@PathVariable String userId) {
         LambdaQueryWrapper<CalorieRecord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CalorieRecord::getUserId, userId);
 
@@ -100,7 +100,7 @@ public class CalorieRecordController {
      * 根据用户ID和日期获取卡路里记录
      */
     @GetMapping("/user/{userId}/date/{date}")
-    public ResponseResult<?> getRecordsByUserIdAndDate(@PathVariable Long userId, @PathVariable String date) {
+    public ResponseResult<?> getRecordsByUserIdAndDate(@PathVariable String userId, @PathVariable String date) {
         LambdaQueryWrapper<CalorieRecord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CalorieRecord::getUserId, userId);
 
@@ -119,7 +119,7 @@ public class CalorieRecordController {
      * 获取今日营养摄入统计
      */
     @GetMapping("/user/{userId}/today-summary")
-    public ResponseResult<?> getTodayNutritionSummary(@PathVariable Long userId) {
+    public ResponseResult<?> getTodayNutritionSummary(@PathVariable String userId) {
         LambdaQueryWrapper<CalorieRecord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CalorieRecord::getUserId, userId);
 

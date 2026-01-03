@@ -28,11 +28,11 @@ public class CalorieRecord {
 
     @TableField("user_id")
     @ApiModelProperty(value = "用户ID")
-    private Long userId; // 用户ID
+    private String userId; // 用户ID
 
     @TableField("dish_id")
     @ApiModelProperty(value = "菜品ID")
-    private Long dishId; // 菜品ID
+    private String dishId; // 菜品ID
 
     @TableField("calorie")
     @ApiModelProperty(value = "卡路里摄入量")

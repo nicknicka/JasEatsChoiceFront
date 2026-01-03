@@ -8,8 +8,11 @@
       <div class="record-time">{{ record.time }}</div>
       <div class="record-content">
         <div class="food-name">{{ record.foodName }}</div>
-        <div class="food-description">
-          {{ record.description }}
+        <div
+          class="food-description"
+          :title="record.description || '暂无描述信息'"
+        >
+          {{ record.description || '暂无描述信息' }}
         </div>
         <div class="food-nutrition" v-if="record.calories || record.protein || record.fat || record.carbohydrate">
           <el-tag size="small" type="danger">{{ record.calories }} kcal</el-tag>
@@ -127,8 +130,12 @@ const onDelete = () => {
   color: #6b7280;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 最多显示2行 */
+  -webkit-box-orient: vertical;
   margin-bottom: 8px;
+  line-height: 1.5; /* 调整行高，优化显示效果 */
+  text-indent: 2em; /* 添加首行缩进 */
 }
 
 /* 营养信息 */

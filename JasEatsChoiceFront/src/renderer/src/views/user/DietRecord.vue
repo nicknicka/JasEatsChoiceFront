@@ -785,7 +785,7 @@ const fetchDietRecords = async (date) => {
       }))
     }
 
-    console.log('获取的饮食记录数据:', dietRecords.value)
+    // console.log('获取的饮食记录数据:', dietRecords.value)
     // 更新总卡路里
     updateTotalCalories()
   } catch (error) {
@@ -978,9 +978,9 @@ const submitEditRecordForm = async () => {
     }
 
     // 调用后端API编辑记录
-    console.log('发送的请求数据:', requestData) // 调试
+    // console.log('发送的请求数据:', requestData) // 调试
     const response = await api.put(API_CONFIG.diet.update, requestData)
-    console.log('编辑记录响应数据:', response)
+    // console.log('编辑记录响应数据:', response)
     // 编辑成功后，关闭弹窗并刷新记录
     closeEditRecordDialog()
     fetchDietRecords(selectedDate.value)
