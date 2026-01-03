@@ -114,7 +114,25 @@ const resetFilters = () => {
 
 // 计算属性：过滤和排序后的商家列表
 const filteredMerchants = computed(() => {
-  let result = [...merchants.value]
+  let result = [...merchants.value].map(merchant => {
+    // 统一状态处理
+    let normalizedStatus = '未知状态'
+    let isOpen = false
+    if (merchant.status === true || merchant.status === 'true' || merchant.status === '营业中') {
+      normalizedStatus = '营业中'
+      isOpen = true
+    } else if (merchant.status === false || merchant.status === 'false' || merchant.status === '已停业') {
+      normalizedStatus = '已停业'
+      isOpen = false
+    }
+
+    // 返回包含归一化状态的商家对象副本
+    return {
+      ...merchant,
+      normalizedStatus,
+      isOpen
+    }
+  })
 
   // 类型筛选
   if (filters.value.type !== 'all') {
@@ -135,8 +153,8 @@ const filteredMerchants = computed(() => {
   if (filters.value.sort === 'distance') {
     // 按距离排序
     result.sort((a, b) => {
-      const distanceA = parseFloat((a.distance || '0km').replace('km', ''))
-      const distanceB = parseFloat((b.distance || '0km').replace('km', ''))
+      const distanceA = (a.distance && a.distance !== '未知距离') ? parseFloat(a.distance.replace('km', '')) : Infinity
+      const distanceB = (b.distance && b.distance !== '未知距离') ? parseFloat(b.distance.replace('km', '')) : Infinity
       return distanceA - distanceB
     })
   } else if (filters.value.sort === 'rating') {
@@ -159,9 +177,10 @@ const filteredMerchants = computed(() => {
         placeholder="搜索商家名称、类型或特色..."
         clearable
         class="search-input"
+        aria-label="搜索商家名称、类型或特色"
       >
         <template #prefix>
-          <span>🔍</span>
+          <span class="el-input__icon">🔍</span>
         </template>
       </el-input>
 
@@ -211,22 +230,27 @@ const filteredMerchants = computed(() => {
         :key="merchant.id"
         :class="[
           'merchant-card',
-          (merchant.status === true || merchant.status === 'true' || merchant.status === '营业中') ? 'merchant-card-open' : 'merchant-card-closed'
+          merchant.isOpen ? 'merchant-card-open' : 'merchant-card-closed'
         ]"
         v-else-if="filteredMerchants.length > 0"
       >
         <div class="card-header">
-          <div class="merchant-image">{{ merchant.image || '🏪' }}</div>
+          <div class="merchant-image">
+            <img v-if="merchant.image && merchant.image !== '未知'" :src="merchant.image" :alt="merchant.name" class="merchant-img" />
+            <span v-else>🏪</span>
+          </div>
           <div class="merchant-info">
             <div class="merchant-name">{{ merchant.name }}</div>
-            <div class="merchant-rating">
-              <el-rate v-model="merchant.rating" :disabled="true" show-text size="small" />
-              <span class="distance">{{ merchant.distance || '未知距离' }}</span>
-            </div>
-            <div class="merchant-status">
-              <el-tag :type="(merchant.status === true || merchant.status === 'true' || merchant.status === '营业中') ? 'success' : 'danger'" size="small">
-                {{ (merchant.status === true || merchant.status === 'true') ? '营业中' : (merchant.status || '未知状态') }}
-              </el-tag>
+            <div class="merchant-meta">
+              <div class="merchant-rating">
+                <el-rate v-model="merchant.rating" :disabled="true" show-text size="small" />
+                <span class="distance">{{ merchant.distance || '未知距离' }}</span>
+              </div>
+              <div class="merchant-status">
+                <el-tag :type="merchant.isOpen ? 'success' : 'danger'" size="small">
+                  {{ merchant.normalizedStatus }}
+                </el-tag>
+              </div>
             </div>
           </div>
         </div>
@@ -288,7 +312,7 @@ const filteredMerchants = computed(() => {
 
   h2 {
     font-size: 32px;
-    margin: 0 0 32px 20px;
+    margin: 0 0 20px 20px;
     color: #1a202c;
     font-weight: 800;
     letter-spacing: -0.5px;
@@ -308,9 +332,9 @@ const filteredMerchants = computed(() => {
   .search-filter-section {
     display: flex;
     flex-direction: column; // 修改为垂直布局
-    gap: 20px; // 搜索框和筛选区之间的间距
-    margin-bottom: 32px;
-    padding: 30px;
+    gap: 12px; // 搜索框和筛选区之间的间距
+    margin-bottom: 24px;
+    padding: 20px;
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); // 渐变背景
     border-radius: 20px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08); // 更明显的阴影
@@ -321,7 +345,7 @@ const filteredMerchants = computed(() => {
       :deep(.el-input__inner) {
         border-radius: 14px;
         border: none; /* 去掉搜索框的方形边框 */
-        height: 56px;
+        height: 48px;
         font-size: 15px;
         padding-left: 17px;
         padding-right: 21px;
@@ -357,7 +381,7 @@ const filteredMerchants = computed(() => {
     .reset-btn {
       flex-shrink: 0;
       border-radius: 14px;
-      height: 56px;
+      height: 48px;
       font-size: 15px;
       padding: 0 32px;
       transition: all 0.3s ease;
@@ -374,7 +398,7 @@ const filteredMerchants = computed(() => {
       :deep(.el-select__wrapper) {
         border-radius: 14px;
         border: 2px solid #e2e8f0;
-        height: 56px;
+        height: 48px;
         transition: all 0.3s ease;
       }
 
@@ -395,7 +419,7 @@ const filteredMerchants = computed(() => {
 
   .merchant-card {
     flex: 1 1 300px; /* 卡片自适应宽度，最小300px */
-    max-width: 95%; 
+    max-width: 500px; /* 最大宽度限制 */
     box-sizing: border-box;
     transition: all 0.3s ease;
     border-radius: 12px;
@@ -435,17 +459,36 @@ const filteredMerchants = computed(() => {
 
       .merchant-image {
         font-size: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .merchant-img {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          object-fit: cover;
+        }
       }
 
       .merchant-info {
         display: flex;
-        align-items: center;
-        gap: 20px; /* 调整间距 */
-        flex-wrap: nowrap; /* 确保不换行 */
+        flex-direction: column; /* 垂直布局 */
+        align-items: flex-start; /* 左对齐 */
+        gap: 8px; /* 调整间距 */
+        flex: 1; /* 占据剩余空间 */
 
         .merchant-name {
           font-size: 18px;
           font-weight: bold;
+          margin-bottom: 4px;
+        }
+
+        .merchant-meta {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
         }
 
         .merchant-rating {
@@ -460,17 +503,14 @@ const filteredMerchants = computed(() => {
         }
 
         .merchant-status {
-          margin-left: auto; /* 将状态推到右侧 */
 
           // 营业中标签样式
-          .el-tag[effect="plain"][type="success"],
           .el-tag[type="success"] {
             :deep(.el-tag__content) {
               color: white !important;
             }
             background-color: #23d160 !important; /* 使用稍微浅一点的绿色 */
             border-color: #23d160 !important; /* 边框颜色同步 */
-            box-shadow: 0 0 30px rgba(35, 209, 96, 0.8); /* 默认显示绿色光晕 */
             transition: box-shadow 0.3s ease; /* 光晕过渡效果 */
           }
 

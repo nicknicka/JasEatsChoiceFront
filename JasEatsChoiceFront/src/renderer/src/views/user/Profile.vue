@@ -701,21 +701,6 @@ const copyShareLink = async () => {
   position: relative;
 }
 
-.user-avatar {
-  background-color: #fff;
-  transition: transform 0.3s ease;
-  .avatar-error-class {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-    color: #fff;
-    font-size: 48px;
-    background-clip: text;
-  }
-}
-
-.user-avatar:hover {
-  transform: scale(1.05);
-}
 
 .user-basic-info {
   flex: 1;

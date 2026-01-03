@@ -7,7 +7,24 @@
     :style="{ cursor: clickToEnlarge ? 'pointer' : 'default' }"
     v-bind="$attrs"
   >
-    <el-avatar :size="size" class="user-avatar" :src="avatarUrl" :shape="shape">
+    <!-- 加载状态 -->
+    <el-skeleton
+      v-if="avatarUrl && !isLoaded"
+      :size="size"
+      shape="circle"
+      active
+    />
+
+    <!-- 头像主体 -->
+    <el-avatar
+      v-else
+      :size="size"
+      class="user-avatar"
+      :src="avatarUrl"
+      :shape="shape"
+      v-loading="isLoading"
+      element-loading-text="加载中..."
+    >
       <template #error>
         <div class="avatar-error-class">
           {{ (fallbackText || '?').charAt(0) }}
@@ -62,7 +79,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+
+// 加载状态
+const isLoading = ref(false)
+const isLoaded = ref(false)
 
 // 组件属性定义
 const props = defineProps({
@@ -131,6 +152,33 @@ const handleFileSelect = (event) => {
 // Ref for dialog visibility
 const showLargeAvatar = ref(false)
 
+// 监听头像URL变化，管理加载状态
+watch(
+  () => props.avatarUrl,
+  (newUrl) => {
+    if (newUrl) {
+      isLoading.value = true;
+      // 创建临时图片对象来监听加载状态
+      const img = new Image();
+
+      img.onload = () => {
+        isLoading.value = false;
+        isLoaded.value = true;
+      };
+
+      img.onerror = () => {
+        isLoading.value = false;
+        isLoaded.value = true;
+      };
+
+      img.src = newUrl;
+    } else {
+      isLoaded.value = false;
+    }
+  },
+  { immediate: true } // 立即执行一次
+);
+
 // Handle avatar click event
 const handleAvatarClick = () => {
   emit('click')
@@ -192,19 +240,31 @@ const handleCloseDialog = () => {
 
 .user-avatar {
   background-color: #fff;
-  transition: transform 0.27s linear;
+  transition: transform 0.27s linear, box-shadow 0.27s linear;
   box-sizing: border-box; /* 确保边框不影响尺寸 */
   border-radius: 50%; /* 确保是圆形 */
   /* 添加一个白色的细边框，让头像和渐变背景有区分 */
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  /* 添加动态光效 */
+  box-shadow:
+    0 0 20px rgba(255, 255, 255, 0.8),
+    0 0 40px rgba(100, 200, 255, 0.3),
+    0 0 60px rgba(255, 180, 100, 0.2);
 }
 
 .avatar-error-class {
   background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-  color: #fff;
-  font-size: 48px;
+  /* 渐变文字效果 */
+  -webkit-background-clip: text;
   background-clip: text;
+  color: transparent;
+  /* 动态字体大小 */
+  font-size: 48px;
+  /* 确保文字居中 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-avatar:hover {

@@ -228,11 +228,6 @@ const handleMenuClose = () => {
   sidebarWidth.value = '150px' // 关闭时恢复原宽度
 }
 
-// 头像点击事件处理
-const handleAvatarClick = () => {
-  // 无论用户端还是商家端，点击头像都放大显示
-  showLargeAvatar.value = true
-}
 
 // 角色切换功能
 const toggleRole = () => {
@@ -591,9 +586,6 @@ const handleSearch = (value) => {
     padding: 20px 0;
     border-bottom: 1px solid #eee;
 
-    .user-avatar {
-      background-color: transparent; /* 移除额外的背景颜色 */
-    }
 
     .username {
       margin-top: 8px;

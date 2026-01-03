@@ -537,6 +537,13 @@ const recommendations = ref([])
           </el-tag>
         </div>
 
+        <div class="reason-section">
+          <div class="reason-title">推荐理由</div>
+          <div class="reason-text" :class="{ 'empty-reason': !item.reason }">
+            {{ item.reason || '暂无推荐理由' }}
+          </div>
+        </div>
+
         <div class="rating">
           <el-rate v-model="item.rating" :disabled="true" show-text />
         </div>
@@ -579,13 +586,27 @@ const recommendations = ref([])
   padding: 0 20px 20px 20px;
 
   h2 {
-    font-size: 24px;
-    margin: 0 0 20px 0;
+    font-size: 32px;
+    margin: 0 0 32px 20px;
+    color: #1a202c;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+
+    // 添加装饰性下划线
+    &::after {
+      content: "";
+      display: block;
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(135deg, #23d160 0%, #20c997 100%);
+      border-radius: 2px;
+      margin-top: 12px;
+    }
   }
 
   .recommend-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 20px;
     padding: 0 20px;
   }
@@ -598,8 +619,8 @@ const recommendations = ref([])
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
 
     &:hover {
-      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
-      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      transform: translateY(-8px) scale(1.02);
     }
 
     .card-header {
@@ -628,12 +649,15 @@ const recommendations = ref([])
 
     .calories-info {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       color: #ff6b6b;
-      font-weight: bold;
+      font-weight: 800;
       margin-bottom: 18px;
-      font-size: 17px;
+      font-size: 20px;
       align-items: center;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #fff5f5 0%, #ffe4e4 100%);
+      border-radius: 20px;
     }
 
     .calories-info-unavailable {

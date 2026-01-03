@@ -374,7 +374,7 @@
                   <template #label>
                     <div class="form-item-label">
                       <el-icon class="label-icon"><ScaleIcon /></el-icon>
-                      <span>卡路里</span>
+                      <span>卡&nbsp;路&nbsp;里</span>
                     </div>
                   </template>
                   <el-input-number
@@ -400,7 +400,7 @@
                   <template #label>
                     <div class="form-item-label">
                       <el-icon class="label-icon"><MilkTea /></el-icon>
-                      <span>蛋&nbsp;白&nbsp;&nbsp;质</span>
+                      <span>蛋&nbsp;白&nbsp;质</span>
                     </div>
                   </template>
                   <el-input-number
@@ -1342,7 +1342,7 @@ onMounted(() => {
 
 /* 表单字段样式 */
 :deep(.el-form-item) {
-  margin-bottom: 32px; /* 增加字段间距 */
+  margin-bottom: 20px; /* 调整为与其他部分一致的间距 */
   align-items: center; /* 垂直居中对齐 */
 }
 
