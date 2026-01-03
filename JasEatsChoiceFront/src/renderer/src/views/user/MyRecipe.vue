@@ -14,6 +14,10 @@ import ImportMerchantDish from '../../components/ImportMerchantDish.vue'
 import AddRecipe from '../../components/recipe/AddRecipe.vue'
 import { useUserStore } from '../../store/userStore'
 
+// 初始化 Pinia store
+const authStore = useAuthStore()
+const userStore = useUserStore()
+
 // 我的食谱数据
 const myRecipes = ref([])
 const loadingFailed = ref(false)
@@ -454,7 +458,8 @@ const deleteDish = (recipe, dish) => {
 
       // 调用后端API更新食谱
       const updateData = {
-        ...recipe
+        ...recipe,
+        items: JSON.stringify(recipe.items)
       }
 
       axios
@@ -570,7 +575,32 @@ const addDialogVisible = ref(false)
 
 // 添加新食谱
 const handleAddRecipe = (newRecipe) => {
-  myRecipes.value.push(newRecipe)
+  // 调用后端API保存新食谱
+  axios
+    .post(`${API_CONFIG.baseURL}${API_CONFIG.recipe.add}`, {
+      ...newRecipe,
+      userId: authStore.userId || userStore.userInfo?.userId, // 添加用户ID
+      favorite: false, // 默认未收藏
+      items: JSON.stringify([]), // 将空数组转换为JSON字符串
+      calories: 0, // 默认0热量
+    })
+    .then((response) => {
+      console.log('保存食谱:', response)
+      if (response.data?.code === '200' && response.data?.data) {
+        // 将后端返回的完整食谱数据添加到本地列表
+        const savedRecipe = {
+          ...response.data.data,
+        }
+        myRecipes.value.push(savedRecipe)
+        ElMessage.success('食谱添加成功')
+      } else {
+        ElMessage.error('保存食谱失败')
+      }
+    })
+    .catch((error) => {
+      console.error('保存食谱失败:', error)
+      ElMessage.error('保存食谱失败，请稍后重试')
+    })
 }
 
 // 打开添加食谱对话框

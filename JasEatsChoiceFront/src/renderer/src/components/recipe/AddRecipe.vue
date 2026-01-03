@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import {
   ForkSpoon as ForkSpoonIcon,
   List as ListIcon,
@@ -34,7 +34,7 @@ const newRecipe = ref({
 const formRules = ref({
   name: [
     { required: true, message: '请填写食谱名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '食谱名称长度在 2 到 50 个字符', trigger: 'blur' }
+    { min: 1, max: 50, message: '食谱名称长度在 1 到 50 个字符', trigger: 'blur' }
   ],
   time: [
     { required: true, message: '请选择准备时间', trigger: 'change' }
@@ -77,7 +77,7 @@ const saveNewRecipe = () => {
   // 发送添加事件
   emit('add-recipe', recipe)
   closeDialog()
-  ElMessage.success('食谱已添加')
+  // 移除默认的成功提示，由后端响应后统一处理
 }
 </script>
 
