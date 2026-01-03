@@ -990,7 +990,7 @@ const filteredRecipes = computed(() => {
         </div>
         <div class="stat-item">
           <div class="stat-label">碳水化合物</div>
-          <div class="stat-value">{{ nutritionData.carbs }} g</div>
+          <div class="stat-value">{{ nutritionData.carcarbohydrateData.carbs }} g</div>
         </div>
         <div class="stat-item">
           <div class="stat-label">脂肪</div>
@@ -999,9 +999,8 @@ const filteredRecipes = computed(() => {
       </div>
     </el-card>
 
-    <!-- 餐型筛选与操作按钮区 -->
-    <div class="filter-action-container">
-      <!-- 餐型筛选 -->
+    <!-- 餐型筛选 -->
+    <div class="filter-container">
       <div class="meal-type-tabs">
         <el-button
           type="primary"
@@ -1044,36 +1043,36 @@ const filteredRecipes = computed(() => {
           加餐
         </el-button>
       </div>
+    </div>
 
-      <!-- 操作按钮 -->
-      <div class="action-buttons">
-        <el-button type="primary" size="small" @click="addRecipeVisible = true">
-          ➕ 添加食谱
-        </el-button>
+    <!-- 添加菜单按钮和布局切换 -->
+    <div class="add-recipe-section">
+      <el-button type="primary" size="small" @click="addRecipeVisible = true">
+        ➕ 添加食谱
+      </el-button>
 
-        <el-button type="success" size="small" @click="importOrderVisible = true">
-          ➕ 从订单导入
-        </el-button>
+      <el-button type="success" size="small" @click="importOrderVisible = true">
+        ➕ 从订单导入
+      </el-button>
 
-        <!-- 批量管理按钮 -->
-        <el-button
-          type="danger"
-          size="small"
-          :disabled="selectedRecipes.length === 0"
-          @click="batchDeleteRecipes"
-        >
-          🗑️ 批量删除
-        </el-button>
+      <!-- 批量管理按钮 -->
+      <el-button
+        type="danger"
+        size="small"
+        :disabled="selectedRecipes.length === 0"
+        @click="batchDeleteRecipes"
+      >
+        🗑️ 批量删除
+      </el-button>
 
-        <el-button
-          type="warning"
-          size="small"
-          :disabled="selectedRecipes.length === 0"
-          @click="batchFavoriteRecipes"
-        >
-          ⭐ 批量收藏
-        </el-button>
-      </div>
+      <el-button
+        type="warning"
+        size="small"
+        :disabled="selectedRecipes.length === 0"
+        @click="batchFavoriteRecipes"
+      >
+        ⭐ 批量收藏
+      </el-button>
     </div>
     <!-- 食谱列表 -->
     <div :class="['recipe-list', layoutType]">
@@ -1293,6 +1292,7 @@ const filteredRecipes = computed(() => {
 <style scoped lang="less">
 .today-recipe-container {
   padding: 24px;
+  min-height: 100vh;
   background: #f5f7fa;
 
   .recipe-header {
@@ -1765,24 +1765,12 @@ const filteredRecipes = computed(() => {
     }
   }
 
-  /* 筛选与操作按钮容器 */
-  .filter-action-container {
+  .add-recipe-section {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 24px;
-    flex-wrap: wrap; /* 响应式换行 */
-    gap: 12px;
-
-    .meal-type-tabs {
-      display: flex;
-      gap: 10px;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 12px; /* 统一按钮间距 */
-    }
+    gap: 12px; /* 统一按钮间距 */
 
     .el-button {
       border-radius: 24px !important;

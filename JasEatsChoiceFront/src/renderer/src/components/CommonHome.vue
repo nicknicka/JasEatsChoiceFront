@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
-import { ref, onMounted, computed, watch, provide } from 'vue'
+import { ref, onMounted, computed, watch, provide, nextTick } from 'vue'
 import {
   Search,
   Menu,
@@ -135,7 +135,7 @@ const menuData = {
 
 // 根据当前角色过滤菜单
 // 当前激活的菜单项索引
-const activeMenuIndex = ref('1')
+const activeMenuIndex = ref('')
 
 // 根据当前角色过滤菜单
 const currentMenu = computed(() => {
@@ -145,12 +145,12 @@ const currentMenu = computed(() => {
 // 根据当前路由计算并设置激活的菜单项索引 - 支持分组菜单
 const updateActiveMenuIndex = () => {
   const currentPath = router.currentRoute.value.path
-  console.log('当前路由:', currentPath)
+  console.log('=== updateActiveMenuIndex ===', '当前路由:', currentPath, '当前菜单:', currentMenu.value.map(item => item.name), '当前activeMenu:', activeMenuIndex.value)
 
-  // 特殊处理商家详情页 - 激活商家查找菜单
-  if (currentPath.startsWith('/user/home/merchant-detail')) {
+  // 特殊处理商家相关页面 - 激活商家查找菜单
+  if (currentPath.startsWith('/user/home/merchant-detail') || currentPath === '/user/home/merchants') {
     activeMenuIndex.value = '3' // "商家查找"的索引是3
-    console.log('匹配到商家详情页，激活商家查找菜单')
+    console.log('匹配到商家相关页面，激活商家查找菜单')
     return
   }
 
@@ -168,17 +168,24 @@ const updateActiveMenuIndex = () => {
   for (const menuItem of currentMenu.value) {
     // 如果是分组菜单，检查其子菜单
     if (menuItem.children) {
+      console.log('检查分组:', menuItem.name, '的子菜单:', menuItem.children.map(child => child.name))
       for (const childItem of menuItem.children) {
+        console.log('检查子菜单:', childItem.name, 'path:', childItem.path, '是否匹配当前path:', currentPath)
         if (currentPath.startsWith(childItem.path)) {
+          console.log('匹配到子菜单:', childItem.name)
           activeMenuIndex.value = childItem.index
           return
         }
       }
     }
     // 如果是普通菜单，直接检查
-    else if (currentPath.startsWith(menuItem.path)) {
-      activeMenuIndex.value = menuItem.index
-      return
+    else {
+      console.log('检查普通菜单:', menuItem.name, 'path:', menuItem.path, '是否匹配当前path:', currentPath)
+      if (currentPath.startsWith(menuItem.path)) {
+        console.log('匹配到普通菜单:', menuItem.name)
+        activeMenuIndex.value = menuItem.index
+        return
+      }
     }
   }
 
@@ -280,8 +287,13 @@ onMounted(() => {
 
     console.log('恢复角色成功:', userRole.value)
 
-    // 页面加载后更新菜单项高亮
-    updateActiveMenuIndex()
+    // 确保当前菜单已更新后再计算激活菜单，使用nextTick确保DOM更新完成
+    nextTick(() => {
+      // 等待路由完全准备就绪
+      router.isReady().then(() => {
+        updateActiveMenuIndex()
+      })
+    })
   } catch (error) {
     console.error('恢复角色失败:', error)
   }
@@ -299,6 +311,7 @@ watch(
 watch(
   currentMenu,
   () => {
+    console.log('=== 监听currentMenu变化，调用updateActiveMenuIndex ===')
     updateActiveMenuIndex()
   },
   { deep: true }
@@ -347,6 +360,7 @@ watch(
       // Role is now managed through Pinia - no need to save to localStorage
       console.log('路由变化自动更新角色:', userRole.value)
       // 更新角色后，重新计算激活的菜单项索引
+      console.log('=== 更新角色后调用updateActiveMenuIndex ===')
       updateActiveMenuIndex()
     }
   }
@@ -607,6 +621,7 @@ const handleSearch = (value) => {
 }
 
 .content-area {
+  flex: 1; /* 让内容区占据剩余空间 */
   padding: 20px;
   background-color: #f5f5f5;
   overflow-y: auto;

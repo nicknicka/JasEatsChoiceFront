@@ -698,7 +698,10 @@ const formatCookTime = (time) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: 400px;
+  /* 默认不设置最大高度，由内容决定 */
+  max-height: none;
+  /* 当内容超出视口高度的一半时显示滚动条 */
+  max-height: calc(100vh - 400px);
   overflow-y: auto;
   padding-right: 8px;
 }

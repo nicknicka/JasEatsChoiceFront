@@ -1071,7 +1071,6 @@ const getTagType = (type) => {
 <style lang="less">
 .my-recipe-container {
   padding: 24px;
-  min-height: 100vh;
   background: #f5f7fa;
 
   .recipe-header {
