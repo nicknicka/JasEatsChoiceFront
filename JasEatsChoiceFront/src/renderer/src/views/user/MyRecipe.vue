@@ -868,19 +868,19 @@ const getTagType = (type) => {
         <el-input
           v-model="searchKeyword"
           placeholder="搜索食谱、菜品或食材"
-          size="small"
-          style="width: 320px; margin-right: 10px"
+          size="default"
+          style="width: 100%; max-width: 500px; margin: 0 0 12px 0"
           clearable
         >
-          <template #prefix-icon>
-            <Search />
+          <template #prefix>
+            <el-icon class="el-input__icon"><Search /></el-icon>
           </template>
         </el-input>
         <el-select
           v-model="recipeFilter"
           placeholder="筛选食谱"
           size="small"
-          style="width: 150px; margin-right: 10px"
+          style="width: 160px; margin: 0"
         >
           <el-option label="全部" value="all" />
           <el-option label="早餐" value="早餐" />
@@ -1212,7 +1212,8 @@ const getTagType = (type) => {
 
     .filter-section {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: flex-end;
       gap: 12px;
       flex-wrap: wrap;
     }
@@ -1398,6 +1399,16 @@ const getTagType = (type) => {
       background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
       height: 6px; /* 更宽的顶部渐变条 */
     }
+
+    // 同时处理选中和悬停状态，确保样式优先级
+    &:hover {
+      border: 3px solid #667eea !important;
+      box-shadow:
+        0 12px 32px rgba(102, 126, 234, 0.3),
+        0 0 0 6px rgba(102, 126, 234, 0.12) !important;
+      transform: scale(1.05) !important;
+      border-color: #667eea !important;
+    }
   }
 
   // 收藏按钮样式
@@ -1475,52 +1486,59 @@ const getTagType = (type) => {
     }
   }
 
-  /* 自定义搜索框和筛选框样式 - 简约浅色系 */
+  /* 自定义搜索框和筛选框样式 - 优化版 */
   :deep(.el-input) {
-    background-color: #fafafa;
     border-radius: 8px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e0e0e0;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
     &:hover {
-      border-color: #d1d5db;
-      background-color: #f5f5f5;
+      border-color: #667eea;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.12);
     }
 
     &__inner {
-      background-color: transparent;
+      background-color: #ffffff;
       border: none;
-      color: #374151;
+      color: #333;
       font-size: 14px;
-      padding: 8px 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
     }
 
     &__prefix {
-      color: #9ca3af;
+      color: #999;
+      font-size: 16px;
+    }
+
+    &__suffix {
+      color: #999;
     }
   }
 
   :deep(.el-select) {
-    background-color: #fafafa;
     border-radius: 8px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e0e0e0;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
     &:hover {
-      border-color: #d1d5db;
-      background-color: #f5f5f5;
+      border-color: #667eea;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.12);
     }
 
     &__inner {
-      background-color: transparent;
+      background-color: #ffffff;
       border: none;
-      color: #374151;
+      color: #333;
       font-size: 14px;
-      padding: 8px 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
     }
 
     &__arrow {
-      color: #9ca3af;
+      color: #999;
     }
   }
 
