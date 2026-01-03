@@ -701,7 +701,6 @@ const copyShareLink = async () => {
   position: relative;
 }
 
-
 .user-basic-info {
   flex: 1;
   min-width: 0; /* 防止 flex 容器内内容溢出 */

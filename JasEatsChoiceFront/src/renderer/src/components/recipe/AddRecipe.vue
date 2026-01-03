@@ -27,7 +27,7 @@ const newRecipe = ref({
   name: '',
   type: '早餐',
   time: '',
-  details: '', // 食谱描述字段
+  details: '' // 食谱描述字段
 })
 
 // 表单验证规则
@@ -36,9 +36,7 @@ const formRules = ref({
     { required: true, message: '请填写食谱名称', trigger: 'blur' },
     { min: 1, max: 50, message: '食谱名称长度在 1 到 50 个字符', trigger: 'blur' }
   ],
-  time: [
-    { required: true, message: '请选择准备时间', trigger: 'change' }
-  ]
+  time: [{ required: true, message: '请选择准备时间', trigger: 'change' }]
 })
 
 // 重置表单
@@ -47,7 +45,7 @@ const resetForm = () => {
     name: '',
     type: '早餐',
     time: '',
-    details: '',
+    details: ''
   }
 }
 
@@ -71,7 +69,7 @@ const saveNewRecipe = () => {
     name: newRecipe.value.name,
     type: newRecipe.value.type,
     time: newRecipe.value.time,
-    details: newRecipe.value.details,
+    details: newRecipe.value.details
   }
 
   // 发送添加事件

@@ -349,7 +349,9 @@ const handleUpdateDetails = (newDetails) => {
           selectedRecipe.value.details = originalDetails
         }
         // 在todayRecipes数组中恢复原始值
-        const index = todayRecipes.value.findIndex((recipe) => recipe.id === selectedRecipe.value.id)
+        const index = todayRecipes.value.findIndex(
+          (recipe) => recipe.id === selectedRecipe.value.id
+        )
         if (index !== -1) {
           todayRecipes.value[index].details = originalDetails
         }
@@ -829,7 +831,6 @@ const handleAddRecipe = (newRecipeData) => {
         // 将返回的食谱添加到本地列表
         todayRecipes.value.push(newRecipe)
         ElMessage.success('食谱已添加')
-
       } else {
         ElMessage.error('添加食谱失败: 服务器返回无效数据')
       }

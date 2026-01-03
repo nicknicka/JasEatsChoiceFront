@@ -49,11 +49,7 @@
                       <span>餐&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;次</span>
                     </div>
                   </template>
-                  <el-select
-                    v-model="addRecordForm.mealType"
-                    placeholder="请选择餐次"
-                    size="large"
-                  >
+                  <el-select v-model="addRecordForm.mealType" placeholder="请选择餐次" size="large">
                     <el-option
                       v-for="mealOption in mealTypeOptions"
                       :key="mealOption.value"
@@ -180,7 +176,7 @@
               </el-col>
             </el-row>
 
-            <el-row justify="center" :gutter="20" style="margin-top: 20px;">
+            <el-row justify="center" :gutter="20" style="margin-top: 20px">
               <el-col :xs="24" :sm="10">
                 <!-- 脂肪输入 -->
                 <el-form-item label="脂肪(g)">
@@ -298,7 +294,11 @@
                       <span>餐&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;次</span>
                     </div>
                   </template>
-                  <el-select v-model="editRecordForm.mealType" placeholder="请选择餐次" size="large">
+                  <el-select
+                    v-model="editRecordForm.mealType"
+                    placeholder="请选择餐次"
+                    size="large"
+                  >
                     <el-option
                       v-for="mealOption in mealTypeOptions"
                       :key="mealOption.value"
@@ -422,7 +422,7 @@
               </el-col>
             </el-row>
 
-            <el-row justify="center" :gutter="20" style="margin-top: 20px;">
+            <el-row justify="center" :gutter="20" style="margin-top: 20px">
               <el-col :xs="24" :sm="10">
                 <el-form-item label="脂肪(g)">
                   <template #label>
@@ -519,7 +519,12 @@
         </el-dialog>
 
         <!-- 删除确认弹窗 -->
-        <el-dialog title="删除确认" v-model="deleteConfirmVisible" width="360px" transition="dialog-fade">
+        <el-dialog
+          title="删除确认"
+          v-model="deleteConfirmVisible"
+          width="360px"
+          transition="dialog-fade"
+        >
           <div>您确定要删除这条饮食记录吗？</div>
           <template #footer>
             <div class="dialog-footer">
@@ -855,12 +860,11 @@ const deleteConfirmVisible = ref(false)
 // 当前要删除的记录ID
 const currentDeleteId = ref('')
 
-
 // 打开添加记录弹窗
 const openAddRecordDialog = () => {
   addRecordDialogVisible.value = true
   // 重置表单并设置时间默认值为当前系统时间
-  const currentTime = new Date().toTimeString().slice(0, 5);
+  const currentTime = new Date().toTimeString().slice(0, 5)
   addRecordForm.value = {
     mealType: 'breakfast',
     time: currentTime,

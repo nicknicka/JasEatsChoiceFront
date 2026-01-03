@@ -182,10 +182,12 @@ const markAllAsRead = () => {
             :key="category"
             :type="activeCategory === category ? 'primary' : 'info'"
             effect="plain"
-            @click="() => {
-              activeCategory = category;
-              updateFilter();
-            }"
+            @click="
+              () => {
+                activeCategory = category
+                updateFilter()
+              }
+            "
             class="category-tag"
           >
             {{ messageCategories[category] }}

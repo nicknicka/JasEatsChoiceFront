@@ -8,12 +8,7 @@
     v-bind="$attrs"
   >
     <!-- 加载状态：仅当有头像URL且未加载完成时显示 -->
-    <el-skeleton
-      v-if="avatarUrl && !isLoaded"
-      :size="size"
-      shape="circle"
-      active
-    />
+    <el-skeleton v-if="avatarUrl && !isLoaded" :size="size" shape="circle" active />
 
     <!-- 头像主体 -->
     <el-avatar
@@ -162,27 +157,27 @@ watch(
   () => props.avatarUrl,
   (newUrl) => {
     if (newUrl) {
-      isLoading.value = true;
+      isLoading.value = true
       // 创建临时图片对象来监听加载状态
-      const img = new Image();
+      const img = new Image()
 
       img.onload = () => {
-        isLoading.value = false;
-        isLoaded.value = true;
-      };
+        isLoading.value = false
+        isLoaded.value = true
+      }
 
       img.onerror = () => {
-        isLoading.value = false;
-        isLoaded.value = true;
-      };
+        isLoading.value = false
+        isLoaded.value = true
+      }
 
-      img.src = newUrl;
+      img.src = newUrl
     } else {
-      isLoaded.value = false;
+      isLoaded.value = false
     }
   },
   { immediate: true } // 立即执行一次
-);
+)
 
 // Handle avatar click event
 const handleAvatarClick = () => {
@@ -245,7 +240,9 @@ const handleCloseDialog = () => {
 
 .user-avatar {
   background-color: #fff;
-  transition: transform 0.27s linear, box-shadow 0.27s linear;
+  transition:
+    transform 0.27s linear,
+    box-shadow 0.27s linear;
   box-sizing: border-box; /* 确保边框不影响尺寸 */
   border-radius: 50%; /* 确保是圆形 */
   /* 添加一个白色的细边框，让头像和渐变背景有区分 */

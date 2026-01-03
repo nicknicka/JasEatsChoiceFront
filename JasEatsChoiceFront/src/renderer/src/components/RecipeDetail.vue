@@ -286,7 +286,6 @@ const formatCookTime = (time) => {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -319,11 +318,11 @@ const formatCookTime = (time) => {
           <div class="section-title">菜品组成</div>
           <div class="dish-list-container">
             <div
-              v-for="(item, index) in (recipe.items && recipe.items.length > 0)
+              v-for="(item, index) in recipe.items && recipe.items.length > 0
                 ? recipe.items
-                : (recipe.ingredients && recipe.ingredients.length > 0
+                : recipe.ingredients && recipe.ingredients.length > 0
                   ? recipe.ingredients
-                  : ['待添加菜品'])"
+                  : ['待添加菜品']"
               :key="index"
               class="dish-card-item"
               :class="{ 'empty-dish-card': typeof item === 'string' }"

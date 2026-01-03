@@ -145,10 +145,21 @@ const currentMenu = computed(() => {
 // 根据当前路由计算并设置激活的菜单项索引 - 支持分组菜单
 const updateActiveMenuIndex = () => {
   const currentPath = router.currentRoute.value.path
-  console.log('=== updateActiveMenuIndex ===', '当前路由:', currentPath, '当前菜单:', currentMenu.value.map(item => item.name), '当前activeMenu:', activeMenuIndex.value)
+  console.log(
+    '=== updateActiveMenuIndex ===',
+    '当前路由:',
+    currentPath,
+    '当前菜单:',
+    currentMenu.value.map((item) => item.name),
+    '当前activeMenu:',
+    activeMenuIndex.value
+  )
 
   // 特殊处理商家相关页面 - 激活商家查找菜单
-  if (currentPath.startsWith('/user/home/merchant-detail') || currentPath === '/user/home/merchants') {
+  if (
+    currentPath.startsWith('/user/home/merchant-detail') ||
+    currentPath === '/user/home/merchants'
+  ) {
     activeMenuIndex.value = '3' // "商家查找"的索引是3
     console.log('匹配到商家相关页面，激活商家查找菜单')
     return
@@ -168,9 +179,21 @@ const updateActiveMenuIndex = () => {
   for (const menuItem of currentMenu.value) {
     // 如果是分组菜单，检查其子菜单
     if (menuItem.children) {
-      console.log('检查分组:', menuItem.name, '的子菜单:', menuItem.children.map(child => child.name))
+      console.log(
+        '检查分组:',
+        menuItem.name,
+        '的子菜单:',
+        menuItem.children.map((child) => child.name)
+      )
       for (const childItem of menuItem.children) {
-        console.log('检查子菜单:', childItem.name, 'path:', childItem.path, '是否匹配当前path:', currentPath)
+        console.log(
+          '检查子菜单:',
+          childItem.name,
+          'path:',
+          childItem.path,
+          '是否匹配当前path:',
+          currentPath
+        )
         if (currentPath.startsWith(childItem.path)) {
           console.log('匹配到子菜单:', childItem.name)
           activeMenuIndex.value = childItem.index
@@ -180,7 +203,14 @@ const updateActiveMenuIndex = () => {
     }
     // 如果是普通菜单，直接检查
     else {
-      console.log('检查普通菜单:', menuItem.name, 'path:', menuItem.path, '是否匹配当前path:', currentPath)
+      console.log(
+        '检查普通菜单:',
+        menuItem.name,
+        'path:',
+        menuItem.path,
+        '是否匹配当前path:',
+        currentPath
+      )
       if (currentPath.startsWith(menuItem.path)) {
         console.log('匹配到普通菜单:', menuItem.name)
         activeMenuIndex.value = menuItem.index
@@ -203,7 +233,7 @@ const handleMenuSelect = (index) => {
   for (const menuItem of currentMenu.value) {
     // 如果是分组菜单，查找其子菜单
     if (menuItem.children) {
-      targetMenuItem = menuItem.children.find(childItem => childItem.index === index)
+      targetMenuItem = menuItem.children.find((childItem) => childItem.index === index)
       if (targetMenuItem) break
     }
     // 如果是普通菜单，直接比较
@@ -234,7 +264,6 @@ const handleMenuOpen = () => {
 const handleMenuClose = () => {
   sidebarWidth.value = '150px' // 关闭时恢复原宽度
 }
-
 
 // 角色切换功能
 const toggleRole = () => {
@@ -471,10 +500,7 @@ const handleSearch = (value) => {
           <!-- 遍历菜单，区分分组菜单和普通菜单项 -->
           <template v-for="menuItem in currentMenu" :key="menuItem.index">
             <!-- 分组菜单 -->
-            <el-sub-menu
-              v-if="menuItem.children"
-              :index="menuItem.index"
-            >
+            <el-sub-menu v-if="menuItem.children" :index="menuItem.index">
               <template #title>
                 <el-icon>
                   <component :is="menuItem.icon" />
@@ -599,7 +625,6 @@ const handleSearch = (value) => {
     text-align: center;
     padding: 20px 0;
     border-bottom: 1px solid #eee;
-
 
     .username {
       margin-top: 8px;

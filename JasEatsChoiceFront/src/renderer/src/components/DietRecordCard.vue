@@ -8,13 +8,13 @@
       <div class="record-time">{{ record.time }}</div>
       <div class="record-content">
         <div class="food-name">{{ record.foodName }}</div>
-        <div
-          class="food-description"
-          :title="record.description || '暂无描述信息'"
-        >
+        <div class="food-description" :title="record.description || '暂无描述信息'">
           {{ record.description || '暂无描述信息' }}
         </div>
-        <div class="food-nutrition" v-if="record.calories || record.protein || record.fat || record.carbohydrate">
+        <div
+          class="food-nutrition"
+          v-if="record.calories || record.protein || record.fat || record.carbohydrate"
+        >
           <el-tag size="small" type="danger">{{ record.calories }} kcal</el-tag>
           <el-tag size="small" type="info">蛋白 {{ record.protein || 0 }}g</el-tag>
           <el-tag size="small" type="warning">脂肪 {{ record.fat || 0 }}g</el-tag>
@@ -23,12 +23,8 @@
       </div>
     </div>
     <div class="record-actions" v-if="isHovered">
-      <el-button type="text" size="small" @click="onEdit">
-        编辑
-      </el-button>
-      <el-button type="text" size="small" @click="onDelete">
-        删除
-      </el-button>
+      <el-button type="text" size="small" @click="onEdit"> 编辑 </el-button>
+      <el-button type="text" size="small" @click="onDelete"> 删除 </el-button>
     </div>
   </div>
 </template>

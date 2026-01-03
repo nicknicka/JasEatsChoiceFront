@@ -10,18 +10,18 @@ export const mealTypeOptions = [
 
 // 将英文餐次类型转换为中文
 export const mealTypeToChinese = (mealType) => {
-  const option = mealTypeOptions.find(opt => opt.value === mealType)
+  const option = mealTypeOptions.find((opt) => opt.value === mealType)
   return option ? option.label : mealType
 }
 
 // 将中文餐次类型转换为英文
 export const mealTypeToEnglish = (mealTypeName) => {
-  const option = mealTypeOptions.find(opt => opt.label === mealTypeName)
+  const option = mealTypeOptions.find((opt) => opt.label === mealTypeName)
   return option ? option.value : mealTypeName.toLowerCase()
 }
 
 // 获取餐次类型对应的图标
 export const getMealTypeIcon = (mealType) => {
-  const option = mealTypeOptions.find(opt => opt.value === mealType)
+  const option = mealTypeOptions.find((opt) => opt.value === mealType)
   return option ? option.icon : '🍴'
 }

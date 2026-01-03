@@ -509,7 +509,12 @@ const recommendations = ref([])
     </div>
 
     <!-- 推荐列表 -->
-    <transition-group name="recommend-card" tag="div" class="recommend-grid" v-else-if="recommendations.length > 0">
+    <transition-group
+      name="recommend-card"
+      tag="div"
+      class="recommend-grid"
+      v-else-if="recommendations.length > 0"
+    >
       <el-card v-for="item in recommendations" :key="item.id" class="recommend-card">
         <div class="card-header">
           <div class="dish-image">{{ item.image }}</div>
@@ -594,7 +599,7 @@ const recommendations = ref([])
 
     // 添加装饰性下划线
     &::after {
-      content: "";
+      content: '';
       display: block;
       width: 60px;
       height: 4px;
@@ -737,7 +742,9 @@ const recommendations = ref([])
 
   .recommend-card-enter-active,
   .recommend-card-leave-active {
-    transition: opacity 0.3s ease, transform 0.5s ease;
+    transition:
+      opacity 0.3s ease,
+      transform 0.5s ease;
   }
 
   .recommend-card-enter-from {

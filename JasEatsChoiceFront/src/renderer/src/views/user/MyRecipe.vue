@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-import { ArrowDown } from '@element-plus/icons-vue'
+import { ArrowDown, Search } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { API_CONFIG } from '../../config'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -24,6 +24,25 @@ const loadingFailed = ref(false)
 
 // 批量操作相关变量
 const selectedRecipes = ref([]) // 存储选中的食谱
+
+// 全选/取消全选功能
+const toggleAllRecipes = () => {
+  if (selectedRecipes.value.length === filteredRecipes.value.length) {
+    selectedRecipes.value = [] // 取消全选
+  } else {
+    selectedRecipes.value = filteredRecipes.value.map((recipe) => recipe.id) // 全选
+  }
+}
+
+// 切换单个食谱的选择状态
+const toggleRecipeSelection = (recipe) => {
+  const index = selectedRecipes.value.indexOf(recipe.id)
+  if (index === -1) {
+    selectedRecipes.value.push(recipe.id)
+  } else {
+    selectedRecipes.value.splice(index, 1)
+  }
+}
 
 // 模态框状态
 const replaceDialogVisible = ref(false)
@@ -135,15 +154,48 @@ onMounted(() => {
 
 // 食谱筛选
 const recipeFilter = ref('all')
+// 搜索关键词
+const searchKeyword = ref('')
+
+// 防抖搜索函数
+const debouncedSearch = ref(null)
+
+// 滚动到顶部功能
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
 
 // 计算属性：过滤后的食谱列表，收藏的食谱排在前面
 const filteredRecipes = computed(() => {
   let filtered = []
 
+  // 按类型筛选
   if (recipeFilter.value === 'all') {
     filtered = [...myRecipes.value]
   } else {
     filtered = myRecipes.value.filter((recipe) => recipe.type === recipeFilter.value)
+  }
+
+  // 按搜索关键词筛选
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase()
+    filtered = filtered.filter(
+      (recipe) =>
+        recipe.name.toLowerCase().includes(keyword) ||
+        (recipe.items &&
+          recipe.items.some((item) =>
+            (typeof item === 'string' ? item : item.name).toLowerCase().includes(keyword)
+          )) ||
+        (recipe.ingredients &&
+          recipe.ingredients.some((ingredient) =>
+            (typeof ingredient === 'string' ? ingredient : ingredient.name)
+              .toLowerCase()
+              .includes(keyword)
+          ))
+    )
   }
 
   // 排序：收藏的食谱在前
@@ -171,21 +223,21 @@ const toggleFavorite = (recipe) => {
       console.log('更新收藏状态成功:', response)
       if (response.data?.code !== '200') {
         recipe.favorite = !recipe.favorite // 恢复状态
-        ElMessage.error('更新收藏状态失败');
+        ElMessage.error('更新收藏状态失败')
       } else {
         // 显示成功消息
         if (recipe.favorite) {
-          ElMessage.success('已收藏到我的食谱');
+          ElMessage.success('已收藏到我的食谱')
         } else {
-          ElMessage.success('已取消收藏');
+          ElMessage.success('已取消收藏')
         }
       }
     })
     .catch((error) => {
       console.error('更新收藏状态失败:', error)
       recipe.favorite = !recipe.favorite // 恢复状态
-      ElMessage.error('更新收藏状态失败，请检查网络');
-    });
+      ElMessage.error('更新收藏状态失败，请检查网络')
+    })
 }
 
 // 食谱详情组件相关
@@ -205,11 +257,11 @@ const updateRecipe = (updatedRecipe) => {
   if (index === -1) return
 
   // 保存原始状态
-  const originalRecipe = {...myRecipes.value[index]};
+  const originalRecipe = { ...myRecipes.value[index] }
 
   // 更新本地状态
-  myRecipes.value[index] = updatedRecipe;
-  selectedRecipe.value = updatedRecipe;
+  myRecipes.value[index] = updatedRecipe
+  selectedRecipe.value = updatedRecipe
 
   // 立即同步到后端
   axios
@@ -220,25 +272,25 @@ const updateRecipe = (updatedRecipe) => {
       console.log('更新收藏状态成功:', response)
       if (response.data?.code !== '200') {
         // 如果后端返回失败，恢复本地状态
-        myRecipes.value[index] = originalRecipe;
-        selectedRecipe.value = originalRecipe;
-        ElMessage.error('更新收藏状态失败');
+        myRecipes.value[index] = originalRecipe
+        selectedRecipe.value = originalRecipe
+        ElMessage.error('更新收藏状态失败')
       } else {
         // 显示成功消息
         if (updatedRecipe.favorite) {
-          ElMessage.success('已收藏到我的食谱');
+          ElMessage.success('已收藏到我的食谱')
         } else {
-          ElMessage.success('已取消收藏');
+          ElMessage.success('已取消收藏')
         }
       }
     })
     .catch((error) => {
       console.error('更新收藏状态失败:', error)
       // 请求失败时恢复本地状态
-      myRecipes.value[index] = originalRecipe;
-      selectedRecipe.value = originalRecipe;
-      ElMessage.error('更新收藏状态失败，请检查网络');
-    });
+      myRecipes.value[index] = originalRecipe
+      selectedRecipe.value = originalRecipe
+      ElMessage.error('更新收藏状态失败，请检查网络')
+    })
 }
 
 // 更新烹饪时间
@@ -582,14 +634,14 @@ const handleAddRecipe = (newRecipe) => {
       userId: authStore.userId || userStore.userInfo?.userId, // 添加用户ID
       favorite: false, // 默认未收藏
       items: JSON.stringify([]), // 将空数组转换为JSON字符串
-      calories: 0, // 默认0热量
+      calories: 0 // 默认0热量
     })
     .then((response) => {
       console.log('保存食谱:', response)
       if (response.data?.code === '200' && response.data?.data) {
         // 将后端返回的完整食谱数据添加到本地列表
         const savedRecipe = {
-          ...response.data.data,
+          ...response.data.data
         }
         myRecipes.value.push(savedRecipe)
         ElMessage.success('食谱添加成功')
@@ -762,20 +814,21 @@ const exportToDietRecord = () => {
 // 计算食谱菜品
 const calculateRecipeItems = (recipe) => {
   // 检查recipe是否存在
-  if (!recipe) return ['待添加菜品']
+  if (!recipe) return []
 
   // 检查items数组
   const hasItems = recipe.items && Array.isArray(recipe.items) && recipe.items.length > 0
 
   // 检查ingredients数组
-  const hasIngredients = recipe.ingredients && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0
+  const hasIngredients =
+    recipe.ingredients && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0
 
   if (hasItems) {
-    return recipe.items
+    return recipe.items.slice(0, 3) // 最多显示3个菜品
   } else if (hasIngredients) {
-    return recipe.ingredients
+    return recipe.ingredients.slice(0, 3) // 最多显示3个食材
   } else {
-    return ['待添加菜品']
+    return []
   }
 }
 
@@ -804,8 +857,25 @@ const getTagType = (type) => {
 <template>
   <div class="my-recipe-container">
     <div class="recipe-header">
-      <h2>我的食谱</h2>
+      <div>
+        <h2>我的食谱</h2>
+        <div v-if="filteredRecipes.length > 0" class="search-result-count">
+          <span>共找到 {{ filteredRecipes.length }} 个食谱</span>
+        </div>
+      </div>
+
       <div class="filter-section">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索食谱、菜品或食材"
+          size="small"
+          style="width: 320px; margin-right: 10px"
+          clearable
+        >
+          <template #prefix-icon>
+            <Search />
+          </template>
+        </el-input>
         <el-select
           v-model="recipeFilter"
           placeholder="筛选食谱"
@@ -823,14 +893,20 @@ const getTagType = (type) => {
 
     <!-- 添加食谱和批量管理按钮 -->
     <div class="add-recipe-section">
-      <!-- 第一行按钮 -->
-      <div class="button-row">
+      <div class="button-group">
         <el-button type="primary" size="small" @click="openAddDialog"> ➕ 添加食谱 </el-button>
         <el-button type="success" size="small" @click="importFromOrders"> 📥 从订单导入 </el-button>
-      </div>
 
-      <!-- 第二行按钮 -->
-      <div class="button-row">
+        <!-- 全选/取消全选按钮 -->
+        <el-button
+          type="default"
+          size="small"
+          @click="toggleAllRecipes"
+          :disabled="filteredRecipes.length === 0"
+        >
+          {{ selectedRecipes.length === filteredRecipes.length ? '❌ 取消全选' : '✅ 全选' }}
+        </el-button>
+
         <el-button
           type="danger"
           size="small"
@@ -839,7 +915,6 @@ const getTagType = (type) => {
         >
           🗑️ 批量删除
         </el-button>
-
         <el-button
           type="warning"
           size="small"
@@ -848,7 +923,6 @@ const getTagType = (type) => {
         >
           ⭐ 批量收藏
         </el-button>
-
         <el-button
           type="info"
           size="small"
@@ -868,13 +942,20 @@ const getTagType = (type) => {
           v-for="recipe in filteredRecipes"
           :key="recipe.id"
           class="recipe-card"
-          :class="[recipe.type, { 'recipe-card-favorited': recipe.favorite }]"
+          :class="[
+            recipe.type,
+            {
+              'recipe-card-favorited': recipe.favorite,
+              'recipe-card-selected': selectedRecipes.includes(recipe.id)
+            }
+          ]"
+          @click="toggleRecipeSelection(recipe)"
         >
           <template #header>
             <div class="card-header">
               <!-- 批量选择复选框 -->
               <div class="checkbox-wrapper">
-                <el-checkbox :value="recipe.id"> </el-checkbox>
+                <el-checkbox :value="recipe.id" @click.stop> </el-checkbox>
               </div>
               <span :class="`meal-icon ${recipe.type}`">
                 {{
@@ -908,9 +989,17 @@ const getTagType = (type) => {
             <el-tag
               v-for="(item, index) in calculateRecipeItems(recipe)"
               :key="index"
-              :type="calculateRecipeItems(recipe).length > 1 || calculateRecipeItems(recipe)[0] !== '待添加菜品' ? getTagType(recipe.type) : 'warning'"
+              :type="getTagType(recipe.type)"
             >
               {{ typeof item === 'string' ? item : item.name }}
+            </el-tag>
+            <!-- 显示更多菜品提示 -->
+            <el-tag v-if="recipe.items?.length > 3 || recipe.ingredients?.length > 3" type="info">
+              +{{ (recipe.items?.length || 0) + (recipe.ingredients?.length || 0) - 3 }} 更多
+            </el-tag>
+            <!-- 空菜品提示 -->
+            <el-tag v-if="calculateRecipeItems(recipe).length === 0" type="warning">
+              暂无菜品
             </el-tag>
           </div>
           <div class="recipe-stats">
@@ -988,6 +1077,11 @@ const getTagType = (type) => {
       v-if="filteredRecipes.length === 0"
       :description="loadingFailed ? '暂未找到我的食谱' : '暂无食谱'"
     ></el-empty>
+
+    <!-- 滚动到顶部按钮 -->
+    <el-button type="primary" circle size="small" class="scroll-to-top-btn" @click="scrollToTop">
+      ↑
+    </el-button>
   </div>
 
   <!-- 食谱详情组件 -->
@@ -1101,12 +1195,13 @@ const getTagType = (type) => {
 <style lang="less">
 .my-recipe-container {
   padding: 24px;
-  background: #f5f7fa;
 
   .recipe-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
     margin-bottom: 24px;
 
     h2 {
@@ -1118,32 +1213,36 @@ const getTagType = (type) => {
     .filter-section {
       display: flex;
       align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
     }
   }
 
   .recipe-list {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 60px !important; /* 增加食谱卡片之间的上下间距 */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 0 !important; /* 设置为0以避免双重间距 */
 
-    .recipe-card {
-      flex: 1 1 100%;
-      max-width: 100%;
-      min-width: 317px;
-      box-sizing: border-box;
-      margin: 20px 0 !important; /* 再增加一个margin来确保间距 */
+    // 在中等屏幕以下改为一行一列
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+
+    // 在极小屏幕上确保卡片有最小边距
+    @media (max-width: 420px) {
+      padding: 0 10px;
     }
   }
 
   .recipe-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%) !important;
-    border-radius: 20px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e8e8e8 !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     position: relative;
+    margin-bottom: 27px !important; 
 
     &::before {
       content: '';
@@ -1158,9 +1257,8 @@ const getTagType = (type) => {
     &.recipe-card-favorited {
       border: 2px solid #ffd700 !important;
       box-shadow:
-        0 8px 30px rgba(255, 215, 0, 0.15),
-        0 0 0 3px rgba(255, 215, 0, 0.05);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        0 8px 24px rgba(255, 215, 0, 0.2),
+        0 0 0 4px rgba(255, 215, 0, 0.08);
 
       &::before {
         background: linear-gradient(90deg, #ffd700 0%, #ffed4e 100%);
@@ -1168,9 +1266,9 @@ const getTagType = (type) => {
     }
 
     &:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
-      border-color: rgba(255, 255, 255, 1) !important;
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+      border-color: #d8d8d8 !important;
     }
 
     .card-header {
@@ -1258,22 +1356,47 @@ const getTagType = (type) => {
 
   // 添加食谱按钮样式
   .add-recipe-section {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
     margin-bottom: 24px;
-    gap: 12px; /* 行与行之间的间距 */
+  }
 
-    .button-row {
-      display: flex;
-      gap: 12px; /* 按钮之间的间距 */
+  .button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px; /* 按钮之间的间距 */
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 
-      .el-button {
-        border-radius: 24px !important;
-        padding: 10px 24px !important;
-        font-weight: 600 !important;
+    .el-button {
+      border-radius: 8px !important;
+      padding: 10px 20px !important;
+      font-weight: 500 !important;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
       }
+
+      &:active {
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  // 选中卡片样式 - 增强版
+  .recipe-card-selected {
+    border: 3px solid #667eea !important; /* 更粗的边框 */
+    box-shadow:
+      0 12px 32px rgba(102, 126, 234, 0.3),
+      /* 更强的阴影 */ 0 0 0 6px rgba(102, 126, 234, 0.12); /* 更大的光晕 */
+    transform: scale(1.05); /* 轻微放大效果 */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &::before {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      height: 6px; /* 更宽的顶部渐变条 */
     }
   }
 
@@ -1352,14 +1475,66 @@ const getTagType = (type) => {
     }
   }
 
+  /* 自定义搜索框和筛选框样式 - 简约浅色系 */
+  :deep(.el-input) {
+    background-color: #fafafa;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #d1d5db;
+      background-color: #f5f5f5;
+    }
+
+    &__inner {
+      background-color: transparent;
+      border: none;
+      color: #374151;
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+
+    &__prefix {
+      color: #9ca3af;
+    }
+  }
+
+  :deep(.el-select) {
+    background-color: #fafafa;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #d1d5db;
+      background-color: #f5f5f5;
+    }
+
+    &__inner {
+      background-color: transparent;
+      border: none;
+      color: #374151;
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+
+    &__arrow {
+      color: #9ca3af;
+    }
+  }
+
   /* 自定义标签颜色和交互 */
   :deep(.el-tag) {
     transition: all 0.3s ease;
     cursor: pointer;
+    border-radius: 20px;
+    font-weight: 500;
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      opacity: 0.9;
     }
   }
 
@@ -1390,6 +1565,28 @@ const getTagType = (type) => {
   :deep(.el-tag--blue) {
     background-color: #e3f2fd;
     color: #1565c0;
+  }
+
+  // 滚动到顶部按钮
+  .scroll-to-top-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.3s;
+    opacity: 0.8;
+
+    &:hover {
+      opacity: 1;
+      transform: translateY(-2px);
+    }
   }
 
   .recipe-detail-dialog {

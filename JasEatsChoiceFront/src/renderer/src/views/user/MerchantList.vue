@@ -53,12 +53,9 @@ onMounted(() => {
 })
 
 // 监听筛选条件变化，重新加载数据
-watch(
-  [searchKeyword, () => filters.value.type, () => filters.value.sort],
-  () => {
-    loadMerchants()
-  }
-)
+watch([searchKeyword, () => filters.value.type, () => filters.value.sort], () => {
+  loadMerchants()
+})
 
 // 从后端加载商家列表
 const loadMerchants = () => {
@@ -114,14 +111,18 @@ const resetFilters = () => {
 
 // 计算属性：过滤和排序后的商家列表
 const filteredMerchants = computed(() => {
-  let result = [...merchants.value].map(merchant => {
+  let result = [...merchants.value].map((merchant) => {
     // 统一状态处理
     let normalizedStatus = '未知状态'
     let isOpen = false
     if (merchant.status === true || merchant.status === 'true' || merchant.status === '营业中') {
       normalizedStatus = '营业中'
       isOpen = true
-    } else if (merchant.status === false || merchant.status === 'false' || merchant.status === '已停业') {
+    } else if (
+      merchant.status === false ||
+      merchant.status === 'false' ||
+      merchant.status === '已停业'
+    ) {
       normalizedStatus = '已停业'
       isOpen = false
     }
@@ -153,8 +154,14 @@ const filteredMerchants = computed(() => {
   if (filters.value.sort === 'distance') {
     // 按距离排序
     result.sort((a, b) => {
-      const distanceA = (a.distance && a.distance !== '未知距离') ? parseFloat(a.distance.replace('km', '')) : Infinity
-      const distanceB = (b.distance && b.distance !== '未知距离') ? parseFloat(b.distance.replace('km', '')) : Infinity
+      const distanceA =
+        a.distance && a.distance !== '未知距离'
+          ? parseFloat(a.distance.replace('km', ''))
+          : Infinity
+      const distanceB =
+        b.distance && b.distance !== '未知距离'
+          ? parseFloat(b.distance.replace('km', ''))
+          : Infinity
       return distanceA - distanceB
     })
   } else if (filters.value.sort === 'rating') {
@@ -209,12 +216,7 @@ const filteredMerchants = computed(() => {
           />
         </el-select>
 
-        <el-button
-          type="default"
-          size="small"
-          @click="resetFilters"
-          class="reset-btn"
-        >
+        <el-button type="default" size="small" @click="resetFilters" class="reset-btn">
           重置
         </el-button>
       </div>
@@ -228,15 +230,17 @@ const filteredMerchants = computed(() => {
       <el-card
         v-for="merchant in filteredMerchants"
         :key="merchant.id"
-        :class="[
-          'merchant-card',
-          merchant.isOpen ? 'merchant-card-open' : 'merchant-card-closed'
-        ]"
+        :class="['merchant-card', merchant.isOpen ? 'merchant-card-open' : 'merchant-card-closed']"
         v-else-if="filteredMerchants.length > 0"
       >
         <div class="card-header">
           <div class="merchant-image">
-            <img v-if="merchant.image && merchant.image !== '未知'" :src="merchant.image" :alt="merchant.name" class="merchant-img" />
+            <img
+              v-if="merchant.image && merchant.image !== '未知'"
+              :src="merchant.image"
+              :alt="merchant.name"
+              class="merchant-img"
+            />
             <span v-else>🏪</span>
           </div>
           <div class="merchant-info">
@@ -265,7 +269,9 @@ const filteredMerchants = computed(() => {
           <!-- 商家特色/优惠信息 -->
           <div class="merchant-features">
             <el-tag v-if="merchant.isNew" type="warning" size="small">新店</el-tag>
-            <el-tag v-if="merchant.discount" type="success" size="small">{{ merchant.discount }}</el-tag>
+            <el-tag v-if="merchant.discount" type="success" size="small">{{
+              merchant.discount
+            }}</el-tag>
           </div>
 
           <!-- 商家标签 - 只在有数据时显示 -->
@@ -319,7 +325,7 @@ const filteredMerchants = computed(() => {
 
     // 添加装饰性下划线
     &::after {
-      content: "";
+      content: '';
       display: block;
       width: 60px;
       height: 4px;
@@ -443,7 +449,7 @@ const filteredMerchants = computed(() => {
       transform: translateY(-2px);
 
       // 卡片悬浮时，为营业中标签添加绿色光晕和阴影
-      .merchant-status .el-tag[type="success"] {
+      .merchant-status .el-tag[type='success'] {
         box-shadow: 0 0 30px rgba(35, 209, 96, 0.8); /* 标签的绿色光晕效果 */
       }
     }
@@ -503,9 +509,8 @@ const filteredMerchants = computed(() => {
         }
 
         .merchant-status {
-
           // 营业中标签样式
-          .el-tag[type="success"] {
+          .el-tag[type='success'] {
             :deep(.el-tag__content) {
               color: white !important;
             }
@@ -515,7 +520,7 @@ const filteredMerchants = computed(() => {
           }
 
           // 非营业中标签样式
-          .el-tag[type="danger"] {
+          .el-tag[type='danger'] {
             :deep(.el-tag__content) {
               color: white !important;
             }

@@ -67,7 +67,12 @@ export const useUserStore = defineStore('user', {
           this.userInfo = response.data.data
 
           // 如果用户有注册商家ID，保存到authStore并获取商家信息
-          if (this.userInfo && this.userInfo.merchantId && String(this.userInfo.merchantId) !== 'null' && String(this.userInfo.merchantId) !== '') {
+          if (
+            this.userInfo &&
+            this.userInfo.merchantId &&
+            String(this.userInfo.merchantId) !== 'null' &&
+            String(this.userInfo.merchantId) !== ''
+          ) {
             authStore.setMerchantId(this.userInfo.merchantId)
             await this.fetchMerchantInfo() // 自动获取商家信息
           }
@@ -94,11 +99,17 @@ export const useUserStore = defineStore('user', {
     async fetchMerchantInfo() {
       try {
         const authStore = useAuthStore()
-        if (!authStore.merchantId || String(authStore.merchantId) === 'null' || String(authStore.merchantId) === '') {
+        if (
+          !authStore.merchantId ||
+          String(authStore.merchantId) === 'null' ||
+          String(authStore.merchantId) === ''
+        ) {
           throw new Error('商家ID不存在')
         }
 
-        const response = await axios.get(`${API_CONFIG.baseURL}/v1/merchant/${Number(authStore.merchantId)}`)
+        const response = await axios.get(
+          `${API_CONFIG.baseURL}/v1/merchant/${Number(authStore.merchantId)}`
+        )
         if (response.data.code === '200') {
           this.merchantInfo = response.data.data
           return response.data.data
