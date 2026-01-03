@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 
@@ -52,16 +52,29 @@ onMounted(() => {
   loadMerchants()
 })
 
+// 监听筛选条件变化，重新加载数据
+watch(
+  [searchKeyword, () => filters.value.type, () => filters.value.sort],
+  () => {
+    loadMerchants()
+  }
+)
+
 // 从后端加载商家列表
 const loadMerchants = () => {
   isLoading.value = true
 
-  // 调用后端API获取商家列表
+  // 调用后端API获取商家列表，包含所有筛选参数
   axios
     .get(API_CONFIG.baseURL + API_CONFIG.merchant.list, {
-      params: { search: searchKeyword.value }
+      params: {
+        search: searchKeyword.value,
+        type: filters.value.type,
+        sort: filters.value.sort
+      }
     })
     .then((response) => {
+      console.log('获取商家列表成功:', response.data)
       // 假设后端返回的数据结构与前端期望的一致
       // 如果结构不同，需要在这里进行转换
       if (response.data.data) {
@@ -88,6 +101,15 @@ const orderNow = (merchant) => {
     path: '/user/home/merchant-detail',
     query: { viewMode: 'order' }
   })
+}
+
+// 重置筛选条件
+const resetFilters = () => {
+  searchKeyword.value = ''
+  filters.value = {
+    type: 'all',
+    sort: 'distance'
+  }
 }
 
 // 计算属性：过滤和排序后的商家列表
@@ -178,7 +200,10 @@ const filteredMerchants = computed(() => {
       <el-card
         v-for="merchant in filteredMerchants"
         :key="merchant.id"
-        class="merchant-card"
+        :class="[
+          'merchant-card',
+          (merchant.status === true || merchant.status === 'true' || merchant.status === '营业中') ? 'merchant-card-open' : 'merchant-card-closed'
+        ]"
         v-else-if="filteredMerchants.length > 0"
       >
         <div class="card-header">
@@ -190,23 +215,35 @@ const filteredMerchants = computed(() => {
               <span class="distance">{{ merchant.distance || '未知距离' }}</span>
             </div>
             <div class="merchant-status">
-              <el-tag :type="merchant.status === '营业中' ? 'success' : 'danger'" size="small">
-                {{ merchant.status || '未知状态' }}
+              <el-tag :type="(merchant.status === true || merchant.status === 'true' || merchant.status === '营业中') ? 'success' : 'danger'" size="small">
+                {{ (merchant.status === true || merchant.status === 'true') ? '营业中' : (merchant.status || '未知状态') }}
               </el-tag>
             </div>
           </div>
         </div>
 
-        <!-- 商家类型 - 只在有数据时显示 -->
-        <div class="merchant-type" v-if="merchant.type">
-          <el-tag type="primary" size="small">{{ merchant.type }}</el-tag>
-        </div>
+        <!-- 商家信息行 -->
+        <div class="merchant-details">
+          <!-- 商家类型 - 只在有数据时显示 -->
+          <div class="merchant-type" v-if="merchant.type">
+            <el-tag type="primary" size="small">{{ merchant.type }}</el-tag>
+          </div>
 
-        <!-- 商家标签 - 只在有数据时显示 -->
-        <div class="merchant-tags" v-if="merchant.tags && merchant.tags.length > 0">
-          <el-tag v-for="tag in merchant.tags" :key="tag" size="small" type="info">
-            {{ tag }}
-          </el-tag>
+          <!-- 商家特色/优惠信息 -->
+          <div class="merchant-features">
+            <el-tag v-if="merchant.isNew" type="warning" size="small">新店</el-tag>
+            <el-tag v-if="merchant.discount" type="success" size="small">{{ merchant.discount }}</el-tag>
+          </div>
+
+          <!-- 商家标签 - 只在有数据时显示 -->
+          <div class="merchant-tags" v-if="merchant.tags && merchant.tags.length > 0">
+            <el-tag v-for="tag in merchant.tags.slice(0, 2)" :key="tag" size="small" type="info">
+              {{ tag }}
+            </el-tag>
+            <el-tag v-if="merchant.tags.length > 2" size="small" type="info">
+              +{{ merchant.tags.length - 2 }}
+            </el-tag>
+          </div>
         </div>
 
         <div class="card-actions">
@@ -223,10 +260,13 @@ const filteredMerchants = computed(() => {
 
       <!-- 空数据提示 -->
       <div class="empty-data" v-else>
-        <div class="empty-icon">😕</div>
+        <div class="empty-icon">🍴</div>
         <div class="empty-text">
           <h3>暂无商家数据</h3>
-          <p>当前条件下没有找到任何商家，请尝试调整搜索条件或筛选方式</p>
+          <p>当前条件下没有找到任何商家</p>
+        </div>
+        <div class="empty-actions">
+          <el-button type="primary" @click="resetFilters">重置筛选条件</el-button>
         </div>
       </div>
     </div>
@@ -270,14 +310,17 @@ const filteredMerchants = computed(() => {
   }
 
   .merchant-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap; /* 允许卡片换行 */
     gap: 20px;
     padding: 0 20px;
+    justify-content: center; /* 卡片居中排列 */
   }
 
   .merchant-card {
-    width: 100%;
+    flex: 1 1 300px; /* 卡片自适应宽度，最小300px */
+    max-width: 95%; 
     box-sizing: border-box;
     transition: all 0.3s ease;
     border-radius: 12px;
@@ -287,7 +330,28 @@ const filteredMerchants = computed(() => {
       box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
       transform: translateY(-2px);
     }
+  }
 
+  // 营业中商家卡片 - 非悬停状态
+  .merchant-card-open {
+    // 恢复卡片基础样式，移除绿色光晕
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+
+    &:hover {
+      // 卡片悬浮时保持基础阴影增强效果
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+
+      // 卡片悬浮时，为营业中标签添加绿色光晕和阴影
+      .merchant-status .el-tag[type="success"] {
+        box-shadow: 0 0 30px rgba(35, 209, 96, 0.8); /* 标签的绿色光晕效果 */
+      }
+    }
+  }
+
+  // 所有商家卡片通用样式
+  .merchant-card {
     .card-header {
       display: flex;
       gap: 20px;
@@ -299,45 +363,86 @@ const filteredMerchants = computed(() => {
       }
 
       .merchant-info {
+        display: flex;
+        align-items: center;
+        gap: 20px; /* 调整间距 */
+        flex-wrap: nowrap; /* 确保不换行 */
+
         .merchant-name {
           font-size: 18px;
           font-weight: bold;
-          margin-bottom: 5px;
         }
 
         .merchant-rating {
           display: flex;
           align-items: center;
           gap: 10px;
-          margin-bottom: 5px;
 
           .distance {
             font-size: 14px;
             color: #666;
           }
         }
+
+        .merchant-status {
+          margin-left: auto; /* 将状态推到右侧 */
+
+          // 营业中标签样式
+          .el-tag[effect="plain"][type="success"],
+          .el-tag[type="success"] {
+            :deep(.el-tag__content) {
+              color: white !important;
+            }
+            background-color: #23d160 !important; /* 使用稍微浅一点的绿色 */
+            border-color: #23d160 !important; /* 边框颜色同步 */
+            box-shadow: 0 0 30px rgba(35, 209, 96, 0.8); /* 默认显示绿色光晕 */
+            transition: box-shadow 0.3s ease; /* 光晕过渡效果 */
+          }
+
+          // 非营业中标签样式
+          .el-tag[type="danger"] {
+            :deep(.el-tag__content) {
+              color: white !important;
+            }
+            background-color: #ff4d4f !important; /* 红色 */
+            border-color: #ff4d4f !important; /* 边框颜色同步 */
+            box-shadow: none; /* 非营业中标签没有光晕 */
+          }
+        }
       }
     }
 
-    .merchant-type {
-      margin-bottom: 10px;
-    }
-
-    .merchant-tags {
+    .merchant-details {
       margin-bottom: 20px;
       display: flex;
       flex-wrap: wrap;
+      gap: 10px; /* 调整元素之间的间距 */
+      align-items: center; /* 垂直居中对齐 */
+    }
+
+    .merchant-type {
+      margin: 0; /* 重置margin */
+    }
+
+    .merchant-features {
+      display: flex;
+      gap: 8px;
+    }
+
+    .merchant-tags {
+      margin: 0; /* 重置margin */
+      display: flex;
       gap: 8px;
     }
 
     .card-actions {
       display: flex;
-      gap: 10px;
+      justify-content: center; /* 将按钮居中 */
       padding-top: 16px;
       border-top: 1px solid #f0f0f0;
 
       .el-button {
-        flex: 1;
+        width: 100%; /* 按钮宽度占满 */
         border-radius: 8px;
         font-weight: 500;
       }
@@ -346,12 +451,14 @@ const filteredMerchants = computed(() => {
 
   // 加载中样式
   .loading-skeleton {
-    grid-column: 1 / -1;
+    width: 100%;
+    flex-shrink: 0;
   }
 
   // 空数据样式
   .empty-data {
-    grid-column: 1 / -1;
+    width: 100%;
+    flex-shrink: 0;
     text-align: center;
     padding: 80px 20px;
     background-color: #f8f9fa;
@@ -376,6 +483,15 @@ const filteredMerchants = computed(() => {
       p {
         font-size: 14px;
         margin: 0;
+      }
+    }
+
+    .empty-actions {
+      margin-top: 30px;
+
+      .el-button {
+        padding: 8px 24px;
+        font-size: 14px;
       }
     }
   }

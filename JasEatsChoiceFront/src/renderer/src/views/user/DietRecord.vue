@@ -131,7 +131,7 @@
                   <template #label>
                     <div class="form-item-label">
                       <el-icon class="label-icon"><ScaleIcon /></el-icon>
-                      <span>卡&nbsp;路&nbsp;&nbsp;里</span>
+                      <span>卡&nbsp;路&nbsp;里</span>
                     </div>
                   </template>
                   <el-input-number
@@ -158,7 +158,7 @@
                   <template #label>
                     <div class="form-item-label">
                       <el-icon class="label-icon"><MilkTea /></el-icon>
-                      <span>蛋&nbsp;白&nbsp;&nbsp;质</span>
+                      <span>蛋&nbsp;白&nbsp;质</span>
                     </div>
                   </template>
                   <el-input-number
@@ -565,36 +565,13 @@
           </div>
           <Transition name="collapse">
             <div v-show="expandedSections.breakfast" class="meal-records">
-              <div
+              <DietRecordCard
                 v-for="record in getMealsByType('breakfast')"
                 :key="record.id"
-                class="record-card"
-                @mouseenter="hoverRecord = record.id"
-                @mouseleave="hoverRecord = null"
-              >
-                <div class="record-info">
-                  <div class="record-time">{{ record.time }}</div>
-                  <div class="record-content">
-                    <div class="food-name">{{ record.foodName }}</div>
-                    <div class="food-description">
-                      {{ record.description }}
-                    </div>
-                  </div>
-                </div>
-                <div class="record-calories">
-                  <span class="calories-text">{{ record.calories }}</span>
-                  <span class="calories-unit">kcal</span>
-                </div>
-                <!-- 记录操作按钮 -->
-                <div v-if="hoverRecord === record.id" class="record-actions">
-                  <el-button type="text" size="small" @click="openEditRecordDialog(record)">
-                    编辑
-                  </el-button>
-                  <el-button type="text" size="small" @click="openDeleteConfirm(record)">
-                    删除
-                  </el-button>
-                </div>
-              </div>
+                :record="record"
+                @edit="openEditRecordDialog"
+                @delete="openDeleteConfirm"
+              />
             </div>
           </Transition>
         </div>
@@ -617,36 +594,13 @@
           </div>
           <Transition name="collapse">
             <div v-show="expandedSections.lunch" class="meal-records">
-              <div
+              <DietRecordCard
                 v-for="record in getMealsByType('lunch')"
                 :key="record.id"
-                class="record-card"
-                @mouseenter="hoverRecord = record.id"
-                @mouseleave="hoverRecord = null"
-              >
-                <div class="record-info">
-                  <div class="record-time">{{ record.time }}</div>
-                  <div class="record-content">
-                    <div class="food-name">{{ record.foodName }}</div>
-                    <div class="food-description">
-                      {{ record.description }}
-                    </div>
-                  </div>
-                </div>
-                <div class="record-calories">
-                  <span class="calories-text">{{ record.calories }}</span>
-                  <span class="calories-unit">kcal</span>
-                </div>
-                <!-- 记录操作按钮 -->
-                <div v-if="hoverRecord === record.id" class="record-actions">
-                  <el-button type="text" size="small" @click="openEditRecordDialog(record)">
-                    编辑
-                  </el-button>
-                  <el-button type="text" size="small" @click="openDeleteConfirm(record)">
-                    删除
-                  </el-button>
-                </div>
-              </div>
+                :record="record"
+                @edit="openEditRecordDialog"
+                @delete="openDeleteConfirm"
+              />
             </div>
           </Transition>
         </div>
@@ -669,36 +623,13 @@
           </div>
           <Transition name="collapse">
             <div v-show="expandedSections.dinner" class="meal-records">
-              <div
+              <DietRecordCard
                 v-for="record in getMealsByType('dinner')"
                 :key="record.id"
-                class="record-card"
-                @mouseenter="hoverRecord = record.id"
-                @mouseleave="hoverRecord = null"
-              >
-                <div class="record-info">
-                  <div class="record-time">{{ record.time }}</div>
-                  <div class="record-content">
-                    <div class="food-name">{{ record.foodName }}</div>
-                    <div class="food-description">
-                      {{ record.description }}
-                    </div>
-                  </div>
-                </div>
-                <div class="record-calories">
-                  <span class="calories-text">{{ record.calories }}</span>
-                  <span class="calories-unit">kcal</span>
-                </div>
-                <!-- 记录操作按钮 -->
-                <div v-if="hoverRecord === record.id" class="record-actions">
-                  <el-button type="text" size="small" @click="openEditRecordDialog(record)">
-                    编辑
-                  </el-button>
-                  <el-button type="text" size="small" @click="openDeleteConfirm(record)">
-                    删除
-                  </el-button>
-                </div>
-              </div>
+                :record="record"
+                @edit="openEditRecordDialog"
+                @delete="openDeleteConfirm"
+              />
             </div>
           </Transition>
         </div>
@@ -721,36 +652,13 @@
           </div>
           <Transition name="collapse">
             <div v-show="expandedSections.snack" class="meal-records">
-              <div
+              <DietRecordCard
                 v-for="record in getMealsByType('snack')"
                 :key="record.id"
-                class="record-card"
-                @mouseenter="hoverRecord = record.id"
-                @mouseleave="hoverRecord = null"
-              >
-                <div class="record-info">
-                  <div class="record-time">{{ record.time }}</div>
-                  <div class="record-content">
-                    <div class="food-name">{{ record.foodName }}</div>
-                    <div class="food-description">
-                      {{ record.description }}
-                    </div>
-                  </div>
-                </div>
-                <div class="record-calories">
-                  <span class="calories-text">{{ record.calories }}</span>
-                  <span class="calories-unit">kcal</span>
-                </div>
-                <!-- 记录操作按钮 -->
-                <div v-if="hoverRecord === record.id" class="record-actions">
-                  <el-button type="text" size="small" @click="openEditRecordDialog(record)">
-                    编辑
-                  </el-button>
-                  <el-button type="text" size="small" @click="openDeleteConfirm(record)">
-                    删除
-                  </el-button>
-                </div>
-              </div>
+                :record="record"
+                @edit="openEditRecordDialog"
+                @delete="openDeleteConfirm"
+              />
             </div>
           </Transition>
         </div>
@@ -798,6 +706,9 @@ import {
 import { ElMessage } from 'element-plus'
 import api from '../../utils/api.js'
 import { API_CONFIG } from '../../config/index.js'
+// 导入新组件和工具函数
+import DietRecordCard from '../../components/DietRecordCard.vue'
+import { mealTypeToChinese, mealTypeToEnglish, mealTypeOptions } from '../../utils/mealTypeUtils.js'
 
 // 展开/折叠状态
 const expandedSections = ref({
@@ -818,8 +729,7 @@ const selectedDate = ref(new Date().toISOString().split('T')[0])
 // 饮食记录数据
 const dietRecords = ref([])
 
-// 记录悬停状态
-const hoverRecord = ref(null)
+// 记录悬停状态已移至DietRecordCard组件
 
 // 计算总卡路里
 const totalCalories = ref(0)
@@ -863,14 +773,7 @@ const fetchDietRecords = async (date) => {
       // 转换数据格式
       dietRecords.value = backendRecords.map((record) => ({
         id: record.id,
-        mealType:
-          record.mealTime === '早餐'
-            ? 'breakfast'
-            : record.mealTime === '午餐'
-              ? 'lunch'
-              : record.mealTime === '晚餐'
-                ? 'dinner'
-                : 'snack',
+        mealType: mealTypeToEnglish(record.mealTime),
         mealTypeName: record.mealTime,
         time: record.recordTime ? record.recordTime.split('T')[1].substring(0, 5) : '',
         foodName: record.foodName || '', // 使用直接存储的食物名称
@@ -1002,19 +905,12 @@ const submitAddRecordForm = async () => {
     }
 
     // 构建请求数据
-    // 转换餐次类型为中文
-    const mealTimeMap = {
-      breakfast: '早餐',
-      lunch: '午餐',
-      dinner: '晚餐',
-      snack: '加餐'
-    }
     // 合并日期和时间为时间字符串格式，避免时区转换
     const recordTime = `${selectedDate.value}T${addRecordForm.value.time}:00`
 
     const requestData = {
       userId: userInfo.userId,
-      mealTime: mealTimeMap[addRecordForm.value.mealType],
+      mealTime: mealTypeToChinese(addRecordForm.value.mealType),
       foodName: addRecordForm.value.foodName,
       calorie: addRecordForm.value.calories, // 注意后端字段是单数形式
       protein: addRecordForm.value.protein,
@@ -1071,20 +967,13 @@ const submitEditRecordForm = async () => {
     }
 
     // 构建请求数据
-    // 转换餐次类型为中文
-    const mealTimeMap = {
-      breakfast: '早餐',
-      lunch: '午餐',
-      dinner: '晚餐',
-      snack: '加餐'
-    }
     // 合并日期和时间为时间字符串格式，避免时区转换
     const recordTime = `${selectedDate.value}T${editRecordForm.value.time}:00`
 
     const requestData = {
       id: editRecordForm.value.id,
       userId: userInfo.userId,
-      mealTime: mealTimeMap[editRecordForm.value.mealType],
+      mealTime: mealTypeToChinese(editRecordForm.value.mealType),
       foodName: editRecordForm.value.foodName,
       calorie: editRecordForm.value.calories, // 注意后端字段是单数形式
       protein: editRecordForm.value.protein,
