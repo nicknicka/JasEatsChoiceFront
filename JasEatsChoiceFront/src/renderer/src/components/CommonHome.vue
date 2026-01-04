@@ -145,15 +145,15 @@ const currentMenu = computed(() => {
 // 根据当前路由计算并设置激活的菜单项索引 - 支持分组菜单
 const updateActiveMenuIndex = () => {
   const currentPath = router.currentRoute.value.path
-  console.log(
-    '=== updateActiveMenuIndex ===',
-    '当前路由:',
-    currentPath,
-    '当前菜单:',
-    currentMenu.value.map((item) => item.name),
-    '当前activeMenu:',
-    activeMenuIndex.value
-  )
+  // console.log(
+  //   '=== updateActiveMenuIndex ===',
+  //   '当前路由:',
+  //   currentPath,
+  //   '当前菜单:',
+  //   currentMenu.value.map((item) => item.name),
+  //   '当前activeMenu:',
+  //   activeMenuIndex.value
+  // )
 
   // 清除所有菜单的激活状态
   nextTick(() => {
@@ -161,80 +161,44 @@ const updateActiveMenuIndex = () => {
     menuTitles.forEach(title => title.classList.remove('is-active'))
   })
 
-  // 特殊处理商家相关页面 - 激活商家查找菜单
-  if (
-    currentPath.startsWith('/user/home/merchant-detail') ||
-    currentPath === '/user/home/merchants'
-  ) {
-    activeMenuIndex.value = '3' // "商家查找"的索引是3
-    console.log('匹配到商家相关页面，激活商家查找菜单')
-
-    // 查找并激活父菜单组
-    nextTick(() => {
-      const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
-      if (activeMenuItem) {
-        const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
-        if (parentMenuTitle) {
-          parentMenuTitle.classList.add('is-active')
-        }
-      }
-    })
-
-    return
-  }
-
-  // 特殊处理地址管理和联系客服页面 - 激活用户中心菜单
-  if (
-    currentPath.startsWith('/user/home/address') ||
-    currentPath.startsWith('/user/home/contact')
-  ) {
-    activeMenuIndex.value = '7' // "用户中心"的索引是7
-    console.log('匹配到用户中心相关页面，激活用户中心菜单')
-
-    // 查找并激活父菜单组
-    nextTick(() => {
-      const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
-      if (activeMenuItem) {
-        const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
-        if (parentMenuTitle) {
-          parentMenuTitle.classList.add('is-active')
-        }
-      }
-    })
-
-    return
-  }
-
   // 查找当前路由对应的菜单项 - 包括分组内的子菜单
   for (const menuItem of currentMenu.value) {
     // 如果是分组菜单，检查其子菜单
     if (menuItem.children) {
-      console.log(
-        '检查分组:',
-        menuItem.name,
-        '的子菜单:',
-        menuItem.children.map((child) => child.name)
-      )
+      // console.log(
+      //   '检查分组:',
+      //   menuItem.name,
+      //   '的子菜单:',
+      //   menuItem.children.map((child) => child.name)
+      // )
       for (const childItem of menuItem.children) {
-        console.log(
-          '检查子菜单:',
-          childItem.name,
-          'path:',
-          childItem.path,
-          '是否匹配当前path:',
-          currentPath
-        )
-        if (currentPath.startsWith(childItem.path)) {
-          console.log('匹配到子菜单:', childItem.name)
+        // console.log(
+        //   '检查子菜单:',
+        //   childItem.name,
+        //   'path:',
+        //   childItem.path,
+        //   '是否匹配当前path:',
+        //   currentPath
+        // )
+        if (currentPath === childItem.path) {
+          // console.log('匹配到子菜单:', childItem.name)
           activeMenuIndex.value = childItem.index
 
           // 查找并激活当前子菜单所在的父菜单组
           nextTick(() => {
             const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
             if (activeMenuItem) {
-              const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
-              if (parentMenuTitle) {
-                parentMenuTitle.classList.add('is-active')
+              // 查找当前激活菜单项所在的父级一级菜单
+              const parentSubMenu = activeMenuItem.closest('.el-sub-menu')
+              if (parentSubMenu) {
+                // 检查该一级菜单下是否包含当前激活的二级菜单
+                const hasActiveChild = parentSubMenu.contains(activeMenuItem)
+                if (hasActiveChild) {
+                  const parentMenuTitle = parentSubMenu.querySelector('.el-sub-menu__title')
+                  if (parentMenuTitle) {
+                    parentMenuTitle.classList.add('is-active')
+                  }
+                }
               }
             }
           })
@@ -245,16 +209,16 @@ const updateActiveMenuIndex = () => {
     }
     // 如果是普通菜单，直接检查
     else {
-      console.log(
-        '检查普通菜单:',
-        menuItem.name,
-        'path:',
-        menuItem.path,
-        '是否匹配当前path:',
-        currentPath
-      )
-      if (currentPath.startsWith(menuItem.path)) {
-        console.log('匹配到普通菜单:', menuItem.name)
+      // console.log(
+      //   '检查普通菜单:',
+      //   menuItem.name,
+      //   'path:',
+      //   menuItem.path,
+      //   '是否匹配当前path:',
+      //   currentPath
+      // )
+      if (currentPath === menuItem.path) {
+        // console.log('匹配到普通菜单:', menuItem.name)
         activeMenuIndex.value = menuItem.index
         return
       }
@@ -273,11 +237,18 @@ const updateActiveMenuIndex = () => {
     // 查找当前激活的菜单项
     const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
     if (activeMenuItem) {
-      // 查找其父级菜单组的标题
-      const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
-      if (parentMenuTitle) {
-        // 给父级菜单组标题添加激活类
-        parentMenuTitle.classList.add('is-active')
+      // 查找当前激活菜单项所在的父级一级菜单
+      const parentSubMenu = activeMenuItem.closest('.el-sub-menu')
+      if (parentSubMenu) {
+        // 检查该一级菜单下是否包含当前激活的二级菜单
+        const hasActiveChild = parentSubMenu.contains(activeMenuItem)
+        if (hasActiveChild) {
+          const parentMenuTitle = parentSubMenu.querySelector('.el-sub-menu__title')
+          if (parentMenuTitle) {
+            // 给父级菜单组标题添加激活类
+            parentMenuTitle.classList.add('is-active')
+          }
+        }
       }
     }
   })
@@ -325,9 +296,17 @@ const handleMenuClose = () => {
   // 确保菜单关闭后，包含激活子菜单的一级菜单组仍然保持激活状态
   const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
   if (activeMenuItem) {
-    const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
-    if (parentMenuTitle) {
-      parentMenuTitle.classList.add('is-active')
+    // 查找当前激活菜单项所在的父级一级菜单
+    const parentSubMenu = activeMenuItem.closest('.el-sub-menu')
+    if (parentSubMenu) {
+      // 检查该一级菜单下是否包含当前激活的二级菜单
+      const hasActiveChild = parentSubMenu.contains(activeMenuItem)
+      if (hasActiveChild) {
+        const parentMenuTitle = parentSubMenu.querySelector('.el-sub-menu__title')
+        if (parentMenuTitle) {
+          parentMenuTitle.classList.add('is-active')
+        }
+      }
     }
   }
 }
@@ -414,7 +393,7 @@ watch(
 watch(
   currentMenu,
   () => {
-    console.log('=== 监听currentMenu变化，调用updateActiveMenuIndex ===')
+    // console.log('=== 监听currentMenu变化，调用updateActiveMenuIndex ===')
 
     // 清除所有菜单的激活状态
     nextTick(() => {
