@@ -107,29 +107,60 @@ const menuData = {
   // 商家端菜单
   // 商家端菜单 - 按功能模块重新排序：首页 → 核心业务 → 店铺管理 → 客户沟通 → 经营分析
   merchant: [
-    { index: '1', name: '我的店铺', icon: HomeFilled, path: '/merchant/home' }, // 首页入口
-    { index: '2', name: '今日订单', icon: List, path: '/merchant/home/today-orders' }, // 核心业务模块
-    { index: '3', name: '菜单管理', icon: Shop, path: '/merchant/home/menu' }, // 店铺管理模块
+    // 首页模块
+    { index: '1', name: '我的店铺', icon: HomeFilled, path: '/merchant/home' },
+
+    // 核心业务模块
+    {
+      index: '2',
+      name: '核心业务',
+      icon: List,
+      children: [
+        { index: '2-1', name: '今日订单', icon: List, path: '/merchant/home/today-orders' }
+      ]
+    },
+
+    // 店铺管理模块
+    {
+      index: '3',
+      name: '店铺管理',
+      icon: Shop,
+      children: [
+        { index: '3-1', name: '菜单管理', icon: Shop, path: '/merchant/home/menu' },
+        { index: '3-2', name: '菜品管理', icon: Document, path: '/merchant/home/dish-management' }
+      ]
+    },
+
+    // 客户沟通模块
     {
       index: '4',
-      name: '菜品管理',
-      icon: Document,
-      path: '/merchant/home/dish-management'
+      name: '客户沟通',
+      icon: Message,
+      children: [
+        { index: '4-1', name: '商家聊天', icon: ChatDotRound, path: '/merchant/home/chat' },
+        { index: '4-2', name: '消息管理', icon: Message, path: '/merchant/home/messages' }
+      ]
     },
-    { index: '6', name: '商家聊天', icon: ChatDotRound, path: '/merchant/home/chat' }, // 客户沟通模块
-    { index: '9', name: '消息管理', icon: Message, path: '/merchant/home/messages' },
+
+    // 经营分析模块
     {
-      index: '7',
-      name: '评价中心',
+      index: '5',
+      name: '经营分析',
       icon: DataAnalysis,
-      path: '/merchant/home/comments'
+      children: [
+        { index: '5-1', name: '评价中心', icon: DataAnalysis, path: '/merchant/home/comments' },
+        { index: '5-2', name: '经营统计', icon: DataAnalysis, path: '/merchant/home/statistics' }
+      ]
     },
+
+    // 设置菜单
     {
-      index: '8',
-      name: '经营统计',
-      icon: DataAnalysis,
-      path: '/merchant/home/statistics'
-    } // 经营分析模块
+      index: '6',
+      name: '设置',
+      icon: Setting,
+      path: '/merchant/home/settings',
+      isSetting: true
+    }
   ]
 }
 

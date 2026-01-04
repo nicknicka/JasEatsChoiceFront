@@ -308,6 +308,12 @@ const router = createRouter({
           name: 'merchant-comments',
           component: MerchantComments,
           meta: { title: '佳食宜选-商家评价中心' }
+        },
+        {
+          path: 'settings', // 商家设置路由
+          name: 'merchant-settings',
+          component: () => import('../views/user/Settings.vue'), // 复用用户端设置页面
+          meta: { title: '佳食宜选-商家设置' }
         }
       ]
     }

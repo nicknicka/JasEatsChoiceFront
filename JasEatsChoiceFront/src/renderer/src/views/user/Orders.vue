@@ -15,27 +15,50 @@ const orders = ref([])
 
 // 加载状态
 const loading = ref(false)
+// 刷新动画状态
+const isRefreshing = ref(false)
+
+// 处理刷新点击
+const handleRefresh = () => {
+  // 启动刷新动画
+  isRefreshing.value = true
+
+  // 确保动画至少持续一点时间
+  const startTime = Date.now()
+
+  // 调用加载订单函数
+  loadOrders().finally(() => {
+    const duration = Date.now() - startTime
+    // 如果加载太快，延迟关闭动画以提供更好的视觉反馈
+    const delay = Math.max(0, 500 - duration)
+
+    setTimeout(() => {
+      isRefreshing.value = false
+    }, delay)
+  })
+}
 
 // 加载用户订单数据
 const loadOrders = () => {
-  // 显示加载状态
-  loading.value = true
+  return new Promise((resolve, reject) => {
+    // 显示加载状态
+    loading.value = true
 
-  const userId = parseInt(localStorage.getItem('userId') || '1', 10) // 临时使用固定用户ID
+    const userId = parseInt(localStorage.getItem('userId') || '1', 10) // 临时使用固定用户ID
 
-  axios
-    .get(API_CONFIG.baseURL + API_CONFIG.order.list + userId)
-    .then((response) => {
-      if (response.data.data) {
-        orders.value = response.data.data
-      }
-    })
-    .catch((error) => {
-      console.error('加载订单失败:', error)
-      // 使用默认数据作为 fallback
-      orders.value = [
-        {
-          id: 1,
+    axios
+      .get(API_CONFIG.baseURL + API_CONFIG.order.list + userId)
+      .then((response) => {
+        if (response.data.data) {
+          orders.value = response.data.data
+        }
+      })
+      .catch((error) => {
+        console.error('加载订单失败:', error)
+        // 使用默认数据作为 fallback
+        orders.value = [
+          {
+            id: 1,
           orderNo: 'JD20231123001',
           status: 'delivered',
           merchant: '健康轻食馆',
@@ -94,7 +117,9 @@ const loadOrders = () => {
     .finally(() => {
       // 隐藏加载状态
       loading.value = false
+      resolve()
     })
+  })
 }
 
 // 订单状态筛选
@@ -270,8 +295,8 @@ const goToEvaluate = (order) => {
       <CommonBackButton />
       <h2 style="margin-left: 15px">查看订单</h2>
       <div style="flex: 1; text-align: right">
-        <el-button type="default" size="small" @click="loadOrders" :loading="loading">
-          <el-icon><Refresh /></el-icon>
+        <el-button type="default" size="small" @click="handleRefresh" :loading="loading">
+          <el-icon :class="{ 'refresh-rotating': isRefreshing }"><Refresh /></el-icon>
           刷新
         </el-button>
       </div>
@@ -453,6 +478,20 @@ const goToEvaluate = (order) => {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
+    }
+  }
+
+  /* 刷新按钮旋转动画 */
+  .refresh-rotating {
+    animation: refresh-rotate 0.8s linear infinite;
+  }
+
+  @keyframes refresh-rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
     }
   }
 
