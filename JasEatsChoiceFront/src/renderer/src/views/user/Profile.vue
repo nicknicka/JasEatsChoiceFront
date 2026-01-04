@@ -328,20 +328,24 @@
 					</el-select>
 				</el-form-item>
 
+				<!-- 身高输入框，允许输入小数点后一位 -->
 				<el-form-item label="身高 (cm)" prop="height">
 					<el-input
 						v-model.number="editForm.height"
 						placeholder="请输入身高"
 						type="number"
-					/>
+						step="0.1"
+					></el-input>
 				</el-form-item>
 
+				<!-- 体重输入框，允许输入小数点后一位 -->
 				<el-form-item label="体重 (kg)" prop="weight">
 					<el-input
 						v-model.number="editForm.weight"
 						placeholder="请输入体重"
 						type="number"
-					/>
+						step="0.1"
+					></el-input>
 				</el-form-item>
 
 				<el-form-item label="饮食目标" prop="dietGoal">

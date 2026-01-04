@@ -304,12 +304,12 @@
       "Bash(npm run dev:front:*)",
       "Bash(npm run dev:front)",
       "Bash(npm run --prefix JasEatsChoiceFront:*)",
-      "Bash(git stash pop:*)",
       "Bash(git checkout HEAD:*)",
       "Bash(git stash clear:*)",
       "Bash(mvn clean:*)",
       "Bash(npx electron-vite build)",
-      "Bash(npm run dev:renderer)"
+      "Bash(npm run dev:renderer)",
+      "Bash(git diff:*)"
     ],
     "deny": [],
     "ask": []
