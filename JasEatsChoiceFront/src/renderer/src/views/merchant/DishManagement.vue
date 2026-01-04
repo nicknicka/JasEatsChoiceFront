@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, TransitionGroup } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import { API_CONFIG } from '../../config/index.js'
@@ -404,7 +404,7 @@ const getDishCheckedState = (dish) => {
         <el-input
           v-model="searchKeyword"
           placeholder="输入菜品名称或分类..."
-          style="width: 300px; margin-right: 10px"
+          style="min-width: 250px; max-width: 400px; width: auto; flex: 1; max-width: 400px; margin-right: 10px"
           @input="updateFilter"
         />
         <el-button type="primary" @click="openAddDishDialog">
@@ -436,7 +436,11 @@ const getDishCheckedState = (dish) => {
     </div>
 
     <div class="dish-list">
-      <div class="dish-item" v-for="dish in filteredDishes" :key="dish.id">
+      <TransitionGroup
+        name="list"
+        tag="div"
+      >
+        <div class="dish-item" v-for="dish in filteredDishes" :key="dish.id">
         <div class="dish-selection">
           <el-checkbox
             :model-value="getDishCheckedState(dish)"
@@ -472,6 +476,7 @@ const getDishCheckedState = (dish) => {
           </div>
         </div>
       </div>
+    </TransitionGroup>
     </div>
 
     <div class="batch-actions" v-if="filteredDishes.length > 0">
@@ -513,7 +518,11 @@ const getDishCheckedState = (dish) => {
     </div>
 
     <!-- 空数据提示 -->
-    <el-empty v-if="filteredDishes.length === 0" description="暂无菜品"></el-empty>
+    <el-empty v-if="filteredDishes.length === 0" description="暂无菜品">
+      <template #bottom>
+        <el-button type="primary" size="small" @click="addDishDialogVisible = true">新增菜品</el-button>
+      </template>
+    </el-empty>
 
     <!-- 添加菜品对话框 -->
     <el-dialog v-model="addDishDialogVisible" title="添加新菜品" width="600px" top="10%">
@@ -692,13 +701,13 @@ const getDishCheckedState = (dish) => {
 }
 
 .dish-management-container {
-  padding: 0 20px 20px 20px;
+  padding: 24px;
 
   .dish-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 
     .page-title {
       font-size: 18px;
@@ -730,7 +739,19 @@ const getDishCheckedState = (dish) => {
   }
 
   .dish-list {
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+
+    /* List transition animations */
+    .list-enter-active,
+    .list-leave-active {
+      transition: all 0.3s ease;
+    }
+
+    .list-enter-from,
+    .list-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
 
     .dish-item {
       display: flex;
@@ -754,7 +775,7 @@ const getDishCheckedState = (dish) => {
       .dish-content {
         flex: 1;
         display: flex;
-        justify-content: space-between;
+        flex-direction: column;
 
         .dish-info {
           .dish-name {
@@ -773,7 +794,7 @@ const getDishCheckedState = (dish) => {
             display: flex;
             flex-wrap: wrap;
             gap: 24px;
-            margin-bottom: 8px;
+            margin-bottom: 16px; /* 增加底部间距，为水平排列的按钮腾出空间 */
             font-size: 14px;
 
             .dish-category,
@@ -786,9 +807,10 @@ const getDishCheckedState = (dish) => {
 
         .dish-actions {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
           gap: 8px;
           justify-content: flex-start;
+          flex-wrap: wrap;
 
           button {
             width: 100px;
