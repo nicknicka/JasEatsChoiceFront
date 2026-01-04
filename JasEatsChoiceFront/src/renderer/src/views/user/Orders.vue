@@ -1,8 +1,8 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
-import { API_CONFIG } from '../../config'
+import { API_CONFIG, WS_CONFIG } from '../../config'
 import { ElMessage } from 'element-plus'
 import CommonBackButton from '../../components/common/CommonBackButton.vue'
 import { Refresh } from '@element-plus/icons-vue'
@@ -124,14 +124,77 @@ const statusTagTypeMap = {
   cancelled: 'danger'
 }
 
-// 组件挂载时加载数据
+// WebSocket实例
+const ws = ref(null)
+
+// 组件挂载时加载数据和初始化WebSocket
 onMounted(() => {
   // 检查是否有传递的状态参数
   if (route.query.status) {
     activeStatus.value = route.query.status
   }
   loadOrders()
+
+  // 初始化WebSocket连接
+  initWebSocket()
 })
+
+// 组件卸载时关闭WebSocket连接
+onUnmounted(() => {
+  if (ws.value) {
+    ws.value.close()
+  }
+})
+
+// 初始化WebSocket
+const initWebSocket = () => {
+  try {
+    ws.value = new WebSocket(WS_CONFIG.url)
+
+    // 连接成功
+    ws.value.onopen = () => {
+      console.log('WebSocket连接成功')
+
+      // 可以在这里发送用户ID等信息到服务器，以便服务器推送相关订单更新
+      // ws.value.send(JSON.stringify({ userId: localStorage.getItem('userId') }))
+    }
+
+    // 接收消息
+    ws.value.onmessage = (event) => {
+      try {
+        const orderUpdate = JSON.parse(event.data)
+
+        // 更新本地订单状态
+        const index = orders.value.findIndex(order => order.id === orderUpdate.id)
+        if (index !== -1) {
+          orders.value[index].status = orderUpdate.status
+
+          // 显示更新提示
+          const statusText = orderStatusMap[orderUpdate.status] || orderUpdate.status
+          ElMessage.info(`订单 ${orders.value[index].orderNo} 状态已更新为: ${statusText}`)
+        }
+      } catch (error) {
+        console.error('解析WebSocket消息失败:', error)
+      }
+    }
+
+    // 连接关闭
+    ws.value.onclose = () => {
+      console.log('WebSocket连接关闭')
+
+      // 可以在这里实现重连逻辑
+      // setTimeout(() => initWebSocket(), 3000)
+    }
+
+    // 连接错误
+    ws.value.onerror = (error) => {
+      console.error('WebSocket连接错误:', error)
+    }
+  } catch (error) {
+    console.error('初始化WebSocket失败:', error)
+    ElMessage.error('WebSocket连接失败，无法接收实时订单更新')
+  }
+}
 
 // 监听路由参数变化
 watch(
@@ -174,9 +237,30 @@ const viewOrderDetails = (order) => {
 
 // 取消订单
 const cancelOrder = (order) => {
-  // 实际应用中实现取消订单功能
-  console.log('取消订单:', order)
-  order.status = 'cancelled'
+  // 调用后端API取消订单
+  axios.put(API_CONFIG.baseURL + API_CONFIG.order.detail + order.id + '/cancel')
+    .then((response) => {
+      if (response.data.success) {
+        order.status = 'cancelled'
+        ElMessage.success('订单已取消')
+      } else {
+        ElMessage.error(response.data.message || '取消订单失败')
+      }
+    })
+    .catch((error) => {
+      console.error('取消订单失败:', error)
+      ElMessage.error('取消订单失败，请稍后重试')
+    })
+}
+
+// 跳转到评价页面
+const goToEvaluate = (order) => {
+  // 导航到评价页面
+  router.push({
+    path: `/user/home/evaluate-order/${order.id}`,
+    name: 'user-evaluate-order',
+    params: { id: order.id }
+  })
 }
 </script>
 
@@ -248,6 +332,14 @@ const cancelOrder = (order) => {
             @click="cancelOrder(order)"
           >
             取消订单
+          </el-button>
+          <el-button
+            v-if="order.status === 'pendingComment'"
+            type="success"
+            size="small"
+            @click="goToEvaluate(order)"
+          >
+            去评价
           </el-button>
         </div>
       </el-card>
