@@ -364,29 +364,32 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+// 导入依赖
+import { ref, onMounted, computed, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import CommonAvatar from "../../components/CommonAvatar.vue";
 import api from "../../utils/api";
 import { API_CONFIG } from "../../config";
-// 导入authStore
+import QRCode from "qrcode";
+
+// 导入状态管理
 import { useAuthStore } from "../../store/authStore";
-// 导入userStore
 import { useUserStore } from "../../store/userStore";
 
+// 初始化路由和状态管理
 const router = useRouter();
-
-// 初始化用户存储
 const authStore = useAuthStore();
 const userStore = useUserStore();
 
-// 计算头像来源 - 统一使用userStore中的头像信息
+// 计算属性
+// 头像来源 - 统一使用userStore中的头像信息
 const avatarSrc = computed(() => {
 	return userStore.userInfo?.avatar;
 });
 
-// 真实数据，初始化完整结构
+// 响应式变量 & Refs
+// 用户信息
 const userInfo = ref({
 	name: "",
 	phone: "",
@@ -405,12 +408,61 @@ const userInfo = ref({
 	addresses: 0,
 	defaultAddress: "",
 	avatar: "",
+	height: 0,
+	weight: 0,
 });
 
-// 从本地存储加载真实数据
+// 组件引用
+const commonAvatarRef = ref(null);
+
+// 分享功能变量
+const shareDialogVisible = ref(false);
+const shareLink = ref("");
+const qrCodeDataUrl = ref("");
+
+// 资料编辑功能变量
+const editProfileDialogVisible = ref(false);
+const editForm = reactive({
+	nickname: "",
+	phone: "",
+	email: "",
+	location: "",
+	height: 0,
+	weight: 0,
+	dietGoal: "",
+});
+
+// 地址选择功能变量
+const selectedProvince = ref('');
+const selectedCity = ref('');
+const selectedDistrict = ref('');
+const provinces = ref([]);
+const cities = ref([]);
+const districts = ref([]);
+const cascaderData = ref([]);
+
+// 资料编辑表单验证规则
+const editFormRules = ref({
+	nickname: [
+		{ required: true, message: "请输入昵称", trigger: "blur" },
+		{ min: 2, max: 20, message: "昵称长度在 2 到 20 个字符", trigger: "blur" },
+	],
+	email: [
+		{ type: "email", message: "请输入正确的邮箱地址", trigger: ["blur", "change"] },
+	],
+	location: [
+		{ max: 50, message: "所在地长度不超过 50 个字符", trigger: ["blur", "change"] },
+	],
+// height 和 weight 的验证将在提交时手动处理
+	height: [],
+	weight: [],
+	dietGoal: [{ required: true, message: "请选择饮食目标", trigger: "change" }],
+});
+
+// 生命周期钩子
+// 页面加载时初始化
 onMounted(async () => {
 	// 从authStore获取userId
-	const authStore = useAuthStore();
 	let userId = parseInt(authStore.userId || "0", 10);
 
 	console.log("userId:", userId);
@@ -448,14 +500,14 @@ onMounted(async () => {
 	console.log("userInfo:", userInfo.value);
 });
 
-// Handle upload button click (for external button)
-const commonAvatarRef = ref(null);
+// 头像相关功能
+// 触发头像上传
 const triggerAvatarUpload = () => {
 	// Trigger the hidden file input in the CommonAvatar component
 	commonAvatarRef.value?.$refs?.avatarInput?.click();
 };
 
-// Handle avatar upload
+// 处理头像上传
 const handleAvatarUpload = (file) => {
 	if (!file) return;
 
@@ -494,6 +546,7 @@ const handleAvatarUpload = (file) => {
 	reader.readAsDataURL(file);
 };
 
+// 导航功能
 // 跳转到所有订单页面
 const goToAllOrders = () => {
 	router.push("/user/home/orders");
@@ -522,6 +575,7 @@ const goToAddress = () => {
 	router.push("/user/home/address");
 };
 
+// 钱包功能
 // 充值功能
 const recharge = () => {
 	// 创建充值表单对话框
@@ -645,23 +699,38 @@ const goToContact = () => {
 	router.push("/user/home/contact");
 };
 
+// 设置功能
 // 提交反馈建议
 const submitFeedback = () => {
 	ElMessage.success("反馈已提交，我们会尽快处理");
 };
 
+// 资料编辑功能
 // 编辑资料
 const editProfile = () => {
+	// 处理 height 和 weight，确保它们不是数组类型
+  console.log("userInfo:", userInfo.value);
+	const userHeight = userInfo.value.height;
+	const processedHeight = Array.isArray(userHeight)
+		? Number(userHeight[0]) || 0
+		: Number(userHeight) || 0;
+
+	const userWeight = userInfo.value.weight;
+	const processedWeight = Array.isArray(userWeight)
+		? Number(userWeight[0]) || 0
+		: Number(userWeight) || 0;
+
 	// 将当前用户信息填充到编辑表单
-	editForm.value = {
+	Object.assign(editForm, {
 		nickname: userInfo.value.nickname || "",
 		phone: userInfo.value.phone || "",
 		email: userInfo.value.email || "",
 		location: userInfo.value.location || "",
-		height: userInfo.value.height || null,
-		weight: userInfo.value.weight || null,
+		// 确保 height 和 weight 始终为数字类型
+		height: processedHeight,
+		weight: processedWeight,
 		dietGoal: userInfo.value.dietGoal || "",
-	};
+	});
 
 	// 初始化地址选择器
 	initLocationSelect(userInfo.value.location || "");
@@ -670,23 +739,73 @@ const editProfile = () => {
 	editProfileDialogVisible.value = true;
 };
 
-// 保存编辑的资料
+// 更新保存编辑的资料方法
 const saveEditProfile = () => {
 	if (editFormRef.value) {
+    console.log("editForm:", editForm);
 		editFormRef.value.validate(async (valid) => {
 			if (valid) {
+				// 手动验证身高和体重
+				let isHeightValid = true;
+				let isWeightValid = true;
+
+				// 验证身高
+				if (editForm.height !== null && editForm.height !== undefined && editForm.height !== '') {
+					const heightNum = Number(editForm.height);
+					if (isNaN(heightNum)) {
+						isHeightValid = false;
+						ElMessage.error("请输入有效的身高数值");
+					} else if (heightNum < 30 || heightNum > 280) {
+						isHeightValid = false;
+						ElMessage.error("身高范围在 30 到 280 cm");
+					}
+				}
+
+				// 验证体重
+				if (editForm.weight !== null && editForm.weight !== undefined && editForm.weight !== '') {
+					const weightNum = Number(editForm.weight);
+					if (isNaN(weightNum)) {
+						isWeightValid = false;
+						ElMessage.error("请输入有效的体重数值");
+					} else if (weightNum < 5 || weightNum > 300) {
+						isWeightValid = false;
+						ElMessage.error("体重范围在 5 到 300 kg");
+					}
+				}
+
+				// 如果验证失败，返回
+				if (!isHeightValid || !isWeightValid) {
+					return;
+				}
+
+				// 再次确保提交前 height 和 weight 不是数组类型
+				const submitForm = { ...editForm };
+				if (Array.isArray(submitForm.height)) {
+					submitForm.height = Number(submitForm.height[0]) || null;
+				} else if (submitForm.height) {
+					submitForm.height = Number(submitForm.height);
+				}
+
+				if (Array.isArray(submitForm.weight)) {
+					submitForm.weight = Number(submitForm.weight[0]) || null;
+				} else if (submitForm.weight) {
+					submitForm.weight = Number(submitForm.weight);
+				}
 				try {
 					const userId = parseInt(localStorage.getItem("userId"), 10);
 					// 发送PUT请求更新用户资料
 					const response = await api.put(
 						API_CONFIG.user.update.replace("{userId}", userId),
-						editForm.value
+						submitForm
 					);
 
           console.log("更新用户信息响应:", response);
 					if (response.code === "200") {
 						// 更新本地用户信息
-						userInfo.value = { ...userInfo.value, ...editForm.value };
+						const updatedUserInfo = { ...userInfo.value, ...editForm };
+						userInfo.value = updatedUserInfo;
+						// 更新store中的用户信息并保存到localStorage
+						userStore.setUserInfo(updatedUserInfo);
 						// 关闭对话框
 						editProfileDialogVisible.value = false;
 						ElMessage.success("资料更新成功");
@@ -706,6 +825,7 @@ const saveEditProfile = () => {
 	}
 };
 
+// 设置功能
 // 退出登录
 const logout = () => {
 	// 弹出确认对话框
@@ -737,45 +857,7 @@ const logout = () => {
 		});
 };
 
-// 导入qrcode库
-import QRCode from "qrcode";
-
-// 分享对话框可见性
-const shareDialogVisible = ref(false);
-// 分享链接
-const shareLink = ref("");
-// 二维码数据URL
-const qrCodeDataUrl = ref("");
-
-// 编辑资料对话框可见性
-const editProfileDialogVisible = ref(false);
-// 编辑资料表单
-const editForm = ref({
-	nickname: "",
-	phone: "",
-	email: "",
-	location: "",
-	height: null,
-	weight: null,
-	dietGoal: "",
-});
-
-// 地址选择相关
-const selectedProvince = ref('');
-const selectedCity = ref('');
-const selectedDistrict = ref('');
-
-// 省份数据
-const provinces = ref([]);
-
-// 城市数据
-const cities = ref([]);
-
-// 区县数据
-const districts = ref([]);
-
-// 完整的级联地址数据
-const cascaderData = ref([]);
+// 地址选择功能
 
 // 从后端获取地址数据
 const fetchAddressData = async () => {
@@ -856,7 +938,7 @@ onMounted(async () => {
 // 更新完整地址到表单
 const updateLocation = () => {
 	const locationParts = [selectedProvince.value, selectedCity.value, selectedDistrict.value].filter(Boolean);
-	editForm.value.location = locationParts.join(' ');
+	editForm.location = locationParts.join(' ');
 };
 
 // 初始化地址选择器
@@ -881,38 +963,6 @@ const initLocationSelect = (location) => {
 	}
 };
 
-// 编辑资料表单验证规则
-const editFormRules = ref({
-	nickname: [
-		{ required: true, message: "请输入昵称", trigger: "blur" },
-		{ min: 2, max: 20, message: "昵称长度在 2 到 20 个字符", trigger: "blur" },
-	],
-	email: [
-		{ type: "email", message: "请输入正确的邮箱地址", trigger: ["blur", "change"] },
-	],
-	location: [
-		{ max: 50, message: "所在地长度不超过 50 个字符", trigger: ["blur", "change"] },
-	],
-	height: [
-		{ type: "number", message: "请输入有效的身高数值", trigger: ["blur", "change"] },
-		{
-			min: 50,
-			max: 280,
-			message: "身高范围在 50 到 280 cm",
-			trigger: ["blur", "change"],
-		},
-	],
-	weight: [
-		{ type: "number", message: "请输入有效的体重数值", trigger: ["blur", "change"] },
-		{
-			min: 10,
-			max: 300,
-			message: "体重范围在 10 到 300 kg",
-			trigger: ["blur", "change"],
-		},
-	],
-	dietGoal: [{ required: true, message: "请选择饮食目标", trigger: "change" }],
-});
 // 编辑表单引用
 const editFormRef = ref(null);
 
@@ -949,16 +999,10 @@ const copyShareLink = async () => {
 </script>
 
 <style scoped>
+/* 基础容器样式 */
 .profile-container {
 	padding: 0 20px 20px 20px;
 	min-height: 100vh;
-}
-
-.profile-container h2 {
-	font-size: 28px;
-	margin: 0 0 25px 0;
-	color: #333;
-	font-weight: 700;
 }
 
 .profile-card {
@@ -966,6 +1010,21 @@ const copyShareLink = async () => {
 	border-radius: 12px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 	background-color: #fff;
+}
+
+/* 标题样式 */
+.profile-container h2 {
+	font-size: 28px;
+	margin: 0 0 25px 0;
+	color: #333;
+	font-weight: 700;
+}
+
+.module-title {
+	font-size: 18px;
+	margin: 0 0 20px 0;
+	font-weight: 700;
+	color: #2d3748;
 }
 
 /* 顶部头像区域 */
@@ -979,10 +1038,23 @@ const copyShareLink = async () => {
 	flex-wrap: wrap;
 }
 
-/* 名字容器 */
 .user-name-container {
 	width: 100%;
 	text-align: center; /* 名字居中 */
+}
+
+.user-name {
+	font-size: 32px; /* 文字大小 */
+	font-weight: 800; /* 字体粗细 */
+	margin: 10px 0 20px 0; /* 上下间距 */
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 文字渐变 */
+	-webkit-background-clip: text; /* 将渐变应用到文字 */
+	-webkit-text-fill-color: transparent; /* 文字填充为透明以显示渐变 */
+	background-clip: text; /* 标准属性 */
+	text-shadow: 2px 2px 4px rgba(102, 126, 234, 0.15); /* 文字阴影增强质感 */
+	display: inline-block; /* 适应内容宽度 */
+	letter-spacing: 1px; /* 字间距 */
+	line-height: 1.2; /* 行高 */
 }
 
 /* 头像和用户信息内容区 */
@@ -1004,29 +1076,16 @@ const copyShareLink = async () => {
 .user-info-section {
 	min-width: 300px; /* 减小最小宽度，允许在更窄的屏幕上保持并排 */
 	padding-right: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end; /* 内容右对齐 */
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end; /* 内容右对齐 */
 }
 
 .user-basic-info {
 	margin-bottom: 20px;
 }
 
-.user-name {
-	font-size: 32px; /* 文字大小 */
-	font-weight: 800; /* 字体粗细 */
-	margin: 10px 0 20px 0; /* 上下间距 */
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 文字渐变 */
-	-webkit-background-clip: text; /* 将渐变应用到文字 */
-	-webkit-text-fill-color: transparent; /* 文字填充为透明以显示渐变 */
-	background-clip: text; /* 标准属性 */
-	text-shadow: 2px 2px 4px rgba(102, 126, 234, 0.15); /* 文字阴影增强质感 */
-	display: inline-block; /* 适应内容宽度 */
-	letter-spacing: 1px; /* 字间距 */
-	line-height: 1.2; /* 行高 */
-}
-
+/* 用户统计信息 */
 .user-stats {
 	font-size: 14px;
 	margin-bottom: 20px;
@@ -1039,21 +1098,37 @@ const copyShareLink = async () => {
 	flex-wrap: wrap;
 }
 
-.user-stats .stat-item {
+.stat-item {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
+	text-align: center;
+}
+
+.user-stats .stat-item {
 	min-width: clamp(120px, 20vw, 140px); /* 响应式最小宽度 */
 }
 
 .stat-label {
-	color: #718096;
+	font-size: 14px;
 	font-weight: 500;
+	color: #718096;
+}
+
+.user-stats .stat-label {
+	color: #606266;
+	margin-bottom: 5px;
 }
 
 .stat-value {
-	color: #2d3748;
+	font-size: 18px;
 	font-weight: 600;
+	color: #2d3748;
+}
+
+.user-stats .stat-value {
+	font-weight: bold;
+	color: #ff6b6b;
 }
 
 .calorie-highlight {
@@ -1064,6 +1139,7 @@ const copyShareLink = async () => {
 	color: #48bb78;
 }
 
+/* 操作按钮 */
 .action-buttons {
 	display: flex;
 	justify-content: flex-end; /* 按钮右对齐 */
@@ -1084,13 +1160,7 @@ const copyShareLink = async () => {
 	font-weight: bold;
 }
 
-.module-title {
-	font-size: 18px;
-	margin: 0 0 20px 0;
-	font-weight: 700;
-	color: #2d3748;
-}
-
+/* 订单统计 */
 .order-stats {
 	display: flex;
 	flex-wrap: wrap;
@@ -1116,9 +1186,19 @@ const copyShareLink = async () => {
 
 .order-stat-card .stat-value {
 	font-size: 32px;
-	font-weight: 700;
 	color: #2d3748;
 	margin-bottom: 6px;
+}
+
+.order-stat-card .stat-label {
+	font-size: 14px;
+	color: #718096;
+	margin-bottom: 2px;
+}
+
+.order-stat-card small {
+	font-size: 12px;
+	color: #a0aec0;
 }
 
 .order-in-progress {
@@ -1133,33 +1213,7 @@ const copyShareLink = async () => {
 	color: #805ad5; /* 紫色 */
 }
 
-.order-stat-card .stat-label {
-	font-size: 14px;
-	color: #718096;
-	margin-bottom: 2px;
-}
-
-.order-stat-card small {
-	font-size: 12px;
-	color: #a0aec0;
-}
-
-.stat-item {
-	text-align: center;
-}
-
-.stat-label {
-	font-size: 14px;
-	color: #606266;
-	margin-bottom: 5px;
-}
-
-.stat-value {
-	font-size: 18px;
-	font-weight: bold;
-	color: #ff6b6b;
-}
-
+/* 钱包模块 */
 .wallet-card {
 	background: linear-gradient(135deg, #fef5e7 0%, #fdebd0 100%);
 	padding: 25px;
@@ -1226,6 +1280,7 @@ const copyShareLink = async () => {
 	box-shadow: 0 4px 8px rgba(66, 153, 225, 0.4);
 }
 
+/* 其他模块 */
 .other-modules {
 	margin-bottom: 20px;
 }

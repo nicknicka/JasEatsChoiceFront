@@ -38,7 +38,7 @@ console.warn = function (warning, ...args) {
     // 情况3: 对象类型的表单验证警告
     (typeof warning === 'object' &&
       warning !== null &&
-      JSON.stringify(warning).match(/(phone|password|captcha): Array/))
+      JSON.stringify(warning).match(/(phone|password|captcha|height|weight): Array/))
 
   // 仅显示非Element Plus的警告
   if (!isElementPlusWarning) {

@@ -9,6 +9,7 @@ export interface UserInfo {
   phone: string
   nickname: string
   email: string
+  location: string | null
   height: number | null
   weight: number | null
   dietGoal: string | null
@@ -64,7 +65,22 @@ export const useUserStore = defineStore('user', {
         const response = await axios.get(`${API_CONFIG.baseURL}/v1/users/${authStore.userId}`)
 
         if (response.data.code === '200') {
-          this.userInfo = response.data.data
+          // 确保height和weight是数字类型（处理后端可能返回的数组类型）
+          const userData = response.data.data
+          // 如果是数组，取第一个元素；否则直接转换
+          if (Array.isArray(userData.height)) {
+            userData.height = Number(userData.height[0]) || null
+          } else if (userData.height) {
+            userData.height = Number(userData.height)
+          }
+
+          if (Array.isArray(userData.weight)) {
+            userData.weight = Number(userData.weight[0]) || null
+          } else if (userData.weight) {
+            userData.weight = Number(userData.weight)
+          }
+
+          this.userInfo = userData
           // 将最新用户信息保存到localStorage
           localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
 
@@ -79,7 +95,7 @@ export const useUserStore = defineStore('user', {
             await this.fetchMerchantInfo() // 自动获取商家信息
           }
 
-          return response.data.data
+          return userData
         } else {
           throw new Error(response.data.message || '获取用户信息失败')
         }
@@ -90,11 +106,28 @@ export const useUserStore = defineStore('user', {
     },
 
     setUserInfo(info: UserInfo) {
-      this.userInfo = info
+      // 确保height和weight是数字类型（处理可能的数组类型）
+      const userData = { ...info };
+      // 如果是数组，取第一个元素；否则直接转换
+      if (Array.isArray(userData.height)) {
+        userData.height = Number(userData.height[0]) || null
+      } else if (userData.height) {
+        userData.height = Number(userData.height)
+      }
+
+      if (Array.isArray(userData.weight)) {
+        userData.weight = Number(userData.weight[0]) || null
+      } else if (userData.weight) {
+        userData.weight = Number(userData.weight)
+      }
+
+      this.userInfo = userData
+      // 将最新用户信息保存到localStorage
+      localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
       const authStore = useAuthStore()
       // 如果用户有注册商家ID，保存到authStore
-      if (info.merchantId) {
-        authStore.setMerchantId(info.merchantId)
+      if (userData.merchantId) {
+        authStore.setMerchantId(userData.merchantId)
       }
     },
 
