@@ -177,10 +177,9 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public List<Map<String, Object>> getCascaderLocationData() {
-        if (true) return new ArrayList<>() ;
         try {
-            // 调用高德地图API获取中国所有省市区数据
-            String url = String.format("%s/config/district?keywords=中国&subdistrict=2&key=%s", gaodeApiUrl, gaodeApiKey);
+            // 调用高德地图API获取中国所有省市区数据，subdistrict=3表示获取到区县级别
+            String url = String.format("%s/config/district?keywords=中国&subdistrict=3&key=%s", gaodeApiUrl, gaodeApiKey);
 
             // 从API获取原始数据
             String response = restTemplate.getForObject(url, String.class);

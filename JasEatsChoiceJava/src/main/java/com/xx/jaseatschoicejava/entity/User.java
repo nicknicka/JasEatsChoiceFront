@@ -80,4 +80,8 @@ public class User {
     @TableField("avatar")
     @ApiModelProperty(value = "用户头像URL")
     private String avatar; // 用户头像URL
+
+    @TableField("location")
+    @ApiModelProperty(value = "用户所在地")
+    private String location; // 用户所在地
 }

@@ -514,6 +514,9 @@ public class UserController {
             if (updateData.containsKey("dietGoal")) {
                 user.setDietGoal((String) updateData.get("dietGoal"));
             }
+            if (updateData.containsKey("location")) {
+                user.setLocation((String) updateData.get("location"));
+            }
 
             boolean success = userService.updateById(user);
             if (success) {
