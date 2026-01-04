@@ -314,6 +314,8 @@ const filteredMerchants = computed(() => {
 
 <style scoped lang="less">
 .merchant-list-container {
+  width: 100%; // 确保容器宽度为100%
+  box-sizing: border-box; // 确保padding不会增加额外宽度
   padding: 0 20px 20px 20px;
 
   h2 {
@@ -344,6 +346,8 @@ const filteredMerchants = computed(() => {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); // 渐变背景
     border-radius: 20px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08); // 更明显的阴影
+    width: 100%; // 确保宽度为100%
+    box-sizing: border-box; // 确保padding和border不会增加额外宽度
 
     .search-input {
       width: 100%;

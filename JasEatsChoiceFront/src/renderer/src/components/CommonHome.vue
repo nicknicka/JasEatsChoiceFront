@@ -287,6 +287,10 @@ const sidebarWidth = ref('170px')
 // 监听菜单展开事件 - 展开时增宽，给二级菜单足够空间
 const handleMenuOpen = () => {
   sidebarWidth.value = '220px' // 展开时增宽
+
+  // 菜单展开时，移除所有父菜单标题的激活类，避免视觉冲突
+  // const menuTitles = document.querySelectorAll('.menu-list .el-sub-menu__title')
+  // menuTitles.forEach(title => title.classList.remove('is-active'))
 }
 
 // 监听菜单关闭事件 - 关闭时恢复默认较短宽度
@@ -295,14 +299,18 @@ const handleMenuClose = () => {
 
   // 确保菜单关闭后，包含激活子菜单的一级菜单组仍然保持激活状态
   const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
+
   if (activeMenuItem) {
     // 查找当前激活菜单项所在的父级一级菜单
     const parentSubMenu = activeMenuItem.closest('.el-sub-menu')
+
     if (parentSubMenu) {
       // 检查该一级菜单下是否包含当前激活的二级菜单
       const hasActiveChild = parentSubMenu.contains(activeMenuItem)
+
       if (hasActiveChild) {
         const parentMenuTitle = parentSubMenu.querySelector('.el-sub-menu__title')
+
         if (parentMenuTitle) {
           parentMenuTitle.classList.add('is-active')
         }
@@ -703,11 +711,14 @@ const handleSearch = (value) => {
   }
 
   /* 当一级菜单组包含激活的子菜单时，保持高亮 */
-  .el-menu-item.is-active,
-  .el-sub-menu__title.is-active {
+/* 确保即使在 scoped 样式下，激活状态也能正确应用 */
+.menu-list {
+  :deep(.el-menu-item.is-active),
+  :deep(.el-sub-menu__title.is-active) {
     background-color: var(--el-menu-item-hover-bg-color) !important;
     color: var(--el-menu-active-color) !important;
   }
+}
 
   .setting-menu {
     border-top: 1px solid #eee;
