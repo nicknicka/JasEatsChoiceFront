@@ -252,9 +252,9 @@ const router = useRouter()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 
-// 计算头像来源
+// 计算头像来源 - 统一使用userStore中的头像信息
 const avatarSrc = computed(() => {
-  return userStore.userInfo?.avatar || localStorage.getItem('userAvatar')
+  return userStore.userInfo?.avatar
 })
 
 // 真实数据，初始化完整结构

@@ -163,7 +163,7 @@ const backToOrders = () => {
         <h4 class="section-title">🏪 商家信息</h4>
         <div class="info-row">
           <span class="info-label">商家名称:</span>
-          <span class="info-value">{{ orderDetail.merchantInfo.name }}</span>
+          <span class="info-value">{{ orderDetail.merchantInfo.nickname }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">联系电话:</span>

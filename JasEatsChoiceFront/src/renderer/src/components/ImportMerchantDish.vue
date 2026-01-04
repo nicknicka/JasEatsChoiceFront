@@ -107,7 +107,7 @@ const resetState = () => {
           <el-option
             v-for="merchant in props.merchants"
             :key="merchant.id"
-            :label="merchant.name"
+            :label="merchant.nickname"
             :value="merchant"
           />
         </el-select>

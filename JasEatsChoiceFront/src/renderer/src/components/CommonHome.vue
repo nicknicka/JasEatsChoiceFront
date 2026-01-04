@@ -155,6 +155,12 @@ const updateActiveMenuIndex = () => {
     activeMenuIndex.value
   )
 
+  // 清除所有菜单的激活状态
+  nextTick(() => {
+    const menuTitles = document.querySelectorAll('.menu-list .el-sub-menu__title')
+    menuTitles.forEach(title => title.classList.remove('is-active'))
+  })
+
   // 特殊处理商家相关页面 - 激活商家查找菜单
   if (
     currentPath.startsWith('/user/home/merchant-detail') ||
@@ -162,6 +168,18 @@ const updateActiveMenuIndex = () => {
   ) {
     activeMenuIndex.value = '3' // "商家查找"的索引是3
     console.log('匹配到商家相关页面，激活商家查找菜单')
+
+    // 查找并激活父菜单组
+    nextTick(() => {
+      const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
+      if (activeMenuItem) {
+        const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
+        if (parentMenuTitle) {
+          parentMenuTitle.classList.add('is-active')
+        }
+      }
+    })
+
     return
   }
 
@@ -172,6 +190,18 @@ const updateActiveMenuIndex = () => {
   ) {
     activeMenuIndex.value = '7' // "用户中心"的索引是7
     console.log('匹配到用户中心相关页面，激活用户中心菜单')
+
+    // 查找并激活父菜单组
+    nextTick(() => {
+      const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
+      if (activeMenuItem) {
+        const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
+        if (parentMenuTitle) {
+          parentMenuTitle.classList.add('is-active')
+        }
+      }
+    })
+
     return
   }
 
@@ -197,6 +227,18 @@ const updateActiveMenuIndex = () => {
         if (currentPath.startsWith(childItem.path)) {
           console.log('匹配到子菜单:', childItem.name)
           activeMenuIndex.value = childItem.index
+
+          // 查找并激活当前子菜单所在的父菜单组
+          nextTick(() => {
+            const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
+            if (activeMenuItem) {
+              const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
+              if (parentMenuTitle) {
+                parentMenuTitle.classList.add('is-active')
+              }
+            }
+          })
+
           return
         }
       }
@@ -222,6 +264,23 @@ const updateActiveMenuIndex = () => {
   // 如果没有匹配到，默认激活第一个菜单项
   activeMenuIndex.value = currentMenu.value[0]?.index || '1'
   console.log('未匹配到菜单项，默认激活第一个')
+
+  // 重置侧边栏宽度为默认值，防止自动展开菜单时宽度变宽
+  sidebarWidth.value = '170px' // 这里的默认宽度要和初始化时一致
+
+  // 延迟更新菜单激活状态，确保DOM已渲染完成
+  nextTick(() => {
+    // 查找当前激活的菜单项
+    const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
+    if (activeMenuItem) {
+      // 查找其父级菜单组的标题
+      const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
+      if (parentMenuTitle) {
+        // 给父级菜单组标题添加激活类
+        parentMenuTitle.classList.add('is-active')
+      }
+    }
+  })
 }
 
 // 菜单点击事件处理 - 支持分组菜单
@@ -252,17 +311,25 @@ const handleMenuSelect = (index) => {
 // 头像放大弹窗
 const showLargeAvatar = ref(false)
 
-// 菜单栏宽度状态
-const sidebarWidth = ref('150px')
+const sidebarWidth = ref('170px')
 
-// 监听菜单展开事件
+// 监听菜单展开事件 - 展开时增宽，给二级菜单足够空间
 const handleMenuOpen = () => {
   sidebarWidth.value = '220px' // 展开时增宽
 }
 
-// 监听菜单关闭事件
+// 监听菜单关闭事件 - 关闭时恢复默认较短宽度
 const handleMenuClose = () => {
-  sidebarWidth.value = '150px' // 关闭时恢复原宽度
+  sidebarWidth.value = '170px' // 关闭时恢复默认宽度
+
+  // 确保菜单关闭后，包含激活子菜单的一级菜单组仍然保持激活状态
+  const activeMenuItem = document.querySelector('.menu-list .el-menu-item.is-active')
+  if (activeMenuItem) {
+    const parentMenuTitle = activeMenuItem.closest('.el-sub-menu')?.querySelector('.el-sub-menu__title')
+    if (parentMenuTitle) {
+      parentMenuTitle.classList.add('is-active')
+    }
+  }
 }
 
 // 角色切换功能
@@ -332,7 +399,14 @@ onMounted(() => {
 watch(
   () => router.currentRoute.value.path,
   () => {
-    updateActiveMenuIndex()
+    // 清除所有菜单的激活状态
+    nextTick(() => {
+      const menuTitles = document.querySelectorAll('.menu-list .el-sub-menu__title')
+      menuTitles.forEach(title => title.classList.remove('is-active'))
+
+      // 更新激活的菜单项
+      updateActiveMenuIndex()
+    })
   }
 )
 
@@ -341,12 +415,20 @@ watch(
   currentMenu,
   () => {
     console.log('=== 监听currentMenu变化，调用updateActiveMenuIndex ===')
-    updateActiveMenuIndex()
+
+    // 清除所有菜单的激活状态
+    nextTick(() => {
+      const menuTitles = document.querySelectorAll('.menu-list .el-sub-menu__title')
+      menuTitles.forEach(title => title.classList.remove('is-active'))
+
+      // 更新激活的菜单项
+      updateActiveMenuIndex()
+    })
   },
   { deep: true }
 )
 
-// 监听商家注册状态变化 - 不再需要，直接使用userStore.userInfo.merchantId判断
+// 监听商家注册状态变化 
 
 // Watch for route changes to update role automatically
 watch(
@@ -367,7 +449,7 @@ watch(
         // 商户端信息从userStore.merchantInfo获取
         userStore.userInfo = {
           name: '商户端',
-          avatar: userStore.merchantInfo?.avatar || 'https://picsum.photos/id/200/150/150'
+          avatar: userStore.merchantInfo?.avatar || '',
         }
       } else if (userRole.value === 'user') {
         // 从authStore获取token并解码用户名
@@ -380,9 +462,7 @@ watch(
         }
         // 使用userStore管理用户信息
         userStore.userInfo = {
-          ...userStore.userInfo,
-          name: username,
-          avatar: '👤'
+          ...userStore.userInfo
         }
       }
 
@@ -480,13 +560,13 @@ const handleSearch = (value) => {
             :size="80"
             class="user-avatar"
             :avatar-url="userStore.userInfo?.avatar"
-            :fallback-text="userStore.userInfo?.name || '用户'"
+            :fallback-text="userStore.userInfo?.nickname"
             :show-upload="false"
             :click-to-enlarge="true"
           >
           </CommonAvatar>
           <div class="username">
-            {{ userStore.userInfo?.name || userRole === 'merchant' ? '商户端' : '用户端' }}
+            {{ userRole === 'merchant' ? userStore.merchantInfo?.nickname : userStore.userInfo?.nickname }}
           </div>
         </div>
 
@@ -631,12 +711,23 @@ const handleSearch = (value) => {
       font-size: 14px;
       font-weight: 500;
       color: #333;
+      white-space: nowrap; /* 不换行 */
+      overflow: hidden; /* 隐藏溢出 */
+      text-overflow: ellipsis; /* 显示省略号 */
+      width: 100%; /* 自适应宽度 */
     }
   }
 
   .menu-list {
     border: none;
-    height: calc(100% - 120px);
+    height: calc(100% - 170px);
+  }
+
+  /* 当一级菜单组包含激活的子菜单时，保持高亮 */
+  .el-menu-item.is-active,
+  .el-sub-menu__title.is-active {
+    background-color: var(--el-menu-item-hover-bg-color) !important;
+    color: var(--el-menu-active-color) !important;
   }
 
   .setting-menu {

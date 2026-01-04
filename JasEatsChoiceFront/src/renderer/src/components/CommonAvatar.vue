@@ -15,7 +15,7 @@
       v-else
       :size="size"
       class="user-avatar"
-      :src="avatarUrl"
+      :src="timestampedAvatarUrl"
       :shape="shape"
       v-loading="isLoading"
       element-loading-text="加载中..."
@@ -64,7 +64,7 @@
     @close="handleCloseDialog"
   >
     <div style="text-align: center; padding: 20px 0">
-      <el-avatar :size="enlargeSize" class="user-avatar" :src="avatarUrl" :shape="shape">
+      <el-avatar :size="enlargeSize" class="user-avatar" :src="timestampedAvatarUrl" :shape="shape">
         <div class="avatar-error-class">
           {{ (fallbackText || '?').charAt(0) }}
         </div>
@@ -79,11 +79,18 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 // 加载状态
 const isLoading = ref(false)
 const isLoaded = ref(false)
+
+// 计算带时间戳的头像URL，解决浏览器缓存问题
+const timestampedAvatarUrl = computed(() => {
+  if (!props.avatarUrl) return ''
+  // 在URL后添加时间戳，防止浏览器缓存
+  return props.avatarUrl + '?t=' + new Date().getTime()
+})
 
 // 组件属性定义
 const props = defineProps({
@@ -161,6 +168,9 @@ watch(
       // 创建临时图片对象来监听加载状态
       const img = new Image()
 
+      // 在URL后添加时间戳，解决浏览器缓存问题
+      const urlWithTimestamp = newUrl + '?t=' + new Date().getTime()
+
       img.onload = () => {
         isLoading.value = false
         isLoaded.value = true
@@ -171,7 +181,7 @@ watch(
         isLoaded.value = true
       }
 
-      img.src = newUrl
+      img.src = urlWithTimestamp
     } else {
       isLoaded.value = false
     }

@@ -145,7 +145,7 @@ const filteredMerchants = computed(() => {
     const keyword = searchKeyword.value.toLowerCase()
     result = result.filter(
       (merchant) =>
-        merchant.name.toLowerCase().includes(keyword) ||
+        merchant-name.toLowerCase().includes(keyword) ||
         (merchant.tags && merchant.tags.some((tag) => tag.toLowerCase().includes(keyword)))
     )
   }
@@ -238,13 +238,13 @@ const filteredMerchants = computed(() => {
             <img
               v-if="merchant.image && merchant.image !== '未知'"
               :src="merchant.image"
-              :alt="merchant.name"
+              :alt="merchant-name"
               class="merchant-img"
             />
             <span v-else>🏪</span>
           </div>
           <div class="merchant-info">
-            <div class="merchant-name">{{ merchant.name }}</div>
+            <div class="merchant-name">{{ merchant-name }}</div>
             <div class="merchant-meta">
               <div class="merchant-rating">
                 <el-rate v-model="merchant.rating" :disabled="true" show-text size="small" />

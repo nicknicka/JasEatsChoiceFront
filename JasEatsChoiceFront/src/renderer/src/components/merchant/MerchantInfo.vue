@@ -49,7 +49,7 @@ fetchMerchantInfo()
         <span class="avatar">📸</span>
       </div>
       <div class="detail-section">
-        <div class="merchant-name">🏪 {{ merchantInfo.name }}</div>
+        <div class="merchant-name">🏪 {{ merchantInfo.nickname }}</div>
         <div class="merchant-rating">🌟 {{ merchantInfo.rating }}</div>
         <div class="contact-info">
           <span class="phone">📞 {{ merchantInfo.phone }}</span>

@@ -9,7 +9,7 @@
       <!-- 商家头部信息 -->
       <div class="merchant-header">
         <div class="header-left">
-          <div class="merchant-name-main">{{ merchant.name }}</div>
+          <div class="merchant-name-main">{{ merchant.nickname }}</div>
           <el-button type="text" size="small" class="favorite-button" @click="toggleFavorite">
             {{ isFavorite ? '❤️' : '🤍' }} {{ isFavorite ? '已收藏' : '收藏' }}
           </el-button>
@@ -837,7 +837,7 @@ const loadMerchantDetails = (merchantId) => {
 const toggleFavorite = () => {
   isFavorite.value = !isFavorite.value
   ElMessage.success(
-    isFavorite.value ? `${merchant.value.name} 已加入收藏` : `${merchant.value.name} 已取消收藏`
+    isFavorite.value ? `${merchant.value.nickname} 已加入收藏` : `${merchant.value.nickname} 已取消收藏`
   )
   // 这里可以添加真实的收藏逻辑，比如保存到数据库或本地存储
   console.log('收藏状态:', isFavorite.value)

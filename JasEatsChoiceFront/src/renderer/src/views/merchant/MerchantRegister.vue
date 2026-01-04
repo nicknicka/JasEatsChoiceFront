@@ -249,7 +249,7 @@ const submitForm = () => {
         // 准备后端需要的数据结构
         const merchantData = {
           // 注意：前端字段与后端字段映射
-          name: registerForm.merchantName, // 后端是name，前端是merchantName
+          nickname: registerForm.merchantName, // 后端是nickname，前端是merchantName
           phone: registerForm.contactPhone, // 后端是phone，前端是contactPhone
           // 其他字段暂时保留，等待后端实体更新后启用
           businessLicense: registerForm.businessLicense,

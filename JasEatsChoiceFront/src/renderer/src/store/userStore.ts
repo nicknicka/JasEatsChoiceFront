@@ -23,7 +23,7 @@ export interface UserInfo {
 
 export interface MerchantInfo {
   merchantId: string
-  name: string
+  nickname: string
   address?: string
   phone: string
   status: boolean
@@ -65,6 +65,8 @@ export const useUserStore = defineStore('user', {
 
         if (response.data.code === '200') {
           this.userInfo = response.data.data
+          // 将最新用户信息保存到localStorage
+          localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
 
           // 如果用户有注册商家ID，保存到authStore并获取商家信息
           if (
@@ -127,6 +129,8 @@ export const useUserStore = defineStore('user', {
       if (this.userInfo) {
         // Update in store first
         this.userInfo.avatar = avatar
+        // 将最新用户信息保存到localStorage
+        localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
 
         // Try to update on backend if userId exists
         try {
