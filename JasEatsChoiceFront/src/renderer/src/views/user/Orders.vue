@@ -5,6 +5,7 @@ import axios from 'axios'
 import { API_CONFIG } from '../../config'
 import { ElMessage } from 'element-plus'
 import CommonBackButton from '../../components/common/CommonBackButton.vue'
+import { Refresh } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -99,6 +100,9 @@ const loadOrders = () => {
 // 订单状态筛选
 const activeStatus = ref('all')
 
+// 明确按钮顺序的状态列表
+const statusList = ref(['all', 'processing', 'pending', 'pendingComment', 'delivered', 'completed', 'cancelled'])
+
 // 订单状态映射
 const orderStatusMap = {
   all: '全部订单',
@@ -116,7 +120,7 @@ const statusTagTypeMap = {
   pending: 'primary',
   pendingComment: 'info',
   delivered: 'success',
-  completed: 'info',
+  completed: 'success',  // 已完成订单使用绿色更合理
   cancelled: 'danger'
 }
 
@@ -147,6 +151,17 @@ const filteredOrders = computed(() => {
   return orders.value.filter((order) => order.status === activeStatus.value)
 })
 
+// 分页相关
+const currentPage = ref(1)
+const pageSize = ref(5)
+
+// 分页后的订单
+const paginatedOrders = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredOrders.value.slice(start, end)
+})
+
 // 查看订单详情
 const viewOrderDetails = (order) => {
   // 导航到订单详情页
@@ -168,14 +183,20 @@ const cancelOrder = (order) => {
 <template>
   <div class="orders-container">
     <div class="page-header">
-      <common-back-button />
+      <CommonBackButton />
       <h2 style="margin-left: 15px">查看订单</h2>
+      <div style="flex: 1; text-align: right">
+        <el-button type="default" size="small" @click="loadOrders" :loading="loading">
+          <el-icon><Refresh /></el-icon>
+          刷新
+        </el-button>
+      </div>
     </div>
 
     <!-- 订单筛选 -->
     <div class="order-filters">
       <el-button
-        v-for="status in Object.keys(orderStatusMap)"
+        v-for="status in statusList"
         :key="status"
         type="primary"
         :plain="activeStatus !== status"
@@ -188,7 +209,7 @@ const cancelOrder = (order) => {
 
     <!-- 订单列表 -->
     <div class="order-list" v-loading="loading" element-loading-text="加载中...">
-      <el-card v-for="order in filteredOrders" :key="order.id" class="order-card">
+      <el-card v-for="order in paginatedOrders" :key="order.id" class="order-card">
         <div class="order-header">
           <div class="order-info">
             <div class="order-no">订单号: {{ order.orderNo }}</div>
@@ -232,8 +253,21 @@ const cancelOrder = (order) => {
       </el-card>
     </div>
 
+    <!-- 分页组件 -->
+    <el-pagination
+      v-if="filteredOrders.length > 0"
+      background
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="filteredOrders.length"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      @current-change="(page) => currentPage = page"
+      @size-change="(size) => { pageSize = size; currentPage = 1; }"
+      class="order-pagination"
+    />
+
     <!-- 空数据提示 -->
-    <el-empty v-if="filteredOrders.length === 0" description="暂无订单"></el-empty>
+    <el-empty v-if="filteredOrders.length === 0" description="暂无订单记录，快去下单吧！"></el-empty>
   </div>
 </template>
 
@@ -262,6 +296,11 @@ const cancelOrder = (order) => {
     display: flex;
     flex-direction: column;
     gap: 15px;
+  }
+
+  .order-pagination {
+    margin-top: 20px;
+    text-align: center;
   }
 
   .order-card {
@@ -322,6 +361,42 @@ const cancelOrder = (order) => {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
+    }
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .orders-container {
+      padding: 0 10px 10px 10px;
+    }
+
+    .order-filters {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .order-card {
+      .order-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+
+        .order-status {
+          margin-top: 10px;
+        }
+      }
+
+      .order-total, .order-actions {
+        justify-content: flex-start !important;
+      }
+
+      .order-actions {
+        flex-direction: column;
+        gap: 8px;
+
+        el-button {
+          width: 100%;
+        }
+      }
     }
   }
 }
