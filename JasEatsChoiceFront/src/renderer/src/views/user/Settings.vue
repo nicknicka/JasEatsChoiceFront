@@ -392,8 +392,9 @@ onMounted(() => {
     notifications.value = { ...officialSettings.value.notifications }
     privacy.value = { ...officialSettings.value.privacy }
 
-    // Update theme
+    // Update theme and font size
     updateTheme()
+    updateFontSize()
   }
 
   // Fetch user info from backend
@@ -425,8 +426,9 @@ const saveSettings = () => {
   ElMessage.success('设置已保存')
   console.log('Saved settings:', officialSettings.value)
 
-  // 更新主题
+  // 更新主题和字体大小
   updateTheme()
+  updateFontSize()
 }
 
 // Handle reset settings
@@ -468,6 +470,28 @@ const updateTheme = () => {
   } else {
     document.body.classList.add('light-theme')
     document.body.classList.remove('dark-theme')
+  }
+}
+
+// Update font size
+const updateFontSize = () => {
+  // Remove all font size classes
+  document.body.classList.remove('font-small', 'font-medium', 'font-large', 'font-extra-large')
+
+  // Add the selected font size class
+  switch (fontSize.value) {
+    case 'small':
+      document.body.classList.add('font-small')
+      break
+    case 'medium':
+      document.body.classList.add('font-medium')
+      break
+    case 'large':
+      document.body.classList.add('font-large')
+      break
+    case 'extra-large':
+      document.body.classList.add('font-extra-large')
+      break
   }
 }
 
@@ -808,5 +832,105 @@ const submitFeedback = () => {
 
 .settings-container .user-avatar {
   background-color: transparent; /* 移除额外的背景颜色 */
+}
+</style>
+
+<style>
+/* 全局主题样式 */
+/* 浅色主题 */
+.light-theme {
+  background-color: #ffffff;
+  color: #333333;
+}
+
+/* 深色主题 */
+.dark-theme {
+  background-color: #1a1a1a;
+  color: #ffffff;
+
+  /* Element Plus 组件深色适配 */
+  .el-card {
+    background-color: #2d2d2d;
+    border-color: #444444;
+  }
+
+  .el-divider {
+    background-color: #444444;
+  }
+
+  .el-input__wrapper {
+    background-color: #2d2d2d;
+    color: #ffffff;
+    border-color: #444444;
+  }
+
+  .el-switch__core {
+    background-color: #444444;
+  }
+
+  .el-button {
+    background-color: #409eff;
+    border-color: #409eff;
+  }
+
+  .el-button--default {
+    background-color: #2d2d2d;
+    border-color: #444444;
+    color: #ffffff;
+  }
+
+  .el-button--default:hover {
+    background-color: #444444;
+    border-color: #666666;
+  }
+
+  .el-dialog {
+    background-color: #2d2d2d;
+    color: #ffffff;
+  }
+
+  .el-dialog__header {
+    border-bottom-color: #444444;
+  }
+
+  .el-form-item__label {
+    color: #ffffff !important;
+  }
+}
+
+/* 字体大小 */
+.font-small {
+  font-size: 12px;
+}
+
+.font-medium {
+  font-size: 14px;
+}
+
+.font-large {
+  font-size: 16px;
+}
+
+.font-extra-large {
+  font-size: 18px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .font-small {
+    font-size: 11px;
+  }
+
+  .font-medium {
+    font-size: 13px;
+  }
+
+  .font-large {
+    font-size: 15px;
+  }
+
+  .font-extra-large {
+    font-size: 17px;
+  }
 }
 </style>
