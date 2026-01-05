@@ -3,6 +3,7 @@ package com.xx.jaseatschoicejava.entity;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -35,6 +36,7 @@ public class Menu {
 
     @TableField("type")
     @ApiModelProperty(value = "菜单类型（如：早餐、午餐、晚餐）")
+    @JsonProperty("category") // 前端使用的字段名是category
     private String type; // 菜单类型（如：早餐、午餐、晚餐）
 
     @TableField("status")

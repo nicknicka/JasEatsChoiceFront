@@ -28,9 +28,20 @@ public class MenuController {
     @GetMapping("/merchants/{merchantId}/menu")
     public ResponseResult<?> getMenusByMerchantId(@PathVariable Long merchantId) {
         LambdaQueryWrapper<Menu> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Menu::getMerchantId, merchantId);
-        queryWrapper.eq(Menu::getStatus, "active"); // 只显示激活状态的菜单
+        queryWrapper.eq(Menu::getMerchantId, merchantId.toString());
+        // 只显示激活状态的菜单，注意：这里数据库中存储的是"active"
+        queryWrapper.eq(Menu::getStatus, "active");
         List<Menu> menus = menuService.list(queryWrapper);
+
+        // 将后端的状态转换为前端需要的格式
+        menus.forEach(menu -> {
+            if ("active".equals(menu.getStatus())) {
+                menu.setStatus("online");
+            } else {
+                menu.setStatus("offline");
+            }
+        });
+
         return ResponseResult.success(menus);
     }
 
@@ -76,5 +87,46 @@ public class MenuController {
             return ResponseResult.success("批量操作成功");
         }
         return ResponseResult.fail("500", "批量操作失败");
+    }
+
+    /**
+     * 添加新菜单
+     */
+    @PostMapping("/merchants/{merchantId}/menu")
+    public ResponseResult<?> addMenu(@PathVariable Long merchantId, @RequestBody Menu menu) {
+        try {
+            // 设置商家ID
+            menu.setMerchantId(merchantId.toString());
+
+            // 转换前端传来的状态值到后端统一格式
+            String frontStatus = menu.getStatus();
+            if ("online".equals(frontStatus) || "active".equals(frontStatus)) {
+                menu.setStatus("active");
+            } else { // draft或offline都转为inactive
+                menu.setStatus("inactive");
+            }
+
+            boolean success = menuService.save(menu);
+            if (success) {
+                // 返回前端需要的状态格式
+                Menu responseMenu = menuService.getById(menu.getId());
+                if (responseMenu != null) {
+                    // 将后端的active/inactive转换为前端的online/offline
+                    if ("active".equals(responseMenu.getStatus())) {
+                        responseMenu.setStatus("online");
+                    } else {
+                        responseMenu.setStatus("offline");
+                    }
+                    return ResponseResult.success(responseMenu);
+                }
+                return ResponseResult.fail("500", "保存菜单失败");
+            }
+            return ResponseResult.fail("500", "保存菜单失败");
+        } catch (DateTimeParseException e) {
+            // 处理时间格式解析异常
+            return ResponseResult.fail("400", "时间格式错误，请使用正确的日期时间格式");
+        } catch (Exception e) {
+            return ResponseResult.fail("500", "保存菜单失败: " + e.getMessage());
+        }
     }
 }

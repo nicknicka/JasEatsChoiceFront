@@ -281,7 +281,8 @@ const saveNewMenu = () => {
       menuData
     )
     .then((response) => {
-      if (response.data && response.data.success) {
+      console.log('保存菜单响应:', response)
+      if (response.data && response.data.code === '200') {
         // 从响应中获取完整的菜单对象
         const savedMenu = response.data.data
 
@@ -290,6 +291,9 @@ const saveNewMenu = () => {
         updateFilter()
         addMenuDialogVisible.value = false
         ElMessage.success('菜单已添加')
+      }else 
+      {
+        ElMessage.error(`保存菜单失败: ${response.data.message || '未知错误'}`)
       }
     })
     .catch((error) => {
@@ -516,7 +520,9 @@ const toggleSelectAll = () => {
         <el-form-item label="自动上架时间">
           <el-time-picker
             v-model="newMenu.autoOnline"
-            type="datetime"
+            type="fixed-time"
+            format="HH:mm:ss"
+            value-format="HH:mm:ss"
             placeholder="选择自动上架时间"
             style="width: 100%"
           />
@@ -525,7 +531,9 @@ const toggleSelectAll = () => {
         <el-form-item label="自动下架时间">
           <el-time-picker
             v-model="newMenu.autoOffline"
-            type="datetime"
+            type="fixed-time"
+            format="HH:mm:ss"
+            value-format="HH:mm:ss"
             placeholder="选择自动下架时间"
             style="width: 100%"
           />
@@ -535,6 +543,7 @@ const toggleSelectAll = () => {
           <el-select v-model="newMenu.status" style="width: 100%">
             <el-option label="上架中" value="online" />
             <el-option label="草稿" value="draft" />
+            <el-option label="下架中" value="offline" />
           </el-select>
         </el-form-item>
       </el-form>
