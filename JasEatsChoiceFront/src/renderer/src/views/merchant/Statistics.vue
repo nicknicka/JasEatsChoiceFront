@@ -1,7 +1,7 @@
 <script setup>
 import api from '../../utils/api'
 import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { useAuthStore } from '../../store/authStore'
 import { use } from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import {
@@ -43,7 +43,13 @@ const chartRef = ref(null)
 
 // 从后端获取统计数据
 const fetchStatisticsData = () => {
-  const merchantId = 1 // 假设商家ID为1，可以根据实际情况从登录信息或路由参数中获取
+  const authStore = useAuthStore()
+  const merchantId = authStore.merchantId
+
+  if (!merchantId) {
+    console.error('获取统计数据失败: 商家ID不存在')
+    return
+  }
   api
     .get(`/v1/merchant/${merchantId}/statistics`, { params: { timeRange: activeTimeRange.value } })
     .then((response) => {
@@ -169,7 +175,14 @@ const updateChartData = () => {
   orderChartOptions.value.series[0].data = currentOrderTrend.value.map((item) => item.orders)
 }
 
-// 监听数据变化并更新图表
+// 只监听currentOrderTrend变化，因为updateChartData会修改orderChartOptions
+watch(
+  currentOrderTrend,
+  () => {
+    updateChartData()
+  },
+  { deep: true }
+)
 </script>
 
 <template>
@@ -182,8 +195,8 @@ const updateChartData = () => {
           :key="range"
           :type="activeTimeRange === range ? 'primary' : 'info'"
           effect="plain"
-          @click="changeTimeRange(range)"
           class="time-range-tag"
+          @click="changeTimeRange(range)"
         >
           {{
             range === 'today'
@@ -234,13 +247,13 @@ const updateChartData = () => {
       <!-- 订单趋势图表 -->
       <div class="order-trend-section">
         <h4 class="section-title">📈 订单趋势</h4>
-        <div class="chart-container" v-show="true">
+        <div v-show="true" class="chart-container">
           <v-chart
             v-if="chartContainerWidth > 0 && currentOrderTrend.length > 0"
+            ref="chartRef"
             :options="orderChartOptions"
             style="height: 250px; width: 100%"
             :autoresize="true"
-            ref="chartRef"
           />
           <div v-else-if="chartContainerWidth > 0" class="chart-placeholder">暂时没有数据提供</div>
           <div v-else class="chart-placeholder chart-loading">

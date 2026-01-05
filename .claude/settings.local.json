@@ -310,7 +310,8 @@
       "Bash(npx electron-vite build)",
       "Bash(npm run dev:renderer)",
       "Bash(git diff:*)",
-      "Bash(__NEW_LINE__ git add JasEatsChoiceFront/src/renderer/src/views/user/Orders.vue JasEatsChoiceFront/src/renderer/src/views/user/OrderDetail.vue)"
+      "Bash(__NEW_LINE__ git add JasEatsChoiceFront/src/renderer/src/views/user/Orders.vue JasEatsChoiceFront/src/renderer/src/views/user/OrderDetail.vue)",
+      "Bash(npx vite optimize)"
     ],
     "deny": [],
     "ask": []
