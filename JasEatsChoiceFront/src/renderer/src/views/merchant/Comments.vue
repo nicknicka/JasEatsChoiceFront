@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
 
 // 评价评分对应文本
 const ratingTextMap = {
@@ -31,7 +32,8 @@ const comments = ref([
     reply: '',
     status: 'unreplied', // unreplied, replied
     time: '2024-11-21 12:30',
-    dishes: ['宫保鸡丁', '鱼香肉丝', '米饭']
+    dishes: ['宫保鸡丁', '鱼香肉丝', '米饭'],
+    replies: []
   },
   {
     id: 2,
@@ -88,6 +90,9 @@ const searchKeyword = ref('')
 const filteredComments = ref([])
 filteredComments.value = [...comments.value]
 
+// 单个评论的回复/追评展开状态管理 (key: comment.id, value: boolean)
+const isReplyExpanded = ref({})
+
 // 评价统计
 const commentsStats = computed(() => {
   const total = filteredComments.value.length
@@ -143,7 +148,7 @@ const showReplyDialog = ref(false)
 
 const openReplyDialog = (comment) => {
   currentComment.value = comment
-  replyComment.value = comment.reply
+  replyComment.value = '' // 追评时清空输入框，准备输入新内容
   showReplyDialog.value = true
 }
 
@@ -153,9 +158,26 @@ const submitReply = () => {
     return
   }
 
-  // 更新回复内容
-  currentComment.value.reply = replyComment.value
-  currentComment.value.status = 'replied'
+  // 更新回复内容：如果已经有回复则追加到追评列表，否则直接设置
+  if (currentComment.value.status === 'replied' && currentComment.value.reply) {
+    // 追加追评，使用数组存储追评
+    const now = new Date().toLocaleString('zh-CN')
+    // 初始化追评数组
+    if (!currentComment.value.replies) {
+      currentComment.value.replies = []
+    }
+    // 添加新追评
+    currentComment.value.replies.push({
+      content: replyComment.value,
+      time: now
+    })
+  } else {
+    // 首次回复
+    currentComment.value.reply = replyComment.value
+    currentComment.value.status = 'replied'
+    // 初始化追评数组
+    currentComment.value.replies = []
+  }
 
   updateFilter()
   replyComment.value = ''
@@ -354,15 +376,47 @@ updateFilter()
                 <div class="comment-value">{{ comment.comment }}</div>
               </div>
 
-              <div v-if="comment.reply" class="comment-reply">
-                <div class="reply-label">📨 商家回复：</div>
-                <div class="reply-value">{{ comment.reply }}</div>
+              <!-- 所有回复（包括原回复和追评） -->
+              <div v-if="comment.reply || (comment.replies && comment.replies.length > 0)">
+                <!-- 将原回复和追评整合为一个数组 -->
+                <div class="all-replies">
+                  <!-- 原回复 -->
+                  <div v-if="comment.reply" class="comment-reply">
+                    <div class="reply-label">📨 商家回复：</div>
+                    <div class="reply-value">{{ comment.reply }}</div>
+                  </div>
+                  <!-- 追评列表 - 只显示前2个或全部 -->
+                  <div
+                    v-for="(reply, index) in (
+                      isReplyExpanded[comment.id]
+                      ? (comment.replies || [])
+                      : (comment.replies || []).slice(0, 2 - (comment.reply ? 1 : 0))
+                    )"
+                    :key="index"
+                    class="comment-reply comment-reply-followup"
+                  >
+                    <div class="reply-label">🔔 商家追评 ({{ reply.time }})：</div>
+                    <div class="reply-value">{{ reply.content }}</div>
+                  </div>
+                  <!-- 展开/折叠按钮 -->
+                  <div
+                    v-if="1 + (comment.reply ? 1 : 0) + (comment.replies?.length || 0) > 3"
+                    class="reply-expand-btn"
+                    @click="isReplyExpanded[comment.id] = !isReplyExpanded[comment.id]"
+                  >
+                    <span class="btn-text">{{ isReplyExpanded[comment.id] ? '收起' : '查看所有 ' + (1 + (comment.reply ? 1 : 0) + (comment.replies?.length || 0)) + ' 条评价' }}</span>
+                    <el-icon class="arrow-icon">
+                      <ArrowDown v-if="!isReplyExpanded[comment.id]" />
+                      <ArrowUp v-else />
+                    </el-icon>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="comment-actions">
               <el-button type="primary" size="small" plain @click="openReplyDialog(comment)">
-                {{ comment.status === 'unreplied' ? '回复评价' : '修改回复' }}
+                {{ comment.status === 'unreplied' ? '回复评价' : '追评' }}
               </el-button>
             </div>
           </div>
@@ -390,7 +444,7 @@ updateFilter()
     </div>
 
     <!-- 回复对话框 -->
-    <el-dialog v-model="showReplyDialog" title="回复评价" width="500px">
+    <el-dialog v-model="showReplyDialog" :title="currentComment?.status === 'replied' ? '追评' : '回复评价'" width="500px">
       <el-input
         v-model="replyComment"
         type="textarea"
@@ -718,6 +772,37 @@ updateFilter()
                 background-color: #ecf5ff;
                 color: #409eff;
                 border-left: 3px solid #409eff;
+              }
+            }
+
+            // 追评样式
+            .comment-reply-followup {
+              margin-top: 12px;
+
+              .reply-value {
+                background-color: #ecf5ff;
+                color: #409eff;
+                border-left: 3px solid #409eff;
+              }
+
+              .reply-label {
+                color: #409eff;
+                font-weight: 600;
+              }
+            }
+
+            // 回复展开/折叠按钮
+            .reply-expand-btn {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-top: 10px;
+              cursor: pointer;
+              color: #409eff;
+              font-size: 14px;
+
+              .btn-text {
+                margin-right: 5px;
               }
             }
           }
