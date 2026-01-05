@@ -18,7 +18,7 @@ public interface MenuService extends IService<Menu> {
      * @param autoEndTime 自动下架时间
      * @return 是否设置成功
      */
-    boolean setMenuSchedule(Long menuId, LocalDateTime autoStartTime, LocalDateTime autoEndTime);
+    boolean setMenuSchedule(String menuId, LocalDateTime autoStartTime, LocalDateTime autoEndTime);
 
     /**
      * 批量操作菜单
@@ -26,7 +26,7 @@ public interface MenuService extends IService<Menu> {
      * @param action 操作类型：activate/deactivate/delete
      * @return 是否操作成功
      */
-    boolean batchOperateMenus(List<Long> menuIds, String action);
+    boolean batchOperateMenus(List<String> menuIds, String action);
 
     /**
      * 审核"想吃列表"

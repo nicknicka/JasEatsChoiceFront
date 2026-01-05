@@ -23,7 +23,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     private WantToEatMapper wantToEatMapper;
 
     @Override
-    public boolean setMenuSchedule(Long menuId, LocalDateTime autoStartTime, LocalDateTime autoEndTime) {
+    public boolean setMenuSchedule(String menuId, LocalDateTime autoStartTime, LocalDateTime autoEndTime) {
         Menu menu = getById(menuId);
         if (menu == null) {
             return false;
@@ -34,7 +34,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     }
 
     @Override
-    public boolean batchOperateMenus(List<Long> menuIds, String action) {
+    public boolean batchOperateMenus(List<String> menuIds, String action) {
         Menu updateMenu = new Menu();
         switch (action) {
             case "activate":

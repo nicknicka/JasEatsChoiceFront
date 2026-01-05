@@ -29,8 +29,7 @@ public class MenuController {
     public ResponseResult<?> getMenusByMerchantId(@PathVariable Long merchantId) {
         LambdaQueryWrapper<Menu> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Menu::getMerchantId, merchantId.toString());
-        // 只显示激活状态的菜单，注意：这里数据库中存储的是"active"
-        queryWrapper.eq(Menu::getStatus, "active");
+        // 获取所有菜单，不区分状态
         List<Menu> menus = menuService.list(queryWrapper);
 
         // 将后端的状态转换为前端需要的格式
@@ -38,6 +37,7 @@ public class MenuController {
             if ("active".equals(menu.getStatus())) {
                 menu.setStatus("online");
             } else {
+                // 将inactive统一转换为offline（前端没有inactive状态）
                 menu.setStatus("offline");
             }
         });
@@ -49,7 +49,7 @@ public class MenuController {
      * 获取菜单详情
      */
     @GetMapping("/menus/{menuId}")
-    public ResponseResult<?> getMenuDetail(@PathVariable Long menuId) {
+    public ResponseResult<?> getMenuDetail(@PathVariable String menuId) {
         Menu menu = menuService.getById(menuId);
         if (menu != null) {
             return ResponseResult.success(menu);
@@ -61,7 +61,7 @@ public class MenuController {
      * 设置菜单自动上下架时间
      */
     @PutMapping("/merchants/{merchantId}/menu/{menuId}/schedule")
-    public ResponseResult<?> setMenuSchedule(@PathVariable Long merchantId, @PathVariable Long menuId, @RequestBody Map<String, Object> params) {
+    public ResponseResult<?> setMenuSchedule(@PathVariable Long merchantId, @PathVariable String menuId, @RequestBody Map<String, Object> params) {
         try {
             LocalDateTime autoStartTime = LocalDateTime.parse((String) params.get("autoStartTime"));
             LocalDateTime autoEndTime = LocalDateTime.parse((String) params.get("autoEndTime"));
@@ -80,7 +80,10 @@ public class MenuController {
      */
     @PostMapping("/merchants/{merchantId}/menu/batch")
     public ResponseResult<?> batchOperateMenus(@PathVariable Long merchantId, @RequestBody Map<String, Object> params) {
-        List<Long> menuIds = (List<Long>) params.get("menuIds");
+        // 将菜单ID转换为String类型
+        List<String> menuIds = ((List<?>) params.get("menuIds")).stream()
+            .map(Object::toString)
+            .collect(java.util.stream.Collectors.toList());
         String action = (String) params.get("action");
         boolean success = menuService.batchOperateMenus(menuIds, action);
         if (success) {

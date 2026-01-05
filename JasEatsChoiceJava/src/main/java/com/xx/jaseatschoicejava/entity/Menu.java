@@ -24,7 +24,7 @@ public class Menu {
 
     @TableId
     @ApiModelProperty(value = "菜单ID")
-    private Long id; // 菜单ID
+    private String id; // 菜单ID
 
     @TableField("merchant_id")
     @ApiModelProperty(value = "商家ID")
