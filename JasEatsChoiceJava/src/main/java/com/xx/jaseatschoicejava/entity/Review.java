@@ -18,8 +18,8 @@ public class Review {
     /**
      * 评价ID
      */
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private String id;
 
     /**
      * 用户ID
@@ -34,12 +34,12 @@ public class Review {
     /**
      * 订单ID
      */
-    private Long orderId;
+    private String orderId;
 
     /**
      * 菜品ID（可为空，表示对整个商家的评价）
      */
-    private Long dishId;
+    private String dishId;
 
     /**
      * 评价星级（1-5）

@@ -19,17 +19,17 @@ import lombok.AllArgsConstructor;
 @ApiModel(description = "菜单菜品关联实体")
 public class MenuDish {
 
-    @TableId
+    @TableId(type = com.baomidou.mybatisplus.annotation.IdType.ASSIGN_ID)
     @ApiModelProperty(value = "菜单菜品关联ID")
-    private Long id; // 菜单菜品关联ID
+    private String id; // 菜单菜品关联ID
 
     @TableField("menu_id")
     @ApiModelProperty(value = "菜单ID")
-    private Long menuId; // 菜单ID
+    private String menuId; // 菜单ID
 
     @TableField("dish_id")
     @ApiModelProperty(value = "菜品ID")
-    private Long dishId; // 菜品ID
+    private String dishId; // 菜品ID
 
     @TableField("sort")
     @ApiModelProperty(value = "排序")

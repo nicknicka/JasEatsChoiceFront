@@ -1,8 +1,13 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElDatePicker, ElSelect, ElOption, ElInput } from 'element-plus'
+import { ElMessage, ElTimePicker, ElSelect, ElOption, ElInput, ElMessageBox } from 'element-plus'
+import { CircleCheck, CirclePlus, CircleClose } from '@element-plus/icons-vue'
 import CommonBackButton from '../../components/common/CommonBackButton.vue'
+import axios from 'axios'
+import { API_CONFIG } from '../../config/index.js'
+import { useAuthStore } from '../../store/authStore'
+import dayjs from 'dayjs'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,10 +23,13 @@ const menuInfo = ref({
 
 // 菜单状态映射
 const menuStatusMap = {
-  online: { text: '🟢 上架中', type: 'success' },
-  draft: { text: '🟡 草稿', type: 'warning' },
-  offline: { text: '🔴 下架中', type: 'danger' }
+  online: { text: '上架中', type: 'success' },
+  draft: { text: '草稿', type: 'warning' },
+  offline: { text: '下架中', type: 'danger' }
 }
+
+// 加载状态
+const loading = ref(false)
 
 // 菜品列表
 const dishesList = ref([
@@ -33,63 +41,76 @@ const dishesList = ref([
 // 搜索关键词
 const searchKeyword = ref('')
 
-// 模拟所有菜单数据（与Menu.vue保持一致）
-const allMenus = ref([
-  {
-    id: 1,
-    name: '午餐菜单',
-    dishes: 12,
-    status: 'online',
-    updateTime: '2024-11-21 10:00',
-    autoOnline: '2024-11-22 11:00',
-    autoOffline: '2024-11-22 14:00',
-    description: '精选午餐菜品，营养美味'
-  },
-  {
-    id: 2,
-    name: '晚餐菜单',
-    dishes: 8,
-    status: 'offline',
-    updateTime: '2024-11-21 14:00',
-    autoOnline: '',
-    autoOffline: '',
-    description: '美味晚餐，让您回味无穷'
-  },
-  {
-    id: 3,
-    name: '夜宵菜单',
-    dishes: 5,
-    status: 'draft',
-    updateTime: '2024-11-20 22:00',
-    autoOnline: '',
-    autoOffline: '',
-    description: '深夜美食，满足您的味蕾'
-  }
-])
+// 菜品状态映射（与DishManagement.vue保持一致）
+const dishStatusMap = {
+  online: { text: '🟢 在售', type: 'success' },
+  almost_sold: { text: '🟡 即将售罄', type: 'warning' },
+  offline: { text: '🔴 下架', type: 'danger' }
+}
 
 // 页面加载
-onMounted(() => {
-  // 从路由参数获取菜单ID并加载菜单数据
-  const menuId = parseInt(route.query.menuId)
-  if (menuId) {
-    // 根据菜单ID查找菜单
-    const menu = allMenus.value.find((m) => m.id === menuId)
-    if (menu) {
-      // 更新菜单信息
-      menuInfo.value = {
-        name: menu.name,
-        description: menu.description || '',
-        autoOnline: menu.autoOnline,
-        autoOffline: menu.autoOffline,
-        status: menu.status
-      }
-      console.log('加载菜单:', menu)
+onMounted(async () => {
+  // 从路由参数获取菜单ID
+  const menuId = route.query.menuId
+  loading.value = true
+  if (!menuId) {
+    ElMessage.error('无效的菜单ID')
+    router.push('/merchant/home/menu')
+    return
+  }
+
+  try {
+    // 从authStore获取商家ID
+    const authStore = useAuthStore()
+    const merchantId = authStore.merchantId
+    if (!merchantId) {
+      ElMessage.error('未检测到商家ID，请重新登录')
+      router.push('/merchant/login')
+      return
     }
+
+    // 获取菜单详情
+    const menuResponse = await axios.get(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}`)
+    if (menuResponse.data && menuResponse.data.success) {
+      menuInfo.value = menuResponse.data.data
+      // 格式化时间
+      if (menuInfo.value.autoOnline) {
+        menuInfo.value.autoOnline = dayjs(menuInfo.value.autoOnline).format('HH:mm:ss')
+      }
+      if (menuInfo.value.autoOffline) {
+        menuInfo.value.autoOffline = dayjs(menuInfo.value.autoOffline).format('HH:mm:ss')
+      }
+    }
+
+    // 获取所有菜品数据
+    const dishesResponse = await axios.get(`${API_CONFIG.baseURL}${API_CONFIG.dish.list}`)
+    if (dishesResponse.data && dishesResponse.data.success) {
+      availableDishes.value = dishesResponse.data.data.map(dish => ({
+        ...dish,
+        statusText: dishStatusMap[dish.status] ? dishStatusMap[dish.status].text : '🔴 下架'
+      }))
+    }
+
+    // 获取菜单关联的菜品
+    const menuDishesResponse = await axios.get(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}/dishes`)
+    if (menuDishesResponse.data && menuDishesResponse.data.success) {
+      dishesList.value = menuDishesResponse.data.data.map(dish => ({
+        ...dish,
+        statusText: dishStatusMap[dish.status] ? dishStatusMap[dish.status].text : '🔴 下架'
+      }))
+    }
+  } catch (error) {
+    console.error('加载菜单数据失败:', error)
+    ElMessage.error('加载菜单数据失败')
+    router.push('/merchant/home/menu')
+  } finally {
+    loading.value = false
   }
 })
 
 // 保存菜单
-const saveMenu = (saveType) => {
+const saveMenu = async (saveType) => {
+  loading.value = true
   // 根据保存类型更新菜单状态
   switch (saveType) {
     case 'online':
@@ -103,12 +124,58 @@ const saveMenu = (saveType) => {
       break
   }
 
-  // 模拟保存
-  console.log('保存菜单:', menuInfo.value)
-  ElMessage.success('菜单保存成功')
+  // 表单验证
+  if (!menuInfo.value.name.trim()) {
+    ElMessage.warning('请填写菜单名称')
+    return
+  }
 
-  // 跳回菜单管理页面
-  router.push('/merchant/home/menu')
+  // 验证自动时间
+  if (menuInfo.value.autoOnline && menuInfo.value.autoOffline) {
+    const onlineTime = dayjs(menuInfo.value.autoOnline)
+    const offlineTime = dayjs(menuInfo.value.autoOffline)
+    if (offlineTime.isBefore(onlineTime)) {
+      ElMessage.warning('自动下架时间必须晚于自动上架时间')
+      return
+    }
+  }
+
+  try {
+    // 从authStore获取商家ID
+    const authStore = useAuthStore()
+    const merchantId = authStore.merchantId
+    if (!merchantId) {
+      ElMessage.error('未检测到商家ID，请重新登录')
+      router.push('/merchant/login')
+      return
+    }
+
+    // 从路由参数获取菜单ID
+    const menuId = route.query.menuId
+    if (!menuId) {
+      ElMessage.error('无效的菜单ID')
+      router.push('/merchant/home/menu')
+      return
+    }
+
+    // 准备保存的数据
+    const saveData = {
+      ...menuInfo.value,
+      dishes: dishesList.value.map(dish => dish.id) // 只保存菜品ID
+    }
+
+    // 更新菜单
+    await axios.put(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}`, saveData)
+    ElMessage.success('菜单保存成功')
+
+    // 跳回菜单管理页面
+    router.push('/merchant/home/menu')
+  } catch (error) {
+    console.error('保存菜单失败:', error)
+    ElMessage.error('保存菜单失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 移除菜品
@@ -120,17 +187,19 @@ const removeDish = (dish) => {
   }
 }
 
-// 模拟可用菜品数据
-const availableDishes = ref([
-  { id: 1, name: '麻辣香锅饭', price: 18, status: 'online', statusText: '🟢 在售' },
-  { id: 2, name: '鱼香肉丝面', price: 16, status: 'online', statusText: '🟢 在售' },
-  { id: 3, name: '宫保鸡丁饭', price: 18, status: 'almost_sold', statusText: '🟡 即将售罄' },
-  { id: 4, name: '酸辣汤', price: 8, status: 'online', statusText: '🟢 在售' },
-  { id: 5, name: '可乐', price: 3, status: 'offline', statusText: '🔴 下架' },
-  { id: 6, name: '红烧肉饭', price: 20, status: 'online', statusText: '🟢 在售' },
-  { id: 7, name: '炒青菜', price: 10, status: 'online', statusText: '🟢 在售' },
-  { id: 8, name: '番茄鸡蛋面', price: 15, status: 'online', statusText: '🟢 在售' }
-])
+// 可用菜品数据
+const availableDishes = ref([])
+
+// 过滤后的可用菜品（用于搜索）
+const filteredAvailableDishes = computed(() => {
+  if (!searchKeyword.value) {
+    return availableDishes.value
+  }
+  const keyword = searchKeyword.value.toLowerCase()
+  return availableDishes.value.filter(dish => {
+    return dish.name.toLowerCase().includes(keyword) || dish.description?.toLowerCase().includes(keyword) || dish.category?.toLowerCase().includes(keyword)
+  })
+})
 
 // 添加菜品对话框
 const showAddDishDialog = ref(false)
@@ -155,6 +224,32 @@ const addDish = () => {
     showAddDishDialog.value = false
     selectedDish.value = null
   }
+}
+
+// 设置自动上架时间为当前时间 + 1小时
+const setAutoOnlineTime = () => {
+  menuInfo.value.autoOnline = dayjs().add(1, 'hour').format('HH:mm:ss')
+}
+
+// 设置自动下架时间为当前时间 + 3小时
+const setAutoOfflineTime = () => {
+  menuInfo.value.autoOffline = dayjs().add(3, 'hour').format('HH:mm:ss')
+}
+
+// 处理取消编辑
+const handleCancelEdit = () => {
+  ElMessageBox.confirm('确定要取消编辑吗？未保存的更改将丢失。', '提示', {
+    confirmButtonText: '确定取消',
+    cancelButtonText: '继续编辑',
+    type: 'warning'
+  })
+    .then(() => {
+      // 导航回菜单管理页面
+      router.push('/merchant/home/menu')
+    })
+    .catch(() => {
+      // 用户取消了取消操作，继续编辑
+    })
 }
 
 // 批量关联菜品
@@ -190,10 +285,15 @@ const batchAssociateDishes = () => {
 </script>
 
 <template>
-  <div class="menu-edit-container">
+  <div class="menu-edit-container" v-loading="loading">
     <div class="menu-edit-header">
       <div class="header-left">
-        <CommonBackButton type="text" text="取消编辑" />
+        <CommonBackButton
+          type="text"
+          text="取消编辑"
+          :useRouterBack="false"
+          @click="handleCancelEdit"
+        />
         <h3 class="page-title">【菜单编辑】</h3>
       </div>
     </div>
@@ -216,23 +316,27 @@ const batchAssociateDishes = () => {
         </div>
         <div class="info-item">
           <span class="info-label">📅 自动上架时间：</span>
-          <el-date-picker
+          <el-time-picker
             v-model="menuInfo.autoOnline"
-            type="datetime"
+            type="fixed-time"
+            format="HH:mm:ss"
+            value-format="HH:mm:ss"
             placeholder="选择自动上架时间"
             style="width: 200px"
           />
-          <el-button type="text" size="small">⏰ 设置</el-button>
+          <el-button type="text" size="small" @click="setAutoOnlineTime">⏰ 设置</el-button>
         </div>
         <div class="info-item">
           <span class="info-label">📅 自动下架时间：</span>
-          <el-date-picker
+          <el-time-picker
             v-model="menuInfo.autoOffline"
-            type="datetime"
+            type="fixed-time"
+            format="HH:mm:ss"
+            value-format="HH:mm:ss"
             placeholder="选择自动下架时间"
             style="width: 200px"
           />
-          <el-button type="text" size="small">⏰ 设置</el-button>
+          <el-button type="text" size="small" @click="setAutoOfflineTime">⏰ 设置</el-button>
         </div>
         <div class="info-item">
           <span class="info-label">📋 菜单状态：</span>
@@ -240,9 +344,17 @@ const batchAssociateDishes = () => {
             <el-option
               v-for="(status, key) in menuStatusMap"
               :key="key"
-              :label="status.text"
               :value="key"
-            />
+            >
+              <template #label>
+                <el-icon>
+                  <CircleCheck v-if="key === 'online'" />
+                  <CirclePlus v-else-if="key === 'draft'" />
+                  <CircleClose v-else />
+                </el-icon>
+                {{ status.text }}
+              </template>
+            </el-option>
           </el-select>
         </div>
       </div>
@@ -276,9 +388,9 @@ const batchAssociateDishes = () => {
 
       <!-- 操作按钮 -->
       <div class="action-buttons">
-        <el-button type="success" @click="saveMenu('online')">💾 保存菜单并上架</el-button>
-        <el-button type="warning" @click="saveMenu('offline')">💾 保存菜单并下架</el-button>
-        <el-button type="info" @click="saveMenu('draft')">💾 保存为草稿</el-button>
+        <el-button type="success" @click="saveMenu('online')">保存菜单并上架</el-button>
+        <el-button type="warning" @click="saveMenu('offline')">保存菜单并下架</el-button>
+        <el-button type="info" @click="saveMenu('draft')">保存为草稿</el-button>
       </div>
 
       <!-- 添加菜品对话框 -->
@@ -292,7 +404,7 @@ const batchAssociateDishes = () => {
             clearable
           >
             <el-option
-              v-for="dish in availableDishes"
+              v-for="dish in filteredAvailableDishes"
               :key="dish.id"
               :label="`${dish.name} - ¥${dish.price} ${dish.statusText}`"
               :value="dish"
@@ -321,7 +433,7 @@ const batchAssociateDishes = () => {
             collapse-tags-tooltip
           >
             <el-option
-              v-for="dish in availableDishes"
+              v-for="dish in filteredAvailableDishes"
               :key="dish.id"
               :label="`${dish.name} - ¥${dish.price} ${dish.statusText}`"
               :value="dish"
@@ -416,7 +528,9 @@ const batchAssociateDishes = () => {
 
     .action-buttons {
       display: flex;
-      gap: 12px;
+      gap: 16px;
+      margin-top: 24px;
+      justify-content: flex-end;
     }
   }
 }

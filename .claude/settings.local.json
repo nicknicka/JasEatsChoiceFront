@@ -313,7 +313,8 @@
       "Bash(__NEW_LINE__ git add JasEatsChoiceFront/src/renderer/src/views/user/Orders.vue JasEatsChoiceFront/src/renderer/src/views/user/OrderDetail.vue)",
       "Bash(npx vite optimize)",
       "Bash(./mvnw clean spring-boot:run:*)",
-      "Bash(./JasEatsChoiceFront/node_modules/.bin/electron:*)"
+      "Bash(./JasEatsChoiceFront/node_modules/.bin/electron:*)",
+      "Bash(read:*)"
     ],
     "deny": [],
     "ask": []

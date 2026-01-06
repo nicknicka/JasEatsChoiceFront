@@ -21,9 +21,9 @@ import java.math.BigDecimal;
 @ApiModel(description = "订单菜品实体")
 public class OrderDish {
 
-    @TableId
+    @TableId(type = com.baomidou.mybatisplus.annotation.IdType.ASSIGN_ID)
     @ApiModelProperty(value = "订单菜品ID")
-    private Long id; // 订单菜品ID
+    private String id; // 订单菜品ID
 
     @TableField("order_id")
     @ApiModelProperty(value = "订单ID")
@@ -31,7 +31,7 @@ public class OrderDish {
 
     @TableField("dish_id")
     @ApiModelProperty(value = "菜品ID")
-    private Long dishId; // 菜品ID
+    private String dishId; // 菜品ID
 
     @TableField("quantity")
     @ApiModelProperty(value = "菜品数量")

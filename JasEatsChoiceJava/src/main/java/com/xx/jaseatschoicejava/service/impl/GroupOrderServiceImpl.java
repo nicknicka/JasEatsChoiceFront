@@ -58,7 +58,7 @@ public class GroupOrderServiceImpl extends ServiceImpl<GroupOrderMapper, GroupOr
     }
 
     @Override
-    public List<GroupOrder> getGroupOrdersByGroupId(Long groupId, Integer status, Integer page, Integer size) {
+    public List<GroupOrder> getGroupOrdersByGroupId(String groupId, Integer status, Integer page, Integer size) {
         LambdaQueryWrapper<GroupOrder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(GroupOrder::getGroupId, groupId);
 
@@ -78,12 +78,12 @@ public class GroupOrderServiceImpl extends ServiceImpl<GroupOrderMapper, GroupOr
     }
 
     @Override
-    public GroupOrder getGroupOrderDetail(Long groupOrderId) {
+    public GroupOrder getGroupOrderDetail(String groupOrderId) {
         return getById(groupOrderId);
     }
 
     @Override
-    public List<GroupOrderDish> getGroupOrderDishes(Long groupOrderId) {
+    public List<GroupOrderDish> getGroupOrderDishes(String groupOrderId) {
         LambdaQueryWrapper<GroupOrderDish> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(GroupOrderDish::getGroupOrderId, groupOrderId);
         return groupOrderDishMapper.selectList(queryWrapper);

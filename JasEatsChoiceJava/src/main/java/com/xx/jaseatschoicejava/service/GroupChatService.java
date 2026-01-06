@@ -10,5 +10,5 @@ public interface GroupChatService {
      * @param message 消息内容
      * @return 是否发送成功
      */
-    boolean sendMessage(Long groupId, String message);
+    boolean sendMessage(String groupId, String message);
 }

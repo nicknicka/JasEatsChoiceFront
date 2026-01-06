@@ -13,28 +13,28 @@ import java.time.LocalDateTime;
 @Data
 @TableName("t_group_order")
 public class GroupOrder {
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private String id;
 
     /**
      * 群订单发起者ID
      */
-    private Long initiatorId;
+    private String initiatorId;
 
     /**
      * 商家ID
      */
-    private Long merchantId;
+    private String merchantId;
 
     /**
      * 群ID
      */
-    private Long groupId;
+    private String groupId;
 
     /**
      * 地址ID
      */
-    private Long addressId;
+    private String addressId;
 
     /**
      * 订单备注

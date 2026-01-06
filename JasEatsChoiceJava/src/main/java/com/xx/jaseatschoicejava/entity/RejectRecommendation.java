@@ -15,18 +15,18 @@ public class RejectRecommendation {
     /**
      * 主键ID
      */
-    @TableId
-    private Long id;
+    @TableId(type = com.baomidou.mybatisplus.annotation.IdType.ASSIGN_ID)
+    private String id;
 
     /**
      * 用户ID
      */
-    private Long userId;
+    private String userId;
 
     /**
      * 菜品ID
      */
-    private Long dishId;
+    private String dishId;
 
     /**
      * 拒绝时间

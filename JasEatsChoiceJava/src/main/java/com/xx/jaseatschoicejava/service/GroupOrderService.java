@@ -24,19 +24,19 @@ public interface GroupOrderService extends IService<GroupOrder> {
      * @param groupId 群ID
      * @return 群订单列表
      */
-    List<GroupOrder> getGroupOrdersByGroupId(Long groupId, Integer status, Integer page, Integer size);
+    List<GroupOrder> getGroupOrdersByGroupId(String groupId, Integer status, Integer page, Integer size);
 
     /**
      * 根据群订单ID获取群订单详情
      * @param groupOrderId 群订单ID
      * @return 群订单详情
      */
-    GroupOrder getGroupOrderDetail(Long groupOrderId);
+    GroupOrder getGroupOrderDetail(String groupOrderId);
 
     /**
      * 根据群订单ID获取菜品列表
      * @param groupOrderId 群订单ID
      * @return 菜品列表
      */
-    List<GroupOrderDish> getGroupOrderDishes(Long groupOrderId);
+    List<GroupOrderDish> getGroupOrderDishes(String groupOrderId);
 }

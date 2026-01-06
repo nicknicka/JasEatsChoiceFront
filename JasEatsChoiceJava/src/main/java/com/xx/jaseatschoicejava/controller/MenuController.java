@@ -3,7 +3,9 @@ package com.xx.jaseatschoicejava.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.Menu;
+import com.xx.jaseatschoicejava.entity.MenuDish;
 import com.xx.jaseatschoicejava.service.MenuService;
+import com.xx.jaseatschoicejava.service.MenuDishService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +23,9 @@ public class MenuController {
 
     @Autowired
     private MenuService menuService;
+
+    @Autowired
+    private MenuDishService menuDishService;
 
     /**
      * 根据商家ID获取菜单列表
@@ -48,13 +53,45 @@ public class MenuController {
     /**
      * 获取菜单详情
      */
-    @GetMapping("/menus/{menuId}")
+    @GetMapping("/{menuId}")
     public ResponseResult<?> getMenuDetail(@PathVariable String menuId) {
         Menu menu = menuService.getById(menuId);
         if (menu != null) {
             return ResponseResult.success(menu);
         }
         return ResponseResult.fail("404", "菜单不存在");
+    }
+
+    /**
+     * 获取菜单详情（根据商家ID和菜单ID）
+     */
+    @GetMapping("/merchants/{merchantId}/menu/{menuId}")
+    public ResponseResult<?> getMenuDetailByMerchant(@PathVariable Long merchantId, @PathVariable String menuId) {
+        Menu menu = menuService.getById(menuId);
+        // 验证菜单是否属于该商家
+        if (menu != null && merchantId.toString().equals(menu.getMerchantId())) {
+            return ResponseResult.success(menu);
+        }
+        return ResponseResult.fail("404", "菜单不存在");
+    }
+
+    /**
+     * 获取菜单关联的菜品列表
+     */
+    @GetMapping("/merchants/{merchantId}/menu/{menuId}/dishes")
+    public ResponseResult<?> getMenuDishes(@PathVariable Long merchantId, @PathVariable String menuId) {
+        // 首先验证菜单是否属于该商家
+        Menu menu = menuService.getById(menuId);
+        if (menu == null || !merchantId.toString().equals(menu.getMerchantId())) {
+            return ResponseResult.fail("404", "菜单不存在");
+        }
+
+        // 查询该菜单下的所有菜品关联
+        LambdaQueryWrapper<MenuDish> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(MenuDish::getMenuId, menuId);
+        List<MenuDish> menuDishes = menuDishService.list(queryWrapper);
+
+        return ResponseResult.success(menuDishes);
     }
 
     /**

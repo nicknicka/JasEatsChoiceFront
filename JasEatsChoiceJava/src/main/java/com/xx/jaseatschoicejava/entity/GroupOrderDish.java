@@ -11,18 +11,18 @@ import lombok.Data;
 @Data
 @TableName("t_group_order_dish")
 public class GroupOrderDish {
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private String id;
 
     /**
      * 群订单ID
      */
-    private Long groupOrderId;
+    private String groupOrderId;
 
     /**
      * 菜品ID
      */
-    private Long dishId;
+    private String dishId;
 
     /**
      * 数量
@@ -37,5 +37,5 @@ public class GroupOrderDish {
     /**
      * 用户ID
      */
-    private Long userId;
+    private String userId;
 }

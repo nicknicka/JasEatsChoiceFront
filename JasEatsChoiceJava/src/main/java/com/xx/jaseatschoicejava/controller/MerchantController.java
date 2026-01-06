@@ -657,13 +657,13 @@ public class MerchantController {
                 List<OrderDish> orderDishes = orderDishService.list(orderDishQuery);
 
                 // 按菜品ID分组，统计销量
-                Map<Long, Integer> dishSalesMap = orderDishes.stream()
+                Map<String, Integer> dishSalesMap = orderDishes.stream()
                                                             .collect(Collectors.groupingBy(OrderDish::getDishId,
                                                                                          Collectors.summingInt(OrderDish::getQuantity)));
 
                 // 获取菜品信息并计算销售额
-                for (Map.Entry<Long, Integer> entry : dishSalesMap.entrySet()) {
-                    Long dishId = entry.getKey();
+                for (Map.Entry<String, Integer> entry : dishSalesMap.entrySet()) {
+                    String dishId = entry.getKey();
                     int sales = entry.getValue();
 
                     Dish dish = dishService.getById(dishId);

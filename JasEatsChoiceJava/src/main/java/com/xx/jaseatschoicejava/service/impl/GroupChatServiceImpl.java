@@ -26,12 +26,12 @@ public class GroupChatServiceImpl implements GroupChatService {
     }
 
     @Override
-    public boolean sendMessage(Long groupId, String message) {
+    public boolean sendMessage(String groupId, String message) {
         try {
             // 创建群聊消息
             ChatMsg chatMsg = new ChatMsg();
             chatMsg.setFromId(0L); // 系统消息，fromId设为0
-            chatMsg.setToId(groupId); // 接收者为群ID
+            chatMsg.setToId(Long.valueOf(groupId)); // 接收者为群ID
             chatMsg.setMsgType(MsgType.ORDER_SYNC.getValue()); // 订单同步消息类型
             chatMsg.setContent(message);
             chatMsg.setReadStatus(false); // 初始为未读

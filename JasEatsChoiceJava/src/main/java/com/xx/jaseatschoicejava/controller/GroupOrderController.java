@@ -36,10 +36,10 @@ public class GroupOrderController {
         try {
             // 解析群订单信息
             GroupOrder groupOrder = new GroupOrder();
-            groupOrder.setInitiatorId(Long.valueOf(request.get("initiatorId").toString()));
-            groupOrder.setMerchantId(Long.valueOf(request.get("merchantId").toString()));
-            groupOrder.setGroupId(Long.valueOf(request.get("groupId").toString()));
-            groupOrder.setAddressId(Long.valueOf(request.get("addressId").toString()));
+            groupOrder.setInitiatorId(request.get("initiatorId").toString());
+            groupOrder.setMerchantId(request.get("merchantId").toString());
+            groupOrder.setGroupId(request.get("groupId").toString());
+            groupOrder.setAddressId(request.get("addressId").toString());
             groupOrder.setRemark((String) request.get("remark"));
 
             // 解析菜品列表 - 添加@SuppressWarnings消除未检查转换警告
@@ -48,10 +48,10 @@ public class GroupOrderController {
             List<GroupOrderDish> dishItems = dishItemsMap.stream()
                     .map(item -> {
                         GroupOrderDish dish = new GroupOrderDish();
-                        dish.setDishId(Long.valueOf(item.get("dishId").toString()));
+                        dish.setDishId(item.get("dishId").toString());
                         dish.setQuantity(Integer.valueOf(item.get("quantity").toString()));
                         dish.setCustomization((String) item.get("customization"));
-                        dish.setUserId(Long.valueOf(item.get("userId").toString()));
+                        dish.setUserId(item.get("userId").toString());
                         return dish;
                     }).toList();
 
@@ -71,7 +71,7 @@ public class GroupOrderController {
      * 获取群订单列表
      */
     @GetMapping("/groups/{groupId}/orders")
-    public ResponseResult<?> getGroupOrders(@PathVariable Long groupId,
+    public ResponseResult<?> getGroupOrders(@PathVariable String groupId,
                                            @RequestParam(required = false) Integer status,
                                            @RequestParam(defaultValue = "1") Integer page,
                                            @RequestParam(defaultValue = "10") Integer size) {
@@ -84,7 +84,7 @@ public class GroupOrderController {
      * 获取群订单详情
      */
     @GetMapping("/group-orders/{groupOrderId}")
-    public ResponseResult<?> getGroupOrderDetail(@PathVariable Long groupOrderId) {
+    public ResponseResult<?> getGroupOrderDetail(@PathVariable String groupOrderId) {
         GroupOrder groupOrder = groupOrderService.getGroupOrderDetail(groupOrderId);
         if (groupOrder != null) {
             // 获取菜品列表
@@ -102,7 +102,7 @@ public class GroupOrderController {
      * 同步群订单消息
      */
     @PostMapping("/group-orders/{groupOrderId}/sync-message")
-    public ResponseResult<?> syncGroupOrderMessage(@PathVariable Long groupOrderId, @RequestBody Map<String, Object> params) {
+    public ResponseResult<?> syncGroupOrderMessage(@PathVariable String groupOrderId, @RequestBody Map<String, Object> params) {
         // 获取消息内容
         String message = (String) params.get("message");
         if (message == null || message.trim().isEmpty()) {

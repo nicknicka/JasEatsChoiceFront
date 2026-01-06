@@ -14,8 +14,57 @@ const dishInfo = ref({
   price: 18,
   status: 'online', // online: 在售, almost_sold: 即将售罄, offline: 下架
   stock: 50,
-  description: '精选食材，麻辣鲜香，回味无穷'
+  description: '精选食材，麻辣鲜香，回味无穷',
+  ingredients: {
+    mandatory: [], // 必选食材改为字符串数组
+    optional: [] // 可选食材改为字符串数组
+  },
+  totalCalories: 0 // 总卡路里
 })
+
+// 新必选食材输入
+const newMandatoryIngredient = ref('')
+
+// 新可选食材输入
+const newOptionalIngredient = ref('')
+
+// 添加必选食材
+const addMandatoryIngredient = () => {
+  if (newMandatoryIngredient.value.trim()) {
+    dishInfo.value.ingredients.mandatory.push(newMandatoryIngredient.value.trim())
+    newMandatoryIngredient.value = ''
+    calculateTotalCalories()
+  }
+}
+
+// 添加可选食材
+const addOptionalIngredient = () => {
+  if (newOptionalIngredient.value.trim()) {
+    dishInfo.value.ingredients.optional.push(newOptionalIngredient.value.trim())
+    newOptionalIngredient.value = ''
+    calculateTotalCalories()
+  }
+}
+
+// 删除必选食材
+const removeMandatoryIngredient = (index) => {
+  dishInfo.value.ingredients.mandatory.splice(index, 1)
+  calculateTotalCalories()
+}
+
+// 删除可选食材
+const removeOptionalIngredient = (index) => {
+  dishInfo.value.ingredients.optional.splice(index, 1)
+  calculateTotalCalories()
+}
+
+// 计算总卡路里
+const calculateTotalCalories = () => {
+  // 由于改为直接输入食材名称，暂时简化卡路里计算
+  // 实际项目中可以根据食材名称匹配数据库中的卡路里数据
+  // 或添加输入框让商家直接输入卡路里
+  dishInfo.value.totalCalories = 0
+}
 
 // 菜品分类选项
 const categories = ['主食', '汤品', '饮料', '小吃']
@@ -124,6 +173,74 @@ const handleUpload = (file) => {
             :rows="4"
           />
         </div>
+
+        <!-- 必选食材 -->
+        <div class="info-item">
+          <span class="info-label">🔑 必选食材：</span>
+          <div class="optional-ingredients-container">
+            <el-input
+              v-model="newMandatoryIngredient"
+              style="width: calc(300px - 80px); margin-right: 8px"
+              placeholder="请输入必选食材"
+            />
+            <el-button
+              type="primary"
+              size="small"
+              @click="addMandatoryIngredient"
+            >
+              添加
+            </el-button>
+            <div class="ingredients-tags">
+              <el-tag
+                v-for="(ingredient, index) in dishInfo.ingredients.mandatory"
+                :key="index"
+                type="danger"
+                size="small"
+                closable
+                @close="removeMandatoryIngredient(index)"
+              >
+                {{ ingredient }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+
+        <!-- 可选食材 -->
+        <div class="info-item">
+          <span class="info-label">🔧 可选食材：</span>
+          <div class="optional-ingredients-container">
+            <el-input
+              v-model="newOptionalIngredient"
+              style="width: calc(300px - 80px); margin-right: 8px"
+              placeholder="请输入可选食材"
+            />
+            <el-button
+              type="primary"
+              size="small"
+              @click="addOptionalIngredient"
+            >
+              添加
+            </el-button>
+            <div class="ingredients-tags">
+              <el-tag
+                v-for="(ingredient, index) in dishInfo.ingredients.optional"
+                :key="index"
+                type="info"
+                size="small"
+                closable
+                @close="removeOptionalIngredient(index)"
+              >
+                {{ ingredient }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+
+        <!-- 总卡路里 -->
+        <div class="info-item">
+          <span class="info-label">🔥 总卡路里：</span>
+          <div class="calorie-display">{{ dishInfo.totalCalories }} kcal</div>
+        </div>
       </div>
 
       <!-- 操作按钮 -->
@@ -190,4 +307,29 @@ const handleUpload = (file) => {
     }
   }
 }
+  .calorie-display {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f56c6c;
+  }
+
+  .optional-ingredients-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 300px;
+
+    .ingredients-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+  }
+</style>
+      .action-buttons {
+        display: flex;
+        gap: 12px;
+      }
+    }
+  }
 </style>

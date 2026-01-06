@@ -26,7 +26,7 @@ public class DishController {
     @GetMapping
     public ResponseResult<?> getDishes(@RequestParam(required = false) String category,
                                       @RequestParam(required = false) String keyword,
-                                      @RequestParam(required = false) Long merchantId) {
+                                      @RequestParam(required = false) String merchantId) {
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
         if (category != null) {
             queryWrapper.eq(Dish::getCategory, category);
@@ -47,7 +47,7 @@ public class DishController {
      * 获取菜品详情
      */
     @GetMapping("/{dishId}")
-    public ResponseResult<?> getDishDetail(@PathVariable Long dishId) {
+    public ResponseResult<?> getDishDetail(@PathVariable String dishId) {
         Dish dish = dishService.getById(dishId);
         if (dish == null) {
             throw new BusinessException("404", "菜品不存在");

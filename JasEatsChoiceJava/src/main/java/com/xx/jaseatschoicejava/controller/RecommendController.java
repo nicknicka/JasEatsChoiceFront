@@ -306,9 +306,9 @@ public class RecommendController {
      * 记录推荐拒绝行为
      */
     @PostMapping("/recommend/{userId}/reject")
-    public ResponseResult<?> recordRejectBehavior(@PathVariable Long userId, @RequestBody Map<String, Object> params) {
+    public ResponseResult<?> recordRejectBehavior(@PathVariable String userId, @RequestBody Map<String, Object> params) {
         // 获取被拒绝的菜品ID
-        Long dishId = (Long) params.get("dishId");
+        String dishId = (String) params.get("dishId");
         if (dishId == null) {
             return ResponseResult.fail("400", "请提供被拒绝的菜品ID");
         }
