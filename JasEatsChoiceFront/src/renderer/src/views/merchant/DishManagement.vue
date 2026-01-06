@@ -325,18 +325,30 @@ const newDish = ref({
 // 添加必选食材
 const addMandatoryIngredient = () => {
   if (newMandatoryIngredient.value.trim()) {
-    newDish.value.ingredients.mandatory.push(newMandatoryIngredient.value.trim())
-    newMandatoryIngredient.value = ''
-    calculateTotalCalories()
+    const ingredient = newMandatoryIngredient.value.trim()
+    // 检查重复
+    if (!newDish.value.ingredients.mandatory.includes(ingredient)) {
+      newDish.value.ingredients.mandatory.push(ingredient)
+      newMandatoryIngredient.value = ''
+      calculateTotalCalories()
+    } else {
+      ElMessage.warning('该必选食材已存在')
+    }
   }
 }
 
 // 添加可选食材
 const addOptionalIngredient = () => {
   if (newOptionalIngredient.value.trim()) {
-    newDish.value.ingredients.optional.push(newOptionalIngredient.value.trim())
-    newOptionalIngredient.value = ''
-    calculateTotalCalories()
+    const ingredient = newOptionalIngredient.value.trim()
+    // 检查重复
+    if (!newDish.value.ingredients.optional.includes(ingredient)) {
+      newDish.value.ingredients.optional.push(ingredient)
+      newOptionalIngredient.value = ''
+      calculateTotalCalories()
+    } else {
+      ElMessage.warning('该可选食材已存在')
+    }
   }
 }
 
@@ -381,18 +393,30 @@ const editNewOptionalIngredient = ref('')
 // 添加必选食材（编辑时使用）
 const editAddMandatoryIngredient = () => {
   if (editNewMandatoryIngredient.value.trim()) {
-    editDishForm.value.ingredients.mandatory.push(editNewMandatoryIngredient.value.trim())
-    editNewMandatoryIngredient.value = ''
-    calculateEditTotalCalories()
+    const ingredient = editNewMandatoryIngredient.value.trim()
+    // 检查重复
+    if (!editDishForm.value.ingredients.mandatory.includes(ingredient)) {
+      editDishForm.value.ingredients.mandatory.push(ingredient)
+      editNewMandatoryIngredient.value = ''
+      calculateEditTotalCalories()
+    } else {
+      ElMessage.warning('该必选食材已存在')
+    }
   }
 }
 
 // 添加可选食材（编辑时使用）
 const editAddOptionalIngredient = () => {
   if (editNewOptionalIngredient.value.trim()) {
-    editDishForm.value.ingredients.optional.push(editNewOptionalIngredient.value.trim())
-    editNewOptionalIngredient.value = ''
-    calculateEditTotalCalories()
+    const ingredient = editNewOptionalIngredient.value.trim()
+    // 检查重复
+    if (!editDishForm.value.ingredients.optional.includes(ingredient)) {
+      editDishForm.value.ingredients.optional.push(ingredient)
+      editNewOptionalIngredient.value = ''
+      calculateEditTotalCalories()
+    } else {
+      ElMessage.warning('该可选食材已存在')
+    }
   }
 }
 
@@ -410,11 +434,14 @@ const editRemoveOptionalIngredient = (index) => {
 
 // 打开编辑菜品对话框
 const openEditDishDialog = (dish) => {
-  // 复制菜品数据到编辑表单，确保包含食材信息
+  // 复制菜品数据到编辑表单，确保包含食材信息且为数组
   editDishForm.value = JSON.parse(
     JSON.stringify({
       ...dish,
-      ingredients: dish.ingredients || { mandatory: null, optional: [] },
+      ingredients: {
+        mandatory: Array.isArray(dish.ingredients?.mandatory) ? dish.ingredients.mandatory : [],
+        optional: Array.isArray(dish.ingredients?.optional) ? dish.ingredients.optional : []
+      },
       totalCalories: dish.totalCalories || 0
     })
   )
@@ -716,17 +743,22 @@ const getDishCheckedState = (dish) => {
         <!-- 必选食材 -->
         <el-form-item label="必选食材" required>
           <div class="optional-ingredients-container">
-            <el-input
-              v-model="newMandatoryIngredient"
-              style="width: calc(100% - 100px); margin-right: 10px"
-              placeholder="请输入必选食材"
-            />
-            <el-button
-              type="primary"
-              @click="addMandatoryIngredient"
-            >
-              添加
-            </el-button>
+            <div class="input-button-row">
+              <el-input
+                v-model="newMandatoryIngredient"
+                placeholder="请输入必选食材"
+                @keyup.enter="addMandatoryIngredient"
+                clearable
+                style="width: calc(300px - 80px)"
+              />
+              <el-button
+                type="primary"
+                @click="addMandatoryIngredient"
+                style="margin-left: 10px"
+              >
+                添加
+              </el-button>
+            </div>
             <div class="ingredients-tags">
               <el-tag
                 v-for="(ingredient, index) in newDish.ingredients.mandatory"
@@ -744,17 +776,22 @@ const getDishCheckedState = (dish) => {
         <!-- 可选食材 -->
         <el-form-item label="可选食材">
           <div class="optional-ingredients-container">
-            <el-input
-              v-model="newOptionalIngredient"
-              style="width: calc(100% - 100px); margin-right: 10px"
-              placeholder="请输入可选食材"
-            />
-            <el-button
-              type="primary"
-              @click="addOptionalIngredient"
-            >
-              添加
-            </el-button>
+            <div class="input-button-row">
+              <el-input
+                v-model="newOptionalIngredient"
+                placeholder="请输入可选食材"
+                @keyup.enter="addOptionalIngredient"
+                clearable
+                style="width: calc(300px - 80px)"
+              />
+              <el-button
+                type="primary"
+                @click="addOptionalIngredient"
+                style="margin-left: 10px"
+              >
+                添加
+              </el-button>
+            </div>
             <div class="ingredients-tags">
               <el-tag
                 v-for="(ingredient, index) in newDish.ingredients.optional"
@@ -817,17 +854,22 @@ const getDishCheckedState = (dish) => {
         <!-- 必选食材 -->
         <el-form-item label="必选食材">
           <div class="optional-ingredients-container">
-            <el-input
-              v-model="editNewMandatoryIngredient"
-              style="width: calc(100% - 100px); margin-right: 10px"
-              placeholder="请输入必选食材"
-            />
-            <el-button
-              type="primary"
-              @click="editAddMandatoryIngredient"
-            >
-              添加
-            </el-button>
+            <div class="input-button-row">
+              <el-input
+                v-model="editNewMandatoryIngredient"
+                placeholder="请输入必选食材"
+                @keyup.enter="editAddMandatoryIngredient"
+                clearable
+                style="width: calc(300px - 80px)"
+              />
+              <el-button
+                type="primary"
+                @click="editAddMandatoryIngredient"
+                style="margin-left: 10px"
+              >
+                添加
+              </el-button>
+            </div>
             <div class="ingredients-tags">
               <el-tag
                 v-for="(ingredient, index) in editDishForm.ingredients.mandatory"
@@ -845,17 +887,22 @@ const getDishCheckedState = (dish) => {
         <!-- 可选食材 -->
         <el-form-item label="可选食材">
           <div class="optional-ingredients-container">
-            <el-input
-              v-model="editNewOptionalIngredient"
-              style="width: calc(100% - 100px); margin-right: 10px"
-              placeholder="请输入可选食材"
-            />
-            <el-button
-              type="primary"
-              @click="editAddOptionalIngredient"
-            >
-              添加
-            </el-button>
+            <div class="input-button-row">
+              <el-input
+                v-model="editNewOptionalIngredient"
+                placeholder="请输入可选食材"
+                @keyup.enter="editAddOptionalIngredient"
+                clearable
+                style="width: calc(300px - 80px)"
+              />
+              <el-button
+                type="primary"
+                @click="editAddOptionalIngredient"
+                style="margin-left: 10px"
+              >
+                添加
+              </el-button>
+            </div>
             <div class="ingredients-tags">
               <el-tag
                 v-for="(ingredient, index) in editDishForm.ingredients.optional"
@@ -896,6 +943,12 @@ const getDishCheckedState = (dish) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 300px;
+
+  .input-button-row {
+    display: flex;
+    align-items: center;
+  }
 
   .ingredients-tags {
     display: flex;

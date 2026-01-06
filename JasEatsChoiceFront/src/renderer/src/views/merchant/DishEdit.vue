@@ -31,18 +31,30 @@ const newOptionalIngredient = ref('')
 // 添加必选食材
 const addMandatoryIngredient = () => {
   if (newMandatoryIngredient.value.trim()) {
-    dishInfo.value.ingredients.mandatory.push(newMandatoryIngredient.value.trim())
-    newMandatoryIngredient.value = ''
-    calculateTotalCalories()
+    const ingredient = newMandatoryIngredient.value.trim()
+    // 检查重复
+    if (!dishInfo.value.ingredients.mandatory.includes(ingredient)) {
+      dishInfo.value.ingredients.mandatory.push(ingredient)
+      newMandatoryIngredient.value = ''
+      calculateTotalCalories()
+    } else {
+      ElMessage.warning('该必选食材已存在')
+    }
   }
 }
 
 // 添加可选食材
 const addOptionalIngredient = () => {
   if (newOptionalIngredient.value.trim()) {
-    dishInfo.value.ingredients.optional.push(newOptionalIngredient.value.trim())
-    newOptionalIngredient.value = ''
-    calculateTotalCalories()
+    const ingredient = newOptionalIngredient.value.trim()
+    // 检查重复
+    if (!dishInfo.value.ingredients.optional.includes(ingredient)) {
+      dishInfo.value.ingredients.optional.push(ingredient)
+      newOptionalIngredient.value = ''
+      calculateTotalCalories()
+    } else {
+      ElMessage.warning('该可选食材已存在')
+    }
   }
 }
 
@@ -178,18 +190,23 @@ const handleUpload = (file) => {
         <div class="info-item">
           <span class="info-label">🔑 必选食材：</span>
           <div class="optional-ingredients-container">
-            <el-input
-              v-model="newMandatoryIngredient"
-              style="width: calc(300px - 80px); margin-right: 8px"
-              placeholder="请输入必选食材"
-            />
-            <el-button
-              type="primary"
-              size="small"
-              @click="addMandatoryIngredient"
-            >
-              添加
-            </el-button>
+            <div class="input-button-row">
+              <el-input
+                v-model="newMandatoryIngredient"
+                placeholder="请输入必选食材"
+                style="width: calc(300px - 80px)"
+                @keyup.enter="addMandatoryIngredient"
+                clearable
+              />
+              <el-button
+                type="primary"
+                size="small"
+                @click="addMandatoryIngredient"
+                style="margin-left: 8px"
+              >
+                添加
+              </el-button>
+            </div>
             <div class="ingredients-tags">
               <el-tag
                 v-for="(ingredient, index) in dishInfo.ingredients.mandatory"
@@ -209,18 +226,23 @@ const handleUpload = (file) => {
         <div class="info-item">
           <span class="info-label">🔧 可选食材：</span>
           <div class="optional-ingredients-container">
-            <el-input
-              v-model="newOptionalIngredient"
-              style="width: calc(300px - 80px); margin-right: 8px"
-              placeholder="请输入可选食材"
-            />
-            <el-button
-              type="primary"
-              size="small"
-              @click="addOptionalIngredient"
-            >
-              添加
-            </el-button>
+            <div class="input-button-row">
+              <el-input
+                v-model="newOptionalIngredient"
+                placeholder="请输入可选食材"
+                style="width: calc(300px - 80px)"
+                @keyup.enter="addOptionalIngredient"
+                clearable
+              />
+              <el-button
+                type="primary"
+                size="small"
+                @click="addOptionalIngredient"
+                style="margin-left: 8px"
+              >
+                添加
+              </el-button>
+            </div>
             <div class="ingredients-tags">
               <el-tag
                 v-for="(ingredient, index) in dishInfo.ingredients.optional"
@@ -319,17 +341,15 @@ const handleUpload = (file) => {
     gap: 8px;
     width: 300px;
 
+    .input-button-row {
+      display: flex;
+      align-items: center;
+    }
+
     .ingredients-tags {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-    }
-  }
-</style>
-      .action-buttons {
-        display: flex;
-        gap: 12px;
-      }
     }
   }
 </style>
