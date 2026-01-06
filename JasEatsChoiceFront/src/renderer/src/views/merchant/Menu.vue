@@ -1,10 +1,14 @@
 <script setup>
 import { ref, onMounted, watch, TransitionGroup } from 'vue'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+
+// 扩展dayjs的相对时间功能
+dayjs.extend(relativeTime)
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   ArrowDown, ArrowUp, Edit, Delete, Download,
-  Check, CirclePlus, CircleCheck, CircleClose, InfoFilled
+  Check, CirclePlus, CircleCheck, CircleClose, InfoFilled, Clock, Food
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
@@ -126,19 +130,31 @@ watch(
   { deep: true }
 )
 
-// 切换状态
+// 切换状态并同步到后端
 const toggleMenuStatus = (menu) => {
-  let newStatus = ''
+  let newStatus = menu.status === 'online' ? 'offline' : 'online';
 
-  if (menu.status === 'online') {
-    newStatus = 'offline'
-  } else if (menu.status === 'offline' || menu.status === 'draft') {
-    newStatus = 'online'
-  }
+  // 从authStore获取商家ID
+  const authStore = useAuthStore();
+  const merchantId = authStore.merchantId;
 
-  menu.status = newStatus
-  updateFilter()
-  ElMessage.success(`菜单已${menuStatusMap[newStatus].text}`)
+  axios.put(
+    `${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menu.id}`,
+    { status: newStatus }
+  )
+  .then((response) => {
+    if (response.data && response.data.success) {
+      menu.status = newStatus;
+      updateFilter();
+      ElMessage.success(`菜单已${menuStatusMap[newStatus].text}`);
+    } else {
+      ElMessage.error('更新菜单状态失败: ' + (response.data.message || '未知错误'));
+    }
+  })
+  .catch((error) => {
+    console.error('更新菜单状态失败:', error);
+    ElMessage.error('更新菜单状态失败');
+  });
 }
 
 // 编辑菜单
@@ -220,7 +236,7 @@ const exportMenu = (menu) => {
     [
       menu.name,
       menuStatusMap[menu.status].text,
-      menu.dishes,
+      Array.isArray(menu.dishes) ? menu.dishes.length : (menu.dishes || 0),
       dayjs(menu.updateTime).format('YYYY-MM-DD HH:mm:ss'),
       menu.autoOnline ? dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') : '',
       menu.autoOffline ? dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') : ''
@@ -260,7 +276,7 @@ const addMenuDialogVisible = ref(false)
 // 新菜单表单数据
 const newMenu = ref({
   name: '',
-  category: 'lunch',
+  category: '',
   autoOnline: '',
   autoOffline: '',
   status: 'online'
@@ -273,7 +289,7 @@ const openAddMenuDialog = () => {
   // 重置表单数据
   newMenu.value = {
     name: '',
-    category: 'lunch',
+    category: '',
     autoOnline: '',
     autoOffline: '',
     status: 'online'
@@ -505,7 +521,20 @@ const toggleSelectAll = () => {
           <div class="menu-info">
             <div class="menu-name">
               <span class="name">{{ menu.name }}</span>
-              <el-tag :type="menuStatusMap[menu.status].type">
+              <!-- 菜单类型标签，不同类型不同样式 -->
+              <el-tag
+                :type="menu.category === '早餐' ? 'success' : menu.category === '午餐' ? 'primary' : menu.category === '晚餐' ? 'warning' : menu.category === '加餐' ? 'info' : 'default'"
+                size="small"
+                style="margin-right: 8px;"
+              >
+                {{ menu.category }}
+              </el-tag>
+              <!-- 状态信息，参考状态筛选样式 -->
+              <el-tag
+                :type="menuStatusMap[menu.status].type"
+                effect="plain"
+                class="menu-status-tag"
+              >
                 <el-icon v-if="menu.status === 'online'"><CircleCheck /></el-icon>
                 <el-icon v-if="menu.status === 'draft'"><CirclePlus /></el-icon>
                 <el-icon v-if="menu.status === 'offline'"><CircleClose /></el-icon>
@@ -513,17 +542,57 @@ const toggleSelectAll = () => {
               </el-tag>
             </div>
 
+            <!-- 菜品列表显示为标签，至多两行，超出省略并提示 -->
+            <div class="menu-dishes">
+              <el-tooltip
+                v-if="menu.dishes && Array.isArray(menu.dishes) && menu.dishes.length > 0"
+                :content="menu.dishes.map(dish => dish.name || dish).join(', ')"
+                placement="top"
+              >
+                <div class="dishes-tags-container">
+                  <el-tag
+                    v-for="(dish, index) in menu.dishes"
+                    :key="index"
+                    size="small"
+                  >
+                    {{ dish.name || dish }}
+                  </el-tag>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                v-else-if="menu.dishes && typeof menu.dishes === 'object' && menu.dishes.name"
+                :content="menu.dishes.name"
+                placement="top"
+              >
+                <div class="dishes-tags-container">
+                  <el-tag size="small">{{ menu.dishes.name }}</el-tag>
+                </div>
+              </el-tooltip>
+              <!-- 兼容旧数据结构（菜品数量） -->
+              <div v-else-if="menu.dishes" class="dishes-count">
+                <el-icon><Food /></el-icon> {{ menu.dishes }} 菜品
+              </div>
+              <!-- 无菜品时的显示 -->
+              <div v-else class="dishes-count">
+                <el-icon><Food /></el-icon> 0 菜品
+              </div>
+            </div>
+
             <div class="menu-stats">
-              <span class="dishes-count">🍴 {{ menu.dishes }} 菜品</span>
-              <span class="update-time">⏰ 更新时间：{{ dayjs(menu.updateTime).format('YYYY-MM-DD HH:mm:ss') }}</span>
+              <span class="update-time">
+                <el-icon><Clock /></el-icon>
+                更新时间：{{ dayjs(menu.updateTime).fromNow() }}
+              </span>
             </div>
 
             <div class="auto-times">
               <span v-if="menu.autoOnline" class="auto-online">
-                ⏰ 自动上架：{{ dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') }}
+                <el-icon><Clock /></el-icon>
+                自动上架：{{ dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') }}
               </span>
               <span v-if="menu.autoOffline" class="auto-offline">
-                ⏰ 自动下架：{{ dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') }}
+                <el-icon><Clock /></el-icon>
+                自动下架：{{ dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') }}
               </span>
             </div>
           </div>
@@ -575,10 +644,10 @@ const toggleSelectAll = () => {
 
         <el-form-item label="分类" prop="category" required>
           <el-select v-model="newMenu.category" style="width: 100%">
-            <el-option label="早餐" value="breakfast" />
-            <el-option label="午餐" value="lunch" />
-            <el-option label="晚餐" value="dinner" />
-            <el-option label="夜宵" value="late-night" />
+            <el-option label="早餐" value="早餐" />
+            <el-option label="午餐" value="午餐" />
+            <el-option label="晚餐" value="晚餐" />
+            <el-option label="加餐" value="加餐" />
           </el-select>
         </el-form-item>
 
@@ -735,12 +804,13 @@ const toggleSelectAll = () => {
       border-radius: 8px;
       margin-bottom: 16px;
       background-color: #fff;
-      transition: all 0.3s;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
       &:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        border-color: #c9e6ff;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        border-color: #409eff;
+        transform: translateY(-4px);
       }
 
       .menu-selection {
@@ -776,6 +846,52 @@ const toggleSelectAll = () => {
 
             .dishes-count {
               color: #606266;
+            }
+          }
+
+          /* 状态标签样式，与筛选部分一致 */
+          .menu-status-tag {
+            cursor: pointer;
+            line-height: 28px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+
+            :deep(.el-tag__content) {
+              white-space: nowrap;
+              display: inline-flex;
+              align-items: center;
+            }
+
+            &:hover {
+              opacity: 0.8;
+            }
+          }
+
+          /* 菜品标签容器样式 */
+          .menu-dishes {
+            margin: 12px 0;
+
+            .dishes-tags-container {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              max-height: 56px; /* 两行标签的高度 */
+              overflow: hidden;
+              position: relative;
+              padding-right: 20px;
+
+              /* 超出时显示省略提示 */
+              &::after {
+                content: '...';
+                position: absolute;
+                right: 0;
+                bottom: 8px;
+                background: #fff;
+                padding-left: 5px;
+                font-size: 14px;
+                color: #909399;
+              }
             }
           }
 
@@ -825,7 +941,7 @@ const toggleSelectAll = () => {
   }
 
   .menu-pagination {
-    text-align: center;
+    text-align: right;
   }
 
   /* 筛选面板小屏幕响应式调整 */
@@ -857,9 +973,7 @@ const toggleSelectAll = () => {
     }
 
     .menu-pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      text-align: center; /* 分页居中对齐 */
       margin-top: 12px;
     }
   }

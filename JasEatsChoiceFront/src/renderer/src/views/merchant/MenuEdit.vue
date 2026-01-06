@@ -193,8 +193,8 @@ const batchAssociateDishes = () => {
   <div class="menu-edit-container">
     <div class="menu-edit-header">
       <div class="header-left">
+        <CommonBackButton type="text" text="取消编辑" />
         <h3 class="page-title">【菜单编辑】</h3>
-        <common-back-button type="text" class="back-btn" />
       </div>
     </div>
 
@@ -279,7 +279,6 @@ const batchAssociateDishes = () => {
         <el-button type="success" @click="saveMenu('online')">💾 保存菜单并上架</el-button>
         <el-button type="warning" @click="saveMenu('offline')">💾 保存菜单并下架</el-button>
         <el-button type="info" @click="saveMenu('draft')">💾 保存为草稿</el-button>
-        <CommonBackButton type="text" text="🔙 取消编辑" />
       </div>
 
       <!-- 添加菜品对话框 -->
@@ -342,10 +341,16 @@ const batchAssociateDishes = () => {
 
 <style scoped lang="less">
 .menu-edit-container {
-  padding: 0 20px 20px 20px;
+  padding: 20px;
 
   .menu-edit-header {
     margin-bottom: 20px;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
     .page-title {
       font-size: 18px;

@@ -28,7 +28,17 @@ onMounted(() => {
     .get(`${API_CONFIG.baseURL}${API_CONFIG.dish.list}`)
     .then((response) => {
       if (response.data && response.data.success) {
-        dishesList.value = response.data.data
+        // 预处理菜品数据，确保所有菜品都有有效的状态
+        const processedDishes = response.data.data.map(dish => {
+          // 确保status存在且是有效的值
+          const validStatuses = ['online', 'almost_sold', 'offline']
+          if (!dish.status || !validStatuses.includes(dish.status)) {
+            // 设置默认状态为online
+            dish.status = 'online'
+          }
+          return dish
+        })
+        dishesList.value = processedDishes
         filteredDishes.value = [...dishesList.value] // 更新筛选后的菜品
       }
     })
@@ -73,11 +83,14 @@ const toggleDishStatus = (dish) => {
     newStatus = 'offline'
   } else if (dish.status === 'offline' || dish.status === 'almost_sold') {
     newStatus = 'online'
+  } else {
+    // 默认处理未知状态，设为online
+    newStatus = 'online'
   }
 
   dish.status = newStatus
   updateFilter()
-  ElMessage.success(`菜品已${dishStatusMap[newStatus].text}`)
+  ElMessage.success(`菜品已${dishStatusMap[newStatus]?.text || newStatus}`)
 }
 
 // 编辑菜品
@@ -452,8 +465,8 @@ const getDishCheckedState = (dish) => {
           <div class="dish-info">
             <div class="dish-name">
               <span class="name">{{ dish.name }}</span>
-              <el-tag :type="dishStatusMap[dish.status].type">
-                {{ dishStatusMap[dish.status].text }}
+              <el-tag :type="dishStatusMap[dish.status]?.type || 'info'">
+                {{ dishStatusMap[dish.status]?.text || '未知状态' }}
               </el-tag>
             </div>
 
