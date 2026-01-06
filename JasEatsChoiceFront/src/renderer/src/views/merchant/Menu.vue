@@ -825,7 +825,7 @@ const toggleSelectAll = () => {
   }
 
   .menu-pagination {
-    text-align: right;
+    text-align: center;
   }
 
   /* 筛选面板小屏幕响应式调整 */
@@ -857,7 +857,9 @@ const toggleSelectAll = () => {
     }
 
     .menu-pagination {
-      text-align: center; /* 分页居中对齐 */
+      display: flex;
+      justify-content: center;
+      align-items: center;
       margin-top: 12px;
     }
   }
