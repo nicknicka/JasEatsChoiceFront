@@ -1,6 +1,11 @@
 <script setup>
 import { ref, onMounted, watch, TransitionGroup } from 'vue'
+import dayjs from 'dayjs'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  ArrowDown, ArrowUp, Edit, Delete, Download,
+  Check, CirclePlus, CircleCheck, CircleClose, InfoFilled
+} from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { API_CONFIG } from '../../config/index.js'
@@ -10,9 +15,9 @@ import { useAuthStore } from '../../store/authStore'
 const router = useRouter()
 // 菜单状态映射
 const menuStatusMap = {
-  online: { text: '上架中', icon: '🟢', type: 'success' },
-  draft: { text: '草稿', icon: '🟡', type: 'warning' },
-  offline: { text: '下架中', icon: '🔴', type: 'danger' }
+  online: { text: '上架中', type: 'success' },
+  draft: { text: '草稿', type: 'warning' },
+  offline: { text: '下架中', type: 'danger' }
 }
 
 // 菜单数据
@@ -145,10 +150,10 @@ const editMenu = (menu) => {
 
 // 删除菜单
 const deleteMenu = (menu) => {
-  ElMessageBox.confirm('确定要删除该菜单吗？', '提示', {
-    confirmButtonText: '确定',
+  ElMessageBox.confirm('确定要删除该菜单？删除后不可恢复！', '警告', {
+    confirmButtonText: '确定删除',
     cancelButtonText: '取消',
-    type: 'warning'
+    type: 'danger'
   })
     .then(() => {
       const index = menuList.value.findIndex((item) => item.id === menu.id)
@@ -186,10 +191,10 @@ const batchOperation = (operation) => {
       ElMessage.success('批量下架成功')
       break
     case 'delete':
-      ElMessageBox.confirm('确定要删除所选菜单吗？', '提示', {
-        confirmButtonText: '确定',
+      ElMessageBox.confirm('确定要删除选中的所有菜单？删除后不可恢复！', '警告', {
+        confirmButtonText: '确定删除',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'danger'
       })
         .then(() => {
           menuList.value = menuList.value.filter((menu) => !selectedMenus.value.includes(menu))
@@ -205,10 +210,37 @@ const batchOperation = (operation) => {
   selectedMenus.value = []
 }
 
-// 导出菜单
+// 导出菜单为CSV格式
 const exportMenu = (menu) => {
-  console.log('导出菜单:', menu)
-  ElMessage.info('导出菜单功能开发中')
+  // 构建CSV内容
+  const csvContent = [
+    // 表头
+    ['菜单名称', '状态', '菜品数量', '更新时间', '自动上架时间', '自动下架时间'].join(','),
+    // 数据行
+    [
+      menu.name,
+      menuStatusMap[menu.status].text,
+      menu.dishes,
+      dayjs(menu.updateTime).format('YYYY-MM-DD HH:mm:ss'),
+      menu.autoOnline ? dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') : '',
+      menu.autoOffline ? dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') : ''
+    ].map(item => `"${item}"`).join(',') // 转义包含逗号或引号的内容
+  ].join('\n')
+
+  // 创建Blob对象
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+
+  // 创建下载链接
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', `${menu.name}_${dayjs().format('YYYYMMDDHHmmss')}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+
+  ElMessage.success('菜单导出成功')
 }
 
 // 选择/取消选择单个菜单
@@ -282,7 +314,7 @@ const saveNewMenu = () => {
     )
     .then((response) => {
       console.log('保存菜单响应:', response)
-      if (response.data && response.data.code === '200') {
+      if (response.data && response.data.success) {
         // 从响应中获取完整的菜单对象
         const savedMenu = response.data.data
 
@@ -291,7 +323,7 @@ const saveNewMenu = () => {
         updateFilter()
         addMenuDialogVisible.value = false
         ElMessage.success('菜单已添加')
-      }else 
+      }else
       {
         ElMessage.error(`保存菜单失败: ${response.data.message || '未知错误'}`)
       }
@@ -342,48 +374,117 @@ const toggleSelectAll = () => {
       <div class="header-right">
         <el-input
           v-model="searchKeyword"
-          placeholder="输入菜单名称..."
+          placeholder="输入菜单名称/关键词搜索..."
           style="min-width: 250px; max-width: 400px; width: auto; flex: 1; max-width: 400px; margin-right: 10px"
           @input="updateFilter"
         />
         <el-button type="primary" @click="openAddMenuDialog">
-          <span>➕</span>
+          <el-icon><CirclePlus /></el-icon>
           新增菜单
         </el-button>
       </div>
     </div>
 
-    <div class="menu-filters">
-      <div class="filter-section">
-        <span class="filter-label">📋 状态筛选：</span>
-        <el-tag
-          v-for="status in ['all', 'online', 'draft', 'offline']"
-          :key="status"
-          :type="activeStatusFilter === status ? 'primary' : 'info'"
-          effect="plain"
-          @click="
-            () => {
-              activeStatusFilter = status
-              updateFilter()
-            }
-          "
-          class="status-filter"
+    <!-- 筛选面板：整合状态筛选和排序 -->
+    <div class="filter-panel">
+      <div class="menu-filters">
+        <div class="filter-section">
+          <span class="filter-label">状态筛选：</span>
+          <el-tag
+            v-for="status in ['all', 'online', 'draft', 'offline']"
+            :key="status"
+            :type="activeStatusFilter === status ? 'primary' : 'info'"
+            effect="plain"
+            @click="
+              () => {
+                activeStatusFilter = status
+                updateFilter()
+              }
+            "
+            class="status-filter"
+          >
+            <el-icon v-if="status !== 'all' && status === 'online'"><CircleCheck /></el-icon> 
+            <el-icon v-if="status !== 'all' && status === 'draft'"><CirclePlus /></el-icon>
+            <el-icon v-if="status !== 'all' && status === 'offline'"><CircleClose /></el-icon>
+            {{ status === 'all' ? '全部菜单' : menuStatusMap[status].text }}
+          </el-tag>
+        </div>
+
+        <div class="filter-section">
+          <span class="filter-label">排序：</span>
+          <el-select v-model="sortField" style="width: 120px; margin-right: 8px" @change="updateFilter">
+            <el-option label="更新时间" value="updateTime" />
+            <el-option label="菜单名称" value="name" />
+          </el-select>
+
+          <el-select v-model="sortOrder" style="width: 100px" @change="updateFilter">
+            <el-option label="升序" value="asc" />
+            <el-option label="降序" value="desc" />
+          </el-select>
+          <el-tooltip content="按所选字段升序或降序排列菜单" placement="top">
+            <el-icon style="color: #909399; margin-left: 4px; cursor: help"><InfoFilled /></el-icon>
+          </el-tooltip>
+        </div>
+      </div>
+    </div>
+
+    <!-- 将批量操作和分页放在同一个容器中 -->
+    <div class="batch-pagination-container" v-if="filteredMenus.length > 0">
+      <div class="batch-actions">
+        <span class="select-all">
+          <el-checkbox
+            :indeterminate="getSelectAllState() === 1"
+            :model-value="getSelectAllState() === 2"
+            @change="toggleSelectAll"
+          />
+          全选
+          <span class="selected-count" :style="{ visibility: selectedMenus.length > 0 ? 'visible' : 'hidden' }">
+            ({{ selectedMenus.length }}/{{ filteredMenus.length }})
+          </span>
+        </span>
+
+        <el-button
+          type="success"
+          size="small"
+          @click="batchOperation('online')"
+          :disabled="selectedMenus.length === 0"
         >
-          {{ status === 'all' ? '全部菜单' : `${menuStatusMap[status].icon} ${menuStatusMap[status].text}` }}
-        </el-tag>
+          <el-icon><CircleCheck /></el-icon>
+          批量上架
+        </el-button>
+
+        <el-button
+          type="warning"
+          size="small"
+          @click="batchOperation('offline')"
+          :disabled="selectedMenus.length === 0"
+        >
+          <el-icon><CircleClose /></el-icon>
+          批量下架
+        </el-button>
+
+        <el-button
+          type="danger"
+          size="small"
+          @click="batchOperation('delete')"
+          :disabled="selectedMenus.length === 0"
+        >
+          <el-icon><Delete /></el-icon>
+          批量删除
+        </el-button>
       </div>
 
-      <div class="filter-section">
-        <span class="filter-label">🔀 排序：</span>
-        <el-select v-model="sortField" style="width: 120px; margin-right: 8px" @change="updateFilter">
-          <el-option label="更新时间" value="updateTime" />
-          <el-option label="菜单名称" value="name" />
-        </el-select>
-
-        <el-select v-model="sortOrder" style="width: 100px" @change="updateFilter">
-          <el-option label="升序" value="asc" />
-          <el-option label="降序" value="desc" />
-        </el-select>
+      <!-- 分页 -->
+      <div class="menu-pagination">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="filteredMenus.length"
+          @size-change="updatePagination"
+          @current-change="updatePagination"
+        />
       </div>
     </div>
 
@@ -405,97 +506,61 @@ const toggleSelectAll = () => {
             <div class="menu-name">
               <span class="name">{{ menu.name }}</span>
               <el-tag :type="menuStatusMap[menu.status].type">
-                {{ menuStatusMap[menu.status].icon }} {{ menuStatusMap[menu.status].text }}
+                <el-icon v-if="menu.status === 'online'"><CircleCheck /></el-icon>
+                <el-icon v-if="menu.status === 'draft'"><CirclePlus /></el-icon>
+                <el-icon v-if="menu.status === 'offline'"><CircleClose /></el-icon>
+                {{ menuStatusMap[menu.status].text }}
               </el-tag>
             </div>
 
             <div class="menu-stats">
               <span class="dishes-count">🍴 {{ menu.dishes }} 菜品</span>
-              <span class="update-time">⏰ 更新时间：{{ menu.updateTime }}</span>
+              <span class="update-time">⏰ 更新时间：{{ dayjs(menu.updateTime).format('YYYY-MM-DD HH:mm:ss') }}</span>
             </div>
 
             <div class="auto-times">
               <span v-if="menu.autoOnline" class="auto-online">
-                ⏰ 自动上架：{{ menu.autoOnline }}
+                ⏰ 自动上架：{{ dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') }}
               </span>
               <span v-if="menu.autoOffline" class="auto-offline">
-                ⏰ 自动下架：{{ menu.autoOffline }}
+                ⏰ 自动下架：{{ dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') }}
               </span>
             </div>
           </div>
 
           <div class="menu-actions">
-            <el-button type="primary" size="small" @click="toggleMenuStatus(menu)">
-              {{ menu.status === 'online' ? '🔴 下架菜单' : '🟢 上架菜单' }}
+            <el-button
+              :type="menu.status === 'online' ? 'warning' : 'success'"
+              size="small"
+              @click="toggleMenuStatus(menu)"
+            >
+              <el-icon v-if="menu.status === 'online'"><CircleClose /></el-icon>
+              <el-icon v-else><CircleCheck /></el-icon>
+              {{ menu.status === 'online' ? '下架菜单' : '上架菜单' }}
             </el-button>
 
-            <el-button type="warning" size="small" @click="editMenu(menu)"> ✏️ 编辑 </el-button>
+            <el-button type="primary" size="small" @click="editMenu(menu)">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
 
-            <el-button type="danger" size="small" @click="deleteMenu(menu)"> 🗑️ 删除 </el-button>
+            <el-button type="danger" size="small" @click="deleteMenu(menu)">
+              <el-icon><Delete /></el-icon>
+              删除
+            </el-button>
 
-            <el-button type="info" size="small" @click="exportMenu(menu)"> 📤 导出菜单 </el-button>
+            <el-button type="info" size="small" @click="exportMenu(menu)">
+              <el-icon><Download /></el-icon>
+              导出菜单
+            </el-button>
           </div>
         </div>
       </div>
     </TransitionGroup>
     </div>
 
-    <!-- 将批量操作和分页放在同一个容器中 -->
-    <div class="batch-pagination-container" v-if="filteredMenus.length > 0">
-      <div class="batch-actions">
-        <span class="select-all">
-          <el-checkbox
-            :indeterminate="getSelectAllState() === 1"
-            :model-value="getSelectAllState() === 2"
-            @change="toggleSelectAll"
-          />
-          全选
-        </span>
-
-        <el-button
-          type="success"
-          size="small"
-          @click="batchOperation('online')"
-          :disabled="selectedMenus.length === 0"
-        >
-          🟢 批量上架
-        </el-button>
-
-        <el-button
-          type="warning"
-          size="small"
-          @click="batchOperation('offline')"
-          :disabled="selectedMenus.length === 0"
-        >
-          🔴 批量下架
-        </el-button>
-
-        <el-button
-          type="danger"
-          size="small"
-          @click="batchOperation('delete')"
-          :disabled="selectedMenus.length === 0"
-        >
-          🗑️ 批量删除
-        </el-button>
-      </div>
-
-      <!-- 分页 -->
-      <div class="menu-pagination">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="filteredMenus.length"
-          @size-change="updatePagination"
-          @current-change="updatePagination"
-        />
-      </div>
-    </div>
-
     <!-- 空数据提示 -->
-    <el-empty v-if="filteredMenus.length === 0" description="暂无菜单">
+    <el-empty v-if="filteredMenus.length === 0" description="您还没有创建任何菜单~">
       <template #bottom>
         <el-button type="primary" size="small" @click="addMenuDialogVisible = true">新增菜单</el-button>
       </template>
@@ -572,30 +637,76 @@ const toggleSelectAll = () => {
       font-weight: 600;
       margin: 0;
     }
+
+    // 固定搜索和新增按钮区域的宽度范围，确保布局稳定
+    .header-right {
+      width: 55%; /* 占父容器55%宽度 */
+      max-width: 650px; /* 最大宽度限制 */
+      min-width: 450px; /* 最小宽度限制 */
+      display: flex;
+      align-items: center;
+      gap: 10px; /* 统一内部元素间距 */
+    }
+
+    /* 小屏幕响应式调整 */
+    @media (max-width: 767px) {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+
+      .header-right {
+        width: 100% !important; /* 小屏幕下占满宽度 */
+        min-width: auto !important; /* 取消最小宽度限制 */
+        max-width: none !important; /* 取消最大宽度限制 */
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .el-input {
+        min-width: auto;
+        max-width: none;
+      }
+    }
+  }
+
+  .filter-panel {
+    background-color: #f5f7fa;
+    padding: 16px 24px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 
   .menu-filters {
-    margin-bottom: 24px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    align-items: center;
+    flex-direction: column; /* 改为纵向排列，将状态筛选和排序分成两行 */
+    gap: 16px; /* 两行之间的间距 */
+    align-items: flex-start; /* 左对齐 */
 
     .filter-section {
       display: flex;
       align-items: center;
       gap: 12px;
+      white-space: nowrap; /* 防止筛选标签换行 */
 
       .filter-label {
         font-weight: 500;
-        min-width: 100px; /* 固定标签宽度，使布局更整齐 */
+        white-space: nowrap; /* 确保标签文本不换行 */
+        margin-right: 8px;
       }
 
       .status-filter {
         cursor: pointer;
-
+        line-height: 28px; /* 增加行高确保图标和文字居中对齐 */
+        white-space: nowrap !important; /* 强制标签内所有内容在同一行显示 */
         &:hover {
           opacity: 0.8;
+        }
+        // 确保标签内部元素也不换行
+        :deep(.el-tag__content) {
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
         }
       }
     }
@@ -619,15 +730,17 @@ const toggleSelectAll = () => {
     .menu-item {
       display: flex;
       align-items: flex-start;
-      padding: 18px;
+      padding: 20px;
       border: 1px solid #e4e7ed;
-      border-radius: 4px;
+      border-radius: 8px;
       margin-bottom: 16px;
       background-color: #fff;
-      transition: box-shadow 0.3s;
+      transition: all 0.3s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
       &:hover {
-        box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #c9e6ff;
       }
 
       .menu-selection {
@@ -648,8 +761,9 @@ const toggleSelectAll = () => {
             margin-bottom: 12px;
 
             .name {
-              font-size: 16px;
+              font-size: 18px;
               font-weight: 600;
+              color: #303133;
             }
           }
 
@@ -674,13 +788,14 @@ const toggleSelectAll = () => {
 
         .menu-actions {
           display: flex;
-          flex-direction: row;
-          gap: 8px;
-          justify-content: flex-start;
+          gap: 12px;
+          justify-content: flex-end;
           flex-wrap: wrap;
+          margin-top: 12px;
 
           button {
-            width: 100px;
+            width: auto;
+            padding: 4px 12px;
           }
         }
       }
@@ -698,6 +813,14 @@ const toggleSelectAll = () => {
       align-items: center;
       gap: 8px;
       font-weight: 500;
+      white-space: nowrap; /* 防止全选文本换行 */
+      min-width: 100px; /* 设置固定最小宽度，让批量操作按钮位置稳定 */
+
+      .selected-count {
+        font-size: 13px;
+        font-weight: 400;
+        color: #909399;
+      }
     }
   }
 
@@ -705,16 +828,37 @@ const toggleSelectAll = () => {
     text-align: right;
   }
 
-  /* 将批量操作和分页合并为一行 */
-  @media (min-width: 768px) {
-    .batch-pagination-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+  /* 筛选面板小屏幕响应式调整 */
+  @media (max-width: 767px) {
+    .filter-panel {
+      padding: 12px 16px;
+      overflow-x: auto; /* 小屏幕下允许横向滚动 */
+    }
+
+    .menu-filters {
+      gap: 12px;
+    }
+
+    .filter-section {
+      gap: 8px;
+    }
+
+    .filter-label {
+      white-space: nowrap; /* 确保标签在小屏幕也不换行 */
+    }
+  }
+
+  /* 将批量操作和分页分成两行显示 */
+  .batch-pagination-container {
+    margin-bottom: 20px;
+
+    .batch-actions {
+      justify-content: flex-start; /* 批量操作左对齐 */
     }
 
     .menu-pagination {
-      margin-top: 0;
+      text-align: center; /* 分页居中对齐 */
+      margin-top: 12px;
     }
   }
 
