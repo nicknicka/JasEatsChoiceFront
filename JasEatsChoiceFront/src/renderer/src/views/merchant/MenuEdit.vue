@@ -2,12 +2,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElTimePicker, ElSelect, ElOption, ElInput, ElMessageBox } from 'element-plus'
-import { CircleCheck, CirclePlus, CircleClose } from '@element-plus/icons-vue'
+import { CircleCheck, CirclePlus, CircleClose, Document, Grid, Clock, Switch } from '@element-plus/icons-vue'
 import CommonBackButton from '../../components/common/CommonBackButton.vue'
 import axios from 'axios'
 import { API_CONFIG } from '../../config/index.js'
 import { useAuthStore } from '../../store/authStore'
 import dayjs from 'dayjs'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -285,16 +286,17 @@ const batchAssociateDishes = () => {
 </script>
 
 <template>
-  <div class="menu-edit-container" v-loading="loading">
+  <div class="menu-edit-container">
     <div class="menu-edit-header">
       <div class="header-left">
+        <h3 class="page-title">编辑菜单</h3>
         <CommonBackButton
           type="text"
           text="取消编辑"
           :useRouterBack="false"
           @click="handleCancelEdit"
+          class="back-btn"
         />
-        <h3 class="page-title">【菜单编辑】</h3>
       </div>
     </div>
 
@@ -303,19 +305,27 @@ const batchAssociateDishes = () => {
       <div class="menu-info-section">
         <h4 class="section-title">📝 菜单基本信息</h4>
         <div class="info-item">
-          <span class="info-label">🍽️ 菜单名称：</span>
-          <el-input v-model="menuInfo.name" placeholder="请输入菜单名称" style="width: 300px" />
+          <span class="info-label"><el-icon><Document /></el-icon> 菜单名称</span>
+          <el-input
+            v-model="menuInfo.name"
+            placeholder="请输入菜单名称"
+            style="width: 300px"
+            clearable
+          ></el-input>
         </div>
         <div class="info-item">
-          <span class="info-label">📝 菜单描述：</span>
+          <span class="info-label"><el-icon><Edit /></el-icon> 菜单描述</span>
           <el-input
             v-model="menuInfo.description"
             placeholder="请输入菜单描述"
             style="width: 500px"
-          />
+            type="textarea"
+            :rows="4"
+            clearable
+          ></el-input>
         </div>
         <div class="info-item">
-          <span class="info-label">📅 自动上架时间：</span>
+          <span class="info-label"><el-icon><Clock /></el-icon> 自动上架时间</span>
           <el-time-picker
             v-model="menuInfo.autoOnline"
             type="fixed-time"
@@ -323,11 +333,13 @@ const batchAssociateDishes = () => {
             value-format="HH:mm:ss"
             placeholder="选择自动上架时间"
             style="width: 200px"
-          />
-          <el-button type="text" size="small" @click="setAutoOnlineTime">⏰ 设置</el-button>
+          ></el-time-picker>
+          <el-button type="text" size="small" @click="setAutoOnlineTime" class="time-set-btn">
+            设置
+          </el-button>
         </div>
         <div class="info-item">
-          <span class="info-label">📅 自动下架时间：</span>
+          <span class="info-label"><el-icon><Clock /></el-icon> 自动下架时间</span>
           <el-time-picker
             v-model="menuInfo.autoOffline"
             type="fixed-time"
@@ -335,12 +347,19 @@ const batchAssociateDishes = () => {
             value-format="HH:mm:ss"
             placeholder="选择自动下架时间"
             style="width: 200px"
-          />
-          <el-button type="text" size="small" @click="setAutoOfflineTime">⏰ 设置</el-button>
+          ></el-time-picker>
+          <el-button type="text" size="small" @click="setAutoOfflineTime" class="time-set-btn">
+            设置
+          </el-button>
         </div>
         <div class="info-item">
-          <span class="info-label">📋 菜单状态：</span>
-          <el-select v-model="menuInfo.status" placeholder="选择菜单状态" style="width: 200px">
+          <span class="info-label"><el-icon><Switch /></el-icon> 菜单状态</span>
+          <el-select
+            v-model="menuInfo.status"
+            placeholder="选择菜单状态"
+            style="width: 200px"
+            clearable
+          >
             <el-option
               v-for="(status, key) in menuStatusMap"
               :key="key"
@@ -368,20 +387,31 @@ const batchAssociateDishes = () => {
             placeholder="输入菜品名称..."
             style="width: 250px"
             class="dishes-search"
+            clearable
           />
-          <el-button type="primary" size="small" @click="showAddDishDialog = true"
-            >➕ 添加菜品</el-button
-          >
-          <el-button type="info" size="small" @click="showBatchAssociateDialog = true"
-            >🔗 批量关联菜品</el-button
-          >
+          <el-button type="primary" size="small" @click="showAddDishDialog = true">
+            添加菜品
+          </el-button>
+          <el-button type="info" size="small" @click="showBatchAssociateDialog = true">
+            批量关联菜品
+          </el-button>
         </div>
         <div class="dishes-list">
           <div v-for="dish in dishesList" :key="dish.id" class="dish-item">
-            <span class="dish-info"
-              >{{ dish.name }} | ¥{{ dish.price }} | {{ dish.statusText }}</span
-            >
-            <el-button type="danger" size="small" @click="removeDish(dish)"> 🗑️ 移除 </el-button>
+            <span class="dish-info">
+              <span class="dish-name">{{ dish.name }}</span>
+              <span class="dish-price">¥{{ dish.price }}</span>
+              <el-tag
+                :type="dishStatusMap[dish.status]?.type || 'danger'"
+                size="small"
+                class="status-tag"
+              >
+                {{ dish.statusText }}
+              </el-tag>
+            </span>
+            <el-button type="danger" size="small" @click="removeDish(dish)">
+              移除
+            </el-button>
           </div>
         </div>
       </div>
@@ -394,7 +424,13 @@ const batchAssociateDishes = () => {
       </div>
 
       <!-- 添加菜品对话框 -->
-      <el-dialog v-model="showAddDishDialog" title="添加菜品" width="600px" top="10%">
+      <el-dialog
+        v-model="showAddDishDialog"
+        title="添加菜品"
+        width="600px"
+        top="10%"
+        transition="dialog-fade"
+      >
         <div class="dialog-content">
           <el-select
             v-model="selectedDish"
@@ -412,15 +448,21 @@ const batchAssociateDishes = () => {
           </el-select>
         </div>
         <template #footer>
-          <div class="dialog-footer">
+          <span class="dialog-footer">
             <el-button @click="showAddDishDialog = false">取消</el-button>
             <el-button type="primary" @click="addDish">确定添加</el-button>
-          </div>
+          </span>
         </template>
       </el-dialog>
 
       <!-- 批量关联菜品对话框 -->
-      <el-dialog v-model="showBatchAssociateDialog" title="批量关联菜品" width="600px" top="10%">
+      <el-dialog
+        v-model="showBatchAssociateDialog"
+        title="批量关联菜品"
+        width="600px"
+        top="10%"
+        transition="dialog-fade"
+      >
         <div class="dialog-content">
           <el-select
             v-model="selectedDishesBatch"
@@ -441,10 +483,10 @@ const batchAssociateDishes = () => {
           </el-select>
         </div>
         <template #footer>
-          <div class="dialog-footer">
+          <span class="dialog-footer">
             <el-button @click="showBatchAssociateDialog = false">取消</el-button>
             <el-button type="primary" @click="batchAssociateDishes">确定关联</el-button>
-          </div>
+          </span>
         </template>
       </el-dialog>
     </div>
@@ -452,45 +494,79 @@ const batchAssociateDishes = () => {
 </template>
 
 <style scoped lang="less">
+// 时间设置按钮样式
+.time-set-btn {
+  color: #1890ff;
+  font-weight: 500;
+
+  &:hover {
+    color: #40a9ff;
+    text-decoration: underline;
+  }
+}
+
+// 菜品状态标签样式
+.status-tag {
+  margin-left: 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+// 菜品信息样式
+.dish-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .dish-name {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 14px;
+  }
+
+  .dish-price {
+    color: #e6a23c;
+    font-weight: 600;
+    font-size: 14px;
+  }
+}
+
 .menu-edit-container {
-  padding: 20px;
-  background-color: #f8f9fa;
+  padding: 0 20px 20px 20px;
 
   .menu-edit-header {
-    margin-bottom: 20px;
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    padding: 20px;
+    margin: -20px -20px 20px -20px;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     .page-title {
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 24px;
+      font-weight: 700;
       margin: 0;
-      color: #495057;
+      color: #1976d2;
     }
   }
 
   .menu-edit-content {
     .menu-info-section,
     .dishes-section {
-      background-color: #ffffff;
+      background-color: #fff;
       border-radius: 12px;
-      padding: 20px;
+      padding: 24px;
       margin-bottom: 24px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e9ecef;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
     .section-title {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       margin-bottom: 20px;
-      color: #495057;
-      padding-bottom: 12px;
-      border-bottom: 2px solid #f1f3f5;
+      color: #333;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e0e0e0;
     }
 
     .info-item {
@@ -500,20 +576,97 @@ const batchAssociateDishes = () => {
       margin-bottom: 20px;
 
       .info-label {
-        color: #6c757d;
-        width: 120px;
+        color: #555;
+        width: 130px;
         font-weight: 500;
+        font-size: 14px;
+      }
+
+      /* 输入框悬浮效果优化 */
+      :deep(.el-input) {
+        .el-input__wrapper {
+          transition: all 0.3s ease;
+          border-radius: 6px;
+
+          &:hover {
+            border-color: #409eff;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+          }
+
+          &.is-focus {
+            border-color: #409eff;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+          }
+        }
+      }
+
+      /* 选择框悬浮效果优化 */
+      :deep(.el-select) {
+        .el-input {
+          .el-input__wrapper {
+            transition: all 0.3s ease;
+            border-radius: 6px;
+
+            &:hover {
+              border-color: #409eff;
+              box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+            }
+
+            &.is-focus {
+              border-color: #409eff;
+              box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+            }
+          }
+        }
+      }
+
+      /* 时间选择器悬浮效果优化 */
+      :deep(.el-time-picker) {
+        .el-input {
+          .el-input__wrapper {
+            transition: all 0.3s ease;
+            border-radius: 6px;
+
+            &:hover {
+              border-color: #409eff;
+              box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+            }
+
+            &.is-focus {
+              border-color: #409eff;
+              box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+            }
+          }
+        }
       }
     }
 
     .dishes-header {
       display: flex;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
+      gap: 12px;
+      margin-bottom: 16px;
 
       .dishes-search {
         margin-right: auto;
+
+        /* 搜索输入框悬浮效果优化 */
+        :deep(.el-input) {
+          .el-input__wrapper {
+            transition: all 0.3s ease;
+            border-radius: 6px;
+
+            &:hover {
+              border-color: #409eff;
+              box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+            }
+
+            &.is-focus {
+              border-color: #409eff;
+              box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+            }
+          }
+        }
       }
     }
 
@@ -522,21 +675,16 @@ const batchAssociateDishes = () => {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 16px;
-        border: 1px solid #f1f3f5;
+        padding: 16px;
+        border: none;
         border-radius: 8px;
         margin-bottom: 12px;
-        background-color: #fafbfc;
-        transition: all 0.2s ease;
+        background-color: #ffffff;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
 
         &:hover {
-          background-color: #f8f9fa;
-          border-color: #dee2e6;
-        }
-
-        .dish-info {
-          color: #495057;
-          font-size: 14px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
       }
     }
@@ -544,9 +692,41 @@ const batchAssociateDishes = () => {
     .action-buttons {
       display: flex;
       gap: 16px;
-      margin-top: 32px;
-      justify-content: flex-end;
     }
   }
 }
+
+// 对话框样式
+:deep(.el-dialog) {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+:deep(.el-dialog__header) {
+  border-bottom: 1px solid #f1f3f5;
+  padding: 20px 24px;
+  border-radius: 12px 12px 0 0;
+}
+
+:deep(.el-dialog__title) {
+  color: #495057;
+  font-weight: 600;
+}
+
+:deep(.el-dialog__body) {
+  padding: 24px;
+  background-color: #fafbfc;
+}
+
+:deep(.el-dialog__footer) {
+  border-top: 1px solid #f1f3f5;
+  padding: 16px 24px;
+  border-radius: 0 0 12px 12px;
+  background-color: #ffffff;
+}
+
+.dialog-footer {
+  text-align: right;
+}
+
 </style>

@@ -8,7 +8,8 @@ dayjs.extend(relativeTime)
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   ArrowDown, ArrowUp, Edit, Delete, Download,
-  Check, CirclePlus, CircleCheck, CircleClose, InfoFilled, Clock, Food
+  Check, CirclePlus, CircleCheck, CircleClose, InfoFilled, Clock, Food,
+  Document, Grid, Switch
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
@@ -637,51 +638,67 @@ const toggleSelectAll = () => {
     </el-empty>
 
     <!-- 添加菜单对话框 -->
-    <el-dialog v-model="addMenuDialogVisible" title="添加新菜单" width="600px" top="10%">
-      <el-form :model="newMenu" label-width="100px" status-icon>
-        <el-form-item label="名称" prop="name" required>
-          <el-input v-model="newMenu.name" placeholder="请输入菜单名称" />
-        </el-form-item>
-
-        <el-form-item label="分类" prop="category" required>
-          <el-select v-model="newMenu.category" style="width: 100%">
+    <el-dialog v-model="addMenuDialogVisible" title="添加菜单" width="600px" top="10%">
+      <div class="add-menu-form">
+        <div class="info-item">
+          <span class="info-label"><el-icon><Document /></el-icon> 菜单名称</span>
+          <el-input
+            v-model="newMenu.name"
+            placeholder="请输入菜单名称"
+            style="width: 300px"
+            clearable
+          ></el-input>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><el-icon><Grid /></el-icon> 菜单分类</span>
+          <el-select
+            v-model="newMenu.category"
+            placeholder="选择菜单分类"
+            style="width: 200px"
+            clearable
+          >
             <el-option label="早餐" value="早餐" />
             <el-option label="午餐" value="午餐" />
             <el-option label="晚餐" value="晚餐" />
             <el-option label="加餐" value="加餐" />
           </el-select>
-        </el-form-item>
-
-        <el-form-item label="自动上架时间">
+        </div>
+        <div class="info-item">
+          <span class="info-label"><el-icon><Clock /></el-icon> 自动上架时间</span>
           <el-time-picker
             v-model="newMenu.autoOnline"
             type="fixed-time"
             format="HH:mm:ss"
             value-format="HH:mm:ss"
             placeholder="选择自动上架时间"
-            style="width: 100%"
-          />
-        </el-form-item>
-
-        <el-form-item label="自动下架时间">
+            style="width: 200px"
+          ></el-time-picker>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><el-icon><Clock /></el-icon> 自动下架时间</span>
           <el-time-picker
             v-model="newMenu.autoOffline"
             type="fixed-time"
             format="HH:mm:ss"
             value-format="HH:mm:ss"
             placeholder="选择自动下架时间"
-            style="width: 100%"
-          />
-        </el-form-item>
-
-        <el-form-item label="状态">
-          <el-select v-model="newMenu.status" style="width: 100%">
+            style="width: 200px"
+          ></el-time-picker>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><el-icon><Switch /></el-icon> 菜单状态</span>
+          <el-select
+            v-model="newMenu.status"
+            placeholder="选择菜单状态"
+            style="width: 200px"
+            clearable
+          >
             <el-option label="上架中" value="online" />
             <el-option label="草稿" value="draft" />
             <el-option label="下架中" value="offline" />
           </el-select>
-        </el-form-item>
-      </el-form>
+        </div>
+      </div>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="addMenuDialogVisible = false">取消</el-button>
@@ -988,47 +1005,118 @@ const toggleSelectAll = () => {
     }
   }
 
+  /* 对话框按钮样式 - 与添加菜品保持一致 */
   .dialog-footer {
-    text-align: right;
+    text-align: center;
+    padding: 0 28px 24px;
   }
 
-  /* 对话框内容区域样式 */
+  :deep(.dialog-footer .el-button) {
+    padding: 10px 28px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  :deep(.dialog-footer .el-button--primary) {
+    background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+    border: 1px solid #91d5ff;
+    color: #0050b3;
+  }
+
+  :deep(.dialog-footer .el-button--primary:hover) {
+    background: linear-gradient(135deg, #bae7ff 0%, #91d5ff 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(64, 169, 255, 0.3);
+  }
+
+  :deep(.dialog-footer .el-button--default) {
+    border-color: #e5e7eb;
+    background-color: #fafafa;
+    color: #666;
+  }
+
+  :deep(.dialog-footer .el-button--default:hover) {
+    border-color: #d9d9d9;
+    background-color: #f0f0f0;
+    color: #333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* 对话框内容区域样式 - 与添加菜品保持一致 */
   :deep(.el-dialog) {
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   }
 
   :deep(.el-dialog__header) {
-    border-bottom: 1px solid #f1f3f5;
-    padding: 20px 24px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, rgba(230, 247, 255, 0.8) 0%, rgba(186, 231, 255, 0.8) 100%);
+    padding: 24px 28px;
     border-radius: 12px 12px 0 0;
   }
 
   :deep(.el-dialog__title) {
-    color: #495057;
+    font-size: 20px;
     font-weight: 600;
+    color: #1890ff;
+    background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   :deep(.el-dialog__body) {
-    padding: 24px;
+    padding: 32px 28px;
     background-color: #fafbfc;
   }
 
   :deep(.el-dialog__footer) {
     border-top: 1px solid #f1f3f5;
-    padding: 16px 24px;
+    padding: 0 28px 24px;
     border-radius: 0 0 12px 12px;
     background-color: #ffffff;
   }
 
-  /* 表单样式优化 */
-  :deep(.el-form-item) {
-    margin-bottom: 20px;
-  }
+  /* 添加菜单表单样式 */
+  .add-menu-form {
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
 
-  :deep(.el-form-item__label) {
-    color: #6c757d;
-    font-weight: 500;
+      .info-label {
+        color: #555;
+        width: 130px;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      /* 输入框、选择框、时间选择器悬浮效果优化 - 与添加菜品保持一致 */
+      :deep(.el-input__wrapper),
+      :deep(.el-select__wrapper),
+      :deep(.el-time-picker .el-input__wrapper) {
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+        &:hover {
+          border-color: #91d5ff;
+          box-shadow: 0 0 0 3px rgba(145, 213, 255, 0.1);
+        }
+
+        &.is-focus,
+        &.is-focused {
+          border-color: #40a9ff;
+          box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.15);
+        }
+      }
+    }
   }
 }
 </style>
