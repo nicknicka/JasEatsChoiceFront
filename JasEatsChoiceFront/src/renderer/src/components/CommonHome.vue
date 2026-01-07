@@ -559,8 +559,12 @@ const handleSearch = (value) => {
           class="identity-switch"
           @click="toggleRole"
         >
-          <span :class="['user-icon', userRole === 'user' ? 'icon-enlarged' : '']">👤</span>
-          <span :class="['merchant-icon', userRole === 'merchant' ? 'icon-enlarged' : '']">🏪</span>
+          <el-icon :class="['user-icon', userRole === 'user' ? 'icon-enlarged' : '']">
+            <User />
+          </el-icon>
+          <el-icon :class="['merchant-icon', userRole === 'merchant' ? 'icon-enlarged' : '']">
+            <Shop />
+          </el-icon>
         </el-button>
         <!-- 商家端未注册：显示注册跳转图标 -->
         <el-button v-else type="text" @click="navigateTo('/merchant/register')">
@@ -691,7 +695,8 @@ const handleSearch = (value) => {
 .user-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
+  margin-right: 10px;
 
   .identity-switch {
     font-size: 18px;
@@ -699,12 +704,13 @@ const handleSearch = (value) => {
 
     .user-icon,
     .merchant-icon {
-      transition: font-size 0.3s ease;
+      transition: transform 0.3s ease, color 0.3s ease;
+      font-size: 18px;
     }
 
     .icon-enlarged {
-      font-size: 24px;
-      font-weight: bold;
+      transform: scale(1.3);
+      color: #ff6b6b;
     }
   }
 }

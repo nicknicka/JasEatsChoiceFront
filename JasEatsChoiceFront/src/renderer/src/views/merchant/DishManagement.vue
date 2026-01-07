@@ -15,7 +15,7 @@ import {
   SwitchButton as StatusIcon,
   List as IngredientsIcon,
   Document as DetailsIcon,
-  Flame as FlameIcon
+  Warning as FlameIcon
 } from '@element-plus/icons-vue'
 
 

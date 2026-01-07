@@ -695,6 +695,7 @@ const toggleSelectAll = () => {
 <style scoped lang="less">
 .menu-management-container {
   padding: 24px;
+  background-color: #f8f9fa;
 
   .menu-header {
     display: flex;
@@ -706,6 +707,7 @@ const toggleSelectAll = () => {
       font-size: 18px;
       font-weight: 600;
       margin: 0;
+      color: #495057;
     }
 
     // 固定搜索和新增按钮区域的宽度范围，确保布局稳定
@@ -740,11 +742,12 @@ const toggleSelectAll = () => {
   }
 
   .filter-panel {
-    background-color: #f5f7fa;
-    padding: 16px 24px;
-    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 20px 24px;
+    border-radius: 12px;
     margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
   }
 
   .menu-filters {
@@ -763,6 +766,7 @@ const toggleSelectAll = () => {
         font-weight: 500;
         white-space: nowrap; /* 确保标签文本不换行 */
         margin-right: 8px;
+        color: #6c757d;
       }
 
       .status-filter {
@@ -801,17 +805,17 @@ const toggleSelectAll = () => {
       display: flex;
       align-items: flex-start;
       padding: 20px;
-      border: 1px solid #e4e7ed;
-      border-radius: 8px;
+      border: 1px solid #f1f3f5;
+      border-radius: 12px;
       margin-bottom: 16px;
-      background-color: #fff;
+      background-color: #ffffff;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
       &:hover {
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        border-color: #409eff;
-        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #dee2e6;
+        transform: translateY(-2px);
       }
 
       .menu-selection {
@@ -834,7 +838,7 @@ const toggleSelectAll = () => {
             .name {
               font-size: 18px;
               font-weight: 600;
-              color: #303133;
+              color: #495057;
             }
           }
 
@@ -846,7 +850,7 @@ const toggleSelectAll = () => {
             font-size: 14px;
 
             .dishes-count {
-              color: #606266;
+              color: #6c757d;
             }
           }
 
@@ -888,17 +892,17 @@ const toggleSelectAll = () => {
                 position: absolute;
                 right: 0;
                 bottom: 8px;
-                background: #fff;
+                background: #ffffff;
                 padding-left: 5px;
                 font-size: 14px;
-                color: #909399;
+                color: #adb5bd;
               }
             }
           }
 
           .auto-times {
             font-size: 13px;
-            color: #909399;
+            color: #adb5bd;
             margin-bottom: 12px;
           }
         }
@@ -948,7 +952,7 @@ const toggleSelectAll = () => {
   /* 筛选面板小屏幕响应式调整 */
   @media (max-width: 767px) {
     .filter-panel {
-      padding: 12px 16px;
+      padding: 16px;
       overflow-x: auto; /* 小屏幕下允许横向滚动 */
     }
 
@@ -968,6 +972,11 @@ const toggleSelectAll = () => {
   /* 将批量操作和分页分成两行显示 */
   .batch-pagination-container {
     margin-bottom: 20px;
+    padding: 16px 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #f1f3f5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
     .batch-actions {
       justify-content: flex-start; /* 批量操作左对齐 */
@@ -981,6 +990,45 @@ const toggleSelectAll = () => {
 
   .dialog-footer {
     text-align: right;
+  }
+
+  /* 对话框内容区域样式 */
+  :deep(.el-dialog) {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  :deep(.el-dialog__header) {
+    border-bottom: 1px solid #f1f3f5;
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  :deep(.el-dialog__title) {
+    color: #495057;
+    font-weight: 600;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 24px;
+    background-color: #fafbfc;
+  }
+
+  :deep(.el-dialog__footer) {
+    border-top: 1px solid #f1f3f5;
+    padding: 16px 24px;
+    border-radius: 0 0 12px 12px;
+    background-color: #ffffff;
+  }
+
+  /* 表单样式优化 */
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
+  }
+
+  :deep(.el-form-item__label) {
+    color: #6c757d;
+    font-weight: 500;
   }
 }
 </style>

@@ -454,6 +454,7 @@ const batchAssociateDishes = () => {
 <style scoped lang="less">
 .menu-edit-container {
   padding: 20px;
+  background-color: #f8f9fa;
 
   .menu-edit-header {
     margin-bottom: 20px;
@@ -468,42 +469,48 @@ const batchAssociateDishes = () => {
       font-size: 18px;
       font-weight: 600;
       margin: 0;
+      color: #495057;
     }
   }
 
   .menu-edit-content {
     .menu-info-section,
     .dishes-section {
-      background-color: #fff;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e9ecef;
     }
 
     .section-title {
       font-size: 16px;
       font-weight: 600;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      color: #495057;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f1f3f5;
     }
 
     .info-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 16px;
+      margin-bottom: 20px;
 
       .info-label {
-        color: #606266;
+        color: #6c757d;
         width: 120px;
+        font-weight: 500;
       }
     }
 
     .dishes-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 16px;
+      margin-bottom: 20px;
 
       .dishes-search {
         margin-right: auto;
@@ -515,13 +522,21 @@ const batchAssociateDishes = () => {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 8px;
-        border: 1px solid #e4e7ed;
-        border-radius: 4px;
-        margin-bottom: 8px;
+        padding: 12px 16px;
+        border: 1px solid #f1f3f5;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        background-color: #fafbfc;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background-color: #f8f9fa;
+          border-color: #dee2e6;
+        }
 
         .dish-info {
-          color: #303133;
+          color: #495057;
+          font-size: 14px;
         }
       }
     }
@@ -529,7 +544,7 @@ const batchAssociateDishes = () => {
     .action-buttons {
       display: flex;
       gap: 16px;
-      margin-top: 24px;
+      margin-top: 32px;
       justify-content: flex-end;
     }
   }
