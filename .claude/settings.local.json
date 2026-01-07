@@ -314,7 +314,10 @@
       "Bash(npx vite optimize)",
       "Bash(./mvnw clean spring-boot:run:*)",
       "Bash(./JasEatsChoiceFront/node_modules/.bin/electron:*)",
-      "Bash(read:*)"
+      "Bash(read:*)",
+      "Bash(mvn:*)",
+      "Bash(./mvnw clean:*)",
+      "Bash(xargs kill:*)"
     ],
     "deny": [],
     "ask": []

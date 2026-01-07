@@ -14,13 +14,7 @@ const route = useRoute()
 const router = useRouter()
 
 // 菜单基本信息
-const menuInfo = ref({
-  name: '午餐菜单',
-  description: '精选午餐菜品，营养美味',
-  autoOnline: '2024-11-22 11:00',
-  autoOffline: '2024-11-22 14:00',
-  status: 'online' // online: 上架中, draft: 草稿, offline: 下架中
-})
+const menuInfo = ref({})
 
 // 菜单状态映射
 const menuStatusMap = {
@@ -33,11 +27,7 @@ const menuStatusMap = {
 const loading = ref(false)
 
 // 菜品列表
-const dishesList = ref([
-  { id: 1, name: '麻辣香锅饭', price: 18, status: 'online', statusText: '🟢 在售' },
-  { id: 2, name: '鱼香肉丝面', price: 16, status: 'online', statusText: '🟢 在售' },
-  { id: 3, name: '宫保鸡丁饭', price: 18, status: 'almost_sold', statusText: '🟡 即将售罄' }
-])
+const dishesList = ref([])
 
 // 搜索关键词
 const searchKeyword = ref('')
@@ -166,7 +156,8 @@ const saveMenu = async (saveType) => {
     }
 
     // 更新菜单
-    await axios.put(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}`, saveData)
+    const response = await axios.put(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}`, saveData)
+    console.log('resonse data', response) ;
     ElMessage.success('菜单保存成功')
 
     // 跳回菜单管理页面
@@ -313,17 +304,7 @@ const batchAssociateDishes = () => {
             clearable
           ></el-input>
         </div>
-        <div class="info-item">
-          <span class="info-label"><el-icon><Edit /></el-icon> 菜单描述</span>
-          <el-input
-            v-model="menuInfo.description"
-            placeholder="请输入菜单描述"
-            style="width: 500px"
-            type="textarea"
-            :rows="4"
-            clearable
-          ></el-input>
-        </div>
+
         <div class="info-item">
           <span class="info-label"><el-icon><Clock /></el-icon> 自动上架时间</span>
           <el-time-picker
@@ -334,9 +315,6 @@ const batchAssociateDishes = () => {
             placeholder="选择自动上架时间"
             style="width: 200px"
           ></el-time-picker>
-          <el-button type="text" size="small" @click="setAutoOnlineTime" class="time-set-btn">
-            设置
-          </el-button>
         </div>
         <div class="info-item">
           <span class="info-label"><el-icon><Clock /></el-icon> 自动下架时间</span>
@@ -348,9 +326,6 @@ const batchAssociateDishes = () => {
             placeholder="选择自动下架时间"
             style="width: 200px"
           ></el-time-picker>
-          <el-button type="text" size="small" @click="setAutoOfflineTime" class="time-set-btn">
-            设置
-          </el-button>
         </div>
         <div class="info-item">
           <span class="info-label"><el-icon><Switch /></el-icon> 菜单状态</span>
@@ -364,6 +339,7 @@ const batchAssociateDishes = () => {
               v-for="(status, key) in menuStatusMap"
               :key="key"
               :value="key"
+              :label="status.text"
             >
               <template #label>
                 <el-icon>
@@ -375,6 +351,17 @@ const batchAssociateDishes = () => {
               </template>
             </el-option>
           </el-select>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><el-icon><Edit /></el-icon> 菜单描述</span>
+          <el-input
+            v-model="menuInfo.description"
+            placeholder="请输入菜单描述"
+            style="width: 500px"
+            type="textarea"
+            :rows="4"
+            clearable
+          ></el-input>
         </div>
       </div>
 

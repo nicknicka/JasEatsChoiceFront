@@ -39,16 +39,22 @@ public class Menu {
     @JsonProperty("category") // 前端使用的字段名是category
     private String type; // 菜单类型（如：早餐、午餐、晚餐）
 
+    @TableField("description")
+    @ApiModelProperty(value = "菜单描述")
+    private String description; // 菜单描述
+
     @TableField("status")
     @ApiModelProperty(value = "菜单状态：active-启用，inactive-禁用")
     private String status; // 菜单状态：active-启用，inactive-禁用
 
     @TableField("auto_start_time")
     @ApiModelProperty(value = "自动开始时间")
+    @JsonProperty("autoOnline") // 前端使用的字段名是autoOnline
     private LocalDateTime autoStartTime; // 自动开始时间
 
     @TableField("auto_end_time")
     @ApiModelProperty(value = "自动结束时间")
+    @JsonProperty("autoOffline") // 前端使用的字段名是autoOffline
     private LocalDateTime autoEndTime; // 自动结束时间
 
     @TableField("create_time")
