@@ -5,6 +5,18 @@ import axios from 'axios'
 import { API_CONFIG } from '../../config/index.js'
 // 导入authStore
 import { useAuthStore } from '../../store/authStore'
+// 导入图标
+import { Search, Plus, CircleCheck, CircleClose, Delete } from '@element-plus/icons-vue'
+import {
+  Goods as GoodsIcon,
+  Money as MoneyIcon,
+  Folder as FolderIcon,
+  GoodsFilled as StockIcon,
+  SwitchButton as StatusIcon,
+  List as IngredientsIcon,
+  Document as DetailsIcon,
+  Flame as FlameIcon
+} from '@element-plus/icons-vue'
 
 
 // 菜品数据
@@ -190,6 +202,25 @@ const saveEditedDish = () => {
     .catch((error) => {
       console.error('更新菜品失败:', error)
       ElMessage.error('网络错误，菜品更新失败')
+    })
+}
+
+// 切换菜品状态（上架/下架）
+const toggleDishStatus = (dish) => {
+  const newStatus = dish.status === 'online' ? 'offline' : 'online'
+  const statusText = newStatus === 'online' ? '上架' : '下架'
+
+  ElMessageBox.confirm(`确定要将该菜品${statusText}吗？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(() => {
+      dish.status = newStatus
+      ElMessage.success(`菜品已${statusText}`)
+    })
+    .catch(() => {
+      ElMessage.info('已取消操作')
     })
 }
 
@@ -594,11 +625,16 @@ const getDishCheckedState = (dish) => {
         <el-input
           v-model="searchKeyword"
           placeholder="输入菜品名称或分类..."
-          style="min-width: 250px; max-width: 400px; width: auto; flex: 1; max-width: 400px; margin-right: 10px"
+          style="min-width: 250px; max-width: 400px; width: auto; flex: 1; max-width: 400px; margin-right: 12px"
           @input="updateFilter"
-        />
-        <el-button type="primary" @click="openAddDishDialog">
-          <span>➕</span>
+          clearable
+        >
+          <template #prefix>
+            <el-icon style="color: #909399"><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-button type="primary" @click="openAddDishDialog" class="add-button">
+          <el-icon><Plus /></el-icon>
           新增菜品
         </el-button>
       </div>
@@ -623,24 +659,62 @@ const getDishCheckedState = (dish) => {
             <div class="dish-info">
               <div class="dish-name">
                 <span class="name">{{ dish.name }}</span>
+                <el-tag
+                  :type="dish.status === 'online' ? 'success' : dish.status === 'almost_sold' ? 'warning' : 'danger'"
+                  size="small"
+                  style="margin-left: 8px; font-size: 12px;"
+                >
+                  {{ dish.status === 'online' ? '上架' : dish.status === 'almost_sold' ? '即将售罄' : '下架' }}
+                </el-tag>
               </div>
 
               <div class="dish-stats">
-                <span class="dish-category">🍽️ 分类：{{ dish.category }}</span>
-                <span class="dish-price">💰 价格：¥{{ dish.price }}</span>
-                <span class="dish-stock">📦 库存：{{ dish.stock }}</span>
-                <span class="update-time">⏰ 更新时间：{{ dish.updateTime }}</span>
+                <div class="stat-item">
+                  <span class="stat-label">🍽️ 分类：</span>
+                  <span class="stat-value">{{ dish.category }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">💰 价格：</span>
+                  <span class="stat-value">¥{{ dish.price }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">📦 库存：</span>
+                  <span class="stat-value">{{ dish.stock }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">⏰ 更新时间：</span>
+                  <span class="stat-value">{{ dish.updateTime }}</span>
+                </div>
               </div>
             </div>
 
             <div class="dish-actions">
-              <el-button type="primary" size="small" @click="toggleDishStatus(dish)">
-                {{ dish.status === 'online' ? '🔴 下架' : '🟢 上架' }}
+              <el-button
+                :type="dish.status === 'online' ? 'danger' : 'success'"
+                size="small"
+                @click="toggleDishStatus(dish)"
+                :class="{ 'btn-active': true }"
+              >
+                {{ dish.status === 'online' ? '下架' : '上架' }}
               </el-button>
 
-              <el-button type="warning" size="small" @click="editDish(dish)"> ✏️ 编辑 </el-button>
+              <el-button
+                type="primary"
+                size="small"
+                @click="editDish(dish)"
+                :class="{ 'btn-active': true }"
+              >
+                编辑
+              </el-button>
 
-              <el-button type="danger" size="small" @click="deleteDish(dish)"> 🗑️ 删除 </el-button>
+              <el-button
+                type="warning"
+                size="small"
+                @click="deleteDish(dish)"
+                :class="{ 'btn-active': true }"
+              >
+                删除
+              </el-button>
             </div>
           </div>
         </div>
@@ -662,8 +736,10 @@ const getDishCheckedState = (dish) => {
         size="small"
         @click="batchOperation('online')"
         :disabled="selectedDishes.length === 0"
+        class="batch-btn"
       >
-        🟢 批量上架
+        <el-icon><CircleCheck /></el-icon>
+        批量上架
       </el-button>
 
       <el-button
@@ -671,8 +747,10 @@ const getDishCheckedState = (dish) => {
         size="small"
         @click="batchOperation('offline')"
         :disabled="selectedDishes.length === 0"
+        class="batch-btn"
       >
-        🔴 批量下架
+        <el-icon><CircleClose /></el-icon>
+        批量下架
       </el-button>
 
       <el-button
@@ -680,8 +758,10 @@ const getDishCheckedState = (dish) => {
         size="small"
         @click="batchOperation('delete')"
         :disabled="selectedDishes.length === 0"
+        class="batch-btn"
       >
-        🗑️ 批量删除
+        <el-icon><Delete /></el-icon>
+        批量删除
       </el-button>
     </div>
 
@@ -706,107 +786,191 @@ const getDishCheckedState = (dish) => {
     </el-empty>
 
     <!-- 添加菜品对话框 -->
-    <el-dialog v-model="addDishDialogVisible" title="添加新菜品" width="600px" top="10%">
-      <el-form :model="newDish" label-width="100px" status-icon>
-        <el-form-item label="名称" prop="name" required>
-          <el-input v-model="newDish.name" placeholder="请输入菜品名称" />
-        </el-form-item>
+    <el-dialog
+      v-model="addDishDialogVisible"
+      title="添加新菜品"
+      width="700px"
+      top="10%"
+      transition="dialog-fade"
+    >
+      <div class="add-dish-form">
+        <el-form
+          :model="newDish"
+          label-width="120px"
+          status-icon
+          class="custom-form"
+        >
+          <el-form-item label="名称" prop="name" required>
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><GoodsIcon /></el-icon>
+                <span>名&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;称</span>
+              </div>
+            </template>
+            <el-input v-model="newDish.name" placeholder="例：宫保鸡丁" />
+          </el-form-item>
 
-        <el-form-item label="价格" prop="price" required>
-          <el-input v-model.number="newDish.price" placeholder="请输入价格" type="number" />
-        </el-form-item>
+          <el-form-item label="价格" prop="price" required>
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><MoneyIcon /></el-icon>
+                <span>价&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;格</span>
+              </div>
+            </template>
+            <el-input
+              v-model.number="newDish.price"
+              placeholder="请输入价格"
+              type="number"
+            />
+          </el-form-item>
 
-        <el-form-item label="分类" prop="category" required>
-          <el-select v-model="newDish.category" style="width: 100%" filterable allow-create default-first-option placeholder="请选择或输入分类">
-            <el-option label="主食" value="主食" />
-            <el-option label="汤品" value="汤品" />
-            <el-option label="饮料" value="饮料" />
-            <el-option label="小吃" value="小吃" />
-          </el-select>
-        </el-form-item>
+          <el-form-item label="分类" prop="category" required>
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><FolderIcon /></el-icon>
+                <span>分&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;类</span>
+              </div>
+            </template>
+            <el-select
+              v-model="newDish.category"
+              style="width: 100%"
+              filterable
+              allow-create
+              default-first-option
+              placeholder="请选择或输入分类"
+            >
+              <el-option label="主食" value="主食" />
+              <el-option label="汤品" value="汤品" />
+              <el-option label="饮料" value="饮料" />
+              <el-option label="小吃" value="小吃" />
+            </el-select>
+          </el-form-item>
 
-        <el-form-item label="库存" prop="stock" required>
-          <el-input v-model.number="newDish.stock" placeholder="请输入库存" type="number" />
-        </el-form-item>
+          <el-form-item label="库存" prop="stock" required>
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><StockIcon /></el-icon>
+                <span>库&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;存</span>
+              </div>
+            </template>
+            <el-input
+              v-model.number="newDish.stock"
+              placeholder="请输入库存"
+              type="number"
+            />
+          </el-form-item>
 
-        <el-form-item label="状态">
-          <el-select v-model="newDish.status" style="width: 100%">
-            <el-option label="上架" value="online" />
-            <el-option label="下架" value="offline" />
-          </el-select>
-        </el-form-item>
+          <el-form-item label="状态">
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><StatusIcon /></el-icon>
+                <span>状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态</span>
+              </div>
+            </template>
+            <el-select
+              v-model="newDish.status"
+              style="width: 100%"
+            >
+              <el-option label="上架" value="online" />
+              <el-option label="即将售罄" value="almost_sold" />
+              <el-option label="下架" value="offline" />
+            </el-select>
+          </el-form-item>
 
-        <!-- 必选食材 -->
-        <el-form-item label="必选食材" required>
-          <div class="optional-ingredients-container">
-            <div class="input-button-row">
-              <el-input
-                v-model="newMandatoryIngredient"
-                placeholder="请输入必选食材"
-                @keyup.enter="addMandatoryIngredient"
-                clearable
-                style="width: calc(300px - 80px)"
-              />
-              <el-button
-                type="primary"
-                @click="addMandatoryIngredient"
-                style="margin-left: 10px"
-              >
-                添加
-              </el-button>
+          <!-- 必选食材 -->
+          <el-form-item label="必选食材" required>
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><IngredientsIcon /></el-icon>
+                <span>必选食材</span>
+              </div>
+            </template>
+            <div class="optional-ingredients-container">
+              <div class="input-button-row">
+                <el-input
+                  v-model="newMandatoryIngredient"
+                  placeholder="请输入必选食材"
+                  @keyup.enter="addMandatoryIngredient"
+                  clearable
+                  style="width: calc(350px - 80px)"
+                />
+                <el-button
+                  type="primary"
+                  @click="addMandatoryIngredient"
+                  style="margin-left: 10px"
+                  class="add-ingredient-btn"
+                >
+                  添加
+                </el-button>
+              </div>
+              <div class="ingredients-tags">
+                <el-tag
+                  v-for="(ingredient, index) in newDish.ingredients.mandatory"
+                  :key="index"
+                  type="warning"
+                  closable
+                  @close="removeMandatoryIngredient(index)"
+                  class="ingredient-tag"
+                >
+                  {{ ingredient }}
+                </el-tag>
+              </div>
             </div>
-            <div class="ingredients-tags">
-              <el-tag
-                v-for="(ingredient, index) in newDish.ingredients.mandatory"
-                :key="index"
-                type="warning"
-                closable
-                @close="removeMandatoryIngredient(index)"
-              >
-                {{ ingredient }}
-              </el-tag>
-            </div>
-          </div>
-        </el-form-item>
+          </el-form-item>
 
-        <!-- 可选食材 -->
-        <el-form-item label="可选食材">
-          <div class="optional-ingredients-container">
-            <div class="input-button-row">
-              <el-input
-                v-model="newOptionalIngredient"
-                placeholder="请输入可选食材"
-                @keyup.enter="addOptionalIngredient"
-                clearable
-                style="width: calc(300px - 80px)"
-              />
-              <el-button
-                type="primary"
-                @click="addOptionalIngredient"
-                style="margin-left: 10px"
-              >
-                添加
-              </el-button>
+          <!-- 可选食材 -->
+          <el-form-item label="可选食材">
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><IngredientsIcon /></el-icon>
+                <span>可选食材</span>
+              </div>
+            </template>
+            <div class="optional-ingredients-container">
+              <div class="input-button-row">
+                <el-input
+                  v-model="newOptionalIngredient"
+                  placeholder="请输入可选食材"
+                  @keyup.enter="addOptionalIngredient"
+                  clearable
+                  style="width: calc(350px - 80px)"
+                />
+                <el-button
+                  type="primary"
+                  @click="addOptionalIngredient"
+                  style="margin-left: 10px"
+                  class="add-ingredient-btn"
+                >
+                  添加
+                </el-button>
+              </div>
+              <div class="ingredients-tags">
+                <el-tag
+                  v-for="(ingredient, index) in newDish.ingredients.optional"
+                  :key="index"
+                  type="success"
+                  closable
+                  @close="removeOptionalIngredient(index)"
+                  class="ingredient-tag"
+                >
+                  {{ ingredient }}
+                </el-tag>
+              </div>
             </div>
-            <div class="ingredients-tags">
-              <el-tag
-                v-for="(ingredient, index) in newDish.ingredients.optional"
-                :key="index"
-                type="success"
-                closable
-                @close="removeOptionalIngredient(index)"
-              >
-                {{ ingredient }}
-              </el-tag>
-            </div>
-          </div>
-        </el-form-item>
+          </el-form-item>
 
-        <!-- 卡路里计算 -->
-        <el-form-item label="总卡路里">
-          <div class="calorie-display">{{ newDish.totalCalories }} kcal</div>
-        </el-form-item>
-      </el-form>
+          <!-- 卡路里计算 -->
+          <el-form-item label="总卡路里">
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><FlameIcon /></el-icon>
+                <span>总卡路里</span>
+              </div>
+            </template>
+            <div class="calorie-display">{{ newDish.totalCalories }} kcal</div>
+          </el-form-item>
+        </el-form>
+      </div>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="addDishDialogVisible = false">取消</el-button>
@@ -816,108 +980,191 @@ const getDishCheckedState = (dish) => {
     </el-dialog>
 
     <!-- 编辑菜品对话框 -->
-    <el-dialog v-model="editDishDialogVisible" title="编辑菜品" width="600px" top="10%">
-      <el-form :model="editDishForm" label-width="100px" status-icon>
-        <el-form-item label="名称" prop="name" required>
-          <el-input v-model="editDishForm.name" placeholder="请输入菜品名称" />
-        </el-form-item>
+    <el-dialog
+      v-model="editDishDialogVisible"
+      title="编辑菜品"
+      width="700px"
+      top="10%"
+      transition="dialog-fade"
+    >
+      <div class="add-dish-form">
+        <el-form
+          :model="editDishForm"
+          label-width="120px"
+          status-icon
+          class="custom-form"
+        >
+          <el-form-item label="名称" prop="name" required>
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><GoodsIcon /></el-icon>
+                <span>名&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;称</span>
+              </div>
+            </template>
+            <el-input v-model="editDishForm.name" placeholder="例：宫保鸡丁" />
+          </el-form-item>
 
-        <el-form-item label="价格" prop="price" required>
-          <el-input v-model.number="editDishForm.price" placeholder="请输入价格" type="number" />
-        </el-form-item>
+          <el-form-item label="价格" prop="price" required>
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><MoneyIcon /></el-icon>
+                <span>价&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;格</span>
+              </div>
+            </template>
+            <el-input
+              v-model.number="editDishForm.price"
+              placeholder="请输入价格"
+              type="number"
+            />
+          </el-form-item>
 
-        <el-form-item label="分类" prop="category" required>
-          <el-select v-model="editDishForm.category" style="width: 100%" filterable allow-create default-first-option placeholder="请选择或输入分类">
-            <el-option label="主食" value="主食" />
-            <el-option label="汤品" value="汤品" />
-            <el-option label="饮料" value="饮料" />
-            <el-option label="小吃" value="小吃" />
-          </el-select>
-        </el-form-item>
+          <el-form-item label="分类" prop="category" required>
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><FolderIcon /></el-icon>
+                <span>分&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;类</span>
+              </div>
+            </template>
+            <el-select
+              v-model="editDishForm.category"
+              style="width: 100%"
+              filterable
+              allow-create
+              default-first-option
+              placeholder="请选择或输入分类"
+            >
+              <el-option label="主食" value="主食" />
+              <el-option label="汤品" value="汤品" />
+              <el-option label="饮料" value="饮料" />
+              <el-option label="小吃" value="小吃" />
+            </el-select>
+          </el-form-item>
 
-        <el-form-item label="库存" prop="stock" required>
-          <el-input v-model.number="editDishForm.stock" placeholder="请输入库存" type="number" />
-        </el-form-item>
+          <el-form-item label="库存" prop="stock" required>
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><StockIcon /></el-icon>
+                <span>库&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;存</span>
+              </div>
+            </template>
+            <el-input
+              v-model.number="editDishForm.stock"
+              placeholder="请输入库存"
+              type="number"
+            />
+          </el-form-item>
 
-        <el-form-item label="状态">
-          <el-select v-model="editDishForm.status" style="width: 100%">
-            <el-option label="上架" value="online" />
-            <el-option label="即将售罄" value="almost_sold" />
-            <el-option label="下架" value="offline" />
-          </el-select>
-        </el-form-item>
+          <el-form-item label="状态">
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><StatusIcon /></el-icon>
+                <span>状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态</span>
+              </div>
+            </template>
+            <el-select
+              v-model="editDishForm.status"
+              style="width: 100%"
+            >
+              <el-option label="上架" value="online" />
+              <el-option label="即将售罄" value="almost_sold" />
+              <el-option label="下架" value="offline" />
+            </el-select>
+          </el-form-item>
 
-        <!-- 必选食材 -->
-        <el-form-item label="必选食材">
-          <div class="optional-ingredients-container">
-            <div class="input-button-row">
-              <el-input
-                v-model="editNewMandatoryIngredient"
-                placeholder="请输入必选食材"
-                @keyup.enter="editAddMandatoryIngredient"
-                clearable
-                style="width: calc(300px - 80px)"
-              />
-              <el-button
-                type="primary"
-                @click="editAddMandatoryIngredient"
-                style="margin-left: 10px"
-              >
-                添加
-              </el-button>
+          <!-- 必选食材 -->
+          <el-form-item label="必选食材">
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><IngredientsIcon /></el-icon>
+                <span>必选食材</span>
+              </div>
+            </template>
+            <div class="optional-ingredients-container">
+              <div class="input-button-row">
+                <el-input
+                  v-model="editNewMandatoryIngredient"
+                  placeholder="请输入必选食材"
+                  @keyup.enter="editAddMandatoryIngredient"
+                  clearable
+                  style="width: calc(350px - 80px)"
+                />
+                <el-button
+                  type="primary"
+                  @click="editAddMandatoryIngredient"
+                  style="margin-left: 10px"
+                  class="add-ingredient-btn"
+                >
+                  添加
+                </el-button>
+              </div>
+              <div class="ingredients-tags">
+                <el-tag
+                  v-for="(ingredient, index) in editDishForm.ingredients.mandatory"
+                  :key="index"
+                  type="warning"
+                  closable
+                  @close="editRemoveMandatoryIngredient(index)"
+                  class="ingredient-tag"
+                >
+                  {{ ingredient }}
+                </el-tag>
+              </div>
             </div>
-            <div class="ingredients-tags">
-              <el-tag
-                v-for="(ingredient, index) in editDishForm.ingredients.mandatory"
-                :key="index"
-                type="warning"
-                closable
-                @close="editRemoveMandatoryIngredient(index)"
-              >
-                {{ ingredient }}
-              </el-tag>
-            </div>
-          </div>
-        </el-form-item>
+          </el-form-item>
 
-        <!-- 可选食材 -->
-        <el-form-item label="可选食材">
-          <div class="optional-ingredients-container">
-            <div class="input-button-row">
-              <el-input
-                v-model="editNewOptionalIngredient"
-                placeholder="请输入可选食材"
-                @keyup.enter="editAddOptionalIngredient"
-                clearable
-                style="width: calc(300px - 80px)"
-              />
-              <el-button
-                type="primary"
-                @click="editAddOptionalIngredient"
-                style="margin-left: 10px"
-              >
-                添加
-              </el-button>
+          <!-- 可选食材 -->
+          <el-form-item label="可选食材">
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><IngredientsIcon /></el-icon>
+                <span>可选食材</span>
+              </div>
+            </template>
+            <div class="optional-ingredients-container">
+              <div class="input-button-row">
+                <el-input
+                  v-model="editNewOptionalIngredient"
+                  placeholder="请输入可选食材"
+                  @keyup.enter="editAddOptionalIngredient"
+                  clearable
+                  style="width: calc(350px - 80px)"
+                />
+                <el-button
+                  type="primary"
+                  @click="editAddOptionalIngredient"
+                  style="margin-left: 10px"
+                  class="add-ingredient-btn"
+                >
+                  添加
+                </el-button>
+              </div>
+              <div class="ingredients-tags">
+                <el-tag
+                  v-for="(ingredient, index) in editDishForm.ingredients.optional"
+                  :key="index"
+                  type="success"
+                  closable
+                  @close="editRemoveOptionalIngredient(index)"
+                  class="ingredient-tag"
+                >
+                  {{ ingredient }}
+                </el-tag>
+              </div>
             </div>
-            <div class="ingredients-tags">
-              <el-tag
-                v-for="(ingredient, index) in editDishForm.ingredients.optional"
-                :key="index"
-                type="success"
-                closable
-                @close="editRemoveOptionalIngredient(index)"
-              >
-                {{ ingredient }}
-              </el-tag>
-            </div>
-          </div>
-        </el-form-item>
+          </el-form-item>
 
-        <!-- 卡路里计算 -->
-        <el-form-item label="总卡路里">
-          <div class="calorie-display">{{ editDishForm.totalCalories }} kcal</div>
-        </el-form-item>
-      </el-form>
+          <!-- 卡路里计算 -->
+          <el-form-item label="总卡路里">
+            <template #label>
+              <div class="form-item-label">
+                <el-icon class="label-icon"><FlameIcon /></el-icon>
+                <span>总卡路里</span>
+              </div>
+            </template>
+            <div class="calorie-display">{{ editDishForm.totalCalories }} kcal</div>
+          </el-form-item>
+        </el-form>
+      </div>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="editDishDialogVisible = false">取消</el-button>
@@ -932,14 +1179,14 @@ const getDishCheckedState = (dish) => {
 .calorie-display {
   font-size: 16px;
   font-weight: 600;
-  color: #f56c6c;
+  color: #e6a23c;
 }
 
 .optional-ingredients-container {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: 300px;
+  width: 350px;
 
   .input-button-row {
     display: flex;
@@ -954,19 +1201,198 @@ const getDishCheckedState = (dish) => {
   }
 }
 
+/* 表单容器 */
+.add-dish-form {
+  padding: 30px 0;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+/* 自定义Dialog样式 */
+:deep(.el-dialog__header) {
+  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, rgba(230, 247, 255, 0.8) 0%, rgba(186, 231, 255, 0.8) 100%);
+  padding: 24px 28px;
+}
+
+:deep(.el-dialog__title) {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1890ff;
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+:deep(.el-dialog__body) {
+  padding: 32px 28px;
+}
+
+/* 表单字段样式 */
+:deep(.el-form-item) {
+  margin-bottom: 32px; /* 增加字段间距 */
+}
+
+/* 带图标的标签样式 */
+.form-item-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label-icon {
+  font-size: 18px;
+  color: #667eea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #555;
+  font-size: 14px;
+}
+
+:deep(.el-form-item__label::before) {
+  content: '';
+  display: none; /* 隐藏原来的指示线 */
+}
+
+/* 输入框样式 */
+:deep(.el-input__wrapper),
+:deep(.el-select__wrapper),
+:deep(.el-textarea__inner) {
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.el-input__wrapper:hover),
+:deep(.el-select__wrapper:hover),
+:deep(.el-textarea__inner:hover) {
+  border-color: #91d5ff;
+  box-shadow: 0 0 0 3px rgba(145, 213, 255, 0.1);
+}
+
+:deep(.el-input__wrapper.is-focus),
+:deep(.el-select__wrapper.is-focus),
+:deep(.el-textarea__inner.is-focus) {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.15);
+}
+
+/* 弹窗动画 */
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.dialog-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+}
+
+.dialog-fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+/* 按钮样式 */
+:deep(.dialog-footer) {
+  text-align: center;
+  padding: 0 28px 24px;
+}
+
+:deep(.dialog-footer .el-button) {
+  padding: 10px 28px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.dialog-footer .el-button--primary) {
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  border: 1px solid #91d5ff;
+  color: #0050b3;
+}
+
+:deep(.dialog-footer .el-button--primary:hover) {
+  background: linear-gradient(135deg, #bae7ff 0%, #91d5ff 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(64, 169, 255, 0.3);
+}
+
+:deep(.dialog-footer .el-button--default) {
+  border-color: #e5e7eb;
+  background-color: #fafafa;
+  color: #666;
+}
+
+:deep(.dialog-footer .el-button--default:hover) {
+  border-color: #d9d9d9;
+  background-color: #f0f0f0;
+  color: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 添加食材按钮样式 */
+.add-ingredient-btn {
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  border: 1px solid #91d5ff;
+  color: #0050b3;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(64, 169, 255, 0.2);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #bae7ff 0%, #91d5ff 100%);
+    box-shadow: 0 4px 12px rgba(64, 169, 255, 0.3);
+    transform: translateY(-1px);
+  }
+}
+
+/* 食材标签样式 */
+.ingredient-tag {
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
 .dish-management-container {
   padding: 24px;
+  background-color: #fafbfc;
+  min-height: 100vh;
 
   .dish-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
     .page-title {
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 20px;
+      font-weight: 700;
       margin: 0;
+      color: #4a5568;
     }
   }
 
@@ -1010,15 +1436,17 @@ const getDishCheckedState = (dish) => {
     .dish-item {
       display: flex;
       align-items: flex-start;
-      padding: 16px;
-      border: 1px solid #e4e7ed;
-      border-radius: 4px;
-      margin-bottom: 12px;
-      background-color: #fff;
-      transition: box-shadow 0.3s;
+      padding: 20px;
+      border: none;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      background-color: #ffffff;
+      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
       &:hover {
-        box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
       }
 
       .dish-selection {
@@ -1035,26 +1463,39 @@ const getDishCheckedState = (dish) => {
           .dish-name {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 12px;
+            margin-bottom: 16px;
 
             .name {
-              font-size: 16px;
-              font-weight: 600;
+              font-size: 18px;
+              font-weight: 700;
+              color: #2d3748;
             }
           }
 
           .dish-stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 24px;
-            margin-bottom: 16px; /* 增加底部间距，为水平排列的按钮腾出空间 */
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
             font-size: 14px;
 
-            .dish-category,
-            .dish-price,
-            .dish-stock {
-              color: #606266;
+            .stat-item {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+
+              .stat-label {
+                color: #718096;
+                font-size: 12px;
+                font-weight: 500;
+              }
+
+              .stat-value {
+                color: #4a5568;
+                font-size: 14px;
+                font-weight: 600;
+              }
             }
           }
         }
@@ -1062,12 +1503,35 @@ const getDishCheckedState = (dish) => {
         .dish-actions {
           display: flex;
           flex-direction: row;
-          gap: 8px;
+          gap: 10px;
           justify-content: flex-start;
           flex-wrap: wrap;
 
           button {
-            width: 100px;
+            width: 90px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+            &:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            }
+
+            &:active {
+              transform: translateY(0);
+            }
+          }
+
+          .btn-active {
+            background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+            color: #0050b3;
+
+            &:hover {
+              background: linear-gradient(135deg, #bae7ff 0%, #91d5ff 100%);
+            }
           }
         }
       }
@@ -1078,12 +1542,17 @@ const getDishCheckedState = (dish) => {
     display: flex;
     align-items: center;
     gap: 16px;
+    padding: 16px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
     .select-all {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-weight: 500;
+      font-weight: 600;
+      color: #4a5568;
     }
   }
 
@@ -1092,10 +1561,57 @@ const getDishCheckedState = (dish) => {
     margin-top: 20px;
     display: flex;
     justify-content: flex-end;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 
   .dialog-footer {
     text-align: right;
+  }
+
+  .add-button {
+    background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    color: #389e0d;
+    box-shadow: 0 2px 8px rgba(56, 158, 13, 0.2);
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #d9f7be 0%, #b7eb8f 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(56, 158, 13, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .batch-btn {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 }
 </style>

@@ -175,15 +175,15 @@ const saveNewRecipe = () => {
 /* 自定义Dialog样式 */
 :deep(.el-dialog__header) {
   border-bottom: 2px solid rgba(102, 126, 234, 0.3);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(230, 247, 255, 0.8) 0%, rgba(186, 231, 255, 0.8) 100%);
   padding: 24px 28px;
 }
 
 :deep(.el-dialog__title) {
   font-size: 20px;
   font-weight: 600;
-  color: #333;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #1890ff;
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -207,7 +207,7 @@ const saveNewRecipe = () => {
 
 .label-icon {
   font-size: 18px;
-  color: #667eea;
+  color: #1890ff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -238,15 +238,15 @@ const saveNewRecipe = () => {
 :deep(.el-input__wrapper:hover),
 :deep(.el-select__wrapper:hover),
 :deep(.el-textarea__inner:hover) {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #91d5ff;
+  box-shadow: 0 0 0 3px rgba(145, 213, 255, 0.1);
 }
 
 :deep(.el-input__wrapper.is-focus),
 :deep(.el-select__wrapper.is-focus),
 :deep(.el-textarea__inner.is-focus) {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.15);
 }
 
 /* 时间选择器样式 */
@@ -286,23 +286,28 @@ const saveNewRecipe = () => {
 }
 
 :deep(.dialog-footer .el-button--primary) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  border: 1px solid #91d5ff;
+  color: #0050b3;
 }
 
 :deep(.dialog-footer .el-button--primary:hover) {
+  background: linear-gradient(135deg, #bae7ff 0%, #91d5ff 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 16px rgba(64, 169, 255, 0.3);
 }
 
 :deep(.dialog-footer .el-button--default) {
   border-color: #e5e7eb;
+  background-color: #fafafa;
+  color: #666;
 }
 
 :deep(.dialog-footer .el-button--default:hover) {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #d9d9d9;
+  background-color: #f0f0f0;
+  color: #333;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 </style>
