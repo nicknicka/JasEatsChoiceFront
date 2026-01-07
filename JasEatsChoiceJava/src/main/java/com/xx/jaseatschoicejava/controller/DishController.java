@@ -5,6 +5,7 @@ import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.Dish;
 import com.xx.jaseatschoicejava.exception.BusinessException;
 import com.xx.jaseatschoicejava.service.DishService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +14,7 @@ import java.util.List;
 /**
  * 菜品控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/dishes")
 public class DishController {
@@ -27,6 +29,7 @@ public class DishController {
     public ResponseResult<?> getDishes(@RequestParam(required = false) String category,
                                       @RequestParam(required = false) String keyword,
                                       @RequestParam(required = false) String merchantId) {
+        log.info("获取菜品列表 {} ", merchantId);
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
         if (category != null) {
             queryWrapper.eq(Dish::getCategory, category);
@@ -37,8 +40,6 @@ public class DishController {
         if (merchantId != null) {
             queryWrapper.eq(Dish::getMerchantId, merchantId);
         }
-        // 只显示上架的菜品
-        queryWrapper.eq(Dish::getStatus, true);
         List<Dish> dishes = dishService.list(queryWrapper);
         return ResponseResult.success(dishes);
     }
@@ -68,5 +69,18 @@ public class DishController {
             return ResponseResult.success("菜品创建成功");
         }
         return ResponseResult.fail("500", "菜品创建失败");
+    }
+
+    /**
+     * 更新菜品
+     */
+    @PutMapping("/{dishId}")
+    public ResponseResult<?> updateDish(@PathVariable String dishId, @RequestBody Dish dish) {
+        dish.setId(dishId);
+        boolean updated = dishService.updateById(dish);
+        if (updated) {
+            return ResponseResult.success("菜品更新成功");
+        }
+        return ResponseResult.fail("500", "菜品更新失败");
     }
 }

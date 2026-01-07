@@ -1,24 +1,17 @@
 <script setup>
-import { ref, onMounted, watch, TransitionGroup } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import { API_CONFIG } from '../../config/index.js'
 // 导入authStore
 import { useAuthStore } from '../../store/authStore'
 
-// 菜品状态映射
-const dishStatusMap = {
-  online: { text: '🟢 在售', type: 'success' },
-  almost_sold: { text: '🟡 即将售罄', type: 'warning' },
-  offline: { text: '🔴 下架', type: 'danger' }
-}
 
 // 菜品数据
 const dishesList = ref([])
 
 const loading = ref(false)
 const searchKeyword = ref('')
-const activeStatusFilter = ref('all')
 const selectedDishes = ref([])
 
 // 分页参数
@@ -55,16 +48,10 @@ onMounted(() => {
       }
     })
     .then((response) => {
-      if (response.data && response.data.success) {
+      console.log('菜品响应数据:', response)
+      if (response.data && response.data.code === "200") {
         // 预处理菜品数据，确保所有菜品都有有效的状态和时间格式
         const processedDishes = response.data.data.map(dish => {
-          // 确保status存在且是有效的值
-          const validStatuses = ['online', 'almost_sold', 'offline']
-          if (!dish.status || !validStatuses.includes(dish.status)) {
-            // 设置默认状态为online
-            dish.status = 'online'
-          }
-
           // 转换时间格式为 yyyy-MM-dd HH:mm:ss
           if (dish.createTime) {
             dish.createTime = new Date(dish.createTime).toLocaleString('zh-CN', {
@@ -103,6 +90,21 @@ onMounted(() => {
             dish.category = `分类${dish.category.replace('category_', '')}`
           }
 
+          // 将食材 JSON 字符串解析为对象
+          if (dish.ingredients && typeof dish.ingredients === 'string') {
+            try {
+              dish.ingredients = JSON.parse(dish.ingredients)
+            } catch (error) {
+              console.error('解析食材信息失败:', error)
+              dish.ingredients = { mandatory: [], optional: [] }
+            }
+          }
+
+          // 将后端的 calorie 字段映射到前端的 totalCalories 字段
+          if (dish.calorie !== undefined) {
+            dish.totalCalories = dish.calorie
+          }
+
           return dish
         })
         dishesList.value = processedDishes
@@ -124,11 +126,6 @@ onMounted(() => {
 // 更新筛选
 const updateFilter = () => {
   filteredDishes.value = dishesList.value.filter((dish) => {
-    // 状态筛选
-    if (activeStatusFilter.value !== 'all' && dish.status !== activeStatusFilter.value) {
-      return false
-    }
-
     // 搜索筛选
     if (
       searchKeyword.value &&
@@ -148,23 +145,6 @@ const updateFilter = () => {
   updatePagination()
 }
 
-// 切换状态
-const toggleDishStatus = (dish) => {
-  let newStatus = ''
-
-  if (dish.status === 'online') {
-    newStatus = 'offline'
-  } else if (dish.status === 'offline' || dish.status === 'almost_sold') {
-    newStatus = 'online'
-  } else {
-    // 默认处理未知状态，设为online
-    newStatus = 'online'
-  }
-
-  dish.status = newStatus
-  updateFilter()
-  ElMessage.success(`菜品已${dishStatusMap[newStatus]?.text || newStatus}`)
-}
 
 // 编辑菜品
 const editDish = (dish) => {
@@ -179,20 +159,38 @@ const saveEditedDish = () => {
     return
   }
 
-  // 找到要编辑的菜品并更新
-  const index = dishesList.value.findIndex((item) => item.id === editDishForm.value.id)
-  if (index !== -1) {
-    // 更新菜品信息，确保包含食材和卡路里
-    dishesList.value[index] = {
-      ...dishesList.value[index],
-      ...editDishForm.value,
-      updateTime: new Date().toISOString().slice(0, 19).replace('T', ' ') // 更新时间
-    }
-
-    updateFilter()
-    editDishDialogVisible.value = false
-    ElMessage.success('菜品已更新')
+  // 准备请求数据，将 ingredients 对象序列化为 JSON 字符串，并将 totalCalories 映射为 calorie
+  const requestData = {
+    ...editDishForm.value,
+    calorie: editDishForm.value.totalCalories,
+    ingredients: JSON.stringify(editDishForm.value.ingredients)
   }
+  // 删除不需要的 totalCalories 字段
+  delete requestData.totalCalories
+
+  // 发送后端请求
+  axios.put(`${API_CONFIG.baseURL}${API_CONFIG.dish.detail}${requestData.id}`, requestData)
+    .then((response) => {
+      if (response.status === 200 && response.data && response.data.success) {
+        // 从后端返回中获取更新后的菜品数据
+        const updatedDish = response.data.data
+
+        // 更新本地菜品列表
+        const index = dishesList.value.findIndex((item) => item.id === updatedDish.id)
+        if (index !== -1) {
+          dishesList.value[index] = updatedDish
+          updateFilter()
+          editDishDialogVisible.value = false
+          ElMessage.success('菜品已更新')
+        }
+      } else {
+        ElMessage.error(response.data?.message || '菜品更新失败')
+      }
+    })
+    .catch((error) => {
+      console.error('更新菜品失败:', error)
+      ElMessage.error('网络错误，菜品更新失败')
+    })
 }
 
 // 删除菜品
@@ -313,7 +311,6 @@ const newDish = ref({
   name: '',
   price: 0,
   category: '主食',
-  status: 'online',
   stock: 100,
   ingredients: {
     mandatory: [], // 必选食材改为字符串数组
@@ -435,9 +432,12 @@ const editRemoveOptionalIngredient = (index) => {
 // 打开编辑菜品对话框
 const openEditDishDialog = (dish) => {
   // 复制菜品数据到编辑表单，确保包含食材信息且为数组
+  // 排除status字段，状态由菜单管理
+  const { status, ...dishWithoutStatus } = dish
+
   editDishForm.value = JSON.parse(
     JSON.stringify({
-      ...dish,
+      ...dishWithoutStatus,
       ingredients: {
         mandatory: Array.isArray(dish.ingredients?.mandatory) ? dish.ingredients.mandatory : [],
         optional: Array.isArray(dish.ingredients?.optional) ? dish.ingredients.optional : []
@@ -469,24 +469,42 @@ const saveNewDish = () => {
     return
   }
 
-  // 创建新菜品对象
-  const newDishObj = {
-    id: Date.now(),
+  // 从authStore获取商家ID
+  const authStore = useAuthStore()
+  const merchantId = authStore.merchantId
+  if (!merchantId) {
+    ElMessage.error('未检测到商家ID，请重新登录')
+    return
+  }
+
+  // 准备请求数据，将 ingredients 对象序列化为 JSON 字符串，并将 totalCalories 映射为 calorie
+  const requestData = {
     name: newDish.value.name,
     price: newDish.value.price,
     category: newDish.value.category,
-    status: newDish.value.status,
     stock: newDish.value.stock,
-    ingredients: newDish.value.ingredients,
-    totalCalories: newDish.value.totalCalories,
-    updateTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
+    ingredients: JSON.stringify(newDish.value.ingredients),
+    calorie: newDish.value.totalCalories,
+    merchantId
   }
 
-  // 添加到菜品列表
-  dishesList.value.push(newDishObj)
-  updateFilter()
-  addDishDialogVisible.value = false
-  ElMessage.success('菜品已添加')
+  // 发送后端请求
+  axios.post(`${API_CONFIG.baseURL}${API_CONFIG.dish.list}`, requestData)
+    .then((response) => {
+      if (response.status === 200 && response.data && response.data.success) {
+        const dishData = response.data.data // 获取后端返回的完整菜品数据
+        dishesList.value.push(dishData)
+        updateFilter()
+        addDishDialogVisible.value = false
+        ElMessage.success('菜品已添加')
+      } else {
+        ElMessage.error(response.data?.message || '菜品添加失败')
+      }
+    })
+    .catch((error) => {
+      console.error('添加菜品失败:', error)
+      ElMessage.error('网络错误，菜品添加失败')
+    })
 }
 
 // 选择/取消选择单个菜品
@@ -586,69 +604,47 @@ const getDishCheckedState = (dish) => {
       </div>
     </div>
 
-    <div class="dish-filters">
-      <div class="filter-section">
-        <span class="filter-label">📋 状态筛选：</span>
-        <el-tag
-          v-for="status in ['all', 'online', 'almost_sold', 'offline']"
-          :key="status"
-          :type="activeStatusFilter === status ? 'primary' : 'info'"
-          effect="plain"
-          @click="
-            () => {
-              activeStatusFilter = status
-              updateFilter()
-            }
-          "
-          class="status-filter"
-        >
-          {{ status === 'all' ? '全部菜品' : dishStatusMap[status].text }}
-        </el-tag>
-      </div>
-    </div>
 
     <div class="dish-list">
-      <TransitionGroup
-        name="list"
-        tag="div"
-      >
-        <div class="dish-item" v-for="dish in paginatedDishes" :key="dish.id">
-        <div class="dish-selection">
-          <el-checkbox
-            :model-value="getDishCheckedState(dish)"
-            @change="toggleDishSelection(dish)"
-          />
-        </div>
-
-        <div class="dish-content">
-          <div class="dish-info">
-            <div class="dish-name">
-              <span class="name">{{ dish.name }}</span>
-              <el-tag :type="dishStatusMap[dish.status]?.type || 'info'">
-                {{ dishStatusMap[dish.status]?.text || '未知状态' }}
-              </el-tag>
-            </div>
-
-            <div class="dish-stats">
-              <span class="dish-category">🍽️ 分类：{{ dish.category }}</span>
-              <span class="dish-price">💰 价格：¥{{ dish.price }}</span>
-              <span class="dish-stock">📦 库存：{{ dish.stock }}</span>
-              <span class="update-time">⏰ 更新时间：{{ dish.updateTime }}</span>
-            </div>
+      <div class="dish-list-container">
+        <div
+          class="dish-item"
+          v-for="dish in paginatedDishes"
+          :key="dish.id"
+        >
+          <div class="dish-selection">
+            <el-checkbox
+              :model-value="getDishCheckedState(dish)"
+              @change="toggleDishSelection(dish)"
+            />
           </div>
 
-          <div class="dish-actions">
-            <el-button type="primary" size="small" @click="toggleDishStatus(dish)">
-              {{ dish.status === 'online' ? '🔴 下架' : '🟢 上架' }}
-            </el-button>
+          <div class="dish-content">
+            <div class="dish-info">
+              <div class="dish-name">
+                <span class="name">{{ dish.name }}</span>
+              </div>
 
-            <el-button type="warning" size="small" @click="editDish(dish)"> ✏️ 编辑 </el-button>
+              <div class="dish-stats">
+                <span class="dish-category">🍽️ 分类：{{ dish.category }}</span>
+                <span class="dish-price">💰 价格：¥{{ dish.price }}</span>
+                <span class="dish-stock">📦 库存：{{ dish.stock }}</span>
+                <span class="update-time">⏰ 更新时间：{{ dish.updateTime }}</span>
+              </div>
+            </div>
 
-            <el-button type="danger" size="small" @click="deleteDish(dish)"> 🗑️ 删除 </el-button>
+            <div class="dish-actions">
+              <el-button type="primary" size="small" @click="toggleDishStatus(dish)">
+                {{ dish.status === 'online' ? '🔴 下架' : '🟢 上架' }}
+              </el-button>
+
+              <el-button type="warning" size="small" @click="editDish(dish)"> ✏️ 编辑 </el-button>
+
+              <el-button type="danger" size="small" @click="deleteDish(dish)"> 🗑️ 删除 </el-button>
+            </div>
           </div>
         </div>
       </div>
-    </TransitionGroup>
     </div>
 
     <div class="batch-actions" v-if="filteredDishes.length > 0">
@@ -721,7 +717,7 @@ const getDishCheckedState = (dish) => {
         </el-form-item>
 
         <el-form-item label="分类" prop="category" required>
-          <el-select v-model="newDish.category" style="width: 100%">
+          <el-select v-model="newDish.category" style="width: 100%" filterable allow-create default-first-option placeholder="请选择或输入分类">
             <el-option label="主食" value="主食" />
             <el-option label="汤品" value="汤品" />
             <el-option label="饮料" value="饮料" />
@@ -763,7 +759,7 @@ const getDishCheckedState = (dish) => {
               <el-tag
                 v-for="(ingredient, index) in newDish.ingredients.mandatory"
                 :key="index"
-                type="danger"
+                type="warning"
                 closable
                 @close="removeMandatoryIngredient(index)"
               >
@@ -796,7 +792,7 @@ const getDishCheckedState = (dish) => {
               <el-tag
                 v-for="(ingredient, index) in newDish.ingredients.optional"
                 :key="index"
-                type="info"
+                type="success"
                 closable
                 @close="removeOptionalIngredient(index)"
               >
@@ -831,7 +827,7 @@ const getDishCheckedState = (dish) => {
         </el-form-item>
 
         <el-form-item label="分类" prop="category" required>
-          <el-select v-model="editDishForm.category" style="width: 100%">
+          <el-select v-model="editDishForm.category" style="width: 100%" filterable allow-create default-first-option placeholder="请选择或输入分类">
             <el-option label="主食" value="主食" />
             <el-option label="汤品" value="汤品" />
             <el-option label="饮料" value="饮料" />
@@ -874,7 +870,7 @@ const getDishCheckedState = (dish) => {
               <el-tag
                 v-for="(ingredient, index) in editDishForm.ingredients.mandatory"
                 :key="index"
-                type="danger"
+                type="warning"
                 closable
                 @close="editRemoveMandatoryIngredient(index)"
               >
@@ -907,7 +903,7 @@ const getDishCheckedState = (dish) => {
               <el-tag
                 v-for="(ingredient, index) in editDishForm.ingredients.optional"
                 :key="index"
-                type="info"
+                type="success"
                 closable
                 @close="editRemoveOptionalIngredient(index)"
               >

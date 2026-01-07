@@ -85,15 +85,9 @@ import { ref, watch, computed } from 'vue'
 const isLoading = ref(false)
 const isLoaded = ref(false)
 
-// 计算带时间戳的头像URL，解决浏览器缓存问题
+// 计算头像URL
 const timestampedAvatarUrl = computed(() => {
-  if (!props.avatarUrl) return ''
-  // 检查是否是base64数据URL，如果是则无需添加时间戳
-  if (props.avatarUrl.startsWith('data:')) {
-    return props.avatarUrl;
-  }
-  // 在URL后添加时间戳，防止浏览器缓存
-  return props.avatarUrl + '?t=' + new Date().getTime()
+  return props.avatarUrl || ''
 })
 
 // 组件属性定义
@@ -172,14 +166,8 @@ watch(
       // 创建临时图片对象来监听加载状态
       const img = new Image()
 
-      // 检查是否是base64数据URL，如果是则无需添加时间戳
-      let urlWithTimestamp;
-      if (newUrl.startsWith('data:')) {
-        urlWithTimestamp = newUrl;
-      } else {
-        // 在URL后添加时间戳，解决浏览器缓存问题
-        urlWithTimestamp = newUrl + '?t=' + new Date().getTime();
-      }
+      // 直接使用原始URL
+      const urlWithTimestamp = newUrl;
 
       img.onload = () => {
         isLoading.value = false

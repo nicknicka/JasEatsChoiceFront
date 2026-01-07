@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, TransitionGroup } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
@@ -505,127 +505,128 @@ const toggleSelectAll = () => {
     </div>
 
     <div class="menu-list">
-      <TransitionGroup
-        name="list"
-        tag="div"
-      >
-        <div class="menu-item" v-for="menu in paginatedMenus" :key="menu.id">
-        <div class="menu-selection">
-          <el-checkbox
-            :model-value="selectedMenus.includes(menu)"
-            @change="toggleMenuSelection(menu)"
-          />
-        </div>
-
-        <div class="menu-content">
-          <div class="menu-info">
-            <div class="menu-name">
-              <span class="name">{{ menu.name }}</span>
-              <!-- 菜单类型标签，不同类型不同样式 -->
-              <el-tag
-                :type="menu.category === '早餐' ? 'success' : menu.category === '午餐' ? 'primary' : menu.category === '晚餐' ? 'warning' : menu.category === '加餐' ? 'info' : 'default'"
-                size="small"
-                style="margin-right: 8px;"
-              >
-                {{ menu.category }}
-              </el-tag>
-              <!-- 状态信息，参考状态筛选样式 -->
-              <el-tag
-                :type="menuStatusMap[menu.status].type"
-                effect="plain"
-                class="menu-status-tag"
-              >
-                <el-icon v-if="menu.status === 'online'"><CircleCheck /></el-icon>
-                <el-icon v-if="menu.status === 'draft'"><CirclePlus /></el-icon>
-                <el-icon v-if="menu.status === 'offline'"><CircleClose /></el-icon>
-                {{ menuStatusMap[menu.status].text }}
-              </el-tag>
-            </div>
-
-            <!-- 菜品列表显示为标签，至多两行，超出省略并提示 -->
-            <div class="menu-dishes">
-              <el-tooltip
-                v-if="menu.dishes && Array.isArray(menu.dishes) && menu.dishes.length > 0"
-                :content="menu.dishes.map(dish => dish.name || dish).join(', ')"
-                placement="top"
-              >
-                <div class="dishes-tags-container">
-                  <el-tag
-                    v-for="(dish, index) in menu.dishes"
-                    :key="index"
-                    size="small"
-                  >
-                    {{ dish.name || dish }}
-                  </el-tag>
-                </div>
-              </el-tooltip>
-              <el-tooltip
-                v-else-if="menu.dishes && typeof menu.dishes === 'object' && menu.dishes.name"
-                :content="menu.dishes.name"
-                placement="top"
-              >
-                <div class="dishes-tags-container">
-                  <el-tag size="small">{{ menu.dishes.name }}</el-tag>
-                </div>
-              </el-tooltip>
-              <!-- 兼容旧数据结构（菜品数量） -->
-              <div v-else-if="menu.dishes" class="dishes-count">
-                <el-icon><Food /></el-icon> {{ menu.dishes }} 菜品
-              </div>
-              <!-- 无菜品时的显示 -->
-              <div v-else class="dishes-count">
-                <el-icon><Food /></el-icon> 0 菜品
-              </div>
-            </div>
-
-            <div class="menu-stats">
-              <span class="update-time">
-                <el-icon><Clock /></el-icon>
-                更新时间：{{ dayjs(menu.updateTime).fromNow() }}
-              </span>
-            </div>
-
-            <div class="auto-times">
-              <span v-if="menu.autoOnline" class="auto-online">
-                <el-icon><Clock /></el-icon>
-                自动上架：{{ dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') }}
-              </span>
-              <span v-if="menu.autoOffline" class="auto-offline">
-                <el-icon><Clock /></el-icon>
-                自动下架：{{ dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') }}
-              </span>
-            </div>
+      <div class="menu-list-container">
+        <div
+          class="menu-item"
+          v-for="menu in paginatedMenus"
+          :key="menu.id"
+        >
+          <div class="menu-selection">
+            <el-checkbox
+              :model-value="selectedMenus.includes(menu)"
+              @change="toggleMenuSelection(menu)"
+            />
           </div>
 
-          <div class="menu-actions">
-            <el-button
-              :type="menu.status === 'online' ? 'warning' : 'success'"
-              size="small"
-              @click="toggleMenuStatus(menu)"
-            >
-              <el-icon v-if="menu.status === 'online'"><CircleClose /></el-icon>
-              <el-icon v-else><CircleCheck /></el-icon>
-              {{ menu.status === 'online' ? '下架菜单' : '上架菜单' }}
-            </el-button>
+          <div class="menu-content">
+            <div class="menu-info">
+              <div class="menu-name">
+                <span class="name">{{ menu.name }}</span>
+                <!-- 菜单类型标签，不同类型不同样式 -->
+                <el-tag
+                  :type="menu.category === '早餐' ? 'success' : menu.category === '午餐' ? 'primary' : menu.category === '晚餐' ? 'warning' : menu.category === '加餐' ? 'info' : 'default'"
+                  size="small"
+                  style="margin-right: 8px;"
+                >
+                  {{ menu.category }}
+                </el-tag>
+                <!-- 状态信息，参考状态筛选样式 -->
+                <el-tag
+                  :type="menuStatusMap[menu.status].type"
+                  effect="plain"
+                  class="menu-status-tag"
+                >
+                  <el-icon v-if="menu.status === 'online'"><CircleCheck /></el-icon>
+                  <el-icon v-if="menu.status === 'draft'"><CirclePlus /></el-icon>
+                  <el-icon v-if="menu.status === 'offline'"><CircleClose /></el-icon>
+                  {{ menuStatusMap[menu.status].text }}
+                </el-tag>
+              </div>
 
-            <el-button type="primary" size="small" @click="editMenu(menu)">
-              <el-icon><Edit /></el-icon>
-              编辑
-            </el-button>
+              <!-- 菜品列表显示为标签，至多两行，超出省略并提示 -->
+              <div class="menu-dishes">
+                <el-tooltip
+                  v-if="menu.dishes && Array.isArray(menu.dishes) && menu.dishes.length > 0"
+                  :content="menu.dishes.map(dish => dish.name || dish).join(', ')"
+                  placement="top"
+                >
+                  <div class="dishes-tags-container">
+                    <el-tag
+                      v-for="(dish, index) in menu.dishes"
+                      :key="index"
+                      size="small"
+                    >
+                      {{ dish.name || dish }}
+                    </el-tag>
+                  </div>
+                </el-tooltip>
+                <el-tooltip
+                  v-else-if="menu.dishes && typeof menu.dishes === 'object' && menu.dishes.name"
+                  :content="menu.dishes.name"
+                  placement="top"
+                >
+                  <div class="dishes-tags-container">
+                    <el-tag size="small">{{ menu.dishes.name }}</el-tag>
+                  </div>
+                </el-tooltip>
+                <!-- 兼容旧数据结构（菜品数量） -->
+                <div v-else-if="menu.dishes" class="dishes-count">
+                  <el-icon><Food /></el-icon> {{ menu.dishes }} 菜品
+                </div>
+                <!-- 无菜品时的显示 -->
+                <div v-else class="dishes-count">
+                  <el-icon><Food /></el-icon> 0 菜品
+                </div>
+              </div>
 
-            <el-button type="danger" size="small" @click="deleteMenu(menu)">
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
+              <div class="menu-stats">
+                <span class="update-time">
+                  <el-icon><Clock /></el-icon>
+                  更新时间：{{ dayjs(menu.updateTime).fromNow() }}
+                </span>
+              </div>
 
-            <el-button type="info" size="small" @click="exportMenu(menu)">
-              <el-icon><Download /></el-icon>
-              导出菜单
-            </el-button>
+              <div class="auto-times">
+                <span v-if="menu.autoOnline" class="auto-online">
+                  <el-icon><Clock /></el-icon>
+                  自动上架：{{ dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') }}
+                </span>
+                <span v-if="menu.autoOffline" class="auto-offline">
+                  <el-icon><Clock /></el-icon>
+                  自动下架：{{ dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') }}
+                </span>
+              </div>
+            </div>
+
+            <div class="menu-actions">
+              <el-button
+                :type="menu.status === 'online' ? 'warning' : 'success'"
+                size="small"
+                @click="toggleMenuStatus(menu)"
+              >
+                <el-icon v-if="menu.status === 'online'"><CircleClose /></el-icon>
+                <el-icon v-else><CircleCheck /></el-icon>
+                {{ menu.status === 'online' ? '下架菜单' : '上架菜单' }}
+              </el-button>
+
+              <el-button type="primary" size="small" @click="editMenu(menu)">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+
+              <el-button type="danger" size="small" @click="deleteMenu(menu)">
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+
+              <el-button type="info" size="small" @click="exportMenu(menu)">
+                <el-icon><Download /></el-icon>
+                导出菜单
+              </el-button>
+            </div>
           </div>
         </div>
       </div>
-    </TransitionGroup>
     </div>
 
     <!-- 空数据提示 -->

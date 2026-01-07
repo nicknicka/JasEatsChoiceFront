@@ -34,6 +34,7 @@ spring:
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   type-aliases-package: com.xx.jaseatschoicejava.entity
+  type-handlers-package: com.xx.jaseatschoicejava.handler  # 注册类型处理器
   configuration:
     map-underscore-to-camel-case: true  # 自动驼峰命名转换
   global-config:

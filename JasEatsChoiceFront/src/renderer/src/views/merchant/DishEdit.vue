@@ -2,6 +2,9 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElUpload } from 'element-plus'
+import axios from 'axios'
+import { API_CONFIG } from '../../config/index.js'
+import { useAuthStore } from '../../store/authStore'
 import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
 const route = useRoute()
@@ -12,7 +15,6 @@ const dishInfo = ref({
   name: '麻辣香锅饭',
   category: '主食',
   price: 18,
-  status: 'online', // online: 在售, almost_sold: 即将售罄, offline: 下架
   stock: 50,
   description: '精选食材，麻辣鲜香，回味无穷',
   ingredients: {
@@ -81,12 +83,6 @@ const calculateTotalCalories = () => {
 // 菜品分类选项
 const categories = ['主食', '汤品', '饮料', '小吃']
 
-// 菜品状态映射
-const dishStatusMap = {
-  online: { text: '🟢 在售', type: 'success' },
-  almost_sold: { text: '🟡 即将售罄', type: 'warning' },
-  offline: { text: '🔴 下架', type: 'danger' }
-}
 
 // 页面加载
 onMounted(() => {
@@ -94,18 +90,49 @@ onMounted(() => {
 })
 
 // 保存菜品
-const saveDish = (saveType) => {
-  // 根据保存类型更新菜品状态
-  if (saveType) {
-    dishInfo.value.status = saveType
+const saveDish = () => {
+  // 从authStore获取商家ID
+  const authStore = useAuthStore()
+  const merchantId = authStore.merchantId
+  if (!merchantId) {
+    ElMessage.error('未检测到商家ID，请重新登录')
+    return
   }
 
-  // 模拟保存
-  console.log('保存菜品:', dishInfo.value)
-  ElMessage.success('菜品保存成功')
+  // 准备请求数据，将 ingredients 对象序列化为 JSON 字符串，并将 totalCalories 映射为 calorie
+  const requestData = {
+    ...dishInfo.value,
+    merchantId,
+    calorie: dishInfo.value.totalCalories,
+    ingredients: JSON.stringify(dishInfo.value.ingredients)
+  }
+  // 删除不需要的 totalCalories 字段
+  delete requestData.totalCalories
 
-  // 跳回菜品管理页面
-  router.push('/merchant/dish-management')
+  // 判断是新增还是编辑操作（根据是否有id字段）
+  const isEdit = !!dishInfo.value.id
+
+  // 发送请求
+  const request = isEdit
+    ? axios.put(`${API_CONFIG.baseURL}${API_CONFIG.dish.detail}${dishInfo.value.id}`, requestData)
+    : axios.post(`${API_CONFIG.baseURL}${API_CONFIG.dish.list}`, requestData)
+
+  request
+    .then((response) => {
+      console.log('保存菜品结果:', response)
+      // 根据后端API的实际响应格式调整，通常检查HTTP状态码和业务成功标识
+      if (response.status === 200 && response.data && response.data.success) {
+        ElMessage.success('菜品保存成功')
+        // 跳回菜品管理页面
+        router.push('/merchant/dish-management')
+      } else {
+        ElMessage.error(response.data?.message || '菜品保存失败')
+      }
+    })
+    .catch((error) => {
+      console.error('保存菜品失败:', error)
+      ElMessage.error('网络错误，菜品保存失败')
+    })
 }
 
 // 上传菜品图片
@@ -145,7 +172,15 @@ const handleUpload = (file) => {
         </div>
         <div class="info-item">
           <span class="info-label">📋 菜品分类：</span>
-          <el-select v-model="dishInfo.category" placeholder="选择菜品分类" style="width: 200px">
+          <el-select
+            v-model="dishInfo.category"
+            placeholder="选择或输入菜品分类"
+            style="width: 200px"
+            filterable
+            allow-create
+            default-first-option
+            @create="(inputValue) => dishInfo.category = inputValue"
+          >
             <el-option
               v-for="category in categories"
               :key="category"
@@ -163,17 +198,6 @@ const handleUpload = (file) => {
           <span class="info-label">📦 库存：</span>
           <el-input-number v-model="dishInfo.stock" :min="0" :step="1" style="width: 200px" />
           <span class="unit">份</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">📋 菜品状态：</span>
-          <el-select v-model="dishInfo.status" placeholder="选择菜品状态" style="width: 200px">
-            <el-option
-              v-for="(status, key) in dishStatusMap"
-              :key="key"
-              :label="status.text"
-              :value="key"
-            />
-          </el-select>
         </div>
         <div class="info-item">
           <span class="info-label">📝 菜品描述：</span>
@@ -211,7 +235,7 @@ const handleUpload = (file) => {
               <el-tag
                 v-for="(ingredient, index) in dishInfo.ingredients.mandatory"
                 :key="index"
-                type="danger"
+                type="warning"
                 size="small"
                 closable
                 @close="removeMandatoryIngredient(index)"
@@ -247,7 +271,7 @@ const handleUpload = (file) => {
               <el-tag
                 v-for="(ingredient, index) in dishInfo.ingredients.optional"
                 :key="index"
-                type="info"
+                type="success"
                 size="small"
                 closable
                 @close="removeOptionalIngredient(index)"
@@ -267,9 +291,7 @@ const handleUpload = (file) => {
 
       <!-- 操作按钮 -->
       <div class="action-buttons">
-        <el-button type="success" @click="saveDish('online')">💾 保存菜品并上架</el-button>
-        <el-button type="warning" @click="saveDish('offline')">💾 保存菜品并下架</el-button>
-        <el-button type="info" @click="saveDish()">💾 保存菜品</el-button>
+        <el-button type="success" @click="saveDish()">💾 保存菜品</el-button>
         <CommonBackButton type="text" text="🔙 取消编辑" />
       </div>
     </div>

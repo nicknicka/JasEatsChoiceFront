@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableField;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import com.fasterxml.jackson.databind.JsonNode;
+// import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -49,7 +49,7 @@ public class Dish {
 
     @TableField("ingredients")
     @ApiModelProperty(value = "食材列表（JSON格式）")
-    private JsonNode ingredients; // 食材列表（JSON格式）
+    private String ingredients; // 食材列表（JSON格式）
 
     @TableField("description")
     @ApiModelProperty(value = "菜品描述")
