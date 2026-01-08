@@ -525,7 +525,7 @@ const toggleSelectAll = () => {
                 <span class="name">{{ menu.name }}</span>
                 <!-- 菜单类型标签，不同类型不同样式 -->
                 <el-tag
-                  :type="menu.category === '早餐' ? 'success' : menu.category === '午餐' ? 'primary' : menu.category === '晚餐' ? 'warning' : menu.category === '加餐' ? 'info' : 'default'"
+                  :type="menu.category === '早餐' ? 'success' : menu.category === '午餐' ? 'primary' : menu.category === '晚餐' ? 'warning' : menu.category === '加餐' ? 'info' : 'info'"
                   size="small"
                   style="margin-right: 8px;"
                 >
@@ -571,8 +571,12 @@ const toggleSelectAll = () => {
                   </div>
                 </el-tooltip>
                 <!-- 兼容旧数据结构（菜品数量） -->
-                <div v-else-if="menu.dishes" class="dishes-count">
+                <div v-else-if="menu.dishes && typeof menu.dishes === 'number'" class="dishes-count">
                   <el-icon><Food /></el-icon> {{ menu.dishes }} 菜品
+                </div>
+                <!-- 当 dishes 是空数组时显示 0 菜品 -->
+                <div v-else-if="menu.dishes && Array.isArray(menu.dishes) && menu.dishes.length === 0" class="dishes-count">
+                  <el-icon><Food /></el-icon> 0 菜品
                 </div>
                 <!-- 无菜品时的显示 -->
                 <div v-else class="dishes-count">

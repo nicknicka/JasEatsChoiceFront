@@ -52,12 +52,9 @@ public class MenuController {
                 // 将inactive统一转换为offline（前端没有inactive状态）
                 menu.setStatus("offline");
             }
-            // 添加菜品数量字段
-            Integer dishCount = menuService.getDishCountByMenuId(menu.getId());
-            menu.setDishCount(dishCount);
         });
 
-        // 转换为包含菜品数量的Map列表
+        // 转换为包含菜品详细信息的Map列表
         List<Map<String, Object>> resultMenus = menus.stream().map(menu -> {
             Map<String, Object> menuMap = new java.util.HashMap<>();
             try {
@@ -66,12 +63,35 @@ public class MenuController {
                 for (java.beans.PropertyDescriptor pd : propertyDescriptors) {
                     if (!"class".equals(pd.getName())) {
                         Object value = pd.getReadMethod().invoke(menu);
-                        menuMap.put(pd.getName(), value);
+                        // 处理字段名映射，将 type 转换为 category（前端使用的字段名）
+                        String fieldName = pd.getName();
+                        if ("type".equals(fieldName)) {
+                            menuMap.put("category", value);
+                        } else {
+                            menuMap.put(fieldName, value);
+                        }
                     }
                 }
-                // 确保菜品数量字段存在
-                Integer dishCount = menuService.getDishCountByMenuId(menu.getId());
-                menuMap.put("dishes", dishCount);
+                // 获取菜单关联的菜品详细信息
+                LambdaQueryWrapper<MenuDish> menuDishQueryWrapper = new LambdaQueryWrapper<>();
+                menuDishQueryWrapper.eq(MenuDish::getMenuId, menu.getId());
+                List<MenuDish> menuDishes = menuDishService.list(menuDishQueryWrapper);
+
+                // 根据菜品ID查询完整的菜品信息
+                List<Map<String, Object>> dishes = menuDishes.stream()
+                        .map(menuDish -> dishService.getById(menuDish.getDishId()))
+                        .filter(dish -> dish != null) // 过滤掉可能已删除的菜品
+                        .map(dish -> {
+                            Map<String, Object> dishMap = new java.util.HashMap<>();
+                            dishMap.put("id", dish.getId());
+                            dishMap.put("name", dish.getName());
+                            dishMap.put("price", dish.getPrice());
+                            dishMap.put("status", dish.getStatus());
+                            return dishMap;
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+
+                menuMap.put("dishes", dishes);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -170,10 +190,33 @@ public class MenuController {
         queryWrapper.eq(MenuDish::getMenuId, menuId);
         List<MenuDish> menuDishes = menuDishService.list(queryWrapper);
 
-        // 根据菜品ID查询完整的菜品信息
-        List<Dish> dishes = menuDishes.stream()
-                .map(menuDish -> dishService.getById(menuDish.getDishId()))
-                .filter(dish -> dish != null) // 过滤掉可能已删除的菜品
+        // 根据菜品ID查询完整的菜品信息，并合并菜单内状态
+        List<Map<String, Object>> dishes = menuDishes.stream()
+                .map(menuDish -> {
+                    Dish dish = dishService.getById(menuDish.getDishId());
+                    if (dish == null) {
+                        return null;
+                    }
+                    // 转换为 Map，方便添加菜单内状态信息
+                    Map<String, Object> dishMap = new java.util.HashMap<>();
+                    try {
+                        java.beans.BeanInfo beanInfo = java.beans.Introspector.getBeanInfo(Dish.class);
+                        java.beans.PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+                        for (java.beans.PropertyDescriptor pd : propertyDescriptors) {
+                            if (!"class".equals(pd.getName())) {
+                                Object value = pd.getReadMethod().invoke(dish);
+                                dishMap.put(pd.getName(), value);
+                            }
+                        }
+                        // 添加菜品在菜单中的状态（转换为前端期望的格式：1→online，0→offline）
+                        String status = menuDish.getStatus() == 1 ? "online" : "offline";
+                        dishMap.put("status", status);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return dishMap;
+                })
+                .filter(dishMap -> dishMap != null) // 过滤掉可能已删除的菜品
                 .collect(java.util.stream.Collectors.toList());
 
         return ResponseResult.success(dishes);
