@@ -12,8 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import com.xx.jaseatschoicejava.dto.MenuWithDishStatusDTO;
 import java.util.List;
 import java.util.Map;
 
@@ -225,7 +227,12 @@ public class MenuController {
                         for (java.beans.PropertyDescriptor pd : propertyDescriptors) {
                             if (!"class".equals(pd.getName())) {
                                 Object value = pd.getReadMethod().invoke(dish);
-                                dishMap.put(pd.getName(), value);
+                                // 将 BigDecimal 类型的价格转换为 Double 类型，方便前端解析
+                                if (pd.getName().equals("price") && value != null) {
+                                    dishMap.put(pd.getName(), ((BigDecimal) value).doubleValue());
+                                } else {
+                                    dishMap.put(pd.getName(), value);
+                                }
                             }
                         }
                         // 添加菜品在菜单中的状态（转换为前端期望的格式：1→online，0→offline）
@@ -290,9 +297,12 @@ public class MenuController {
     @GetMapping("/dishes/{dishId}/menus")
     public ResponseResult<?> getMenusByDishId(@PathVariable String dishId) {
         try {
-            List<Map<String, Object>> menus = menuService.getMenusByDishId(dishId);
+            log.info("获取菜品关联的所有菜单信息 菜品id {}", dishId);
+            List<MenuWithDishStatusDTO> menus = menuService.getMenusByDishId(dishId);
+            log.info("获取菜品关联的所有菜单信息 {}", menus);
             return ResponseResult.success(menus);
         } catch (Exception e) {
+            log.error("获取菜品关联的所有菜单信息失败", e);
             return ResponseResult.fail("500", "查询失败: " + e.getMessage());
         }
     }

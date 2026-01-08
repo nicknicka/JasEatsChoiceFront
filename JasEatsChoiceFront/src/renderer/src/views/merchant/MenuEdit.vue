@@ -304,8 +304,7 @@ const handleCancelEdit = () => {
     type: 'warning'
   })
     .then(() => {
-      // 导航回菜单管理页面
-      router.push('/merchant/home/menu')
+      router.back()
     })
     .catch(() => {
       // 用户取消了取消操作，继续编辑

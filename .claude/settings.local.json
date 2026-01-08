@@ -320,7 +320,8 @@
       "Bash(xargs kill:*)",
       "Bash(xargs ls:*)",
       "Bash(mvn clean compile spring-boot:run:*)",
-      "Bash(./mvnw clean compile spring-boot:run:*)"
+      "Bash(./mvnw clean compile spring-boot:run:*)",
+      "Bash(jps:*)"
     ],
     "deny": [],
     "ask": []

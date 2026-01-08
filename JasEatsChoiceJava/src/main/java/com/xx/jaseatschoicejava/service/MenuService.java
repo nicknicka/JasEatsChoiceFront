@@ -3,10 +3,10 @@ package com.xx.jaseatschoicejava.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xx.jaseatschoicejava.entity.Menu;
 import com.xx.jaseatschoicejava.entity.MenuDish;
+import com.xx.jaseatschoicejava.dto.MenuWithDishStatusDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 菜单服务接口
@@ -62,7 +62,7 @@ public interface MenuService extends IService<Menu> {
      * @param dishId 菜品ID
      * @return 菜单列表及菜品在该菜单中的状态
      */
-    List<Map<String, Object>> getMenusByDishId(String dishId);
+    List<MenuWithDishStatusDTO> getMenusByDishId(String dishId);
 
     /**
      * 根据菜单ID查询菜品数量
