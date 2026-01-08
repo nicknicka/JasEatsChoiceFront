@@ -64,4 +64,8 @@ public class Menu {
     @TableField("update_time")
     @ApiModelProperty(value = "更新时间")
     private LocalDateTime updateTime; // 更新时间
+
+    @TableField(exist = false)
+    @ApiModelProperty(value = "菜品数量")
+    private Integer dishCount; // 菜品数量（数据库中不存在，用于返回前端）
 }

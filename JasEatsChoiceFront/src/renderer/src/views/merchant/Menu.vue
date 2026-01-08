@@ -239,8 +239,8 @@ const exportMenu = (menu) => {
       menuStatusMap[menu.status].text,
       Array.isArray(menu.dishes) ? menu.dishes.length : (menu.dishes || 0),
       dayjs(menu.updateTime).format('YYYY-MM-DD HH:mm:ss'),
-      menu.autoOnline ? dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') : '',
-      menu.autoOffline ? dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') : ''
+      menu.autoOnline ? (menu.autoOnline.includes('T') || menu.autoOnline.length > 8 ? dayjs(menu.autoOnline).format('HH:mm') : dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm')) : '',
+      menu.autoOffline ? (menu.autoOffline.includes('T') || menu.autoOffline.length > 8 ? dayjs(menu.autoOffline).format('HH:mm') : dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm')) : ''
     ].map(item => `"${item}"`).join(',') // 转义包含逗号或引号的内容
   ].join('\n')
 
@@ -583,18 +583,18 @@ const toggleSelectAll = () => {
               <div class="menu-stats">
                 <span class="update-time">
                   <el-icon><Clock /></el-icon>
-                  更新时间：{{ dayjs(menu.updateTime).fromNow() }}
+                  更新时间：{{ dayjs(menu.updateTime).format('YYYY年MM月DD日 HH:mm:ss') }}
                 </span>
               </div>
 
               <div class="auto-times">
                 <span v-if="menu.autoOnline" class="auto-online">
                   <el-icon><Clock /></el-icon>
-                  自动上架：{{ dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') }}
+                  自动上架：{{ menu.autoOnline.includes('T') || menu.autoOnline.length > 8 ? dayjs(menu.autoOnline).format('HH:mm') : dayjs(menu.autoOnline, 'HH:mm:ss').format('HH:mm') }}
                 </span>
                 <span v-if="menu.autoOffline" class="auto-offline">
                   <el-icon><Clock /></el-icon>
-                  自动下架：{{ dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') }}
+                  自动下架：{{ menu.autoOffline.includes('T') || menu.autoOffline.length > 8 ? dayjs(menu.autoOffline).format('HH:mm') : dayjs(menu.autoOffline, 'HH:mm:ss').format('HH:mm') }}
                 </span>
               </div>
             </div>
@@ -1118,5 +1118,9 @@ const toggleSelectAll = () => {
       }
     }
   }
+}
+
+.auto-offline {
+  margin-left: 20px;
 }
 </style>

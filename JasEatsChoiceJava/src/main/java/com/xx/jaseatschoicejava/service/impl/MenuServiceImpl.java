@@ -3,8 +3,10 @@ package com.xx.jaseatschoicejava.service.impl;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xx.jaseatschoicejava.entity.Menu;
+import com.xx.jaseatschoicejava.entity.MenuDish;
 import com.xx.jaseatschoicejava.entity.WantToEat;
 import com.xx.jaseatschoicejava.mapper.MenuMapper;
+import com.xx.jaseatschoicejava.mapper.MenuDishMapper;
 import com.xx.jaseatschoicejava.mapper.WantToEatMapper;
 import com.xx.jaseatschoicejava.service.MenuService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 菜单服务实现
@@ -21,6 +24,9 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
 
     @Autowired
     private WantToEatMapper wantToEatMapper;
+
+    @Autowired
+    private MenuDishMapper menuDishMapper;
 
     @Override
     public boolean setMenuSchedule(String menuId, LocalDateTime autoStartTime, LocalDateTime autoEndTime) {
@@ -69,5 +75,56 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
 
         // 执行更新操作
         return wantToEatMapper.update(wantToEat, updateWrapper) > 0;
+    }
+
+    @Override
+    public boolean updateDishStatusInMenu(String menuId, String dishId, Integer status) {
+        // 检查输入参数
+        if (menuId == null || menuId.isEmpty() || dishId == null || dishId.isEmpty() || status == null) {
+            return false;
+        }
+
+        // 创建更新条件
+        UpdateWrapper<MenuDish> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("menu_id", menuId).eq("dish_id", dishId);
+
+        // 更新菜品状态
+        MenuDish menuDish = new MenuDish();
+        menuDish.setStatus(status);
+
+        // 执行更新操作
+        return menuDishMapper.update(menuDish, updateWrapper) > 0;
+    }
+
+    @Override
+    public boolean batchUpdateDishStatusInMenus(String dishId, List<String> menuIds, Integer status) {
+        // 检查输入参数
+        if (dishId == null || dishId.isEmpty() || menuIds == null || menuIds.isEmpty() || status == null) {
+            return false;
+        }
+
+        // 创建更新条件
+        UpdateWrapper<MenuDish> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("dish_id", dishId).in("menu_id", menuIds);
+
+        // 更新菜品状态
+        MenuDish menuDish = new MenuDish();
+        menuDish.setStatus(status);
+
+        // 执行更新操作
+        return menuDishMapper.update(menuDish, updateWrapper) > 0;
+    }
+
+    @Override
+    public List<Map<String, Object>> getMenusByDishId(String dishId) {
+        // 这里应该通过MenuDishMapper查询该菜品关联的所有菜单
+        // 并返回菜单的基本信息，包括菜单ID、名称、类型、状态以及菜品在该菜单中的状态
+        // 由于需要关联查询，可能需要在MenuDishMapper中添加自定义SQL
+        return menuDishMapper.selectMenusByDishId(dishId);
+    }
+
+    @Override
+    public Integer getDishCountByMenuId(String menuId) {
+        return menuDishMapper.selectDishCountByMenuId(menuId);
     }
 }

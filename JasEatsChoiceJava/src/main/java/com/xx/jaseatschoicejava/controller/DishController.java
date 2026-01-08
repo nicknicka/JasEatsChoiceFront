@@ -83,4 +83,46 @@ public class DishController {
         }
         return ResponseResult.fail("500", "菜品更新失败");
     }
+
+    /**
+     * 更新菜品状态（上架/下架）
+     */
+    @PutMapping("/{dishId}/status")
+    public ResponseResult<?> updateDishStatus(@PathVariable String dishId, @RequestBody java.util.Map<String, Object> request) {
+        Boolean status = (Boolean) request.get("status");
+        Dish dish = dishService.getById(dishId);
+        if (dish == null) {
+            throw new BusinessException("404", "菜品不存在");
+        }
+        dish.setStatus(status);
+        boolean updated = dishService.updateById(dish);
+        if (updated) {
+            return ResponseResult.success("菜品状态更新成功");
+        }
+        return ResponseResult.fail("500", "菜品状态更新失败");
+    }
+
+    /**
+     * 批量更新菜品状态（上架/下架）
+     */
+    @PutMapping("/batch/status")
+    public ResponseResult<?> batchUpdateDishStatus(@RequestBody java.util.Map<String, Object> request) {
+        List<String> dishIds = (List<String>) request.get("dishIds");
+        Boolean status = (Boolean) request.get("status");
+
+        if (dishIds == null || dishIds.isEmpty()) {
+            return ResponseResult.fail("400", "请选择要操作的菜品");
+        }
+
+        List<Dish> dishes = dishService.listByIds(dishIds);
+        for (Dish dish : dishes) {
+            dish.setStatus(status);
+        }
+        boolean updated = dishService.updateBatchById(dishes);
+
+        if (updated) {
+            return ResponseResult.success("批量更新菜品状态成功");
+        }
+        return ResponseResult.fail("500", "批量更新菜品状态失败");
+    }
 }

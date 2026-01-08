@@ -34,4 +34,8 @@ public class MenuDish {
     @TableField("sort")
     @ApiModelProperty(value = "排序")
     private Integer sort; // 排序
+
+    @TableField("status")
+    @ApiModelProperty(value = "菜品在菜单中的状态：1-上架，0-下架")
+    private Integer status = 1; // 菜品在菜单中的状态，默认为上架
 }

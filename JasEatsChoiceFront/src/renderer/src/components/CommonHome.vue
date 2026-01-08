@@ -592,49 +592,76 @@ const handleSearch = (value) => {
           </div>
         </div>
 
-        <el-menu
-          v-model:default-active="activeMenuIndex"
-          class="menu-list"
-          @select="handleMenuSelect"
-          @open="handleMenuOpen"
-          @close="handleMenuClose"
-        >
-          <!-- 遍历菜单，区分分组菜单和普通菜单项 -->
-          <template v-for="menuItem in currentMenu" :key="menuItem.index">
-            <!-- 分组菜单 -->
-            <el-sub-menu v-if="menuItem.children" :index="menuItem.index">
-              <template #title>
+        <!-- 菜单区域 -->
+        <div class="menu-content">
+          <el-menu
+            v-model:default-active="activeMenuIndex"
+            class="menu-list"
+            @select="handleMenuSelect"
+            @open="handleMenuOpen"
+            @close="handleMenuClose"
+          >
+            <!-- 遍历菜单，区分分组菜单和普通菜单项 -->
+            <template v-for="menuItem in currentMenu" :key="menuItem.index">
+              <!-- 排除设置菜单，单独处理 -->
+              <template v-if="!menuItem.isSetting">
+                <!-- 分组菜单 -->
+                <el-sub-menu v-if="menuItem.children" :index="menuItem.index">
+                  <template #title>
+                    <el-icon>
+                      <component :is="menuItem.icon" />
+                    </el-icon>
+                    <span>{{ menuItem.name }}</span>
+                  </template>
+                  <!-- 分组下的子菜单 -->
+                  <el-menu-item
+                    v-for="childItem in menuItem.children"
+                    :key="childItem.index"
+                    :index="childItem.index"
+                  >
+                    <el-icon>
+                      <component :is="childItem.icon" />
+                    </el-icon>
+                    <template #title>{{ childItem.name }}</template>
+                  </el-menu-item>
+                </el-sub-menu>
+
+                <!-- 普通菜单项 -->
+                <el-menu-item
+                  v-else
+                  :index="menuItem.index"
+                >
+                  <el-icon>
+                    <component :is="menuItem.icon" />
+                  </el-icon>
+                  <template #title>{{ menuItem.name }}</template>
+                </el-menu-item>
+              </template>
+            </template>
+          </el-menu>
+        </div>
+
+        <!-- 设置菜单 - 固定在底部 -->
+        <div class="setting-menu-container">
+          <el-menu
+            class="setting-menu-list"
+            @select="handleMenuSelect"
+          >
+            <template v-for="menuItem in currentMenu" :key="menuItem.index">
+              <!-- 只渲染设置菜单 -->
+              <el-menu-item
+                v-if="menuItem.isSetting"
+                :index="menuItem.index"
+                class="setting-menu-item"
+              >
                 <el-icon>
                   <component :is="menuItem.icon" />
                 </el-icon>
-                <span>{{ menuItem.name }}</span>
-              </template>
-              <!-- 分组下的子菜单 -->
-              <el-menu-item
-                v-for="childItem in menuItem.children"
-                :key="childItem.index"
-                :index="childItem.index"
-              >
-                <el-icon>
-                  <component :is="childItem.icon" />
-                </el-icon>
-                <template #title>{{ childItem.name }}</template>
+                <template #title>{{ menuItem.name }}</template>
               </el-menu-item>
-            </el-sub-menu>
-
-            <!-- 普通菜单项 -->
-            <el-menu-item
-              v-else
-              :index="menuItem.index"
-              :class="{ 'setting-menu': menuItem.isSetting }"
-            >
-              <el-icon>
-                <component :is="menuItem.icon" />
-              </el-icon>
-              <template #title>{{ menuItem.name }}</template>
-            </el-menu-item>
-          </template>
-        </el-menu>
+            </template>
+          </el-menu>
+        </div>
       </el-aside>
 
       <!-- 右侧内容区域，使用router-view实现子组件内容访问 -->
@@ -724,6 +751,9 @@ const handleSearch = (value) => {
   background-color: #fff;
   border-right: 1px solid #eee;
   transition: width 0.3s ease-in-out; /* 添加平滑过渡动画 */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 
   .avatar-section {
     text-align: center;
@@ -742,14 +772,20 @@ const handleSearch = (value) => {
     }
   }
 
-  .menu-list {
-    border: none;
-    height: calc(100% - 170px);
+  .menu-content {
+    flex: 1;
+    overflow-y: auto;
+
+    .menu-list {
+      border: none;
+      height: 100%;
+      overflow-y: auto;
+    }
   }
 
   /* 当一级菜单组包含激活的子菜单时，保持高亮 */
 /* 确保即使在 scoped 样式下，激活状态也能正确应用 */
-.menu-list {
+.menu-list, .setting-menu-list {
   :deep(.el-menu-item.is-active),
   :deep(.el-sub-menu__title.is-active) {
     background-color: var(--el-menu-item-hover-bg-color) !important;
@@ -757,9 +793,18 @@ const handleSearch = (value) => {
   }
 }
 
-  .setting-menu {
+  .setting-menu-container {
     border-top: 1px solid #eee;
-    margin-top: 20px;
+    flex-shrink: 0;
+
+    .setting-menu-list {
+      border: none;
+      background-color: transparent;
+
+      .setting-menu-item {
+        background-color: transparent;
+      }
+    }
   }
 }
 

@@ -18,7 +18,6 @@ import {
   Warning as FlameIcon
 } from '@element-plus/icons-vue'
 
-
 // 菜品数据
 const dishesList = ref([])
 
@@ -61,9 +60,9 @@ onMounted(() => {
     })
     .then((response) => {
       console.log('菜品响应数据:', response)
-      if (response.data && response.data.code === "200") {
+      if (response.data && response.data.code === '200') {
         // 预处理菜品数据，确保所有菜品都有有效的状态和时间格式
-        const processedDishes = response.data.data.map(dish => {
+        const processedDishes = response.data.data.map((dish) => {
           // 转换时间格式为 yyyy-MM-dd HH:mm:ss
           if (dish.createTime) {
             dish.createTime = new Date(dish.createTime).toLocaleString('zh-CN', {
@@ -157,7 +156,6 @@ const updateFilter = () => {
   updatePagination()
 }
 
-
 // 编辑菜品
 const editDish = (dish) => {
   openEditDishDialog(dish)
@@ -181,7 +179,8 @@ const saveEditedDish = () => {
   delete requestData.totalCalories
 
   // 发送后端请求
-  axios.put(`${API_CONFIG.baseURL}${API_CONFIG.dish.detail}${requestData.id}`, requestData)
+  axios
+    .put(`${API_CONFIG.baseURL}${API_CONFIG.dish.detail}${requestData.id}`, requestData)
     .then((response) => {
       if (response.status === 200 && response.data && response.data.success) {
         // 从后端返回中获取更新后的菜品数据
@@ -209,6 +208,7 @@ const saveEditedDish = () => {
 const toggleDishStatus = (dish) => {
   const newStatus = dish.status === 'online' ? 'offline' : 'online'
   const statusText = newStatus === 'online' ? '上架' : '下架'
+  const statusBoolean = newStatus === 'online' ? true : false
 
   ElMessageBox.confirm(`确定要将该菜品${statusText}吗？`, '提示', {
     confirmButtonText: '确定',
@@ -216,11 +216,100 @@ const toggleDishStatus = (dish) => {
     type: 'warning'
   })
     .then(() => {
-      dish.status = newStatus
-      ElMessage.success(`菜品已${statusText}`)
+      // 调用后端API更新菜品状态
+      axios
+        .put(`${API_CONFIG.baseURL}/dishes/${dish.id}/status`, {
+          status: statusBoolean
+        })
+        .then((response) => {
+          if (response.data && response.data.code === '200') {
+            dish.status = newStatus
+            ElMessage.success(`菜品已${statusText}`)
+          } else {
+            ElMessage.error(response.data?.message || `菜品${statusText}失败`)
+          }
+        })
+        .catch((error) => {
+          console.error(`更新菜品状态失败:`, error)
+          ElMessage.error(`网络错误，菜品${statusText}失败`)
+        })
     })
     .catch(() => {
       ElMessage.info('已取消操作')
+    })
+}
+
+// 菜单关联对话框状态
+const menuAssociationDialogVisible = ref(false)
+const currentDish = ref(null)
+const associatedMenus = ref([])
+const selectedStatus = ref(1)
+
+// 显示菜单关联对话框
+const showMenuAssociationDialog = (dish) => {
+  currentDish.value = dish
+  menuAssociationDialogVisible.value = true
+
+  // 调用API获取该菜品关联的所有菜单
+  axios
+    .get(`${API_CONFIG.baseURL}/v1/menus/dishes/${dish.id}/menus`)
+    .then((response) => {
+      if (response.data && response.data.code === '200') {
+        associatedMenus.value = response.data.data.map((menu) => ({
+          ...menu,
+          dishStatus: menu.dish_status
+        }))
+      } else {
+        ElMessage.error('获取菜单关联失败')
+      }
+    })
+    .catch((error) => {
+      console.error('获取菜单关联失败:', error)
+      ElMessage.error('获取菜单关联失败')
+    })
+}
+
+// 更新菜品在特定菜单中的状态
+const updateDishStatusInMenu = (menu) => {
+  axios
+    .put(`${API_CONFIG.baseURL}/v1/menus/menu/${menu.id}/dishes/${currentDish.value.id}/status`, {
+      status: menu.dishStatus
+    })
+    .then((response) => {
+      if (response.data && response.data.code === '200') {
+        ElMessage.success('菜品状态更新成功')
+      } else {
+        ElMessage.error(response.data?.message || '菜品状态更新失败')
+      }
+    })
+    .catch((error) => {
+      console.error('更新菜品状态失败:', error)
+      ElMessage.error('网络错误，菜品状态更新失败')
+    })
+}
+
+// 批量更新菜品在所有菜单中的状态
+const batchUpdateDishStatus = () => {
+  const menuIds = associatedMenus.value.map((menu) => menu.id)
+  axios
+    .put(`${API_CONFIG.baseURL}/v1/menus/dishes/${currentDish.value.id}/status`, {
+      menuIds: menuIds,
+      status: selectedStatus.value
+    })
+    .then((response) => {
+      if (response.data && response.data.code === '200') {
+        ElMessage.success('批量更新成功')
+        // 更新本地数据
+        associatedMenus.value.forEach((menu) => {
+          menu.dishStatus = selectedStatus.value
+        })
+      } else {
+        ElMessage.error(response.data?.message || '批量更新失败')
+      }
+    })
+    .catch((error) => {
+      console.error('批量更新失败:', error)
+      ElMessage.error('网络错误，批量更新失败')
     })
 }
 
@@ -286,39 +375,40 @@ const batchOperation = (operation) => {
   })
     .then(() => {
       // 执行批量操作
-      switch (operation) {
-        case 'online':
-          selectedDishes.value.forEach((dish) => {
-            dish.status = 'online'
+      if (operation === 'online' || operation === 'offline') {
+        const statusBoolean = operation === 'online' ? true : false
+        const dishIds = selectedDishes.value.map((dish) => dish.id)
+
+        // 调用后端API批量更新菜品状态
+        axios
+          .put(`${API_CONFIG.baseURL}/dishes/batch/status`, {
+            dishIds: dishIds,
+            status: statusBoolean
           })
-          break
-        case 'offline':
-          selectedDishes.value.forEach((dish) => {
-            dish.status = 'offline'
+          .then((response) => {
+            if (response.data && response.data.code === '200') {
+              // 更新前端状态
+              selectedDishes.value.forEach((dish) => {
+                dish.status = operation
+              })
+              updateFilter()
+              selectedDishes.value = []
+              ElMessage.success(getSuccessMessage())
+            } else {
+              ElMessage.error(response.data?.message || '批量操作失败')
+            }
           })
-          break
-        case 'delete':
-          dishesList.value = dishesList.value.filter((dish) => !selectedDishes.value.includes(dish))
-          break
-      }
-
-      // 更新筛选和选择状态
-      updateFilter()
-
-      // 删除操作需要特殊处理选择状态
-      if (operation !== 'delete') {
-        selectedDishes.value = []
-      } else {
-        selectedDishes.value = []
-      }
-
-      // 显示操作成功消息
-      ElMessage.success(getSuccessMessage())
-
-      // 强制更新界面，确保全选状态正确更新
-      setTimeout(() => {
+          .catch((error) => {
+            console.error('批量更新菜品状态失败:', error)
+            ElMessage.error('网络错误，批量操作失败')
+          })
+      } else if (operation === 'delete') {
+        // 批量删除操作
+        dishesList.value = dishesList.value.filter((dish) => !selectedDishes.value.includes(dish))
         updateFilter()
-      }, 0)
+        selectedDishes.value = []
+        ElMessage.success(getSuccessMessage())
+      }
     })
     .catch(() => {
       // 用户取消操作
@@ -520,7 +610,8 @@ const saveNewDish = () => {
   }
 
   // 发送后端请求
-  axios.post(`${API_CONFIG.baseURL}${API_CONFIG.dish.list}`, requestData)
+  axios
+    .post(`${API_CONFIG.baseURL}${API_CONFIG.dish.list}`, requestData)
     .then((response) => {
       if (response.status === 200 && response.data && response.data.success) {
         const dishData = response.data.data // 获取后端返回的完整菜品数据
@@ -625,29 +716,31 @@ const getDishCheckedState = (dish) => {
         <el-input
           v-model="searchKeyword"
           placeholder="输入菜品名称或分类..."
-          style="min-width: 250px; max-width: 400px; width: auto; flex: 1; max-width: 400px; margin-right: 12px"
-          @input="updateFilter"
+          style="
+            min-width: 250px;
+            max-width: 400px;
+            width: auto;
+            flex: 1;
+            max-width: 400px;
+            margin-right: 12px;
+          "
           clearable
+          @input="updateFilter"
         >
           <template #prefix>
             <el-icon style="color: #909399"><Search /></el-icon>
           </template>
         </el-input>
-        <el-button type="primary" @click="openAddDishDialog" class="add-button">
+        <el-button type="primary" class="add-button" @click="openAddDishDialog">
           <el-icon><Plus /></el-icon>
           新增菜品
         </el-button>
       </div>
     </div>
 
-
     <div class="dish-list">
       <div class="dish-list-container">
-        <div
-          class="dish-item"
-          v-for="dish in paginatedDishes"
-          :key="dish.id"
-        >
+        <div v-for="dish in paginatedDishes" :key="dish.id" class="dish-item">
           <div class="dish-selection">
             <el-checkbox
               :model-value="getDishCheckedState(dish)"
@@ -660,11 +753,23 @@ const getDishCheckedState = (dish) => {
               <div class="dish-name">
                 <span class="name">{{ dish.name }}</span>
                 <el-tag
-                  :type="dish.status === 'online' ? 'success' : dish.status === 'almost_sold' ? 'warning' : 'danger'"
+                  :type="
+                    dish.status === 'online'
+                      ? 'success'
+                      : dish.status === 'almost_sold'
+                        ? 'warning'
+                        : 'danger'
+                  "
                   size="small"
-                  style="margin-left: 8px; font-size: 12px;"
+                  style="margin-left: 8px; font-size: 12px"
                 >
-                  {{ dish.status === 'online' ? '上架' : dish.status === 'almost_sold' ? '即将售罄' : '下架' }}
+                  {{
+                    dish.status === 'online'
+                      ? '上架'
+                      : dish.status === 'almost_sold'
+                        ? '即将售罄'
+                        : '下架'
+                  }}
                 </el-tag>
               </div>
 
@@ -692,8 +797,8 @@ const getDishCheckedState = (dish) => {
               <el-button
                 :type="dish.status === 'online' ? 'danger' : 'success'"
                 size="small"
-                @click="toggleDishStatus(dish)"
                 :class="{ 'btn-active': true }"
+                @click="toggleDishStatus(dish)"
               >
                 {{ dish.status === 'online' ? '下架' : '上架' }}
               </el-button>
@@ -701,17 +806,26 @@ const getDishCheckedState = (dish) => {
               <el-button
                 type="primary"
                 size="small"
-                @click="editDish(dish)"
                 :class="{ 'btn-active': true }"
+                @click="editDish(dish)"
               >
                 编辑
               </el-button>
 
               <el-button
+                type="info"
+                size="small"
+                :class="{ 'btn-active': true }"
+                @click="showMenuAssociationDialog(dish)"
+              >
+                菜单关联
+              </el-button>
+
+              <el-button
                 type="warning"
                 size="small"
-                @click="deleteDish(dish)"
                 :class="{ 'btn-active': true }"
+                @click="deleteDish(dish)"
               >
                 删除
               </el-button>
@@ -721,7 +835,7 @@ const getDishCheckedState = (dish) => {
       </div>
     </div>
 
-    <div class="batch-actions" v-if="filteredDishes.length > 0">
+    <div v-if="filteredDishes.length > 0" class="batch-actions">
       <span class="select-all">
         <el-checkbox
           :indeterminate="getSelectAllState() === 1"
@@ -734,9 +848,9 @@ const getDishCheckedState = (dish) => {
       <el-button
         type="success"
         size="small"
-        @click="batchOperation('online')"
         :disabled="selectedDishes.length === 0"
         class="batch-btn"
+        @click="batchOperation('online')"
       >
         <el-icon><CircleCheck /></el-icon>
         批量上架
@@ -745,9 +859,9 @@ const getDishCheckedState = (dish) => {
       <el-button
         type="warning"
         size="small"
-        @click="batchOperation('offline')"
         :disabled="selectedDishes.length === 0"
         class="batch-btn"
+        @click="batchOperation('offline')"
       >
         <el-icon><CircleClose /></el-icon>
         批量下架
@@ -756,9 +870,9 @@ const getDishCheckedState = (dish) => {
       <el-button
         type="danger"
         size="small"
-        @click="batchOperation('delete')"
         :disabled="selectedDishes.length === 0"
         class="batch-btn"
+        @click="batchOperation('delete')"
       >
         <el-icon><Delete /></el-icon>
         批量删除
@@ -766,7 +880,7 @@ const getDishCheckedState = (dish) => {
     </div>
 
     <!-- 分页组件 -->
-    <div class="pagination-container" v-if="filteredDishes.length > 0">
+    <div v-if="filteredDishes.length > 0" class="pagination-container">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -781,7 +895,9 @@ const getDishCheckedState = (dish) => {
     <!-- 空数据提示 -->
     <el-empty v-if="filteredDishes.length === 0" description="暂无菜品">
       <template #bottom>
-        <el-button type="primary" size="small" @click="addDishDialogVisible = true">新增菜品</el-button>
+        <el-button type="primary" size="small" @click="addDishDialogVisible = true"
+          >新增菜品</el-button
+        >
       </template>
     </el-empty>
 
@@ -794,12 +910,7 @@ const getDishCheckedState = (dish) => {
       transition="dialog-fade"
     >
       <div class="add-dish-form">
-        <el-form
-          :model="newDish"
-          label-width="120px"
-          status-icon
-          class="custom-form"
-        >
+        <el-form :model="newDish" label-width="120px" status-icon class="custom-form">
           <el-form-item label="名称" prop="name" required>
             <template #label>
               <div class="form-item-label">
@@ -817,11 +928,7 @@ const getDishCheckedState = (dish) => {
                 <span>价&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;格</span>
               </div>
             </template>
-            <el-input
-              v-model.number="newDish.price"
-              placeholder="请输入价格"
-              type="number"
-            />
+            <el-input v-model.number="newDish.price" placeholder="请输入价格" type="number" />
           </el-form-item>
 
           <el-form-item label="分类" prop="category" required>
@@ -853,11 +960,7 @@ const getDishCheckedState = (dish) => {
                 <span>库&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;存</span>
               </div>
             </template>
-            <el-input
-              v-model.number="newDish.stock"
-              placeholder="请输入库存"
-              type="number"
-            />
+            <el-input v-model.number="newDish.stock" placeholder="请输入库存" type="number" />
           </el-form-item>
 
           <el-form-item label="状态">
@@ -867,10 +970,7 @@ const getDishCheckedState = (dish) => {
                 <span>状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态</span>
               </div>
             </template>
-            <el-select
-              v-model="newDish.status"
-              style="width: 100%"
-            >
+            <el-select v-model="newDish.status" style="width: 100%">
               <el-option label="上架" value="online" />
               <el-option label="即将售罄" value="almost_sold" />
               <el-option label="下架" value="offline" />
@@ -890,15 +990,15 @@ const getDishCheckedState = (dish) => {
                 <el-input
                   v-model="newMandatoryIngredient"
                   placeholder="请输入必选食材"
-                  @keyup.enter="addMandatoryIngredient"
                   clearable
                   style="width: calc(350px - 80px)"
+                  @keyup.enter="addMandatoryIngredient"
                 />
                 <el-button
                   type="primary"
-                  @click="addMandatoryIngredient"
                   style="margin-left: 10px"
                   class="add-ingredient-btn"
+                  @click="addMandatoryIngredient"
                 >
                   添加
                 </el-button>
@@ -909,8 +1009,8 @@ const getDishCheckedState = (dish) => {
                   :key="index"
                   type="warning"
                   closable
-                  @close="removeMandatoryIngredient(index)"
                   class="ingredient-tag"
+                  @close="removeMandatoryIngredient(index)"
                 >
                   {{ ingredient }}
                 </el-tag>
@@ -931,15 +1031,15 @@ const getDishCheckedState = (dish) => {
                 <el-input
                   v-model="newOptionalIngredient"
                   placeholder="请输入可选食材"
-                  @keyup.enter="addOptionalIngredient"
                   clearable
                   style="width: calc(350px - 80px)"
+                  @keyup.enter="addOptionalIngredient"
                 />
                 <el-button
                   type="primary"
-                  @click="addOptionalIngredient"
                   style="margin-left: 10px"
                   class="add-ingredient-btn"
+                  @click="addOptionalIngredient"
                 >
                   添加
                 </el-button>
@@ -950,8 +1050,8 @@ const getDishCheckedState = (dish) => {
                   :key="index"
                   type="success"
                   closable
-                  @close="removeOptionalIngredient(index)"
                   class="ingredient-tag"
+                  @close="removeOptionalIngredient(index)"
                 >
                   {{ ingredient }}
                 </el-tag>
@@ -988,12 +1088,7 @@ const getDishCheckedState = (dish) => {
       transition="dialog-fade"
     >
       <div class="add-dish-form">
-        <el-form
-          :model="editDishForm"
-          label-width="120px"
-          status-icon
-          class="custom-form"
-        >
+        <el-form :model="editDishForm" label-width="120px" status-icon class="custom-form">
           <el-form-item label="名称" prop="name" required>
             <template #label>
               <div class="form-item-label">
@@ -1011,11 +1106,7 @@ const getDishCheckedState = (dish) => {
                 <span>价&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;格</span>
               </div>
             </template>
-            <el-input
-              v-model.number="editDishForm.price"
-              placeholder="请输入价格"
-              type="number"
-            />
+            <el-input v-model.number="editDishForm.price" placeholder="请输入价格" type="number" />
           </el-form-item>
 
           <el-form-item label="分类" prop="category" required>
@@ -1047,11 +1138,7 @@ const getDishCheckedState = (dish) => {
                 <span>库&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;存</span>
               </div>
             </template>
-            <el-input
-              v-model.number="editDishForm.stock"
-              placeholder="请输入库存"
-              type="number"
-            />
+            <el-input v-model.number="editDishForm.stock" placeholder="请输入库存" type="number" />
           </el-form-item>
 
           <el-form-item label="状态">
@@ -1061,10 +1148,7 @@ const getDishCheckedState = (dish) => {
                 <span>状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态</span>
               </div>
             </template>
-            <el-select
-              v-model="editDishForm.status"
-              style="width: 100%"
-            >
+            <el-select v-model="editDishForm.status" style="width: 100%">
               <el-option label="上架" value="online" />
               <el-option label="即将售罄" value="almost_sold" />
               <el-option label="下架" value="offline" />
@@ -1084,15 +1168,15 @@ const getDishCheckedState = (dish) => {
                 <el-input
                   v-model="editNewMandatoryIngredient"
                   placeholder="请输入必选食材"
-                  @keyup.enter="editAddMandatoryIngredient"
                   clearable
                   style="width: calc(350px - 80px)"
+                  @keyup.enter="editAddMandatoryIngredient"
                 />
                 <el-button
                   type="primary"
-                  @click="editAddMandatoryIngredient"
                   style="margin-left: 10px"
                   class="add-ingredient-btn"
+                  @click="editAddMandatoryIngredient"
                 >
                   添加
                 </el-button>
@@ -1103,8 +1187,8 @@ const getDishCheckedState = (dish) => {
                   :key="index"
                   type="warning"
                   closable
-                  @close="editRemoveMandatoryIngredient(index)"
                   class="ingredient-tag"
+                  @close="editRemoveMandatoryIngredient(index)"
                 >
                   {{ ingredient }}
                 </el-tag>
@@ -1125,15 +1209,15 @@ const getDishCheckedState = (dish) => {
                 <el-input
                   v-model="editNewOptionalIngredient"
                   placeholder="请输入可选食材"
-                  @keyup.enter="editAddOptionalIngredient"
                   clearable
                   style="width: calc(350px - 80px)"
+                  @keyup.enter="editAddOptionalIngredient"
                 />
                 <el-button
                   type="primary"
-                  @click="editAddOptionalIngredient"
                   style="margin-left: 10px"
                   class="add-ingredient-btn"
+                  @click="editAddOptionalIngredient"
                 >
                   添加
                 </el-button>
@@ -1144,8 +1228,8 @@ const getDishCheckedState = (dish) => {
                   :key="index"
                   type="success"
                   closable
-                  @close="editRemoveOptionalIngredient(index)"
                   class="ingredient-tag"
+                  @close="editRemoveOptionalIngredient(index)"
                 >
                   {{ ingredient }}
                 </el-tag>
@@ -1172,10 +1256,101 @@ const getDishCheckedState = (dish) => {
         </span>
       </template>
     </el-dialog>
+
+    <!-- 菜单关联对话框 -->
+    <el-dialog
+      v-model="menuAssociationDialogVisible"
+      title="菜品菜单关联管理"
+      width="600px"
+      top="10%"
+    >
+      <div class="menu-association-container">
+        <div class="dialog-header">
+          <h4>{{ currentDish?.name }} - 菜单关联状态</h4>
+          <p class="dialog-description">管理该菜品在各个菜单中的上架/下架状态</p>
+        </div>
+
+        <div class="batch-operation">
+          <el-select
+            v-model="selectedStatus"
+            placeholder="选择批量操作状态"
+            style="width: 200px; margin-right: 10px"
+          >
+            <el-option label="上架" :value="1" />
+            <el-option label="下架" :value="0" />
+          </el-select>
+          <el-button type="primary" @click="batchUpdateDishStatus"> 批量应用到所有菜单 </el-button>
+        </div>
+
+        <el-table :data="associatedMenus" style="width: 100%; margin-top: 20px" border stripe>
+          <el-table-column prop="name" label="菜单名称" width="200">
+            <template #default="{ row }">
+              <el-tag size="small" style="margin-right: 5px">{{ row.type }}</el-tag>
+              {{ row.name }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="menu_status" label="菜单状态" width="120">
+            <template #default="{ row }">
+              <el-tag :type="row.menu_status === 'active' ? 'success' : 'danger'" size="small">
+                {{ row.menu_status === 'active' ? '启用' : '禁用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="dishStatus" label="菜品状态" width="150">
+            <template #default="{ row }">
+              <el-switch
+                v-model="row.dishStatus"
+                :active-value="1"
+                :inactive-value="0"
+                @change="updateDishStatusInMenu(row)"
+              />
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <template #footer>
+        <el-button @click="menuAssociationDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped lang="less">
+/* 菜单关联对话框样式 */
+.menu-association-container {
+  .dialog-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+
+    h4 {
+      margin: 0 0 5px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #303133;
+    }
+
+    .dialog-description {
+      margin: 0;
+      font-size: 14px;
+      color: #909399;
+    }
+  }
+
+  .batch-operation {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  :deep(.el-table) {
+    .cell {
+      padding: 12px 0;
+    }
+  }
+}
+
 .calorie-display {
   font-size: 16px;
   font-weight: 600;
@@ -1441,12 +1616,59 @@ const getDishCheckedState = (dish) => {
       border-radius: 16px;
       margin-bottom: 16px;
       background-color: #ffffff;
-      transition: all 0.3s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(64, 169, 255, 0.08) 0%,
+          rgba(145, 213, 255, 0.08) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
+        pointer-events: none;
+      }
 
       &:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        transform: translateY(-8px) scale(1.03);
+        cursor: pointer;
+
+        &::before {
+          opacity: 1;
+        }
+
+        .dish-actions .el-button {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .dish-content {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+      }
+
+      .dish-actions {
+        display: flex;
+        gap: 8px;
+
+        .el-button {
+          transform: translateY(5px);
+          opacity: 0.9;
+          transition: all 0.3s ease;
+        }
       }
 
       .dish-selection {

@@ -317,7 +317,8 @@
       "Bash(read:*)",
       "Bash(mvn:*)",
       "Bash(./mvnw clean:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(xargs ls:*)"
     ],
     "deny": [],
     "ask": []

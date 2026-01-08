@@ -2,13 +2,20 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElTimePicker, ElSelect, ElOption, ElInput, ElMessageBox } from 'element-plus'
-import { CircleCheck, CirclePlus, CircleClose, Document, Grid, Clock, Switch } from '@element-plus/icons-vue'
+import {
+  CircleCheck,
+  CirclePlus,
+  CircleClose,
+  Document,
+  Grid,
+  Clock,
+  Switch
+} from '@element-plus/icons-vue'
 import CommonBackButton from '../../components/common/CommonBackButton.vue'
 import axios from 'axios'
 import { API_CONFIG } from '../../config/index.js'
 import { useAuthStore } from '../../store/authStore'
 import dayjs from 'dayjs'
-
 
 const route = useRoute()
 const router = useRouter()
@@ -61,31 +68,40 @@ onMounted(async () => {
     }
 
     // 获取菜单详情
-    const menuResponse = await axios.get(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}`)
+    const menuResponse = await axios.get(
+      `${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}`
+    )
     if (menuResponse.data && menuResponse.data.success) {
       menuInfo.value = menuResponse.data.data
-      // 格式化时间
+      // 格式化时间 - 处理后端返回的 LocalDateTime 格式
       if (menuInfo.value.autoOnline) {
-        menuInfo.value.autoOnline = dayjs(menuInfo.value.autoOnline).format('HH:mm:ss')
+        // 检查是否是完整的日期时间格式 (如: 2025-01-07T09:20:21)
+        if (menuInfo.value.autoOnline.includes('T') || menuInfo.value.autoOnline.length > 8) {
+          menuInfo.value.autoOnline = dayjs(menuInfo.value.autoOnline).format('HH:mm:ss')
+        }
       }
       if (menuInfo.value.autoOffline) {
-        menuInfo.value.autoOffline = dayjs(menuInfo.value.autoOffline).format('HH:mm:ss')
+        if (menuInfo.value.autoOffline.includes('T') || menuInfo.value.autoOffline.length > 8) {
+          menuInfo.value.autoOffline = dayjs(menuInfo.value.autoOffline).format('HH:mm:ss')
+        }
       }
     }
 
     // 获取所有菜品数据
     const dishesResponse = await axios.get(`${API_CONFIG.baseURL}${API_CONFIG.dish.list}`)
     if (dishesResponse.data && dishesResponse.data.success) {
-      availableDishes.value = dishesResponse.data.data.map(dish => ({
+      availableDishes.value = dishesResponse.data.data.map((dish) => ({
         ...dish,
         statusText: dishStatusMap[dish.status] ? dishStatusMap[dish.status].text : '🔴 下架'
       }))
     }
 
     // 获取菜单关联的菜品
-    const menuDishesResponse = await axios.get(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}/dishes`)
+    const menuDishesResponse = await axios.get(
+      `${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}/dishes`
+    )
     if (menuDishesResponse.data && menuDishesResponse.data.success) {
-      dishesList.value = menuDishesResponse.data.data.map(dish => ({
+      dishesList.value = menuDishesResponse.data.data.map((dish) => ({
         ...dish,
         statusText: dishStatusMap[dish.status] ? dishStatusMap[dish.status].text : '🔴 下架'
       }))
@@ -152,12 +168,15 @@ const saveMenu = async (saveType) => {
     // 准备保存的数据
     const saveData = {
       ...menuInfo.value,
-      dishes: dishesList.value.map(dish => dish.id) // 只保存菜品ID
+      dishes: dishesList.value.map((dish) => dish.id) // 只保存菜品ID
     }
 
     // 更新菜单
-    const response = await axios.put(`${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}`, saveData)
-    console.log('resonse data', response) ;
+    const response = await axios.put(
+      `${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}`,
+      saveData
+    )
+    console.log('resonse data', response)
     ElMessage.success('菜单保存成功')
 
     // 跳回菜单管理页面
@@ -179,6 +198,42 @@ const removeDish = (dish) => {
   }
 }
 
+// 切换菜品状态（上架/下架）
+const toggleDishStatus = (dish) => {
+  const newStatus = dish.status === 'online' ? 'offline' : 'online'
+  const statusText = newStatus === 'online' ? '上架' : '下架'
+  const statusInt = newStatus === 'online' ? 1 : 0
+
+  ElMessageBox.confirm(`确定要将该菜品${statusText}吗？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(() => {
+      // 调用后端API更新菜品在特定菜单中的状态
+      axios
+        .put(`${API_CONFIG.baseURL}/v1/menus/menu/${route.query.menuId}/dishes/${dish.id}/status`, {
+          status: statusInt
+        })
+        .then((response) => {
+          if (response.data && response.data.code === '200') {
+            dish.status = newStatus
+            dish.statusText = dishStatusMap[newStatus].text
+            ElMessage.success(`菜品已${statusText}`)
+          } else {
+            ElMessage.error(response.data?.message || `菜品${statusText}失败`)
+          }
+        })
+        .catch((error) => {
+          console.error(`更新菜品状态失败:`, error)
+          ElMessage.error(`网络错误，菜品${statusText}失败`)
+        })
+    })
+    .catch(() => {
+      ElMessage.info('已取消操作')
+    })
+}
+
 // 可用菜品数据
 const availableDishes = ref([])
 
@@ -188,8 +243,12 @@ const filteredAvailableDishes = computed(() => {
     return availableDishes.value
   }
   const keyword = searchKeyword.value.toLowerCase()
-  return availableDishes.value.filter(dish => {
-    return dish.name.toLowerCase().includes(keyword) || dish.description?.toLowerCase().includes(keyword) || dish.category?.toLowerCase().includes(keyword)
+  return availableDishes.value.filter((dish) => {
+    return (
+      dish.name.toLowerCase().includes(keyword) ||
+      dish.description?.toLowerCase().includes(keyword) ||
+      dish.category?.toLowerCase().includes(keyword)
+    )
   })
 })
 
@@ -280,14 +339,14 @@ const batchAssociateDishes = () => {
   <div class="menu-edit-container">
     <div class="menu-edit-header">
       <div class="header-left">
-        <h3 class="page-title">编辑菜单</h3>
         <CommonBackButton
           type="text"
           text="取消编辑"
-          :useRouterBack="false"
-          @click="handleCancelEdit"
+          :use-router-back="false"
           class="back-btn"
+          @click="handleCancelEdit"
         />
+        <h3 class="page-title">编辑菜单</h3>
       </div>
     </div>
 
@@ -296,7 +355,9 @@ const batchAssociateDishes = () => {
       <div class="menu-info-section">
         <h4 class="section-title">📝 菜单基本信息</h4>
         <div class="info-item">
-          <span class="info-label"><el-icon><Document /></el-icon> 菜单名称</span>
+          <span class="info-label"
+            ><el-icon><Document /></el-icon> 菜单名称</span
+          >
           <el-input
             v-model="menuInfo.name"
             placeholder="请输入菜单名称"
@@ -306,7 +367,9 @@ const batchAssociateDishes = () => {
         </div>
 
         <div class="info-item">
-          <span class="info-label"><el-icon><Clock /></el-icon> 自动上架时间</span>
+          <span class="info-label"
+            ><el-icon><Clock /></el-icon> 自动上架时间</span
+          >
           <el-time-picker
             v-model="menuInfo.autoOnline"
             type="fixed-time"
@@ -317,7 +380,9 @@ const batchAssociateDishes = () => {
           ></el-time-picker>
         </div>
         <div class="info-item">
-          <span class="info-label"><el-icon><Clock /></el-icon> 自动下架时间</span>
+          <span class="info-label"
+            ><el-icon><Clock /></el-icon> 自动下架时间</span
+          >
           <el-time-picker
             v-model="menuInfo.autoOffline"
             type="fixed-time"
@@ -328,7 +393,9 @@ const batchAssociateDishes = () => {
           ></el-time-picker>
         </div>
         <div class="info-item">
-          <span class="info-label"><el-icon><Switch /></el-icon> 菜单状态</span>
+          <span class="info-label"
+            ><el-icon><Switch /></el-icon> 菜单状态</span
+          >
           <el-select
             v-model="menuInfo.status"
             placeholder="选择菜单状态"
@@ -353,7 +420,9 @@ const batchAssociateDishes = () => {
           </el-select>
         </div>
         <div class="info-item">
-          <span class="info-label"><el-icon><Edit /></el-icon> 菜单描述</span>
+          <span class="info-label"
+            ><el-icon><Edit /></el-icon> 菜单描述</span
+          >
           <el-input
             v-model="menuInfo.description"
             placeholder="请输入菜单描述"
@@ -396,9 +465,17 @@ const batchAssociateDishes = () => {
                 {{ dish.statusText }}
               </el-tag>
             </span>
-            <el-button type="danger" size="small" @click="removeDish(dish)">
-              移除
-            </el-button>
+            <div class="dish-actions">
+              <el-button
+                :type="dish.status === 'online' ? 'warning' : 'success'"
+                size="small"
+                class="status-btn"
+                @click="toggleDishStatus(dish)"
+              >
+                {{ dish.status === 'online' ? '下架' : '上架' }}
+              </el-button>
+              <el-button type="danger" size="small" @click="removeDish(dish)"> 移除 </el-button>
+            </div>
           </div>
         </div>
       </div>
@@ -533,6 +610,7 @@ const batchAssociateDishes = () => {
       font-size: 24px;
       font-weight: 700;
       margin: 0;
+      margin-left: 17px;
       color: #1976d2;
     }
   }
@@ -673,6 +751,15 @@ const batchAssociateDishes = () => {
         &:hover {
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
+
+        .dish-actions {
+          display: flex;
+          gap: 8px;
+
+          .status-btn {
+            width: 60px;
+          }
+        }
       }
     }
 
@@ -716,4 +803,25 @@ const batchAssociateDishes = () => {
   text-align: right;
 }
 
+/* 隐藏右侧可能出现的额外下拉框 */
+:deep(.el-popper) {
+  display: none !important;
+}
+
+/* 确保页面内容不被其他元素遮挡 */
+.menu-edit-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* 隐藏浏览器开发者工具中可能出现的额外元素 */
+:deep(.el-select__popper) {
+  z-index: 1000 !important;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
 </style>
