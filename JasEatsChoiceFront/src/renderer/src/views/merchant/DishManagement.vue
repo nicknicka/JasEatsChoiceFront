@@ -237,9 +237,37 @@ const toggleDishStatus = (dish) => {
 					status: statusBoolean,
 				})
 				.then((response) => {
+          console.log("更改菜品状态响应:", response);
 					if (response.data && response.data.code === "200") {
 						dish.status = newStatus;
 						ElMessage.success(`菜品已${statusText}`);
+
+						// 当菜品下架时，同步更新该菜品在所有菜单中的状态为下架
+						if (!statusBoolean) {
+							axios
+								.get(`${API_CONFIG.baseURL}/v1/menus/dishes/${dish.id}/menus`)
+								.then((menuResponse) => {
+									if (menuResponse.data && menuResponse.data.code === "200") {
+										const menuIds = menuResponse.data.data.map((menu) => menu.id);
+										axios
+											.put(`${API_CONFIG.baseURL}/v1/menus/dishes/${dish.id}/status`, {
+												menuIds: menuIds,
+												status: 0, // 0 表示下架
+											})
+											.then((batchResponse) => {
+												if (batchResponse.data && batchResponse.data.code === "200") {
+													console.log("菜品在所有菜单中的状态已同步下架");
+												}
+											})
+											.catch((error) => {
+												console.error("同步菜品在菜单中的状态失败:", error);
+											});
+									}
+								})
+								.catch((error) => {
+									console.error("获取菜品关联菜单失败:", error);
+								});
+						}
 					} else {
 						ElMessage.error(
 							response.data?.message || `菜品${statusText}失败`
@@ -819,20 +847,16 @@ const getDishCheckedState = (dish) => {
 								<span class="name">{{ dish.name }}</span>
 								<el-tag
 									:type="
-										dish.status === 'online'
+										dish.status 
 											? 'success'
-											: dish.status === 'almost_sold'
-											? 'warning'
 											: 'danger'
 									"
 									size="small"
 									style="margin-left: 8px; font-size: 12px"
 								>
 									{{
-										dish.status === "online"
+										dish.status
 											? "上架"
-											: dish.status === "almost_sold"
-											? "即将售罄"
 											: "下架"
 									}}
 								</el-tag>
@@ -860,12 +884,11 @@ const getDishCheckedState = (dish) => {
 
 						<div class="dish-actions">
 							<el-button
-								:type="dish.status === 'online' ? 'danger' : 'success'"
 								size="small"
 								:class="{ 'btn-active': true }"
 								@click="toggleDishStatus(dish)"
 							>
-								{{ dish.status === "online" ? "下架" : "上架" }}
+								{{ dish.status  ? "下架" : "上架" }}
 							</el-button>
 
 							<el-button

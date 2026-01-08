@@ -236,8 +236,10 @@ public class MenuController {
                             }
                         }
                         // 添加菜品在菜单中的状态（转换为前端期望的格式：1→online，0→offline）
-                        String status = menuDish.getStatus() == 1 ? "online" : "offline";
-                        dishMap.put("status", status);
+                        String menuStatus = menuDish.getStatus() == 1 ? "online" : "offline";
+                        dishMap.put("status", menuStatus);
+                        // 保留菜品的全局状态（true=上架，false=下架）
+                        dishMap.put("globalStatus", dish.getStatus());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -259,6 +261,15 @@ public class MenuController {
             @RequestBody Map<String, Object> request) {
         try {
             Integer status = (Integer) request.get("status");
+
+            // 当要上架菜品时，先检查该菜品的全局状态
+            if (status == 1) {
+                Dish dish = dishService.getById(dishId);
+                if (dish == null || !Boolean.TRUE.equals(dish.getStatus())) {
+                    return ResponseResult.fail("400", "该菜品未在菜品管理中上架，无法在菜单中上架");
+                }
+            }
+
             boolean success = menuService.updateDishStatusInMenu(menuId, dishId, status);
             if (success) {
                 return ResponseResult.success("菜品状态更新成功");

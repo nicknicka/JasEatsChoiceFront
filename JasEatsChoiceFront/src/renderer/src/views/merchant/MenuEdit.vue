@@ -93,7 +93,8 @@ onMounted(async () => {
     if (dishesResponse.data && dishesResponse.data.success) {
       availableDishes.value = dishesResponse.data.data.map((dish) => ({
         ...dish,
-        statusText: dishStatusMap[dish.status] ? dishStatusMap[dish.status].text : '🔴 下架'
+        statusText: dishStatusMap[dish.status] ? dishStatusMap[dish.status].text : '🔴 下架',
+        globalStatus: dish.status === 'online' // 保存菜品全局状态（true=上架，false=下架）
       }))
     }
 
@@ -105,7 +106,8 @@ onMounted(async () => {
     if (menuDishesResponse.data && menuDishesResponse.data.success) {
       dishesList.value = menuDishesResponse.data.data.map((dish) => ({
         ...dish,
-        statusText: dishStatusMap[dish.status] ? dishStatusMap[dish.status].text : '🔴 下架'
+        statusText: dishStatusMap[dish.status] ? dishStatusMap[dish.status].text : '🔴 下架',
+        globalStatus: dish.globalStatus // 保存菜品全局状态（true=上架，false=下架）
       }))
       console.log('解析后的菜品列表:', dishesList.value)
     }
@@ -209,6 +211,15 @@ const toggleDishStatus = (dish) => {
   const newStatus = dish.status === 'online' ? 'offline' : 'online'
   const statusText = newStatus === 'online' ? '上架' : '下架'
   const statusInt = newStatus === 'online' ? 1 : 0
+
+  // 检查是否要上架菜品，如果是，先检查全局状态
+  if (newStatus === 'online') {
+    // 检查菜品全局状态（true=上架，false=下架）
+    if (!dish.globalStatus) {
+      ElMessage.warning('该菜品未在菜品管理中上架，无法在菜单中上架')
+      return
+    }
+  }
 
   ElMessageBox.confirm(`确定要将该菜品${statusText}吗？`, '提示', {
     confirmButtonText: '确定',
@@ -482,6 +493,7 @@ const batchAssociateDishes = () => {
                 size="small"
                 class="status-btn"
                 @click="toggleDishStatus(dish)"
+                :disabled="dish.status === 'offline' && !dish.globalStatus"
               >
                 {{ dish.status === 'online' ? '下架' : '上架' }}
               </el-button>

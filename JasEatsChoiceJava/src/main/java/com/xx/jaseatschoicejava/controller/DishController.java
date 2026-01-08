@@ -2,9 +2,11 @@ package com.xx.jaseatschoicejava.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xx.jaseatschoicejava.common.ResponseResult;
+import com.xx.jaseatschoicejava.dto.MenuWithDishStatusDTO;
 import com.xx.jaseatschoicejava.entity.Dish;
 import com.xx.jaseatschoicejava.exception.BusinessException;
 import com.xx.jaseatschoicejava.service.DishService;
+import com.xx.jaseatschoicejava.service.MenuService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,9 @@ public class DishController {
 
     @Autowired
     private DishService dishService;
+
+    @Autowired
+    private MenuService menuService;
 
     /**
      * 获取菜品列表
@@ -96,7 +101,19 @@ public class DishController {
         }
         dish.setStatus(status);
         boolean updated = dishService.updateById(dish);
+        log.info("更新菜品状态 {} {}", dishId, status);
+        log.info("updated {} ", updated);
         if (updated) {
+            // 当菜品下架时，同步更新该菜品在所有菜单中的状态为下架
+            if (!status) {
+                // 获取该菜品关联的所有菜单
+                List<MenuWithDishStatusDTO> menus = menuService.getMenusByDishId(dishId);
+                if (menus != null && !menus.isEmpty()) {
+                    List<String> menuIds = menus.stream().map(MenuWithDishStatusDTO::getId).collect(java.util.stream.Collectors.toList());
+                    menuService.batchUpdateDishStatusInMenus(dishId, menuIds, 0); // 0 表示下架
+                }
+            }
+
             return ResponseResult.success("菜品状态更新成功");
         }
         return ResponseResult.fail("500", "菜品状态更新失败");
