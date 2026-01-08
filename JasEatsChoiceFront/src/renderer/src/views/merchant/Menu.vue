@@ -9,7 +9,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   ArrowDown, ArrowUp, Edit, Delete, Download,
   Check, CirclePlus, CircleCheck, CircleClose, InfoFilled, Clock, Food,
-  Document, Grid, Switch
+  Document, Grid, Switch, Search
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
@@ -392,10 +392,15 @@ const toggleSelectAll = () => {
         <el-input
           v-model="searchKeyword"
           placeholder="输入菜单名称/关键词搜索..."
-          style="min-width: 250px; max-width: 400px; width: auto; flex: 1; max-width: 400px; margin-right: 10px"
+          style="min-width: 200px; max-width: 300px; width: auto; flex: 1; margin-right: 12px"
+          clearable
           @input="updateFilter"
-        />
-        <el-button type="primary" @click="openAddMenuDialog">
+        >
+          <template #prefix>
+            <el-icon style="color: #909399"><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-button type="primary" @click="openAddMenuDialog" class="add-button">
           <el-icon><CirclePlus /></el-icon>
           新增菜单
         </el-button>
@@ -465,6 +470,7 @@ const toggleSelectAll = () => {
           size="small"
           @click="batchOperation('online')"
           :disabled="selectedMenus.length === 0"
+          class="batch-btn"
         >
           <el-icon><CircleCheck /></el-icon>
           批量上架
@@ -475,6 +481,7 @@ const toggleSelectAll = () => {
           size="small"
           @click="batchOperation('offline')"
           :disabled="selectedMenus.length === 0"
+          class="batch-btn"
         >
           <el-icon><CircleClose /></el-icon>
           批量下架
@@ -485,6 +492,7 @@ const toggleSelectAll = () => {
           size="small"
           @click="batchOperation('delete')"
           :disabled="selectedMenus.length === 0"
+          class="batch-btn"
         >
           <el-icon><Delete /></el-icon>
           批量删除
@@ -716,26 +724,55 @@ const toggleSelectAll = () => {
 <style scoped lang="less">
 .menu-management-container {
   padding: 24px;
-  background-color: #f8f9fa;
+  background-color: #fafbfc;
+  min-height: 100vh;
+
+  /* 输入框样式 - 与菜品管理保持一致 */
+  :deep(.el-input__wrapper),
+  :deep(.el-select__wrapper),
+  :deep(.el-textarea__inner) {
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  :deep(.el-input__wrapper:hover),
+  :deep(.el-select__wrapper:hover),
+  :deep(.el-textarea__inner:hover) {
+    border-color: #91d5ff;
+    box-shadow: 0 0 0 3px rgba(145, 213, 255, 0.1);
+  }
+
+  :deep(.el-input__wrapper.is-focus),
+  :deep(.el-select__wrapper.is-focus),
+  :deep(.el-textarea__inner.is-focus) {
+    border-color: #40a9ff;
+    box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.15);
+  }
 
   .menu-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
     .page-title {
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 20px;
+      font-weight: 700;
       margin: 0;
-      color: #495057;
+      color: #4a5568;
     }
 
     // 固定搜索和新增按钮区域的宽度范围，确保布局稳定
     .header-right {
       width: 55%; /* 占父容器55%宽度 */
-      max-width: 650px; /* 最大宽度限制 */
-      min-width: 450px; /* 最小宽度限制 */
+      max-width: 550px; /* 最大宽度限制 */
+      min-width: 350px; /* 最小宽度限制 */
       display: flex;
       align-items: center;
       gap: 10px; /* 统一内部元素间距 */
@@ -826,17 +863,46 @@ const toggleSelectAll = () => {
       display: flex;
       align-items: flex-start;
       padding: 20px;
-      border: 1px solid #f1f3f5;
-      border-radius: 12px;
+      border: none;
+      border-radius: 16px;
       margin-bottom: 16px;
       background-color: #ffffff;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(64, 169, 255, 0.08) 0%,
+          rgba(145, 213, 255, 0.08) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
+        pointer-events: none;
+      }
 
       &:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        border-color: #dee2e6;
-        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        transform: translateY(-8px) scale(1.03);
+        cursor: pointer;
+
+        &::before {
+          opacity: 1;
+        }
+
+        .menu-actions .el-button {
+          transform: translateY(0);
+          opacity: 1;
+        }
       }
 
       .menu-selection {
@@ -846,6 +912,8 @@ const toggleSelectAll = () => {
 
       .menu-content {
         flex: 1;
+        position: relative;
+        z-index: 1;
         display: flex;
         flex-direction: column;
 
@@ -853,22 +921,40 @@ const toggleSelectAll = () => {
           .menu-name {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 12px;
+            margin-bottom: 16px;
 
             .name {
               font-size: 18px;
-              font-weight: 600;
-              color: #495057;
+              font-weight: 700;
+              color: #2d3748;
             }
           }
 
           .menu-stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 24px;
-            margin-bottom: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
             font-size: 14px;
+
+            .stat-item {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+
+              .stat-label {
+                color: #718096;
+                font-size: 12px;
+                font-weight: 500;
+              }
+
+              .stat-value {
+                color: #4a5568;
+                font-size: 14px;
+                font-weight: 600;
+              }
+            }
 
             .dishes-count {
               color: #6c757d;
@@ -930,14 +1016,39 @@ const toggleSelectAll = () => {
 
         .menu-actions {
           display: flex;
-          gap: 12px;
-          justify-content: flex-end;
+          flex-direction: row;
+          gap: 10px;
+          justify-content: flex-start;
           flex-wrap: wrap;
           margin-top: 12px;
 
           button {
-            width: auto;
-            padding: 4px 12px;
+            width: 90px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transform: translateY(5px);
+            opacity: 0.9;
+
+            &:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            }
+
+            &:active {
+              transform: translateY(0);
+            }
+
+            &.btn-active {
+              background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+              color: #0050b3;
+
+              &:hover {
+                background: linear-gradient(135deg, #bae7ff 0%, #91d5ff 100%);
+              }
+            }
           }
         }
       }
@@ -948,13 +1059,17 @@ const toggleSelectAll = () => {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
     .select-all {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-weight: 500;
+      font-weight: 600;
+      color: #4a5568;
       white-space: nowrap; /* 防止全选文本换行 */
       min-width: 100px; /* 设置固定最小宽度，让批量操作按钮位置稳定 */
 
@@ -966,8 +1081,61 @@ const toggleSelectAll = () => {
     }
   }
 
+  // 分页容器样式
   .menu-pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     text-align: right;
+  }
+
+  // 新增按钮样式
+  .add-button {
+    background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    color: #389e0d;
+    box-shadow: 0 2px 8px rgba(56, 158, 13, 0.2);
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #d9f7be 0%, #b7eb8f 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(56, 158, 13, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // 批量操作按钮样式
+  .batch-btn {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 
   /* 筛选面板小屏幕响应式调整 */

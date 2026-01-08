@@ -47,6 +47,10 @@ const dishStatusMap = {
   offline: { text: '🔴 下架', type: 'danger' }
 }
 
+// 原始数据副本（用于比较是否有未保存的更改）
+const originalMenuInfo = ref({})
+const originalDishesList = ref([])
+
 // 页面加载
 onMounted(async () => {
   // 从路由参数获取菜单ID
@@ -86,6 +90,8 @@ onMounted(async () => {
           menuInfo.value.autoOffline = dayjs(menuInfo.value.autoOffline).format('HH:mm:ss')
         }
       }
+      // 保存菜单原始数据
+      originalMenuInfo.value = JSON.parse(JSON.stringify(menuInfo.value))
     }
 
     // 获取所有菜品数据
@@ -110,6 +116,8 @@ onMounted(async () => {
         globalStatus: dish.globalStatus // 保存菜品全局状态（true=上架，false=下架）
       }))
       console.log('解析后的菜品列表:', dishesList.value)
+      // 保存菜品原始数据
+      originalDishesList.value = JSON.parse(JSON.stringify(dishesList.value))
     }
   } catch (error) {
     console.error('加载菜单数据失败:', error)
@@ -119,6 +127,36 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// 检查是否有未保存的更改
+const hasUnsavedChanges = () => {
+  // 比较菜单基本信息
+  if (JSON.stringify(menuInfo.value) !== JSON.stringify(originalMenuInfo.value)) {
+    return true
+  }
+
+  // 比较菜品列表（数量和内容）
+  if (dishesList.value.length !== originalDishesList.value.length) {
+    return true
+  }
+
+  // 比较菜品详细信息
+  for (let i = 0; i < dishesList.value.length; i++) {
+    const currentDish = dishesList.value[i]
+    const originalDish = originalDishesList.value.find(d => d.id === currentDish.id)
+
+    if (!originalDish) {
+      return true
+    }
+
+    // 比较重要字段（id, status, 其他可能变更的字段）
+    if (currentDish.status !== originalDish.status) {
+      return true
+    }
+  }
+
+  return false
+}
 
 // 保存菜单
 const saveMenu = async (saveType) => {
@@ -309,6 +347,14 @@ const setAutoOfflineTime = () => {
 
 // 处理取消编辑
 const handleCancelEdit = () => {
+  // 检查是否有未保存的更改
+  if (!hasUnsavedChanges()) {
+    // 没有未保存的更改，直接返回
+    router.back()
+    return
+  }
+
+  // 有未保存的更改，显示提示框
   ElMessageBox.confirm('确定要取消编辑吗？未保存的更改将丢失。', '提示', {
     confirmButtonText: '确定取消',
     cancelButtonText: '继续编辑',

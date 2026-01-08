@@ -809,14 +809,7 @@ const getDishCheckedState = (dish) => {
 				<el-input
 					v-model="searchKeyword"
 					placeholder="输入菜品名称或分类..."
-					style="
-						min-width: 250px;
-						max-width: 400px;
-						width: auto;
-						flex: 1;
-						max-width: 400px;
-						margin-right: 12px;
-					"
+					style="min-width: 200px; max-width: 300px; width: auto; flex: 1; margin-right: 12px"
 					clearable
 					@input="updateFilter"
 				>
@@ -825,7 +818,7 @@ const getDishCheckedState = (dish) => {
 					</template>
 				</el-input>
 				<el-button type="primary" class="add-button" @click="openAddDishDialog">
-					<el-icon><Plus /></el-icon>
+					<el-icon><CirclePlus /></el-icon>
 					新增菜品
 				</el-button>
 			</div>
@@ -1818,6 +1811,36 @@ const getDishCheckedState = (dish) => {
 			font-weight: 700;
 			margin: 0;
 			color: #4a5568;
+		}
+
+		// 固定搜索和新增按钮区域的宽度范围，确保布局稳定
+		.header-right {
+			width: 55%; /* 占父容器55%宽度 */
+			max-width: 550px; /* 最大宽度限制 */
+			min-width: 350px; /* 最小宽度限制 */
+			display: flex;
+			align-items: center;
+			gap: 10px; /* 统一内部元素间距 */
+		}
+
+		/* 小屏幕响应式调整 */
+		@media (max-width: 767px) {
+			flex-direction: column;
+			gap: 16px;
+			align-items: stretch;
+
+			.header-right {
+				width: 100% !important; /* 小屏幕下占满宽度 */
+				min-width: auto !important; /* 取消最小宽度限制 */
+				max-width: none !important; /* 取消最大宽度限制 */
+				flex-direction: column;
+				gap: 12px;
+			}
+
+			.el-input {
+				min-width: auto;
+				max-width: none;
+			}
 		}
 	}
 
