@@ -9,7 +9,8 @@ import {
   Document,
   Grid,
   Clock,
-  Switch
+  Switch,
+  Edit
 } from '@element-plus/icons-vue'
 import CommonBackButton from '../../components/common/CommonBackButton.vue'
 import axios from 'axios'
@@ -100,11 +101,13 @@ onMounted(async () => {
     const menuDishesResponse = await axios.get(
       `${API_CONFIG.baseURL}${API_CONFIG.merchant.menu.replace('{merchantId}', merchantId)}/${menuId}/dishes`
     )
+    console.log('菜单关联的菜品数据:', menuDishesResponse.data)
     if (menuDishesResponse.data && menuDishesResponse.data.success) {
       dishesList.value = menuDishesResponse.data.data.map((dish) => ({
         ...dish,
         statusText: dishStatusMap[dish.status] ? dishStatusMap[dish.status].text : '🔴 下架'
       }))
+      console.log('解析后的菜品列表:', dishesList.value)
     }
   } catch (error) {
     console.error('加载菜单数据失败:', error)
@@ -168,7 +171,10 @@ const saveMenu = async (saveType) => {
     // 准备保存的数据
     const saveData = {
       ...menuInfo.value,
-      dishes: dishesList.value.map((dish) => dish.id) // 只保存菜品ID
+      dishes: dishesList.value.map((dish) => ({
+        id: dish.id,
+        status: dish.status === 'online' ? 1 : 0 // 将前端状态转换为后端格式：1-上架，0-下架
+      }))
     }
 
     // 更新菜单
@@ -254,26 +260,29 @@ const filteredAvailableDishes = computed(() => {
 
 // 添加菜品对话框
 const showAddDishDialog = ref(false)
-const selectedDish = ref(null)
+const selectedDishId = ref('')
 
 // 批量关联菜品对话框
 const showBatchAssociateDialog = ref(false)
-const selectedDishesBatch = ref([])
+const selectedDishIdsBatch = ref([])
 
 // 添加菜品
 const addDish = () => {
-  if (selectedDish.value) {
-    // 检查菜品是否已在菜单中
-    const isExist = dishesList.value.some((dish) => dish.id === selectedDish.value.id)
-    if (!isExist) {
-      dishesList.value.push({ ...selectedDish.value })
-      ElMessage.success('菜品已添加')
-    } else {
-      ElMessage.warning('该菜品已在菜单中')
+  if (selectedDishId.value) {
+    const dish = availableDishes.value.find(d => d.id === selectedDishId.value)
+    if (dish) {
+      // 检查菜品是否已在菜单中
+      const isExist = dishesList.value.some((item) => item.id === dish.id)
+      if (!isExist) {
+        dishesList.value.push({ ...dish })
+        ElMessage.success('菜品已添加')
+      } else {
+        ElMessage.warning('该菜品已在菜单中')
+      }
     }
     // 重置状态
     showAddDishDialog.value = false
-    selectedDish.value = null
+    selectedDishId.value = ''
   }
 }
 
@@ -305,17 +314,20 @@ const handleCancelEdit = () => {
 
 // 批量关联菜品
 const batchAssociateDishes = () => {
-  if (selectedDishesBatch.value.length > 0) {
+  if (selectedDishIdsBatch.value.length > 0) {
     let addedCount = 0
     let existingCount = 0
 
-    selectedDishesBatch.value.forEach((dish) => {
-      const isExist = dishesList.value.some((existingDish) => existingDish.id === dish.id)
-      if (!isExist) {
-        dishesList.value.push({ ...dish })
-        addedCount++
-      } else {
-        existingCount++
+    selectedDishIdsBatch.value.forEach((dishId) => {
+      const dish = availableDishes.value.find(d => d.id === dishId)
+      if (dish) {
+        const isExist = dishesList.value.some((existingDish) => existingDish.id === dish.id)
+        if (!isExist) {
+          dishesList.value.push({ ...dish })
+          addedCount++
+        } else {
+          existingCount++
+        }
       }
     })
 
@@ -330,7 +342,7 @@ const batchAssociateDishes = () => {
 
     // 重置状态
     showBatchAssociateDialog.value = false
-    selectedDishesBatch.value = []
+    selectedDishIdsBatch.value = []
   }
 }
 </script>
@@ -497,7 +509,7 @@ const batchAssociateDishes = () => {
       >
         <div class="dialog-content">
           <el-select
-            v-model="selectedDish"
+            v-model="selectedDishId"
             placeholder="请选择要添加的菜品"
             style="width: 100%"
             filterable
@@ -507,7 +519,7 @@ const batchAssociateDishes = () => {
               v-for="dish in filteredAvailableDishes"
               :key="dish.id"
               :label="`${dish.name} - ¥${dish.price} ${dish.statusText}`"
-              :value="dish"
+              :value="dish.id"
             />
           </el-select>
         </div>
@@ -529,7 +541,7 @@ const batchAssociateDishes = () => {
       >
         <div class="dialog-content">
           <el-select
-            v-model="selectedDishesBatch"
+            v-model="selectedDishIdsBatch"
             multiple
             placeholder="请选择要关联的菜品"
             style="width: 100%"
@@ -542,7 +554,7 @@ const batchAssociateDishes = () => {
               v-for="dish in filteredAvailableDishes"
               :key="dish.id"
               :label="`${dish.name} - ¥${dish.price} ${dish.statusText}`"
-              :value="dish"
+              :value="dish.id"
             />
           </el-select>
         </div>

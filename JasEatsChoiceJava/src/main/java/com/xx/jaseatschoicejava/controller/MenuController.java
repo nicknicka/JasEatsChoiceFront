@@ -124,7 +124,17 @@ public class MenuController {
                 for (java.beans.PropertyDescriptor pd : propertyDescriptors) {
                     if (!"class".equals(pd.getName())) {
                         Object value = pd.getReadMethod().invoke(menu);
-                        menuMap.put(pd.getName(), value);
+                        // 处理字段名映射，与@JsonProperty注解保持一致
+                        String fieldName = pd.getName();
+                        if ("type".equals(fieldName)) {
+                            menuMap.put("category", value);
+                        } else if ("autoStartTime".equals(fieldName)) {
+                            menuMap.put("autoOnline", value);
+                        } else if ("autoEndTime".equals(fieldName)) {
+                            menuMap.put("autoOffline", value);
+                        } else {
+                            menuMap.put(fieldName, value);
+                        }
                     }
                 }
                 menuMap.put("dishes", dishCount);
@@ -161,7 +171,17 @@ public class MenuController {
                 for (java.beans.PropertyDescriptor pd : propertyDescriptors) {
                     if (!"class".equals(pd.getName())) {
                         Object value = pd.getReadMethod().invoke(menu);
-                        menuMap.put(pd.getName(), value);
+                        // 处理字段名映射，与@JsonProperty注解保持一致
+                        String fieldName = pd.getName();
+                        if ("type".equals(fieldName)) {
+                            menuMap.put("category", value);
+                        } else if ("autoStartTime".equals(fieldName)) {
+                            menuMap.put("autoOnline", value);
+                        } else if ("autoEndTime".equals(fieldName)) {
+                            menuMap.put("autoOffline", value);
+                        } else {
+                            menuMap.put(fieldName, value);
+                        }
                     }
                 }
                 menuMap.put("dishes", dishCount);
@@ -420,15 +440,42 @@ public class MenuController {
                 menuDishService.remove(deleteWrapper);
 
                 // 添加新的菜单菜品关联
-                List<?> dishIds = (List<?>) requestData.get("dishes");
-                for (int i = 0; i < dishIds.size(); i++) {
-                    Object dishIdObj = dishIds.get(i);
+                List<?> dishes = (List<?>) requestData.get("dishes");
+                for (int i = 0; i < dishes.size(); i++) {
+                    Object dishObj = dishes.get(i);
                     String dishId = null;
+                    Integer status = 1; // 默认上架
 
-                    if (dishIdObj instanceof Number) {
-                        dishId = String.valueOf(dishIdObj);
-                    } else if (dishIdObj instanceof String) {
-                        dishId = (String) dishIdObj;
+                    if (dishObj instanceof Map) {
+                        // 如果是对象格式，获取id和status
+                        Map<String, Object> dishMap = (Map<String, Object>) dishObj;
+                        Object idObj = dishMap.get("id");
+                        Object statusObj = dishMap.get("status");
+
+                        if (idObj instanceof Number) {
+                            dishId = String.valueOf(idObj);
+                        } else if (idObj instanceof String) {
+                            dishId = (String) idObj;
+                        }
+
+                        if (statusObj != null) {
+                            if (statusObj instanceof Number) {
+                                status = ((Number) statusObj).intValue();
+                            } else if (statusObj instanceof String) {
+                                try {
+                                    status = Integer.parseInt((String) statusObj);
+                                } catch (NumberFormatException e) {
+                                    // 如果无法解析，保持默认值1
+                                    status = 1;
+                                }
+                            }
+                        }
+                    } else if (dishObj instanceof Number) {
+                        // 兼容旧格式（只传id）
+                        dishId = String.valueOf(dishObj);
+                    } else if (dishObj instanceof String) {
+                        // 兼容旧格式（只传id）
+                        dishId = (String) dishObj;
                     }
 
                     if (dishId != null && !dishId.trim().isEmpty()) {
@@ -436,6 +483,7 @@ public class MenuController {
                         menuDish.setMenuId(menuId);
                         menuDish.setDishId(dishId);
                         menuDish.setSort(i); // 设置排序
+                        menuDish.setStatus(status); // 设置菜品在菜单中的状态
                         menuDishService.save(menuDish);
                     }
                 }
