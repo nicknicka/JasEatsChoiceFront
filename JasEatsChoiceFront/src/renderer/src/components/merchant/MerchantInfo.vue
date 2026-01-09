@@ -2,7 +2,7 @@
 import { useAuthStore } from '../../store/authStore'
 import { useUserStore } from '../../store/userStore'
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage, ElTag, ElIcon, ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElSwitch, ElUpload, ElMessageBox, ElCascader } from 'element-plus'
+import { ElMessage, ElTag, ElIcon, ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElSwitch, ElUpload, ElMessageBox, ElCascader, ElTimePicker } from 'element-plus'
 import {
   Location,
   Phone,
@@ -196,6 +196,12 @@ onMounted(async () => {
 // 格式化营业时间
 const formatBusinessHours = (hours) => {
   if (!hours) return '暂无'
+
+  // 如果是 HH:mm-HH:mm 格式，转换为 "HH:mm 至 HH:mm" 格式显示
+  if (hours.includes('-')) {
+    return hours.replace('-', ' 至 ')
+  }
+
   return hours
 }
 
@@ -273,6 +279,11 @@ const handleEditClick = () => {
       info.areaAddress = areaAddress
       info.detailAddress = detailAddress
     }
+  }
+
+  // 处理营业时间格式转换（将 "HH:mm 至 HH:mm" 转换为 "HH:mm-HH:mm"）
+  if (info.businessHours && typeof info.businessHours === 'string') {
+    info.businessHours = info.businessHours.replace(' 至 ', '-')
   }
 
   editForm.value = info
@@ -407,7 +418,7 @@ const editFormRules = {
     { min: 5, message: '详细地址长度至少5个字符', trigger: 'blur' }
   ],
   businessHours: [
-    { required: true, message: '请输入营业时间', trigger: 'blur' }
+    { required: true, message: '请选择营业时间', trigger: 'change' }
   ],
   category: [
     { required: true, message: '请输入经营品类', trigger: 'blur' }
@@ -563,12 +574,13 @@ const editFormRules = {
           clearable
           :props="{ checkStrictly: false, expandTrigger: 'hover' }"
           popper-class="address-cascader-popper"
+          teleported
         />
       </div>
 
       <div class="info-item" style="position: relative;">
         <span class="info-label"><ElIcon><Location /></ElIcon> 详细地址</span>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; align-items: center;">
           <ElInput
             v-model="editForm.detailAddress"
             placeholder="请输入街道、门牌号等详细地址"
@@ -620,12 +632,19 @@ const editFormRules = {
 
       <div class="info-item">
         <span class="info-label"><ElIcon><Clock /></ElIcon> 营业时间</span>
-        <ElInput
-          v-model="editForm.businessHours"
-          placeholder="请输入营业时间"
-          style="width: 300px"
-          clearable
-        />
+        <div style="width: 300px;">
+          <ElTimePicker
+            v-model="editForm.businessHours"
+            is-range
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            placeholder="请选择营业时间"
+            format="HH:mm"
+            value-format="HH:mm-HH:mm"
+            clearable
+          />
+        </div>
       </div>
 
       <div class="info-item">
@@ -688,24 +707,69 @@ const editFormRules = {
   transform: translateY(-20px) scale(0.95);
 }
 
-/* 地址级联选择器样式优化 */
+/* 地址级联选择器样式优化 - 修复长文字导致上级选择器左移问题 */
 :deep(.address-cascader-popper) {
+  /* 强制级联菜单容器使用固定布局 */
+  .el-cascader__menus {
+    display: flex !important;
+    width: fit-content !important;
+  }
+
+  .el-cascader__menu {
+    flex-shrink: 0 !important;
+    /* 设置固定宽度，防止菜单列宽变化导致位移 */
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+    flex-basis: 160px !important;
+  }
+
   .el-cascader-menu {
-    min-width: 120px;
-    max-width: 180px;
+    /* 确保每一列都有固定宽度 */
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+    flex-basis: 160px !important;
+    /* 防止菜单内容溢出 */
+    overflow: hidden !important;
+    box-sizing: border-box !important;
 
     .el-cascader-menu__item {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
 
       :deep(.el-cascader-menu__label) {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 117px;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        /* 确保标签文字不会撑破容器 */
+        max-width: 130px !important;
+        display: inline-block !important;
+        vertical-align: middle !important;
+        /* 强制限制最大宽度 */
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      /* 确保箭头图标不会导致宽度变化 */
+      .el-cascader-menu__item__arrow {
+        flex-shrink: 0 !important;
+        width: 16px !important;
+        min-width: 16px !important;
+        max-width: 16px !important;
       }
     }
+  }
+
+  /* 确保整个级联菜单容器不会被撑大 */
+  &.el-popper {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    overflow: visible !important;
   }
 }
 
@@ -800,6 +864,7 @@ const editFormRules = {
   top: 100%;
 }
 
+
 .dropdown-header {
   display: flex;
   justify-content: space-between;
@@ -861,45 +926,83 @@ const editFormRules = {
   gap: 4px;
 }
 
-/* 对话框按钮样式 - 与菜单管理添加菜单保持一致 */
+/* 对话框按钮样式 - 参考编辑按钮样式 */
 .dialog-footer {
-  text-align: center;
+  text-align: right;
   padding: 0 28px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 :deep(.dialog-footer .el-button) {
-  padding: 10px 28px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-weight: 500;
   font-size: 14px;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  min-width: 80px;
 }
 
 :deep(.dialog-footer .el-button--primary) {
   background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
   border: 1px solid #91d5ff;
   color: #0050b3;
+  box-shadow: 0 2px 8px rgba(64, 169, 255, 0.2);
 }
 
 :deep(.dialog-footer .el-button--primary:hover) {
   background: linear-gradient(135deg, #bae7ff 0%, #91d5ff 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(64, 169, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(64, 169, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 :deep(.dialog-footer .el-button--default) {
-  border-color: #e5e7eb;
-  background-color: #fafafa;
-  color: #666;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
+  border: 1px solid #dcdfe6;
+  color: #606266;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 :deep(.dialog-footer .el-button--default:hover) {
-  border-color: #d9d9d9;
-  background-color: #f0f0f0;
-  color: #333;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #e4e7ed 0%, #c0c4cc 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+/* 按钮点击动画 */
+:deep(.dialog-footer .el-button:active) {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 搜索定位按钮样式美化 */
+:deep(.info-item .el-button) {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+:deep(.info-item .el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(64, 169, 255, 0.3);
+}
+
+/* 按钮点击效果 */
+:deep(.el-button) {
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* 按钮加载状态 */
+:deep(.el-button.is-loading) {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .merchant-info-card {
