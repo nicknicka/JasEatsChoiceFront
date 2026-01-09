@@ -15,6 +15,20 @@ public class MenuWithDishStatusDTO {
     private String id;
 
     /**
+     * 获取菜单ID
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * 设置菜单ID
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
      * 菜单名称
      */
     private String name;

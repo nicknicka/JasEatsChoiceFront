@@ -82,7 +82,8 @@ export const API_CONFIG = {
   // 位置选择API端点
   location: {
     location: '/v1/location', // 获取当前定位接口
-    cascaderData: '/v1/location/cascader' // 获取级联选择器地址数据接口
+    cascaderData: '/v1/location/cascader', // 获取级联选择器地址数据接口
+    search: '/v1/location/search' // 地址搜索接口
   },
 
   // 订单API端点

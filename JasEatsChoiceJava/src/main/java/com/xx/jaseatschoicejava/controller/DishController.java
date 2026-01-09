@@ -33,7 +33,7 @@ public class DishController {
     @GetMapping
     public ResponseResult<?> getDishes(@RequestParam(required = false) String category,
                                       @RequestParam(required = false) String keyword,
-                                      @RequestParam(required = false) String merchantId) {
+                                      @RequestParam(required = false) Long merchantId) {
         log.info("获取菜品列表 {} ", merchantId);
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
         if (category != null) {
@@ -53,7 +53,7 @@ public class DishController {
      * 获取菜品详情
      */
     @GetMapping("/{dishId}")
-    public ResponseResult<?> getDishDetail(@PathVariable String dishId) {
+    public ResponseResult<?> getDishDetail(@PathVariable Long dishId) {
         Dish dish = dishService.getById(dishId);
         if (dish == null) {
             throw new BusinessException("404", "菜品不存在");
@@ -69,9 +69,13 @@ public class DishController {
      */
     @PostMapping
     public ResponseResult<?> createDish(@RequestBody Dish dish) {
+        // 设置默认值
+        if (dish.getStatus() == null) {
+            dish.setStatus(true); // 默认上架
+        }
         boolean saved = dishService.save(dish);
         if (saved) {
-            return ResponseResult.success("菜品创建成功");
+            return ResponseResult.success(dish); // 返回创建的菜品数据
         }
         return ResponseResult.fail("500", "菜品创建失败");
     }
@@ -80,11 +84,11 @@ public class DishController {
      * 更新菜品
      */
     @PutMapping("/{dishId}")
-    public ResponseResult<?> updateDish(@PathVariable String dishId, @RequestBody Dish dish) {
+    public ResponseResult<?> updateDish(@PathVariable Long dishId, @RequestBody Dish dish) {
         dish.setId(dishId);
         boolean updated = dishService.updateById(dish);
         if (updated) {
-            return ResponseResult.success("菜品更新成功");
+            return ResponseResult.success(dishService.getById(dishId)); // 返回更新后的菜品数据
         }
         return ResponseResult.fail("500", "菜品更新失败");
     }
@@ -93,7 +97,7 @@ public class DishController {
      * 更新菜品状态（上架/下架）
      */
     @PutMapping("/{dishId}/status")
-    public ResponseResult<?> updateDishStatus(@PathVariable String dishId, @RequestBody java.util.Map<String, Object> request) {
+    public ResponseResult<?> updateDishStatus(@PathVariable Long dishId, @RequestBody java.util.Map<String, Object> request) {
         Boolean status = (Boolean) request.get("status");
         Dish dish = dishService.getById(dishId);
         if (dish == null) {
@@ -107,10 +111,10 @@ public class DishController {
             // 当菜品下架时，同步更新该菜品在所有菜单中的状态为下架
             if (!status) {
                 // 获取该菜品关联的所有菜单
-                List<MenuWithDishStatusDTO> menus = menuService.getMenusByDishId(dishId);
+                List<MenuWithDishStatusDTO> menus = menuService.getMenusByDishId(String.valueOf(dishId));
                 if (menus != null && !menus.isEmpty()) {
-                    List<String> menuIds = menus.stream().map(MenuWithDishStatusDTO::getId).collect(java.util.stream.Collectors.toList());
-                    menuService.batchUpdateDishStatusInMenus(dishId, menuIds, 0); // 0 表示下架
+                    List<String> menuIds = menus.stream().map(menu -> menu.getId()).collect(java.util.stream.Collectors.toList());
+                    menuService.batchUpdateDishStatusInMenus(String.valueOf(dishId), menuIds, 0); // 0 表示下架
                 }
             }
 
@@ -124,7 +128,7 @@ public class DishController {
      */
     @PutMapping("/batch/status")
     public ResponseResult<?> batchUpdateDishStatus(@RequestBody java.util.Map<String, Object> request) {
-        List<String> dishIds = (List<String>) request.get("dishIds");
+        List<Long> dishIds = (List<Long>) request.get("dishIds");
         Boolean status = (Boolean) request.get("status");
 
         if (dishIds == null || dishIds.isEmpty()) {

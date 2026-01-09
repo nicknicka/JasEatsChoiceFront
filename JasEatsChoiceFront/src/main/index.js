@@ -1,11 +1,7 @@
 // CommonJS syntax for Electron main process
 
 // 直接导入 electron 模块
-const electron = require('electron')
-
-console.log('Electron module:', electron) // 添加调试输出
-
-const { app, shell, BrowserWindow, ipcMain } = electron
+const { app, shell, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs/promises')
 const Store = require('electron-store')
@@ -132,9 +128,6 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
 
 // WebSocket implementation
 const WebSocket = require('ws')

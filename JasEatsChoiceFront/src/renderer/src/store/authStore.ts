@@ -4,9 +4,9 @@ export const useAuthStore = defineStore('auth', {
   // 严格的 Pinia 状态声明
   state: () => ({
     token: localStorage.getItem('auth_token') || '',
-    userId: localStorage.getItem('auth_userId') || '',
+    userId: localStorage.getItem('auth_userId') ? Number(localStorage.getItem('auth_userId')) : null,
     phone: localStorage.getItem('auth_phone') || '',
-    merchantId: localStorage.getItem('auth_merchantId') || '',
+    merchantId: localStorage.getItem('auth_merchantId') ? Number(localStorage.getItem('auth_merchantId')) : null,
     currentRole: localStorage.getItem('auth_currentRole') || ''
   }),
 
@@ -23,19 +23,25 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('auth_token', newToken)
     },
 
-    setUserId(newUserId: string) {
-      this.userId = newUserId
-      localStorage.setItem('auth_userId', newUserId)
+    setUserId(newUserId: string | number) {
+      const userId = Number(newUserId)
+      this.userId = Number.isNaN(userId) ? null : userId
+      if (this.userId) {
+        localStorage.setItem('auth_userId', String(this.userId))
+      } else {
+        localStorage.removeItem('auth_userId')
+      }
     },
 
-    setMerchantId(newMerchantId: string) {
+    setMerchantId(newMerchantId: string | number) {
       // 只存储有效的商家ID
-      if (newMerchantId && String(newMerchantId) !== 'null' && String(newMerchantId) !== '') {
-        this.merchantId = newMerchantId
-        localStorage.setItem('auth_merchantId', newMerchantId)
+      const merchantId = Number(newMerchantId)
+      if (!Number.isNaN(merchantId) && merchantId > 0) {
+        this.merchantId = merchantId
+        localStorage.setItem('auth_merchantId', String(merchantId))
       } else {
         // 如果是无效值，清除商家ID
-        this.merchantId = ''
+        this.merchantId = null
         localStorage.removeItem('auth_merchantId')
       }
     },

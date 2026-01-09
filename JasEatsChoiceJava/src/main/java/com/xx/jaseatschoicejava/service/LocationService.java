@@ -20,4 +20,11 @@ public interface LocationService {
      * @return 地址数据列表
      */
     List<Map<String, Object>> getCascaderLocationData();
+
+    /**
+     * 地址搜索
+     * @param keyword 搜索关键词
+     * @return 搜索结果列表
+     */
+    List<Map<String, Object>> searchAddress(String keyword);
 }

@@ -18,12 +18,12 @@ export interface UserInfo {
   disableWeatherRecommend: boolean | null
   createTime: string // 创建时间
   updateTime: string | null
-  merchantId: string | null // 商家ID，如果不为空表示用户已注册为商家
+  merchantId: number | null // 商家ID，如果不为空表示用户已注册为商家
   avatar: string // 用户头像URL
 }
 
 export interface MerchantInfo {
-  id: string
+  id: number
   name: string
   address?: string
   phone: string

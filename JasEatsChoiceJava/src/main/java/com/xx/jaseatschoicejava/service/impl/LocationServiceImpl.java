@@ -258,4 +258,51 @@ public class LocationServiceImpl implements LocationService {
         }
     }
 
+    @Override
+    public List<Map<String, Object>> searchAddress(String keyword) {
+        try {
+            // 调用高德地图POI搜索API
+            String url = String.format("%s/place/text?keywords=%s&key=%s&city=&offset=20", gaodeApiUrl, keyword, gaodeApiKey);
+
+            // 从API获取原始数据
+            String response = restTemplate.getForObject(url, String.class);
+
+            logger.info("高德地图地址搜索返回的response = {}", response);
+
+            // 使用Jackson解析JSON
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> responseMap = mapper.readValue(response, Map.class);
+
+            // 解析搜索结果
+            boolean success = responseMap != null && "1".equals(responseMap.get("status"));
+
+            if (success) {
+                List<Map<String, Object>> pois = (List<Map<String, Object>>) responseMap.get("pois");
+                List<Map<String, Object>> searchResults = new ArrayList<>();
+
+                if (pois != null && !pois.isEmpty()) {
+                    for (Map<String, Object> poi : pois) {
+                        Map<String, Object> result = new HashMap<>();
+                        result.put("id", poi.get("id"));
+                        result.put("name", poi.get("name"));
+                        result.put("address", poi.get("address"));
+                        result.put("location", poi.get("location"));
+                        result.put("adname", poi.get("adname"));
+                        result.put("cityname", poi.get("cityname"));
+                        result.put("pname", poi.get("pname"));
+
+                        searchResults.add(result);
+                    }
+                }
+
+                return searchResults;
+            }
+        } catch (Exception e) {
+            logger.error("从高德地图API搜索地址失败: {}", e.getMessage());
+            e.printStackTrace();
+        }
+
+        return new ArrayList<>();
+    }
+
 }

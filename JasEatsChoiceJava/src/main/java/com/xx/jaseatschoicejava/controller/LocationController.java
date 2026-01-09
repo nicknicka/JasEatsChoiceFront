@@ -40,4 +40,15 @@ public class LocationController {
         List<Map<String, Object>> cascaderData = locationService.getCascaderLocationData();
         return ResponseResult.success(cascaderData);
     }
+
+    /**
+     * 地址搜索
+     * @param keyword 搜索关键词
+     * @return 搜索结果
+     */
+    @GetMapping("/search")
+    public ResponseResult<?> searchAddress(@RequestParam String keyword) {
+        List<Map<String, Object>> searchResults = locationService.searchAddress(keyword);
+        return ResponseResult.success(searchResults);
+    }
 }
