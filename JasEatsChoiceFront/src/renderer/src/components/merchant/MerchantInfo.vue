@@ -2,7 +2,7 @@
 import { useAuthStore } from '../../store/authStore'
 import { useUserStore } from '../../store/userStore'
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage, ElTag, ElIcon, ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElSwitch, ElUpload, ElMessageBox, ElAutocomplete } from 'element-plus'
+import { ElMessage, ElTag, ElIcon, ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElSwitch, ElUpload, ElMessageBox, ElCascader } from 'element-plus'
 import {
   Location,
   Phone,
@@ -31,45 +31,119 @@ const editDialogVisible = ref(false)
 const editForm = ref({})
 const editFormRef = ref(null)
 
-// 地址搜索相关
-const addressSearchQuery = ref('')
-const addressSearchResults = ref([])
-const addressLoading = ref(false)
+// 地址选项数据（通过API获取）
+const addressOptions = ref([])
 
-// 地址搜索
-const searchAddress = async (query, callback) => {
-  if (!query) {
-    callback([])
-    return
-  }
-
-  addressLoading.value = true
+// 获取地址数据
+const fetchAddressOptions = async () => {
   try {
-    const response = await api.get(API_CONFIG.location.search, {
-      params: { keyword: query }
-    })
-    if (response.data && response.data.success) {
-      const results = response.data.data || []
-      addressSearchResults.value = results
-      callback(results)
+    console.log('开始获取地址数据，API配置:', API_CONFIG.baseURL + API_CONFIG.location.cascaderData)
+    const response = await api.get(API_CONFIG.location.cascaderData)
+    console.log('地址数据API响应:', response)
+
+    if (response && response.success) {
+      addressOptions.value = response.data || []
+      console.log('地址数据设置成功:', addressOptions.value)
     } else {
-      addressSearchResults.value = []
-      callback([])
+      console.error('获取地址数据失败：API返回失败', response)
+      // 如果API失败，使用默认的示例数据
+      addressOptions.value = [
+        {
+          value: '北京',
+          label: '北京',
+          children: [
+            {
+              value: '北京市',
+              label: '北京市',
+              children: [
+                { value: '东城区', label: '东城区' },
+                { value: '西城区', label: '西城区' },
+                { value: '朝阳区', label: '朝阳区' },
+                { value: '海淀区', label: '海淀区' },
+                { value: '丰台区', label: '丰台区' },
+                { value: '石景山区', label: '石景山区' },
+                { value: '昌平区', label: '昌平区' },
+                { value: '大兴区', label: '大兴区' }
+              ]
+            }
+          ]
+        },
+        {
+          value: '上海',
+          label: '上海',
+          children: [
+            {
+              value: '上海市',
+              label: '上海市',
+              children: [
+                { value: '黄浦区', label: '黄浦区' },
+                { value: '徐汇区', label: '徐汇区' },
+                { value: '长宁区', label: '长宁区' },
+                { value: '静安区', label: '静安区' },
+                { value: '普陀区', label: '普陀区' },
+                { value: '虹口区', label: '虹口区' },
+                { value: '杨浦区', label: '杨浦区' },
+                { value: '浦东新区', label: '浦东新区' }
+              ]
+            }
+          ]
+        }
+      ]
     }
   } catch (error) {
-    console.error('地址搜索失败:', error)
-    addressSearchResults.value = []
-    callback([])
-  } finally {
-    addressLoading.value = false
+    console.error('获取地址数据失败:', error)
+    console.error('错误详情:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      response: error.response,
+      request: error.request,
+      code: error.code
+    })
+    // 如果API失败，使用默认的示例数据
+    addressOptions.value = [
+      {
+        value: '北京',
+        label: '北京',
+        children: [
+          {
+            value: '北京市',
+            label: '北京市',
+            children: [
+              { value: '东城区', label: '东城区' },
+              { value: '西城区', label: '西城区' },
+              { value: '朝阳区', label: '朝阳区' },
+              { value: '海淀区', label: '海淀区' },
+              { value: '丰台区', label: '丰台区' },
+              { value: '石景山区', label: '石景山区' },
+              { value: '昌平区', label: '昌平区' },
+              { value: '大兴区', label: '大兴区' }
+            ]
+          }
+        ]
+      },
+      {
+        value: '上海',
+        label: '上海',
+        children: [
+          {
+            value: '上海市',
+            label: '上海市',
+            children: [
+              { value: '黄浦区', label: '黄浦区' },
+              { value: '徐汇区', label: '徐汇区' },
+              { value: '长宁区', label: '长宁区' },
+              { value: '静安区', label: '静安区' },
+              { value: '普陀区', label: '普陀区' },
+              { value: '虹口区', label: '虹口区' },
+              { value: '杨浦区', label: '杨浦区' },
+              { value: '浦东新区', label: '浦东新区' }
+            ]
+          }
+        ]
+      }
+    ]
   }
-}
-
-// 地址搜索结果点击事件
-const handleAddressSelect = (item) => {
-  // 格式化地址显示
-  editForm.value.address = item.name + (item.address ? ' ' + item.address : '')
-  addressSearchQuery.value = editForm.value.address
 }
 
 // 从 userStore 中获取商家信息
@@ -107,9 +181,10 @@ const fetchMerchantInfo = async () => {
   }
 }
 
-// 组件挂载时获取商家信息
+// 组件挂载时获取商家信息和地址数据
 onMounted(async () => {
   await fetchMerchantInfo()
+  await fetchAddressOptions()
 })
 
 // 格式化营业时间
@@ -170,9 +245,28 @@ const handleEditClick = () => {
     ...merchantInfo.value
   }
 
-  // 地址直接使用字符串格式
+  // 将地址字符串转换为级联选择器需要的数组格式
+  if (info.address) {
+    // 尝试将地址字符串分割为省/市/区
+    // 这里假设地址格式是 "省/市/区" 或类似格式
+    if (typeof info.address === 'string') {
+      // 尝试按常见的分隔符分割
+      let addressArray = []
+      if (info.address.includes('/')) {
+        addressArray = info.address.split('/')
+      } else if (info.address.includes(' ')) {
+        addressArray = info.address.split(' ')
+      } else if (info.address.includes('、')) {
+        addressArray = info.address.split('、')
+      } else {
+        // 如果没有分隔符，可能需要根据实际数据格式处理
+        addressArray = [info.address]
+      }
+      info.address = addressArray
+    }
+  }
+
   editForm.value = info
-  addressSearchQuery.value = info.address || ''
   editDialogVisible.value = true
 }
 
@@ -208,14 +302,9 @@ const validateForm = () => {
     return false
   }
 
-  // 地址验证：确保输入了地址
-  if (!editForm.value.address?.trim()) {
-    ElMessage.warning('请输入店铺地址')
-    return false
-  }
-
-  if (editForm.value.address.length < 5) {
-    ElMessage.warning('地址长度至少5个字符')
+  // 地址验证：确保选择了完整的地址（省/市/区）
+  if (!editForm.value.address || !Array.isArray(editForm.value.address) || editForm.value.address.length < 3) {
+    ElMessage.warning('请选择完整的店铺地址（省/市/区）')
     return false
   }
 
@@ -244,8 +333,18 @@ const handleSaveEdit = async () => {
   }
 
   try {
+    // 处理地址数据，将级联选择器的数组转换为字符串
+    const formData = {
+      ...editForm.value
+    }
+
+    // 将地址数组转换为字符串（用 "/" 分隔）
+    if (Array.isArray(formData.address)) {
+      formData.address = formData.address.join('/')
+    }
+
     // 调用API更新商家信息
-    const response = await api.put(API_CONFIG.merchant.update.replace('{merchantId}', authStore.merchantId), editForm.value)
+    const response = await api.put(API_CONFIG.merchant.update.replace('{merchantId}', authStore.merchantId), formData)
 
     if (response.data && response.data.success) {
       // 更新用户存储中的信息
@@ -434,24 +533,14 @@ const editFormRules = {
 
       <div class="info-item">
         <span class="info-label"><ElIcon><Location /></ElIcon> 店铺地址</span>
-        <ElAutocomplete
-          v-model="addressSearchQuery"
-          :fetch-suggestions="searchAddress"
-          :loading="addressLoading"
-          placeholder="请输入地址关键词搜索"
+        <ElCascader
+          v-model="editForm.address"
+          :options="addressOptions"
+          placeholder="请选择店铺地址"
           style="width: 300px"
           clearable
-          @select="handleAddressSelect"
-          popper-class="address-autocomplete"
-        >
-          <template #popper="{ values }">
-            <div class="address-suggestion" v-for="item in values" :key="item.id">
-              <div class="address-name">{{ item.name }}</div>
-              <div class="address-detail">{{ item.address }}</div>
-              <div class="address-area">{{ item.pname }} {{ item.cityname }} {{ item.adname }}</div>
-            </div>
-          </template>
-        </ElAutocomplete>
+          :props="{ checkStrictly: false, expandTrigger: 'hover' }"
+        />
       </div>
 
       <div class="info-item">
@@ -522,41 +611,6 @@ const editFormRules = {
 :deep(.dialog-fade-leave-to) {
   opacity: 0;
   transform: translateY(-20px) scale(0.95);
-}
-
-/* 地址搜索组件样式 */
-:deep(.address-autocomplete) {
-  .address-suggestion {
-    padding: 12px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-
-    &:hover {
-      background-color: #f5f7fa;
-    }
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .address-name {
-      font-weight: 600;
-      color: #303133;
-      margin-bottom: 4px;
-      font-size: 14px;
-    }
-
-    .address-detail {
-      color: #606266;
-      font-size: 13px;
-      margin-bottom: 2px;
-    }
-
-    .address-area {
-      color: #909399;
-      font-size: 12px;
-    }
-  }
 }
 
 /* 编辑表单样式 - 参考菜单管理添加菜单样式 */
