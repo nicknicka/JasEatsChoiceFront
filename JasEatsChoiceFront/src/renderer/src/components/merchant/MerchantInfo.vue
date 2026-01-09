@@ -245,24 +245,27 @@ const handleEditClick = () => {
     ...merchantInfo.value
   }
 
-  // 将地址字符串转换为级联选择器需要的数组格式
+  // 将地址字符串拆分为区域地址和详细地址
   if (info.address) {
-    // 尝试将地址字符串分割为省/市/区
-    // 这里假设地址格式是 "省/市/区" 或类似格式
+    // 假设地址格式是 "省/市/区/详细地址"
     if (typeof info.address === 'string') {
-      // 尝试按常见的分隔符分割
-      let addressArray = []
+      let areaAddress = []
+      let detailAddress = ''
+
       if (info.address.includes('/')) {
-        addressArray = info.address.split('/')
-      } else if (info.address.includes(' ')) {
-        addressArray = info.address.split(' ')
-      } else if (info.address.includes('、')) {
-        addressArray = info.address.split('、')
+        const parts = info.address.split('/')
+        if (parts.length >= 3) {
+          areaAddress = parts.slice(0, 3)
+          detailAddress = parts.slice(3).join('/').trim()
+        } else {
+          areaAddress = parts
+        }
       } else {
-        // 如果没有分隔符，可能需要根据实际数据格式处理
-        addressArray = [info.address]
+        areaAddress = [info.address]
       }
-      info.address = addressArray
+
+      info.areaAddress = areaAddress
+      info.detailAddress = detailAddress
     }
   }
 
@@ -302,9 +305,19 @@ const validateForm = () => {
     return false
   }
 
-  // 地址验证：确保选择了完整的地址（省/市/区）
-  if (!editForm.value.address || !Array.isArray(editForm.value.address) || editForm.value.address.length < 3) {
-    ElMessage.warning('请选择完整的店铺地址（省/市/区）')
+  // 区域地址验证：确保选择了完整的地址（省/市/区）
+  if (!editForm.value.areaAddress || !Array.isArray(editForm.value.areaAddress) || editForm.value.areaAddress.length < 3) {
+    ElMessage.warning('请选择完整的区域地址（省/市/区）')
+    return false
+  }
+
+  // 详细地址验证：确保输入了详细地址
+  if (!editForm.value.detailAddress?.trim()) {
+    ElMessage.warning('请输入详细地址')
+    return false
+  }
+  if (editForm.value.detailAddress.length < 5) {
+    ElMessage.warning('详细地址长度至少5个字符')
     return false
   }
 
@@ -333,14 +346,14 @@ const handleSaveEdit = async () => {
   }
 
   try {
-    // 处理地址数据，将级联选择器的数组转换为字符串
+    // 处理地址数据，将区域地址和详细地址合并
     const formData = {
       ...editForm.value
     }
 
-    // 将地址数组转换为字符串（用 "/" 分隔）
-    if (Array.isArray(formData.address)) {
-      formData.address = formData.address.join('/')
+    // 将区域地址数组转换为字符串（用 "/" 分隔），并与详细地址合并
+    if (Array.isArray(formData.areaAddress)) {
+      formData.address = formData.areaAddress.join('/') + '/' + (formData.detailAddress || '').trim()
     }
 
     // 调用API更新商家信息
@@ -380,9 +393,12 @@ const editFormRules = {
     { required: true, message: '请输入邮箱地址', trigger: 'blur' },
     { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
   ],
-  address: [
-    { required: true, message: '请输入店铺地址', trigger: 'blur' },
-    { min: 5, message: '地址长度至少5个字符', trigger: 'blur' }
+  areaAddress: [
+    { required: true, message: '请选择区域地址', trigger: 'change' }
+  ],
+  detailAddress: [
+    { required: true, message: '请输入详细地址', trigger: 'blur' },
+    { min: 5, message: '详细地址长度至少5个字符', trigger: 'blur' }
   ],
   businessHours: [
     { required: true, message: '请输入营业时间', trigger: 'blur' }
@@ -532,14 +548,25 @@ const editFormRules = {
       </div>
 
       <div class="info-item">
-        <span class="info-label"><ElIcon><Location /></ElIcon> 店铺地址</span>
+        <span class="info-label"><ElIcon><Location /></ElIcon> 区域地址</span>
         <ElCascader
-          v-model="editForm.address"
+          v-model="editForm.areaAddress"
           :options="addressOptions"
-          placeholder="请选择店铺地址"
+          placeholder="请选择省/市/区"
           style="width: 300px"
           clearable
           :props="{ checkStrictly: false, expandTrigger: 'hover' }"
+          popper-class="address-cascader-popper"
+        />
+      </div>
+
+      <div class="info-item">
+        <span class="info-label"><ElIcon><Location /></ElIcon> 详细地址</span>
+        <ElInput
+          v-model="editForm.detailAddress"
+          placeholder="请输入街道、门牌号等详细地址"
+          style="width: 300px"
+          clearable
         />
       </div>
 
@@ -611,6 +638,27 @@ const editFormRules = {
 :deep(.dialog-fade-leave-to) {
   opacity: 0;
   transform: translateY(-20px) scale(0.95);
+}
+
+/* 地址级联选择器样式优化 */
+:deep(.address-cascader-popper) {
+  .el-cascader-menu {
+    min-width: 120px;
+    max-width: 180px;
+
+    .el-cascader-menu__item {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      :deep(.el-cascader-menu__label) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 117px;
+      }
+    }
+  }
 }
 
 /* 编辑表单样式 - 参考菜单管理添加菜单样式 */

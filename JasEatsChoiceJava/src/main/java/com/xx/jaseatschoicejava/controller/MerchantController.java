@@ -202,14 +202,14 @@ public class MerchantController {
      * 更新商家信息
      */
     @PutMapping("/{merchantId}")
-    public ResponseResult<?> updateMerchant(@PathVariable String merchantId, @RequestBody Merchant merchant) {
+    public ResponseResult<?> updateMerchant(@PathVariable String merchantId, @RequestBody Map<String, Object> requestBody) {
         // 参数验证
-        if (merchantId == null || merchant == null) {
-            logger.error("更新商家信息失败：参数错误，merchantId={}, merchant={}", merchantId, merchant);
+        if (merchantId == null || requestBody == null) {
+            logger.error("更新商家信息失败：参数错误，merchantId={}, requestBody={}", merchantId, requestBody);
             return ResponseResult.fail("400", "参数错误");
         }
 
-        logger.info("开始更新商家信息：merchantId={}, 商家数据={}", merchantId, merchant);
+        logger.info("开始更新商家信息：merchantId={}, 请求数据={}", merchantId, requestBody);
 
         // 检查商家是否存在
         if (merchantService.getById(merchantId) == null) {
@@ -217,21 +217,69 @@ public class MerchantController {
             return ResponseResult.fail("404", "商家不存在");
         }
 
-        // 设置商家ID
-        merchant.setId(merchantId);
         try {
+            // 从数据库获取原商家信息
+            Merchant merchant = merchantService.getById(merchantId);
+
+            // 更新字段
+            if (requestBody.containsKey("name")) {
+                merchant.setName((String) requestBody.get("name"));
+            }
+            if (requestBody.containsKey("phone")) {
+                merchant.setPhone((String) requestBody.get("phone"));
+            }
+            if (requestBody.containsKey("email")) {
+                merchant.setEmail((String) requestBody.get("email"));
+            }
+            if (requestBody.containsKey("category")) {
+                merchant.setCategory((String) requestBody.get("category"));
+            }
+            if (requestBody.containsKey("businessHours")) {
+                merchant.setBusinessHours((String) requestBody.get("businessHours"));
+            }
+            if (requestBody.containsKey("averagePrice")) {
+                merchant.setAveragePrice(new BigDecimal(requestBody.get("averagePrice").toString()));
+            }
+            if (requestBody.containsKey("status")) {
+                merchant.setStatus((Boolean) requestBody.get("status"));
+            }
+            if (requestBody.containsKey("avatar")) {
+                merchant.setAvatar((String) requestBody.get("avatar"));
+            }
+
+            // 处理地址字段 - 支持接收 areaAddress 和 detailAddress 或者直接接收 address
+            if (requestBody.containsKey("areaAddress") && requestBody.containsKey("detailAddress")) {
+                // 处理区域地址（数组转字符串）
+                Object areaAddressObj = requestBody.get("areaAddress");
+                String areaAddressStr = "";
+                if (areaAddressObj instanceof List) {
+                    List<?> areaAddressList = (List<?>) areaAddressObj;
+                    areaAddressStr = String.join("/", areaAddressList.stream().map(Object::toString).toArray(String[]::new));
+                } else if (areaAddressObj instanceof String) {
+                    areaAddressStr = (String) areaAddressObj;
+                }
+
+                String detailAddress = (String) requestBody.get("detailAddress");
+                merchant.setAddress(areaAddressStr + "/" + (detailAddress != null ? detailAddress.trim() : ""));
+            } else if (requestBody.containsKey("address")) {
+                // 保留对直接接收完整地址的支持
+                merchant.setAddress((String) requestBody.get("address"));
+            }
+
+            // 更新时间
+            merchant.setUpdateTime(LocalDateTime.now());
+
             // 更新商家信息
             boolean success = merchantService.updateById(merchant);
             logger.info("更新商家信息结果：{}", success);
 
-            // 无论是否有变化，只要商家存在且更新操作未抛出异常，就视为成功
             logger.info("商家信息更新成功，merchantId={}", merchantId);
             return ResponseResult.success("更新成功");
 
         } catch (Exception e) {
             // 检查是否是JSON格式错误
             if (e.getMessage().contains("JSON") || e.getMessage().contains("json")) {
-                logger.error("更新商家信息失败：JSON格式错误，merchant={}", merchant, e);
+                logger.error("更新商家信息失败：JSON格式错误，requestBody={}", requestBody, e);
                 return ResponseResult.fail("400", "参数错误：营业时间必须是有效的JSON格式");
             }
             // 其他类型的异常
