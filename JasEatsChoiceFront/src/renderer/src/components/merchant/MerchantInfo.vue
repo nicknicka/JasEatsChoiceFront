@@ -287,8 +287,13 @@ onMounted(async () => {
 const formatBusinessHours = (hours) => {
   if (!hours) return '暂无'
 
-  // 如果是 HH:mm-HH:mm 格式，转换为 "HH:mm 至 HH:mm" 格式显示
-  if (hours.includes('-')) {
+  // 如果是 JSON 对象格式 {start: "HH:mm", end: "HH:mm"}
+  if (typeof hours === 'object' && hours.start && hours.end) {
+    return `${hours.start} 至 ${hours.end}`
+  }
+
+  // 如果是字符串格式 HH:mm-HH:mm，转换为 "HH:mm 至 HH:mm" 格式显示
+  if (typeof hours === 'string' && hours.includes('-')) {
     return hours.replace('-', ' 至 ')
   }
 
@@ -371,9 +376,22 @@ const handleEditClick = () => {
     }
   }
 
-  // 处理营业时间格式转换（将 "HH:mm 至 HH:mm" 转换为 "HH:mm-HH:mm"）
-  if (info.businessHours && typeof info.businessHours === 'string') {
-    info.businessHours = info.businessHours.replace(' 至 ', '-')
+  // 确保营业时间格式正确
+  if (info.businessHours) {
+    // 如果是 JSON 对象格式，转换为字符串格式以便 TimePicker 组件使用
+    if (typeof info.businessHours === 'object' && info.businessHours.start && info.businessHours.end) {
+      info.businessHours = `${info.businessHours.start}-${info.businessHours.end}`
+    } else if (typeof info.businessHours === 'string') {
+      // 如果是字符串格式，确保格式正确
+      if (info.businessHours.includes(' 至 ')) {
+        info.businessHours = info.businessHours.replace(' 至 ', '-')
+      }
+      // 去除可能存在的重复格式（如 HH:mm-HH:mm-HH:mm-HH:mm）
+      const match = info.businessHours.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/)
+      if (match) {
+        info.businessHours = `${match[1]}-${match[2]}`
+      }
+    }
   }
 
   // 处理经营品类格式转换（将字符串转换为数组）
@@ -443,12 +461,27 @@ const validateForm = () => {
   }
 
   // 营业时间验证：确保选择了营业时间
+  console.log('businessHours 类型:', typeof editForm.value.businessHours)
+  console.log('businessHours 值:', editForm.value.businessHours)
+
   if (!editForm.value.businessHours) {
     ElMessage.warning('请选择营业时间')
     return false
   }
-  // 确保营业时间是字符串类型且不为空
-  if (typeof editForm.value.businessHours !== 'string' || editForm.value.businessHours.trim() === '') {
+
+  // 检查营业时间的数据类型，ElTimePicker 可能返回数组或其他类型
+  let businessHoursStr = ''
+  if (typeof editForm.value.businessHours === 'string') {
+    businessHoursStr = editForm.value.businessHours.trim()
+  } else if (Array.isArray(editForm.value.businessHours) && editForm.value.businessHours.length === 2) {
+    // 如果是数组，说明是时间范围选择，格式化为 HH:mm-HH:mm
+    businessHoursStr = `${editForm.value.businessHours[0]}-${editForm.value.businessHours[1]}`
+  } else {
+    ElMessage.warning('请选择有效的营业时间')
+    return false
+  }
+
+  if (!businessHoursStr) {
     ElMessage.warning('请选择有效的营业时间')
     return false
   }
@@ -486,6 +519,26 @@ const handleSaveEdit = async () => {
     // 将经营品类数组转换为字符串（用 "、" 分隔）
     if (Array.isArray(formData.category)) {
       formData.category = formData.category.join('、')
+    }
+
+    // 确保营业时间格式正确，转换为 JSON 对象格式 {start: "HH:mm", end: "HH:mm"}
+    if (typeof formData.businessHours === 'string' && formData.businessHours.includes('-')) {
+      const timeRange = formData.businessHours.split('-')
+      if (timeRange.length === 2) {
+        formData.businessHours = {
+          start: timeRange[0].trim(),
+          end: timeRange[1].trim()
+        }
+      } else {
+        formData.businessHours = null
+      }
+    } else if (Array.isArray(formData.businessHours) && formData.businessHours.length === 2) {
+      formData.businessHours = {
+        start: formData.businessHours[0].trim(),
+        end: formData.businessHours[1].trim()
+      }
+    } else if (!formData.businessHours || formData.businessHours === '') {
+      formData.businessHours = null
     }
 
     // 调用API更新商家信息

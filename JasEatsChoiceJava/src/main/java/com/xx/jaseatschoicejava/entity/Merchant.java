@@ -79,7 +79,7 @@ public class Merchant {
 
     @TableField("business_hours")
     @ApiModelProperty(value = "营业时间")
-    private String businessHours; // 营业时间
+    private JsonNode businessHours; // 营业时间
 
     @TableField("average_price")
     @ApiModelProperty(value = "人均消费")

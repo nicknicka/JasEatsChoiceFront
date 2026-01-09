@@ -235,7 +235,44 @@ public class MerchantController {
                 merchant.setCategory((String) requestBody.get("category"));
             }
             if (requestBody.containsKey("businessHours")) {
-                merchant.setBusinessHours((String) requestBody.get("businessHours"));
+                Object businessHoursObj = requestBody.get("businessHours");
+                if (businessHoursObj != null) {
+                    try {
+                        // 处理营业时间，支持字符串格式（如 "09:00-21:00"）或直接接收 JSON 对象/数组
+                        JsonNode businessHoursJson;
+                        if (businessHoursObj instanceof String) {
+                            String businessHoursStr = (String) businessHoursObj;
+                            // 如果是字符串格式 "HH:mm-HH:mm"，转换为 JSON 格式 {"start": "HH:mm", "end": "HH:mm"}
+                            if (businessHoursStr.contains("-")) {
+                                String[] timeRange = businessHoursStr.split("-");
+                                if (timeRange.length == 2) {
+                                    ObjectNode timeNode = objectMapper.createObjectNode();
+                                    timeNode.put("start", timeRange[0].trim());
+                                    timeNode.put("end", timeRange[1].trim());
+                                    businessHoursJson = timeNode;
+                                } else {
+                                    // 格式不正确，设置为 null
+                                    businessHoursJson = null;
+                                }
+                            } else {
+                                // 如果不是范围格式，尝试解析为 JSON
+                                try {
+                                    businessHoursJson = objectMapper.readTree(businessHoursStr);
+                                } catch (Exception e) {
+                                    businessHoursJson = null;
+                                }
+                            }
+                        } else {
+                            // 如果是对象或数组类型，直接转换为 JsonNode
+                            businessHoursJson = objectMapper.valueToTree(businessHoursObj);
+                        }
+
+                        merchant.setBusinessHours(businessHoursJson);
+                    } catch (Exception e) {
+                        logger.warn("解析营业时间失败: {}", e.getMessage());
+                        merchant.setBusinessHours(null);
+                    }
+                }
             }
             if (requestBody.containsKey("averagePrice")) {
                 merchant.setAveragePrice(new BigDecimal(requestBody.get("averagePrice").toString()));

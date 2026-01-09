@@ -35,7 +35,7 @@ export interface MerchantInfo {
   contactName: string
   avatar?: string
   rating?: number
-  businessHours?: string
+  businessHours?: any // JSON 类型，存储营业时间范围 {start: "HH:mm", end: "HH:mm"}
   email?: string
   category?: string
   averagePrice?: number
