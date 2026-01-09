@@ -323,7 +323,8 @@
       "Bash(./mvnw clean compile spring-boot:run:*)",
       "Bash(jps:*)",
       "Bash(npx vite build:*)",
-      "Bash(open http://localhost:5174/)"
+      "Bash(open http://localhost:5174/)",
+      "Bash(npx electron:*)"
     ],
     "deny": [],
     "ask": []

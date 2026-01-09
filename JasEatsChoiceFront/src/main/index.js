@@ -1,7 +1,11 @@
 // CommonJS syntax for Electron main process
 
 // 直接导入 electron 模块
-const { app, shell, BrowserWindow, ipcMain } = require('electron')
+const electron = require('electron')
+
+console.log('Electron module:', electron) // 添加调试输出
+
+const { app, shell, BrowserWindow, ipcMain } = electron
 const path = require('path')
 const fs = require('fs/promises')
 const Store = require('electron-store')

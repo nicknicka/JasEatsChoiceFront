@@ -2,7 +2,7 @@
 import { useAuthStore } from '../../store/authStore'
 import { useUserStore } from '../../store/userStore'
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage, ElTag, ElIcon, ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElSwitch, ElUpload, ElMessageBox } from 'element-plus'
+import { ElMessage, ElTag, ElIcon, ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElSwitch, ElUpload, ElMessageBox, ElCascader } from 'element-plus'
 import {
   Location,
   Phone,
@@ -30,6 +30,191 @@ const loading = ref(false)
 const editDialogVisible = ref(false)
 const editForm = ref({})
 const editFormRef = ref(null)
+
+// 地址选项数据（示例数据，包含主要省份和城市）
+const addressOptions = ref([
+  {
+    value: '北京',
+    label: '北京',
+    children: [
+      {
+        value: '北京市',
+        label: '北京市',
+        children: [
+          { value: '东城区', label: '东城区' },
+          { value: '西城区', label: '西城区' },
+          { value: '朝阳区', label: '朝阳区' },
+          { value: '海淀区', label: '海淀区' },
+          { value: '丰台区', label: '丰台区' },
+          { value: '石景山区', label: '石景山区' },
+          { value: '昌平区', label: '昌平区' },
+          { value: '大兴区', label: '大兴区' }
+        ]
+      }
+    ]
+  },
+  {
+    value: '上海',
+    label: '上海',
+    children: [
+      {
+        value: '上海市',
+        label: '上海市',
+        children: [
+          { value: '黄浦区', label: '黄浦区' },
+          { value: '徐汇区', label: '徐汇区' },
+          { value: '长宁区', label: '长宁区' },
+          { value: '静安区', label: '静安区' },
+          { value: '普陀区', label: '普陀区' },
+          { value: '虹口区', label: '虹口区' },
+          { value: '杨浦区', label: '杨浦区' },
+          { value: '浦东新区', label: '浦东新区' }
+        ]
+      }
+    ]
+  },
+  {
+    value: '广东',
+    label: '广东',
+    children: [
+      {
+        value: '广州市',
+        label: '广州市',
+        children: [
+          { value: '天河区', label: '天河区' },
+          { value: '越秀区', label: '越秀区' },
+          { value: '海珠区', label: '海珠区' },
+          { value: '荔湾区', label: '荔湾区' },
+          { value: '白云区', label: '白云区' },
+          { value: '黄埔区', label: '黄埔区' },
+          { value: '番禺区', label: '番禺区' }
+        ]
+      },
+      {
+        value: '深圳市',
+        label: '深圳市',
+        children: [
+          { value: '福田区', label: '福田区' },
+          { value: '罗湖区', label: '罗湖区' },
+          { value: '南山区', label: '南山区' },
+          { value: '宝安区', label: '宝安区' },
+          { value: '龙岗区', label: '龙岗区' },
+          { value: '龙华区', label: '龙华区' },
+          { value: '坪山区', label: '坪山区' }
+        ]
+      },
+      {
+        value: '东莞市',
+        label: '东莞市',
+        children: [
+          { value: '莞城区', label: '莞城区' },
+          { value: '南城区', label: '南城区' },
+          { value: '东城区', label: '东城区' },
+          { value: '万江区', label: '万江区' },
+          { value: '虎门镇', label: '虎门镇' },
+          { value: '长安镇', label: '长安镇' }
+        ]
+      },
+      {
+        value: '佛山市',
+        label: '佛山市',
+        children: [
+          { value: '禅城区', label: '禅城区' },
+          { value: '南海区', label: '南海区' },
+          { value: '顺德区', label: '顺德区' },
+          { value: '三水区', label: '三水区' },
+          { value: '高明区', label: '高明区' }
+        ]
+      }
+    ]
+  },
+  {
+    value: '江苏',
+    label: '江苏',
+    children: [
+      {
+        value: '南京市',
+        label: '南京市',
+        children: [
+          { value: '玄武区', label: '玄武区' },
+          { value: '秦淮区', label: '秦淮区' },
+          { value: '鼓楼区', label: '鼓楼区' },
+          { value: '建邺区', label: '建邺区' },
+          { value: '栖霞区', label: '栖霞区' },
+          { value: '雨花台区', label: '雨花台区' },
+          { value: '江宁区', label: '江宁区' }
+        ]
+      },
+      {
+        value: '苏州市',
+        label: '苏州市',
+        children: [
+          { value: '姑苏区', label: '姑苏区' },
+          { value: '虎丘区', label: '虎丘区' },
+          { value: '吴中区', label: '吴中区' },
+          { value: '相城区', label: '相城区' },
+          { value: '吴江区', label: '吴江区' },
+          { value: '工业园区', label: '工业园区' }
+        ]
+      },
+      {
+        value: '无锡市',
+        label: '无锡市',
+        children: [
+          { value: '崇安区', label: '崇安区' },
+          { value: '南长区', label: '南长区' },
+          { value: '北塘区', label: '北塘区' },
+          { value: '锡山区', label: '锡山区' },
+          { value: '惠山区', label: '惠山区' },
+          { value: '滨湖区', label: '滨湖区' }
+        ]
+      }
+    ]
+  },
+  {
+    value: '浙江',
+    label: '浙江',
+    children: [
+      {
+        value: '杭州市',
+        label: '杭州市',
+        children: [
+          { value: '上城区', label: '上城区' },
+          { value: '下城区', label: '下城区' },
+          { value: '江干区', label: '江干区' },
+          { value: '拱墅区', label: '拱墅区' },
+          { value: '西湖区', label: '西湖区' },
+          { value: '滨江区', label: '滨江区' },
+          { value: '余杭区', label: '余杭区' }
+        ]
+      },
+      {
+        value: '宁波市',
+        label: '宁波市',
+        children: [
+          { value: '海曙区', label: '海曙区' },
+          { value: '江东区', label: '江东区' },
+          { value: '江北区', label: '江北区' },
+          { value: '北仑区', label: '北仑区' },
+          { value: '镇海区', label: '镇海区' },
+          { value: '鄞州区', label: '鄞州区' }
+        ]
+      },
+      {
+        value: '温州市',
+        label: '温州市',
+        children: [
+          { value: '鹿城区', label: '鹿城区' },
+          { value: '龙湾区', label: '龙湾区' },
+          { value: '瓯海区', label: '瓯海区' },
+          { value: '洞头区', label: '洞头区' },
+          { value: '永嘉县', label: '永嘉县' },
+          { value: '平阳县', label: '平阳县' }
+        ]
+      }
+    ]
+  }
+])
 
 // 从 userStore 中获取商家信息
 const merchantInfo = computed(() => userStore.merchantInfo || {
@@ -103,6 +288,19 @@ const formatBusinessScope = (scope) => {
   return filteredScope.join('、')
 }
 
+// 格式化地址
+const formatAddress = (address) => {
+  if (!address) return '暂无'
+
+  // 如果是数组（来自级联选择器），转换为字符串
+  if (Array.isArray(address)) {
+    return address.join('/')
+  }
+
+  // 如果是字符串，直接返回
+  return address
+}
+
 // 格式化平均价格
 const formatAveragePrice = (price) => {
   if (!price) return '暂无'
@@ -112,9 +310,32 @@ const formatAveragePrice = (price) => {
 // 点击编辑按钮
 const handleEditClick = () => {
   // 初始化编辑表单数据
-  editForm.value = {
+  const info = {
     ...merchantInfo.value
   }
+
+  // 将地址字符串转换为级联选择器需要的数组格式
+  if (info.address) {
+    // 尝试将地址字符串分割为省/市/区
+    // 这里假设地址格式是 "省/市/区" 或类似格式
+    if (typeof info.address === 'string') {
+      // 尝试按常见的分隔符分割
+      let addressArray = []
+      if (info.address.includes('/')) {
+        addressArray = info.address.split('/')
+      } else if (info.address.includes(' ')) {
+        addressArray = info.address.split(' ')
+      } else if (info.address.includes('、')) {
+        addressArray = info.address.split('、')
+      } else {
+        // 如果没有分隔符，可能需要根据实际数据格式处理
+        addressArray = [info.address]
+      }
+      info.address = addressArray
+    }
+  }
+
+  editForm.value = info
   editDialogVisible.value = true
 }
 
@@ -150,12 +371,9 @@ const validateForm = () => {
     return false
   }
 
-  if (!editForm.value.address?.trim()) {
-    ElMessage.warning('请输入店铺地址')
-    return false
-  }
-  if (editForm.value.address.length < 5) {
-    ElMessage.warning('地址长度至少5个字符')
+  // 地址验证：确保选择了完整的地址（省/市/区）
+  if (!editForm.value.address || !Array.isArray(editForm.value.address) || editForm.value.address.length < 3) {
+    ElMessage.warning('请选择完整的店铺地址（省/市/区）')
     return false
   }
 
@@ -184,8 +402,18 @@ const handleSaveEdit = async () => {
   }
 
   try {
+    // 处理地址数据，将级联选择器的数组转换为字符串
+    const formData = {
+      ...editForm.value
+    }
+
+    // 将地址数组转换为字符串（用 "/" 分隔）
+    if (Array.isArray(formData.address)) {
+      formData.address = formData.address.join('/')
+    }
+
     // 调用API更新商家信息
-    const response = await api.put(API_CONFIG.merchant.update.replace('{merchantId}', authStore.merchantId), editForm.value)
+    const response = await api.put(API_CONFIG.merchant.update.replace('{merchantId}', authStore.merchantId), formData)
 
     if (response.data && response.data.success) {
       // 更新用户存储中的信息
@@ -299,7 +527,7 @@ const editFormRules = {
             </div>
             <div class="contact-item" v-if="merchantInfo.address">
               <ElIcon class="icon"><Location /></ElIcon>
-              <span>{{ merchantInfo.address }}</span>
+              <span>{{ formatAddress(merchantInfo.address) }}</span>
             </div>
           </div>
         </div>
@@ -374,13 +602,13 @@ const editFormRules = {
 
       <div class="info-item">
         <span class="info-label"><ElIcon><Location /></ElIcon> 店铺地址</span>
-        <ElInput
+        <ElCascader
           v-model="editForm.address"
-          placeholder="请输入店铺地址"
+          :options="addressOptions"
+          placeholder="请选择店铺地址"
           style="width: 300px"
-          type="textarea"
-          :rows="2"
           clearable
+          :props="{ checkStrictly: false, expandTrigger: 'hover' }"
         />
       </div>
 
