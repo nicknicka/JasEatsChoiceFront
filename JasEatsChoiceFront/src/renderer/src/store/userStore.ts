@@ -23,8 +23,8 @@ export interface UserInfo {
 }
 
 export interface MerchantInfo {
-  merchantId: string
-  nickname: string
+  id: string
+  name: string
   address?: string
   phone: string
   status: boolean
@@ -37,6 +37,10 @@ export interface MerchantInfo {
   rating?: number
   businessHours?: string
   email?: string
+  category?: string
+  averagePrice?: number
+  longitude?: number
+  latitude?: number
   // 其他商家信息字段
 }
 

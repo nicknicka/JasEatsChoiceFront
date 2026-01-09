@@ -571,10 +571,9 @@ const removeOptionalIngredient = (index) => {
 
 // 计算总卡路里
 const calculateTotalCalories = () => {
-	// 由于改为直接输入食材名称，暂时简化卡路里计算
-	// 实际项目中可以根据食材名称匹配数据库中的卡路里数据
-	// 或添加输入框让商家直接输入卡路里
-	newDish.value.totalCalories = 0;
+	// 当食材是商家自定义时，保持当前输入的卡路里值不变
+	// 如果需要自动计算，需要实现食材卡路里数据库匹配功能
+	// 目前支持商家手动输入总卡路里值
 };
 
 // 编辑菜品对话框
@@ -662,10 +661,9 @@ const openEditDishDialog = (dish) => {
 
 // 计算编辑菜品的总卡路里
 const calculateEditTotalCalories = () => {
-	// 由于改为直接输入食材名称，暂时简化卡路里计算
-	// 实际项目中可以根据食材名称匹配数据库中的卡路里数据
-	// 或添加输入框让商家直接输入卡路里
-	editDishForm.value.totalCalories = 0;
+	// 当食材是商家自定义时，保持当前输入的卡路里值不变
+	// 如果需要自动计算，需要实现食材卡路里数据库匹配功能
+	// 目前支持商家手动输入总卡路里值
 };
 
 // 打开添加菜品对话框
@@ -990,7 +988,7 @@ const getDishCheckedState = (dish) => {
 			v-model="addDishDialogVisible"
 			title="添加新菜品"
 			width="700px"
-			top="10%"
+			center
 			transition="dialog-fade"
 		>
 			<div class="add-dish-form">
@@ -1166,9 +1164,15 @@ const getDishCheckedState = (dish) => {
 								<span>总卡路里</span>
 							</div>
 						</template>
-						<div class="calorie-display">
-							{{ newDish.totalCalories }} kcal
-						</div>
+						<el-input
+							v-model.number="newDish.totalCalories"
+							placeholder="请输入总卡路里值"
+							type="number"
+							min="0"
+							style="width: 200px"
+						>
+							<template #suffix>kcal</template>
+						</el-input>
 					</el-form-item>
 				</el-form>
 			</div>
@@ -1185,7 +1189,7 @@ const getDishCheckedState = (dish) => {
 			v-model="editDishDialogVisible"
 			title="编辑菜品"
 			width="700px"
-			top="10%"
+			center
 			transition="dialog-fade"
 		>
 			<div class="add-dish-form">
@@ -1364,8 +1368,18 @@ const getDishCheckedState = (dish) => {
 								<span>总卡路里</span>
 							</div>
 						</template>
-						<div class="calorie-display">
-							{{ editDishForm.totalCalories }} kcal
+						<el-input
+							v-model.number="editDishForm.totalCalories"
+							placeholder="请输入总卡路里值"
+							type="number"
+							min="0"
+							style="width: 200px"
+						>
+							<template #suffix>kcal</template>
+						</el-input>
+						<div class="calorie-hint">
+							<el-icon size="12"><Warning /></el-icon>
+							<span>自定义食材请手动输入卡路里值</span>
 						</div>
 					</el-form-item>
 				</el-form>
@@ -1383,7 +1397,7 @@ const getDishCheckedState = (dish) => {
 			v-model="menuAssociationDialogVisible"
 			title="菜品菜单关联管理"
 			width="600px"
-			top="10%"
+			center
 		>
 			<div class="menu-association-container">
 				<div class="dialog-header">
@@ -1596,6 +1610,19 @@ const getDishCheckedState = (dish) => {
 	color: #e6a23c;
 }
 
+.calorie-hint {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 8px;
+	font-size: 12px;
+	color: #909399;
+	background-color: #f5f7fa;
+	padding: 6px 12px;
+	border-radius: 6px;
+	width: fit-content;
+}
+
 .optional-ingredients-container {
 	display: flex;
 	flex-direction: column;
@@ -1649,7 +1676,7 @@ const getDishCheckedState = (dish) => {
 
 /* 表单字段样式 */
 :deep(.el-form-item) {
-	margin-bottom: 32px; /* 增加字段间距 */
+	margin-bottom: 20px; /* 调整字段间距 */
 }
 
 /* 带图标的标签样式 */
