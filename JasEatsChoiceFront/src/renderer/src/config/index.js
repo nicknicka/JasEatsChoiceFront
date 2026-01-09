@@ -42,6 +42,7 @@ export const API_CONFIG = {
     list: '/v1/merchant', // 商家列表接口
     detail: '/v1/merchant/', // 商家详情接口
     register: '/v1/merchant/register', // 商家注册接口
+    update: '/v1/merchant/{merchantId}', // 更新商家信息接口
     menu: '/v1/menus/merchants/{merchantId}/menu', // 商家菜单接口
     comments: '/v1/merchant/{merchantId}/comments', // 商家评价接口
     album: '/v1/merchant/{merchantId}/album', // 商家相册接口

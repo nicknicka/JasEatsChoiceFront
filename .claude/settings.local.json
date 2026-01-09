@@ -321,7 +321,9 @@
       "Bash(xargs ls:*)",
       "Bash(mvn clean compile spring-boot:run:*)",
       "Bash(./mvnw clean compile spring-boot:run:*)",
-      "Bash(jps:*)"
+      "Bash(jps:*)",
+      "Bash(npx vite build:*)",
+      "Bash(open http://localhost:5174/)"
     ],
     "deny": [],
     "ask": []

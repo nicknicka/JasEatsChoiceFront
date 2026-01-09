@@ -138,7 +138,7 @@ const saveDiscount = () => {
         currentDiscountForm.value
       )
       .then((response) => {
-        if (response.data && response.data.success) {
+        if (response.code === '200' && response.data) {
           // 更新本地数据
           const index = discounts.value.findIndex((d) => d.id === currentDiscountForm.value.id)
           if (index !== -1) {
@@ -159,8 +159,8 @@ const saveDiscount = () => {
         currentDiscountForm.value
       )
       .then((response) => {
-        if (response.data && response.data.success) {
-          const newDiscount = response.data.data
+        if (response.code === '200' && response.data) {
+          const newDiscount = response.data
           discounts.value.push(newDiscount)
           ElMessage.success('优惠活动已添加')
         }
@@ -739,7 +739,25 @@ onMounted(() => {
 
   // 获取今日菜单数据
   fetchTodayMenus()
+
+  // 获取优惠活动列表
+  fetchDiscounts()
 })
+
+// 获取优惠活动列表
+const fetchDiscounts = () => {
+  api
+    .get(API_CONFIG.merchant.discounts.replace('{merchantId}', merchantId))
+    .then((response) => {
+      if (response.code === '200' && response.data) {
+        discounts.value = response.data
+      }
+    })
+    .catch((error) => {
+      console.error('获取优惠活动列表失败:', error)
+      discounts.value = []
+    })
+}
 
 // onUnmounted(() => {
 //   ElMessage.success('欢迎下次再来');
@@ -1000,6 +1018,48 @@ onMounted(() => {
           </el-table>
         </div>
       </div>
+
+      <!-- 优惠管理对话框 -->
+      <el-dialog
+        v-model="discountDialogVisible"
+        :title="isEditingDiscount ? '编辑优惠活动' : '添加优惠活动'"
+        width="600px"
+        top="10%"
+      >
+        <el-form :model="currentDiscountForm" label-width="100px" status-icon>
+          <el-form-item label="优惠名称" prop="name" required>
+            <el-input v-model="currentDiscountForm.name" placeholder="请输入优惠名称" />
+          </el-form-item>
+          <el-form-item label="优惠类型" prop="type" required>
+            <el-select v-model="currentDiscountForm.type" placeholder="请选择优惠类型">
+              <el-option label="满减" value="满减" />
+              <el-option label="折扣" value="折扣" />
+              <el-option label="买赠" value="买赠" />
+              <el-option label="特价" value="特价" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="优惠描述" prop="description" required>
+            <el-input
+              v-model="currentDiscountForm.description"
+              placeholder="请输入优惠描述"
+              type="textarea"
+              :rows="3"
+            />
+          </el-form-item>
+          <el-form-item label="优惠状态" prop="status" required>
+            <el-select v-model="currentDiscountForm.status" placeholder="请选择优惠状态">
+              <el-option label="已启用" value="active" />
+              <el-option label="已禁用" value="inactive" />
+            </el-select>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="discountDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="saveDiscount">确定</el-button>
+          </span>
+        </template>
+      </el-dialog>
 
       <!-- 公告编辑对话框 -->
       <el-dialog
