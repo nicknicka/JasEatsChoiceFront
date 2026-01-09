@@ -572,7 +572,7 @@ const editFormRules = {
           placeholder="请选择省/市/区"
           style="width: 300px"
           clearable
-          :props="{ checkStrictly: false, expandTrigger: 'hover' }"
+          :props="{ checkStrictly: false, expandTrigger: 'click' }"
           popper-class="address-cascader-popper"
           teleported
         />
