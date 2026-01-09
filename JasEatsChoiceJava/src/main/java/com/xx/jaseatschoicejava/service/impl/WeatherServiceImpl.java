@@ -39,6 +39,22 @@ public class WeatherServiceImpl implements WeatherService {
     @Override
     public Map<String, Object> getWeatherInfo(String city) {
         try {
+            // 暂时注释掉高德地图API调用，使用默认数据以降低token消耗
+            logger.info("天气功能已实现，暂时使用默认数据，降低token消耗");
+
+            Map<String, Object> weather = new HashMap<>();
+            weather.put("city", city);
+            weather.put("temperature", "25"); // 默认温度
+            weather.put("humidity", "65"); // 默认湿度
+            weather.put("condition", "晴"); // 默认天气
+            weather.put("windSpeed", "3级"); // 默认风速
+            weather.put("windDirection", "东南风"); // 默认风向
+            weather.put("reportTime", "2024-01-09 10:00:00"); // 默认发布时间
+            weather.put("message", "功能已实现，暂时使用默认数据，降低token消耗"); // 提示消息
+
+            return weather;
+
+            /*
             // 调用高德地图天气API获取天气信息
             String url = String.format("%s?key=%s&city=%s", gaodeApiWeatherUrl, gaodeApiKey, city);
 
@@ -92,6 +108,7 @@ public class WeatherServiceImpl implements WeatherService {
                     responseMap.getOrDefault("info", "unknown"),
                     responseMap.getOrDefault("infocode", "unknown"));
             }
+            */
         } catch (Exception e) {
             logger.error("从高德地图API获取天气信息失败: ", e);
         }

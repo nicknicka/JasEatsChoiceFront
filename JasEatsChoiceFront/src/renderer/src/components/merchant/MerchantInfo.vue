@@ -44,51 +44,19 @@ const fetchAddressOptions = async () => {
     if (response && response.success) {
       addressOptions.value = response.data || []
       console.log('地址数据设置成功:', addressOptions.value)
+      // 将成功获取的地址数据保存到 localStorage 中
+      localStorage.setItem('addressOptions', JSON.stringify(addressOptions.value))
     } else {
       console.error('获取地址数据失败：API返回失败', response)
-      // 如果API失败，使用默认的示例数据
-      addressOptions.value = [
-        {
-          value: '北京',
-          label: '北京',
-          children: [
-            {
-              value: '北京市',
-              label: '北京市',
-              children: [
-                { value: '东城区', label: '东城区' },
-                { value: '西城区', label: '西城区' },
-                { value: '朝阳区', label: '朝阳区' },
-                { value: '海淀区', label: '海淀区' },
-                { value: '丰台区', label: '丰台区' },
-                { value: '石景山区', label: '石景山区' },
-                { value: '昌平区', label: '昌平区' },
-                { value: '大兴区', label: '大兴区' }
-              ]
-            }
-          ]
-        },
-        {
-          value: '上海',
-          label: '上海',
-          children: [
-            {
-              value: '上海市',
-              label: '上海市',
-              children: [
-                { value: '黄浦区', label: '黄浦区' },
-                { value: '徐汇区', label: '徐汇区' },
-                { value: '长宁区', label: '长宁区' },
-                { value: '静安区', label: '静安区' },
-                { value: '普陀区', label: '普陀区' },
-                { value: '虹口区', label: '虹口区' },
-                { value: '杨浦区', label: '杨浦区' },
-                { value: '浦东新区', label: '浦东新区' }
-              ]
-            }
-          ]
-        }
-      ]
+      // 从 localStorage 中获取缓存的地址数据
+      const cachedOptions = localStorage.getItem('addressOptions')
+      if (cachedOptions) {
+        addressOptions.value = JSON.parse(cachedOptions)
+        ElMessage.warning('地址数据加载失败，使用缓存数据')
+      } else {
+        ElMessage.error('获取地址数据失败，请检查网络连接')
+        addressOptions.value = []
+      }
     }
   } catch (error) {
     console.error('获取地址数据失败:', error)
@@ -100,50 +68,88 @@ const fetchAddressOptions = async () => {
       request: error.request,
       code: error.code
     })
-    // 如果API失败，使用默认的示例数据
-    addressOptions.value = [
-      {
-        value: '北京',
-        label: '北京',
-        children: [
-          {
-            value: '北京市',
-            label: '北京市',
-            children: [
-              { value: '东城区', label: '东城区' },
-              { value: '西城区', label: '西城区' },
-              { value: '朝阳区', label: '朝阳区' },
-              { value: '海淀区', label: '海淀区' },
-              { value: '丰台区', label: '丰台区' },
-              { value: '石景山区', label: '石景山区' },
-              { value: '昌平区', label: '昌平区' },
-              { value: '大兴区', label: '大兴区' }
-            ]
-          }
-        ]
-      },
-      {
-        value: '上海',
-        label: '上海',
-        children: [
-          {
-            value: '上海市',
-            label: '上海市',
-            children: [
-              { value: '黄浦区', label: '黄浦区' },
-              { value: '徐汇区', label: '徐汇区' },
-              { value: '长宁区', label: '长宁区' },
-              { value: '静安区', label: '静安区' },
-              { value: '普陀区', label: '普陀区' },
-              { value: '虹口区', label: '虹口区' },
-              { value: '杨浦区', label: '杨浦区' },
-              { value: '浦东新区', label: '浦东新区' }
-            ]
-          }
-        ]
-      }
-    ]
+    // 从 localStorage 中获取缓存的地址数据
+    const cachedOptions = localStorage.getItem('addressOptions')
+    if (cachedOptions) {
+      addressOptions.value = JSON.parse(cachedOptions)
+      ElMessage.warning('地址数据加载失败，使用缓存数据')
+    } else {
+      ElMessage.error('获取地址数据失败，请检查网络连接')
+      addressOptions.value = []
+    }
   }
+}
+
+// 搜索结果相关变量
+const searchResults = ref([])
+const showSearchResults = ref(false)
+
+// 地理位置搜索定位功能
+const searchLocation = async () => {
+  if (!editForm.value.areaAddress || editForm.value.areaAddress.length < 3 || !editForm.value.detailAddress) {
+    ElMessage.warning('请先选择完整区域地址并输入详细地址')
+    return
+  }
+
+  try {
+    // 构建完整地址字符串
+    const fullAddress = editForm.value.areaAddress.join('') + editForm.value.detailAddress
+    console.log('搜索地址:', fullAddress)
+
+    // 调用地址搜索API
+    const response = await api.get(API_CONFIG.location.search, {
+      params: {
+        address: fullAddress
+      }
+    })
+
+    console.log('地址搜索API响应:', response)
+
+    if (response && response.success && response.data) {
+      // 处理搜索结果，后端返回的是数组
+      const results = response.data
+      if (results.length > 0) {
+        searchResults.value = results
+        showSearchResults.value = true
+        ElMessage.success(`找到 ${results.length} 个匹配地址`)
+      } else {
+        ElMessage.warning('未找到匹配的地址，请尝试调整搜索条件')
+        showSearchResults.value = false
+      }
+    } else {
+      ElMessage.error('地址搜索失败')
+      showSearchResults.value = false
+    }
+  } catch (error) {
+    console.error('地址搜索失败:', error)
+    ElMessage.error('地址搜索失败，请检查网络连接')
+    showSearchResults.value = false
+  }
+}
+
+// 选择搜索结果
+const selectSearchResult = (result) => {
+  console.log('选择的地址:', result)
+
+  // 将坐标信息保存到表单中
+  if (result.latitude && result.longitude) {
+    editForm.value.latitude = result.latitude
+    editForm.value.longitude = result.longitude
+  }
+
+  // 可以根据搜索结果优化详细地址
+  if (result.address) {
+    editForm.value.detailAddress = result.address
+  }
+
+  // 隐藏搜索结果下拉框
+  showSearchResults.value = false
+  ElMessage.success('地址选择成功')
+}
+
+// 关闭搜索结果下拉框
+const closeSearchResults = () => {
+  showSearchResults.value = false
 }
 
 // 从 userStore 中获取商家信息
@@ -560,14 +566,56 @@ const editFormRules = {
         />
       </div>
 
-      <div class="info-item">
+      <div class="info-item" style="position: relative;">
         <span class="info-label"><ElIcon><Location /></ElIcon> 详细地址</span>
-        <ElInput
-          v-model="editForm.detailAddress"
-          placeholder="请输入街道、门牌号等详细地址"
-          style="width: 300px"
-          clearable
-        />
+        <div style="display: flex; gap: 8px;">
+          <ElInput
+            v-model="editForm.detailAddress"
+            placeholder="请输入街道、门牌号等详细地址"
+            style="width: 220px"
+            clearable
+          />
+          <ElButton
+            type="primary"
+            size="small"
+            @click="searchLocation"
+            :disabled="!editForm.areaAddress || editForm.areaAddress.length < 3 || !editForm.detailAddress?.trim()"
+          >
+            <ElIcon><Location /></ElIcon>
+            搜索定位
+          </ElButton>
+        </div>
+        <!-- 搜索结果下拉框 -->
+        <div v-if="showSearchResults" class="search-results-dropdown">
+          <div class="dropdown-header">
+            <span>找到 {{ searchResults.length }} 个匹配地址</span>
+            <ElButton
+              type="text"
+              size="small"
+              @click="closeSearchResults"
+              style="padding: 0"
+            >
+              <ElIcon><CircleClose /></ElIcon>
+            </ElButton>
+          </div>
+          <div class="dropdown-content">
+            <div
+              v-for="(result, index) in searchResults"
+              :key="result.id || index"
+              class="result-item"
+              @click="selectSearchResult(result)"
+              @mouseenter="result.hover = true"
+              @mouseleave="result.hover = false"
+            >
+              <div class="result-name">{{ result.name || '未命名地址' }}</div>
+              <div class="result-address">{{ result.address || result.pname + result.cityname + result.adname }}</div>
+              <div class="result-location" v-if="result.latitude && result.longitude">
+                <ElIcon><Location /></ElIcon>
+                {{ result.latitude.toFixed(6) }}, {{ result.longitude.toFixed(6) }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="info-item">
@@ -734,6 +782,83 @@ const editFormRules = {
   padding: 0 28px 24px;
   border-radius: 0 0 12px 12px;
   background-color: #ffffff;
+}
+
+/* 搜索结果下拉框样式 */
+.search-results-dropdown {
+  margin-top: 8px;
+  width: 328px; /* 与输入框宽度一致 */
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  position: absolute;
+  left: 100px; /* 与详细地址标签宽度一致，确保对齐 */
+  top: 100%;
+}
+
+.dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #fafafa;
+  border-radius: 8px 8px 0 0;
+  font-size: 12px;
+  color: #606266;
+}
+
+.dropdown-header span {
+  font-weight: 500;
+}
+
+.dropdown-content {
+  padding: 8px 0;
+}
+
+.result-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f5f7fa;
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-item:hover {
+  background-color: #f5f7fa;
+}
+
+.result-item:hover .result-name {
+  color: #409eff;
+}
+
+.result-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.result-address {
+  font-size: 12px;
+  color: #606266;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.result-location {
+  font-size: 11px;
+  color: #909399;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* 对话框按钮样式 - 与菜单管理添加菜单保持一致 */

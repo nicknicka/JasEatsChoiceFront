@@ -43,12 +43,12 @@ public class LocationController {
 
     /**
      * 地址搜索
-     * @param keyword 搜索关键词
+     * @param address 搜索关键词
      * @return 搜索结果
      */
     @GetMapping("/search")
-    public ResponseResult<?> searchAddress(@RequestParam String keyword) {
-        List<Map<String, Object>> searchResults = locationService.searchAddress(keyword);
+    public ResponseResult<?> searchAddress(@RequestParam String address) {
+        List<Map<String, Object>> searchResults = locationService.searchAddress(address);
         return ResponseResult.success(searchResults);
     }
 }

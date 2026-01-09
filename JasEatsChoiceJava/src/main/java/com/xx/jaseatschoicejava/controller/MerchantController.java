@@ -266,6 +266,28 @@ public class MerchantController {
                 merchant.setAddress((String) requestBody.get("address"));
             }
 
+            // 处理经纬度信息
+            if (requestBody.containsKey("latitude")) {
+                Object latitudeObj = requestBody.get("latitude");
+                if (latitudeObj != null && !(latitudeObj instanceof String && ((String) latitudeObj).trim().isEmpty())) {
+                    try {
+                        merchant.setLatitude(new BigDecimal(latitudeObj.toString()));
+                    } catch (Exception e) {
+                        logger.warn("无效的纬度值: {}", latitudeObj);
+                    }
+                }
+            }
+            if (requestBody.containsKey("longitude")) {
+                Object longitudeObj = requestBody.get("longitude");
+                if (longitudeObj != null && !(longitudeObj instanceof String && ((String) longitudeObj).trim().isEmpty())) {
+                    try {
+                        merchant.setLongitude(new BigDecimal(longitudeObj.toString()));
+                    } catch (Exception e) {
+                        logger.warn("无效的经度值: {}", longitudeObj);
+                    }
+                }
+            }
+
             // 更新时间
             merchant.setUpdateTime(LocalDateTime.now());
 

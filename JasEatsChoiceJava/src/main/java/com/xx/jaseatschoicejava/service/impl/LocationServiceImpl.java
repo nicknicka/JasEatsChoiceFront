@@ -286,10 +286,23 @@ public class LocationServiceImpl implements LocationService {
                         result.put("id", poi.get("id"));
                         result.put("name", poi.get("name"));
                         result.put("address", poi.get("address"));
-                        result.put("location", poi.get("location"));
                         result.put("adname", poi.get("adname"));
                         result.put("cityname", poi.get("cityname"));
                         result.put("pname", poi.get("pname"));
+
+                        // 解析经纬度坐标
+                        String locationStr = (String) poi.get("location");
+                        if (locationStr != null && !locationStr.isEmpty()) {
+                            String[] coords = locationStr.split(",");
+                            if (coords.length == 2) {
+                                try {
+                                    result.put("longitude", Double.parseDouble(coords[0]));
+                                    result.put("latitude", Double.parseDouble(coords[1]));
+                                } catch (NumberFormatException e) {
+                                    logger.error("解析坐标失败: {}", locationStr);
+                                }
+                            }
+                        }
 
                         searchResults.add(result);
                     }
