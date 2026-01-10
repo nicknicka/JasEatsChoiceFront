@@ -43,7 +43,9 @@ public class DiscountController {
         discount.setMerchantId(merchantId);
         boolean success = discountService.save(discount);
         if (success) {
-            return ResponseResult.success(discount, "优惠活动添加成功");
+            // 重新查询数据库以获取完整的字段值（包括自动填充的createTime和updateTime）
+            Discount savedDiscount = discountService.getById(discount.getId());
+            return ResponseResult.success(savedDiscount, "优惠活动添加成功");
         }
         return ResponseResult.fail("500", "优惠活动添加失败");
     }
@@ -51,13 +53,19 @@ public class DiscountController {
     /**
      * 更新优惠活动
      */
-    @PutMapping("/{merchantId}/discounts")
-    public ResponseResult<?> updateDiscount(@PathVariable String merchantId, @RequestBody Discount discount) {
+    @PutMapping("/{merchantId}/discounts/{discountId}")
+    public ResponseResult<?> updateDiscount(
+            @PathVariable String merchantId,
+            @PathVariable String discountId,
+            @RequestBody Discount discount) {
         // 验证优惠活动属于该商家
-        Discount existingDiscount = discountService.getById(Long.valueOf(discount.getId()));
+        Discount existingDiscount = discountService.getById(discountId);
         if (existingDiscount == null || !existingDiscount.getMerchantId().equals(merchantId)) {
             return ResponseResult.fail("404", "优惠活动不存在");
         }
+
+        // 确保ID一致
+        discount.setId(discountId);
 
         boolean success = discountService.updateById(discount);
         if (success) {
@@ -74,7 +82,7 @@ public class DiscountController {
             @PathVariable String merchantId,
             @RequestBody Map<String, Object> request) {
         @SuppressWarnings("unchecked")
-        List<Integer> discountIds = (List<Integer>) request.get("discountIds");
+        List<String> discountIds = (List<String>) request.get("discountIds");
         String status = (String) request.get("status");
 
         if (discountIds == null || discountIds.isEmpty()) {
@@ -107,7 +115,7 @@ public class DiscountController {
     @PutMapping("/{merchantId}/discounts/{discountId}/status")
     public ResponseResult<?> toggleDiscountStatus(
             @PathVariable String merchantId,
-            @PathVariable Long discountId,
+            @PathVariable String discountId,
             @RequestBody Map<String, String> request) {
         String status = request.get("status");
 
@@ -132,7 +140,7 @@ public class DiscountController {
     @DeleteMapping("/{merchantId}/discounts/{discountId}")
     public ResponseResult<?> deleteDiscount(
             @PathVariable String merchantId,
-            @PathVariable Long discountId) {
+            @PathVariable String discountId) {
         // 验证优惠活动属于该商家
         Discount discount = discountService.getById(discountId);
         if (discount == null || !discount.getMerchantId().equals(merchantId)) {
@@ -149,13 +157,16 @@ public class DiscountController {
     /**
      * 批量删除优惠活动
      */
-    @DeleteMapping("/{merchantId}/discounts")
+    @DeleteMapping("/{merchantId}/discounts/batch")
     public ResponseResult<?> batchDeleteDiscounts(
             @PathVariable String merchantId,
-            @RequestBody List<Long> discountIds) {
-        if (discountIds == null || discountIds.isEmpty()) {
+            @RequestParam String ids) {
+        if (ids == null || ids.isEmpty()) {
             return ResponseResult.fail("400", "请选择要删除的优惠活动");
         }
+
+        // 将逗号分隔的字符串转换为列表
+        List<String> discountIds = java.util.Arrays.asList(ids.split(","));
 
         // 验证所有优惠活动都属于该商家
         LambdaQueryWrapper<Discount> queryWrapper = new LambdaQueryWrapper<>();

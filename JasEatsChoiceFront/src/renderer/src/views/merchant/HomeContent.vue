@@ -70,6 +70,12 @@ const discountUnit = computed(() => {
 // 批量操作选中的优惠
 const selectedDiscounts = ref([])
 
+// 处理表格选择变化
+const handleSelectionChange = (selection) => {
+  selectedDiscounts.value = selection
+  console.log('当前选中的优惠:', selectedDiscounts.value)
+}
+
 // 优惠表单验证规则
 const discountRules = {
   name: [
@@ -104,19 +110,23 @@ const batchDeleteDiscounts = () => {
     }
   )
     .then(() => {
-      // 调用后端API批量删除优惠
+      console.log('批量删除优惠ID列表:', discountIds)
+      // 调用后端API批量删除优惠 - 使用新的批量删除endpoint
       api
-        .delete(API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id), {
-          data: discountIds // 发送删除的ID列表
+        .delete(`${API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id)}/batch`, {
+          params: { ids: discountIds.join(',') } // 使用查询参数发送ID列表
         })
         .then((response) => {
-          if (response.data && response.data.success) {
+          console.log('批量删除响应:', response)
+          if (response && response.success) {
             // 更新本地数据
             discounts.value = discounts.value.filter(
               (discount) => !discountIds.includes(discount.id)
             )
             selectedDiscounts.value = []
             ElMessage.success('优惠活动批量删除成功')
+          } else {
+            ElMessage.error(response?.message || '批量删除优惠活动失败')
           }
         })
         .catch((error) => {
@@ -149,13 +159,16 @@ const batchUpdateStatus = (status) => {
     }
   )
     .then(() => {
+      console.log(`批量${statusText}优惠ID列表:`, discountIds, '目标状态:', status)
+      // 调用后端API批量更新状态 - 使用新的批量更新endpoint
       api
-        .put(API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id), {
+        .put(`${API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id)}/batch`, {
           discountIds,
           status
         })
         .then((response) => {
-          if (response.data && response.data.success) {
+          console.log(`批量${statusText}响应:`, response)
+          if (response && response.success) {
             // 更新本地数据
             discounts.value.forEach((discount) => {
               if (discountIds.includes(discount.id)) {
@@ -164,11 +177,13 @@ const batchUpdateStatus = (status) => {
             })
             selectedDiscounts.value = []
             ElMessage.success(`优惠活动批量${statusText}成功`)
+          } else {
+            ElMessage.error(response?.message || `批量${statusText}优惠活动失败`)
           }
         })
         .catch((error) => {
-          console.error('批量更新优惠状态失败:', error)
-          ElMessage.error('批量更新优惠状态失败')
+          console.error(`批量${statusText}优惠状态失败:`, error)
+          ElMessage.error(`批量${statusText}优惠状态失败`)
         })
     })
     .catch(() => {
@@ -211,20 +226,24 @@ const saveDiscount = () => {
   }
 
   if (isEditingDiscount.value) {
-    // 编辑模式 - 更新现有优惠
+    // 编辑模式 - 更新现有优惠 - 使用新的路由包含 discountId
     api
       .put(
-        API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id),
+        `${API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id)}/${currentDiscountForm.value.id}`,
         currentDiscountForm.value
       )
       .then((response) => {
-        if (response.code === '200' && response.data) {
+        console.log('更新优惠响应:', response)
+        if (response && response.success) {
           // 更新本地数据
           const index = discounts.value.findIndex((d) => d.id === currentDiscountForm.value.id)
           if (index !== -1) {
             discounts.value[index] = { ...currentDiscountForm.value }
           }
           ElMessage.success('优惠活动已更新')
+          discountDialogVisible.value = false
+        } else {
+          ElMessage.error(response?.message || '更新优惠活动失败')
         }
       })
       .catch((error) => {
@@ -239,10 +258,14 @@ const saveDiscount = () => {
         currentDiscountForm.value
       )
       .then((response) => {
-        if (response.code === '200' && response.data) {
-          const newDiscount = response.data
-          discounts.value.push(newDiscount)
+        console.log('添加优惠响应:', response)
+        if (response && response.success) {
           ElMessage.success('优惠活动已添加')
+          discountDialogVisible.value = false
+          // 刷新优惠列表以确保数据格式一致
+          fetchDiscounts()
+        } else {
+          ElMessage.error(response?.message || '添加优惠活动失败')
         }
       })
       .catch((error) => {
@@ -251,7 +274,6 @@ const saveDiscount = () => {
       })
   }
 
-  discountDialogVisible.value = false
   currentDiscountForm.value = {}
 }
 
@@ -512,7 +534,7 @@ const deleteDiscount = (discount) => {
           )}/${discount.id}`
         )
         .then((response) => {
-          if (response.data && response.data.success) {
+          if (response && response.success) {
             const index = discounts.value.findIndex((d) => d.id === discount.id)
             if (index !== -1) {
               discounts.value.splice(index, 1)
@@ -553,7 +575,7 @@ const toggleDiscountStatus = (discount) => {
           { status: newStatus }
         )
         .then((response) => {
-          if (response.data && response.data.success) {
+          if (response && response.success) {
             discount.status = newStatus
             ElMessage.success(`优惠活动已${statusText}`)
           }
@@ -566,6 +588,29 @@ const toggleDiscountStatus = (discount) => {
     .catch(() => {
       ElMessage.info('已取消操作')
     })
+}
+
+// 获取优惠类型标签颜色
+const getDiscountTypeTag = (type) => {
+  const typeMap = {
+    满减: 'danger',
+    折扣: 'warning',
+    买赠: 'success',
+    特价: 'primary'
+  }
+  return typeMap[type] || ''
+}
+
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '-'
+  const date = new Date(dateTime)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}`
 }
 
 // 页面跳转
@@ -844,15 +889,7 @@ onMounted(() => {
     })
     .catch((error) => {
       console.error('获取商家信息失败:', error)
-      // 如果获取失败，使用默认模拟数据
-      merchantInfo.value = {
-        id: merchantId, // 确保id存在
-        name: 'XX餐厅',
-        rating: '4.8/5.0',
-        phone: '138XXXX8888',
-        email: 'xx@jaseats.com',
-        address: '北京市朝阳区XX路123号'
-      }
+      
     })
 
   // 获取今日菜单数据
@@ -867,8 +904,20 @@ const fetchDiscounts = () => {
   api
     .get(API_CONFIG.merchant.discounts.replace('{merchantId}', merchantId))
     .then((response) => {
-      if (response.code === '200' && response.data) {
-        discounts.value = response.data
+      console.log('获取优惠活动列表响应:', response)
+      if (response && response.success && response.data) {
+        // 确保数字字段正确转换
+        discounts.value = response.data.map(discount => ({
+          ...discount,
+          discountValue: discount.discountValue !== null && discount.discountValue !== undefined ? Number(discount.discountValue) : 0,
+          minAmount: discount.minAmount !== null && discount.minAmount !== undefined ? Number(discount.minAmount) : 0,
+          limitPerUser: discount.limitPerUser || 1,
+          usedCount: discount.usedCount || 0,
+          validDays: discount.validDays || 30
+        }))
+        console.log('处理后的优惠数据:', discounts.value)
+      } else {
+        discounts.value = []
       }
     })
     .catch((error) => {
@@ -937,51 +986,83 @@ const fetchDiscounts = () => {
         <div class="discounts-table-container">
           <el-table
             :data="discounts"
-            :default-sort="{ prop: 'createdTime', order: 'descending' }"
-            @selection-change="(selection) => (selectedDiscounts = selection)"
+            :default-sort="{ prop: 'createTime', order: 'descending' }"
+            @selection-change="handleSelectionChange"
+            style="width: 100%"
+            :row-style="{ height: '60px' }"
+            :cell-style="{ padding: '8px' }"
+            :table-layout="'auto'"
           >
-            <el-table-column type="selection" width="50" />
-            <el-table-column prop="name" label="优惠名称" min-width="120" />
-            <el-table-column prop="type" label="优惠类型" width="100" />
-            <el-table-column prop="description" label="优惠描述" min-width="200" />
-            <el-table-column prop="usage" label="使用情况" width="150">
+            <el-table-column type="selection" width="50" align="center" fixed="left" />
+            <el-table-column prop="name" label="优惠名称" min-width="150" width="180" show-overflow-tooltip />
+            <el-table-column prop="type" label="类型" width="80" align="center">
+              <template #default="scope">
+                <el-tag :type="getDiscountTypeTag(scope.row.type)" size="small">
+                  {{ scope.row.type }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="优惠规则" min-width="160" width="200">
+              <template #default="scope">
+                <div class="discount-rule">
+                  <template v-if="scope.row.type === '满减' && scope.row.discountValue">
+                    <span class="rule-highlight">满 {{ scope.row.minAmount || 0 }}</span>
+                    <span class="rule-divider">减</span>
+                    <span class="rule-value">{{ scope.row.discountValue }}元</span>
+                  </template>
+                  <template v-else-if="scope.row.type === '折扣' && scope.row.discountValue">
+                    <span class="rule-value">{{ scope.row.discountValue }}折</span>
+                  </template>
+                  <template v-else-if="scope.row.type === '特价' && scope.row.discountValue">
+                    <span class="rule-value">{{ scope.row.discountValue }}元</span>
+                  </template>
+                  <template v-else>
+                    <span class="rule-empty">-</span>
+                  </template>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="description" label="优惠描述" min-width="200" width="250" show-overflow-tooltip />
+            <el-table-column label="使用情况" width="110" align="center">
               <template #default="scope">
                 <div class="usage-stats">
                   <div class="usage-item">
                     <el-icon><User /></el-icon>
                     <span>{{ scope.row.usedCount || 0 }}次</span>
                   </div>
-                  <div class="usage-item" v-if="scope.row.totalAmount">
-                    <el-icon><Money /></el-icon>
-                    <span>¥{{ scope.row.totalAmount.toFixed(2) }}</span>
-                  </div>
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" width="100">
+            <el-table-column prop="status" label="状态" width="80" align="center">
               <template #default="scope">
-                <el-tag :type="scope.row.status === 'active' ? 'success' : 'warning'">
-                  {{ scope.row.status === 'active' ? '已启用' : '已禁用' }}
+                <el-tag :type="scope.row.status === 'active' ? 'success' : 'info'" size="small">
+                  {{ scope.row.status === 'active' ? '启用' : '禁用' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="createdTime" label="创建时间" width="140" class-name="time-column" />
-            <el-table-column prop="updatedTime" label="更新时间" width="140" class-name="time-column" />
-            <el-table-column label="操作" width="260" fixed="right">
+            <el-table-column prop="createTime" label="创建时间" width="150" align="center" class-name="time-column">
               <template #default="scope">
-                <el-button
-                  :type="scope.row.status === 'active' ? 'warning' : 'success'"
-                  size="small"
-                  @click="toggleDiscountStatus(scope.row)"
-                >
-                  {{ scope.row.status === 'active' ? '禁用' : '启用' }}
-                </el-button>
-                <el-button type="primary" size="small" @click="openDiscountDialog(scope.row)">
-                  编辑
-                </el-button>
-                <el-button type="danger" size="small" @click="() => deleteDiscount(scope.row)">
-                  删除
-                </el-button>
+                {{ formatDateTime(scope.row.createTime) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="180" fixed="right" align="center" class-name="operation-column">
+              <template #default="scope">
+                <div class="operation-buttons">
+                  <el-button
+                    :type="scope.row.status === 'active' ? 'warning' : 'success'"
+                    size="small"
+                    @click="toggleDiscountStatus(scope.row)"
+                    link
+                  >
+                    {{ scope.row.status === 'active' ? '禁用' : '启用' }}
+                  </el-button>
+                  <el-button type="primary" size="small" @click="openDiscountDialog(scope.row)" link>
+                    编辑
+                  </el-button>
+                  <el-button type="danger" size="small" @click="() => deleteDiscount(scope.row)" link>
+                    删除
+                  </el-button>
+                </div>
               </template>
             </el-table-column>
 
@@ -2068,6 +2149,48 @@ const fetchDiscounts = () => {
       }
     }
 
+    // 表格容器样式
+    .discounts-table-container {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: visible;
+
+      :deep(.el-table) {
+        font-size: 13px;
+        table-layout: auto;
+
+        .el-table__header-wrapper {
+          th {
+            background-color: #f5f7fa;
+            color: #303133;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 12px 0;
+            white-space: nowrap;
+          }
+        }
+
+        .el-table__body-wrapper {
+          .el-table__row {
+            &:hover {
+              background-color: #f5f7fa;
+            }
+          }
+
+          td {
+            padding: 10px 0;
+          }
+        }
+
+        // 确保表格单元格内容不换行
+        .el-table__cell {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+
     // 使用统计样式
     .usage-stats {
       display: flex;
@@ -2085,6 +2208,35 @@ const fetchDiscounts = () => {
           font-size: 14px;
           color: #409eff;
         }
+      }
+    }
+
+    // 优惠规则样式
+    .discount-rule {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 500;
+
+      .rule-highlight {
+        color: #606266;
+        font-weight: normal;
+      }
+
+      .rule-divider {
+        color: #909399;
+        margin: 0 2px;
+      }
+
+      .rule-value {
+        color: #f56c6c;
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .rule-empty {
+        color: #c0c4cc;
       }
     }
 
@@ -2106,6 +2258,32 @@ const fetchDiscounts = () => {
 
       .cell {
         padding: 8px 0;
+      }
+    }
+
+    // 操作列样式优化
+    :deep(.operation-column) {
+      .cell {
+        padding: 0;
+      }
+
+      .operation-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 100%;
+        padding: 8px 0;
+
+        .el-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0;
+          vertical-align: middle;
+          height: 24px;
+          line-height: 24px;
+        }
       }
     }
   }
