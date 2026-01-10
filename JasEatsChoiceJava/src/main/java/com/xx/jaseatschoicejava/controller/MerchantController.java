@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.xx.jaseatschoicejava.entity.MerchantRegisterRequest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -80,6 +81,9 @@ public class MerchantController {
     @Autowired
     private com.xx.jaseatschoicejava.util.CaptchaUtil captchaUtil;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @PostMapping("/register")
     public ResponseResult<?> register(@RequestBody MerchantRegisterRequest registerRequest, @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
         try {
@@ -99,9 +103,9 @@ public class MerchantController {
             merchant.setName(registerRequest.getName());
             merchant.setBusinessLicense(registerRequest.getBusinessLicense());
             try {
-                // 将经营范围数组转换为JSON字符串
+                // 将经营范围数组转换为JsonNode
                 ObjectMapper objectMapper = new ObjectMapper();
-                merchant.setBusinessScope(objectMapper.writeValueAsString(registerRequest.getBusinessScope()));
+                merchant.setBusinessScope(objectMapper.valueToTree(registerRequest.getBusinessScope()));
             } catch (Exception e) {
                 e.printStackTrace();
                 return ResponseResult.fail("400", "经营范围格式错误");
@@ -193,6 +197,42 @@ public class MerchantController {
         if (merchant != null) {
             // 隐藏敏感信息
             merchant.setPassword(null);
+
+            // 尝试手动解析 JSON 字段（如果 MyBatis-Plus 自动解析失败）
+            try {
+                // 我们可以通过直接查询 SQL 来获取原始的 JSON 字符串
+                // 然后手动解析为 JsonNode
+                String sql = "SELECT business_scope, business_hours, album FROM t_merchant WHERE id = ?";
+                Object[] params = new Object[]{merchantId};
+
+                // 使用 JdbcTemplate 直接查询
+                Map<String, Object> resultMap = jdbcTemplate.queryForMap(sql, params);
+
+                // 解析 business_scope
+                if (resultMap.get("business_scope") != null) {
+                    String businessScopeStr = resultMap.get("business_scope").toString();
+                    JsonNode businessScopeJson = objectMapper.readTree(businessScopeStr);
+                    merchant.setBusinessScope(businessScopeJson);
+                }
+
+                // 解析 business_hours
+                if (resultMap.get("business_hours") != null) {
+                    String businessHoursStr = resultMap.get("business_hours").toString();
+                    JsonNode businessHoursJson = objectMapper.readTree(businessHoursStr);
+                    merchant.setBusinessHours(businessHoursJson);
+                }
+
+                // 解析 album
+                if (resultMap.get("album") != null) {
+                    String albumStr = resultMap.get("album").toString();
+                    JsonNode albumJson = objectMapper.readTree(albumStr);
+                    merchant.setAlbum(albumJson);
+                }
+
+            } catch (Exception e) {
+                logger.warn("手动解析 JSON 字段失败: {}", e.getMessage());
+            }
+
             return ResponseResult.success(merchant);
         }
         return ResponseResult.fail("404", "商家不存在");
@@ -282,6 +322,31 @@ public class MerchantController {
             }
             if (requestBody.containsKey("avatar")) {
                 merchant.setAvatar((String) requestBody.get("avatar"));
+            }
+            if (requestBody.containsKey("businessScope")) {
+                Object businessScopeObj = requestBody.get("businessScope");
+                if (businessScopeObj != null) {
+                    try {
+                        JsonNode businessScopeJson;
+                        if (businessScopeObj instanceof String) {
+                            String businessScopeStr = (String) businessScopeObj;
+                            // 尝试解析为 JSON
+                            try {
+                                businessScopeJson = objectMapper.readTree(businessScopeStr);
+                            } catch (Exception e) {
+                                // 如果解析失败，设置为 null
+                                businessScopeJson = null;
+                            }
+                        } else {
+                            // 如果是对象或数组类型，直接转换为 JsonNode
+                            businessScopeJson = objectMapper.valueToTree(businessScopeObj);
+                        }
+                        merchant.setBusinessScope(businessScopeJson);
+                    } catch (Exception e) {
+                        logger.warn("解析经营范围失败: {}", e.getMessage());
+                        merchant.setBusinessScope(null);
+                    }
+                }
             }
 
             // 处理地址字段 - 支持接收 areaAddress 和 detailAddress 或者直接接收 address

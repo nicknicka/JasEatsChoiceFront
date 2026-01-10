@@ -1,13 +1,13 @@
 import { resolve } from 'path'
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
+import { defineConfig } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    // 不使用 externalizeDepsPlugin，以便正确打包 electron 模块
   },
   preload: {
-    plugins: [externalizeDepsPlugin()]
+    // 不使用 externalizeDepsPlugin，以便正确打包 electron 模块
   },
   renderer: {
     resolve: {

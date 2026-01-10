@@ -378,9 +378,9 @@ const handleEditClick = () => {
 
   // 确保营业时间格式正确
   if (info.businessHours) {
-    // 如果是 JSON 对象格式，转换为字符串格式以便 TimePicker 组件使用
+    // 如果是 JSON 对象格式，转换为数组格式以便 TimePicker 组件使用
     if (typeof info.businessHours === 'object' && info.businessHours.start && info.businessHours.end) {
-      info.businessHours = `${info.businessHours.start}-${info.businessHours.end}`
+      info.businessHours = [info.businessHours.start, info.businessHours.end]
     } else if (typeof info.businessHours === 'string') {
       // 如果是字符串格式，确保格式正确
       if (info.businessHours.includes(' 至 ')) {
@@ -389,7 +389,7 @@ const handleEditClick = () => {
       // 去除可能存在的重复格式（如 HH:mm-HH:mm-HH:mm-HH:mm）
       const match = info.businessHours.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/)
       if (match) {
-        info.businessHours = `${match[1]}-${match[2]}`
+        info.businessHours = [match[1], match[2]]
       }
     }
   }
@@ -470,19 +470,15 @@ const validateForm = () => {
   }
 
   // 检查营业时间的数据类型，ElTimePicker 可能返回数组或其他类型
-  let businessHoursStr = ''
-  if (typeof editForm.value.businessHours === 'string') {
-    businessHoursStr = editForm.value.businessHours.trim()
-  } else if (Array.isArray(editForm.value.businessHours) && editForm.value.businessHours.length === 2) {
-    // 如果是数组，说明是时间范围选择，格式化为 HH:mm-HH:mm
-    businessHoursStr = `${editForm.value.businessHours[0]}-${editForm.value.businessHours[1]}`
-  } else {
+  if (!Array.isArray(editForm.value.businessHours) || editForm.value.businessHours.length !== 2) {
     ElMessage.warning('请选择有效的营业时间')
     return false
   }
 
-  if (!businessHoursStr) {
-    ElMessage.warning('请选择有效的营业时间')
+  // 检查时间格式是否正确
+  const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/
+  if (!timePattern.test(editForm.value.businessHours[0]) || !timePattern.test(editForm.value.businessHours[1])) {
+    ElMessage.warning('请选择有效的营业时间格式')
     return false
   }
 
@@ -522,7 +518,12 @@ const handleSaveEdit = async () => {
     }
 
     // 确保营业时间格式正确，转换为 JSON 对象格式 {start: "HH:mm", end: "HH:mm"}
-    if (typeof formData.businessHours === 'string' && formData.businessHours.includes('-')) {
+    if (Array.isArray(formData.businessHours) && formData.businessHours.length === 2) {
+      formData.businessHours = {
+        start: formData.businessHours[0].trim(),
+        end: formData.businessHours[1].trim()
+      }
+    } else if (typeof formData.businessHours === 'string' && formData.businessHours.includes('-')) {
       const timeRange = formData.businessHours.split('-')
       if (timeRange.length === 2) {
         formData.businessHours = {
@@ -531,11 +532,6 @@ const handleSaveEdit = async () => {
         }
       } else {
         formData.businessHours = null
-      }
-    } else if (Array.isArray(formData.businessHours) && formData.businessHours.length === 2) {
-      formData.businessHours = {
-        start: formData.businessHours[0].trim(),
-        end: formData.businessHours[1].trim()
       }
     } else if (!formData.businessHours || formData.businessHours === '') {
       formData.businessHours = null
@@ -809,7 +805,7 @@ const editFormRules = {
             end-placeholder="结束时间"
             placeholder="请选择营业时间"
             format="HH:mm"
-            value-format="HH:mm-HH:mm"
+            value-format="HH:mm"
             clearable
           />
         </div>

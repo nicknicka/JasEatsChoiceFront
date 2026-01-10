@@ -63,9 +63,9 @@ public class Merchant {
     @ApiModelProperty(value = "营业执照号")
     private String businessLicense; // 营业执照号
 
-    @TableField("business_scope")
+    @TableField(value = "business_scope", typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
     @ApiModelProperty(value = "经营范围")
-    private String businessScope; // 经营范围
+    private JsonNode businessScope; // 经营范围
 
     @TableField("contact_name")
     @ApiModelProperty(value = "联系人姓名")
@@ -77,7 +77,7 @@ public class Merchant {
     @ApiModelProperty(value = "商家评分")
     private BigDecimal rating; // 商家评分
 
-    @TableField("business_hours")
+    @TableField(value = "business_hours", typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
     @ApiModelProperty(value = "营业时间")
     private JsonNode businessHours; // 营业时间
 
@@ -97,7 +97,7 @@ public class Merchant {
     @ApiModelProperty(value = "更新时间")
     private LocalDateTime updateTime; // 更新时间
 
-    @TableField("album")
+    @TableField(value = "album", typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
     @ApiModelProperty(value = "店铺相册（JSON格式，包含environment和dishes两个数组）")
     private JsonNode album; // 店铺相册（JSON格式，包含environment和dishes两个数组）
 
