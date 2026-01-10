@@ -15,7 +15,6 @@ import {
   CircleClose,
   Loading,
   Edit,
-  Plus,
   Document,
   Switch
 } from '@element-plus/icons-vue'
@@ -83,14 +82,17 @@ const fetchAddressOptions = async () => {
 // 经营品类相关变量
 const categoryOptions = ref([])
 const categoryLoading = ref(false)
+const quickCategoriesExpanded = ref(false) // 快捷选择是否展开
+
+// 常用品类（只保留最常用的8个）
 const commonCategories = [
-  '中式快餐', '西式快餐', '火锅', '烧烤', '海鲜', '川菜', '湘菜', '粤菜',
-  '东北菜', '西北菜', '日韩料理', '东南亚菜', '西餐', '咖啡厅', '面包店',
-  '奶茶店', '甜品店', '水果店', '便利店', '超市', '熟食店'
+  '中式快餐', '火锅', '烧烤', '川菜', '湘菜', '粤菜', '西餐', '日韩料理'
 ]
-const customCategory = ref('')
-const showCustomInput = ref(false)
-const expandedTags = ref(false)
+
+// 切换快捷选择展开/收起
+const toggleQuickCategories = () => {
+  quickCategoriesExpanded.value = !quickCategoriesExpanded.value
+}
 
 // 经营品类搜索方法
 const remoteSearchCategory = async (query) => {
@@ -122,14 +124,16 @@ const remoteSearchCategory = async (query) => {
   }
 }
 
-// 添加经营品类
-const addCategory = (category) => {
-  if (!editForm.value.category) {
-    editForm.value.category = []
+// 处理选择器下拉框关闭事件
+const handleCategoryVisibleChange = (visible) => {
+  if (!visible) {
+    categoryOptions.value = []
   }
-  if (!editForm.value.category.includes(category)) {
-    editForm.value.category.push(category)
-  }
+}
+
+// 处理选择器变化事件
+const handleCategoryChange = () => {
+  categoryOptions.value = []
 }
 
 // 移除经营品类
@@ -139,35 +143,19 @@ const removeCategory = (index) => {
   }
 }
 
-// 清空所有经营品类
-const clearCategories = () => {
-  editForm.value.category = []
-}
-
-// 切换自定义输入框显示
-const toggleCustomInput = () => {
-  showCustomInput.value = !showCustomInput.value
-  if (!showCustomInput.value) {
-    customCategory.value = ''
+// 切换经营品类（用于常用品类点击，支持添加/移除）
+const toggleCategory = (category) => {
+  if (!editForm.value.category) {
+    editForm.value.category = []
   }
-}
-
-// 添加自定义经营品类
-const addCustomCategory = () => {
-  const category = customCategory.value.trim()
-  if (category && (!editForm.value.category || !editForm.value.category.includes(category))) {
-    if (!editForm.value.category) {
-      editForm.value.category = []
-    }
+  const index = editForm.value.category.indexOf(category)
+  if (index > -1) {
+    // 如果已选中，则移除
+    editForm.value.category.splice(index, 1)
+  } else {
+    // 如果未选中，则添加
     editForm.value.category.push(category)
-    customCategory.value = ''
-    showCustomInput.value = false
   }
-}
-
-// 切换常用品类标签展开/收起
-const toggleTags = () => {
-  expandedTags.value = !expandedTags.value
 }
 
 // 搜索结果相关变量
@@ -539,8 +527,7 @@ const handleSaveEdit = async () => {
 
     // 调用API更新商家信息
     const response = await api.put(API_CONFIG.merchant.update.replace('{merchantId}', authStore.merchantId), formData)
-
-    if (response.data && response.data.success) {
+    if (response.code === '200') {
       // 更新用户存储中的信息
       await userStore.fetchMerchantInfo()
       ElMessage.success('商家信息更新成功')
@@ -817,7 +804,7 @@ const editFormRules = {
           <!-- 选择器 -->
           <ElSelect
             v-model="editForm.category"
-            placeholder="请选择经营品类"
+            placeholder="输入品类名称或从下拉列表选择"
             style="width: 300px"
             multiple
             clearable
@@ -825,9 +812,10 @@ const editFormRules = {
             remote
             :remote-method="remoteSearchCategory"
             :loading="categoryLoading"
-            collapse-tags
-            collapse-tags-tooltip
-            @clear="clearCategories"
+            allow-create
+            default-first-option
+            @visible-change="handleCategoryVisibleChange"
+            @change="handleCategoryChange"
           >
             <ElOption
               v-for="item in categoryOptions"
@@ -835,73 +823,23 @@ const editFormRules = {
               :label="item.label"
               :value="item.value"
             />
-            <!-- 自定义选项 -->
-            <ElOption
-              v-if="customCategory"
-              :key="'custom'"
-              :label="`自定义: ${customCategory}`"
-              :value="customCategory"
-            />
           </ElSelect>
-          <!-- 已选品类标签 -->
-          <div class="selected-categories" v-if="editForm.category && editForm.category.length > 0">
-            <ElTag
-              v-for="(category, index) in editForm.category"
-              :key="index"
-              size="small"
-              type="primary"
-              closable
-              @close="removeCategory(index)"
-              class="selected-tag"
-            >
-              {{ category }}
-            </ElTag>
-          </div>
-          <!-- 自定义输入框 -->
-          <div class="custom-input-container" v-if="showCustomInput">
-            <ElInput
-              v-model="customCategory"
-              placeholder="请输入自定义品类"
-              style="width: 220px; margin-top: 8px;"
-              clearable
-              @keyup.enter="addCustomCategory"
-              @blur="addCustomCategory"
-            />
-            <ElButton
-              type="primary"
-              size="small"
-              @click="addCustomCategory"
-              style="margin-top: 8px; margin-left: 8px;"
-              :disabled="!customCategory.trim()"
-            >
-              添加
-            </ElButton>
-          </div>
-          <!-- 自定义添加按钮 -->
-          <ElButton
-            type="text"
-            size="small"
-            @click="toggleCustomInput"
-            style="margin-top: 8px;"
-          >
-            <ElIcon><Plus /></ElIcon>
-            {{ showCustomInput ? '取消添加' : '添加自定义品类' }}
-          </ElButton>
-          <!-- 常用品类快速选择 -->
-          <div class="category-tags-container">
-            <div class="tags-header" @click="toggleTags">
-              <span>常用品类 {{ expandedTags ? '收起' : '展开' }}</span>
-              <ElIcon :class="{ 'rotate': expandedTags }"><Switch /></ElIcon>
+          <!-- 常用品类快捷选择 -->
+          <div class="quick-categories">
+            <div class="quick-header" @click="toggleQuickCategories">
+              <span class="quick-label">快捷选择</span>
+              <ElIcon :class="{ 'rotate': !quickCategoriesExpanded }"><Switch /></ElIcon>
             </div>
-            <div class="category-tags" v-if="expandedTags">
+            <div class="quick-tags" v-if="quickCategoriesExpanded">
               <ElTag
                 v-for="tag in commonCategories"
                 :key="tag"
                 size="small"
-                type="info"
-                @click="addCategory(tag)"
-                :class="{ 'selected': editForm.category.includes(tag) }"
-                class="category-tag"
+                @click="toggleCategory(tag)"
+                :class="[
+                  'quick-tag',
+                  editForm.category && editForm.category.includes(tag) ? 'quick-tag-selected' : 'quick-tag-default'
+                ]"
               >
                 {{ tag }}
               </ElTag>
@@ -1107,6 +1045,54 @@ const editFormRules = {
   width: 300px;
 }
 
+/* 选择器内部标签显示样式 - 蓝色主题 */
+:deep(.category-selector .el-select__tags) {
+  .el-tag {
+    background-color: #e6f7ff;
+    border-color: #91d5ff;
+    color: #0050b3;
+
+    &:hover {
+      background-color: #bae7ff;
+      border-color: #69c0ff;
+    }
+
+    .el-tag__close {
+      color: #0050b3;
+
+      &:hover {
+        color: #ffffff;
+        background-color: #409eff;
+      }
+    }
+  }
+}
+
+/* 优化选择器下拉框样式 */
+:deep(.category-selector) {
+  .el-select-dropdown__item {
+    padding: 8px 12px;
+    font-size: 13px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #ecf5ff;
+      color: #409eff;
+    }
+
+    &.is-selected {
+      color: #409eff;
+      font-weight: 600;
+      background-color: #e6f7ff;
+    }
+  }
+
+  .el-select__popper {
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
 /* 已选品类标签 */
 .selected-categories {
   display: flex;
@@ -1126,33 +1112,37 @@ const editFormRules = {
   }
 }
 
-/* 自定义输入框容器 */
-.custom-input-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 常用品类标签容器 */
-.category-tags-container {
+/* 快捷选择区域 */
+.quick-categories {
   margin-top: 8px;
+  max-width: 300px;
+  background-color: #f5f7fa;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-.tags-header {
+.quick-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  padding: 8px 12px;
   cursor: pointer;
-  font-size: 12px;
-  color: #606266;
-  padding: 4px 0;
+  user-select: none;
   transition: all 0.2s ease;
 
   &:hover {
-    color: #409eff;
+    background-color: #ecf5ff;
+  }
+
+  .quick-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #606266;
   }
 
   .el-icon {
+    font-size: 14px;
+    color: #909399;
     transition: transform 0.2s ease;
   }
 
@@ -1161,40 +1151,56 @@ const editFormRules = {
   }
 }
 
-/* 经营品类标签样式 */
-.category-tags {
-  margin-top: 8px;
+.quick-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  max-width: 300px;
-  animation: fadeIn 0.3s ease;
+  gap: 6px;
+  padding: 8px;
+  animation: slideDown 0.3s ease;
 }
 
-.category-tag {
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quick-tag {
   cursor: pointer;
   transition: all 0.2s ease;
+  border: 1px solid;
 
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(64, 169, 255, 0.3);
   }
 
-  &.selected {
+  &.quick-tag-default {
+    background-color: #e6f7ff;
+    border-color: #91d5ff;
+    color: #0050b3;
+
+    &:hover {
+      background-color: #bae7ff;
+      border-color: #69c0ff;
+    }
+  }
+
+  &.quick-tag-selected {
     background-color: #409eff;
     border-color: #409eff;
-    color: #fff;
-  }
-}
+    color: #ffffff;
+    font-weight: 500;
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    &:hover {
+      background-color: #66b1ff;
+      border-color: #66b1ff;
+    }
   }
 }
 
