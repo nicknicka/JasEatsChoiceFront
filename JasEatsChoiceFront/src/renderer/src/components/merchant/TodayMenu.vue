@@ -171,8 +171,9 @@ const fetchTodayMenus = () => {
       if (response.code === '200' && response.data) {
         todayMenus.value = response.data.map((menu) => ({
           ...menu,
-          status: menu.status === 'active' ? 'online' : 'offline',
-          dishes: 0,
+          // 后端直接返回 online/offline，不需要转换
+          status: menu.status || 'offline',
+          dishes: menu.dishCount || 0,
           updateTime: menu.updateTime ? menu.updateTime.replace('T', ' ') : '',
           autoOnline: menu.autoStartTime ? menu.autoStartTime.replace('T', ' ') : '',
           autoOffline: menu.autoEndTime ? menu.autoEndTime.replace('T', ' ') : ''
