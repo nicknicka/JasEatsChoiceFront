@@ -1,7 +1,21 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import {
+  Document,
+  CircleCheck,
+  Dish,
+  Clock,
+  Sunny,
+  Moon,
+  Coffee,
+  FolderOpened,
+  ArrowRight,
+  Edit,
+  CircleClose,
+  CircleCheckFilled
+} from '@element-plus/icons-vue'
 import api from '../../utils/api.js'
 import { useAuthStore } from '../../store/authStore'
 import { API_CONFIG } from '../../config/index.js'
@@ -38,7 +52,7 @@ const activeMenuTypeFilter = ref('全部')
 const activeMenuFilter = ref('全部')
 
 // 菜单分类列表
-const menuCategories = ref(['全部', '早餐', '午餐', '晚餐', '下午茶', '今日特色'])
+const menuCategories = ref(['全部', '早餐', '午餐', '晚餐', '加餐'])
 
 // 菜单状态列表
 const menuStatuses = ref([
@@ -57,10 +71,29 @@ const menuStatusMap = {
 
 // 菜品状态映射
 const dishStatusMap = {
-  online: { text: '🟢 在售', type: 'success' },
-  almost_sold: { text: '🟡 即将售罄', type: 'warning' },
-  offline: { text: '🔴 下架', type: 'danger' }
+  online: { text: '在售', type: 'success' },
+  almost_sold: { text: '即将售罄', type: 'warning' },
+  offline: { text: '下架', type: 'danger' }
 }
+
+// 统计数据
+const menuStatistics = computed(() => {
+  const total = todayMenus.value.length
+  const online = todayMenus.value.filter(m => m.status === 'online').length
+  const totalDishes = todayMenus.value.reduce((sum, menu) => sum + (menu.dishes || 0), 0)
+  const latestUpdate = todayMenus.value.length > 0
+    ? todayMenus.value.reduce((latest, menu) => {
+        return !latest || (menu.updateTime && menu.updateTime > latest) ? menu.updateTime : latest
+      }, '')
+    : '暂无'
+
+  return {
+    total,
+    online,
+    totalDishes,
+    latestUpdate
+  }
+})
 
 // 模拟菜品数据，关联到各个菜单
 const dishData = {
@@ -200,6 +233,17 @@ const navigateToMenu = () => {
   router.push('/merchant/home/menu')
 }
 
+// 格式化时间显示
+const formatTime = (timeStr) => {
+  if (!timeStr) return '暂无'
+  // 只返回时间部分 HH:mm
+  const parts = timeStr.split(' ')
+  if (parts.length >= 2) {
+    return parts[1].substring(0, 5)
+  }
+  return timeStr.substring(0, 5)
+}
+
 // 编辑菜品
 const editDish = (dish) => {
   // 导航到菜品编辑页面
@@ -253,359 +297,962 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="quick-actions-card today-menu-card">
-    <div class="menu-header">
-      <h3 class="card-title">📋 今日菜单</h3>
-      <div class="filter-section">
-        <span class="filter-label">分类：</span>
-        <el-tag
-          v-for="category in menuCategories"
-          :key="category"
-          type="info"
-          effect="light"
-          class="menu-filter-tag"
-          :class="{ active: activeMenuTypeFilter === category }"
-          @click="filterMenus(category, 'type')"
-          >{{ category }}</el-tag
-        >
+  <div class="today-menu-container">
+    <!-- 统计概览卡片 -->
+    <div class="statistics-overview">
+      <div class="stat-card stat-total">
+        <div class="stat-icon"><el-icon :size="28"><Document /></el-icon></div>
+        <div class="stat-content">
+          <div class="stat-value">{{ menuStatistics.total }}</div>
+          <div class="stat-label">总菜单</div>
+        </div>
       </div>
-    </div>
-
-    <div class="menu-header">
-      <div class="filter-section">
-        <span class="filter-label">状态：</span>
-        <el-tag
-          v-for="status in menuStatuses"
-          :key="status.value"
-          :type="
-            status.value === 'online'
-              ? 'success'
-              : status.value === 'offline'
-                ? 'danger'
-                : status.value === 'draft'
-                  ? 'warning'
-                  : 'primary'
-          "
-          effect="light"
-          class="menu-status-tag"
-          :class="{ active: activeMenuFilter === status.value }"
-          @click="filterMenus(status.value, 'status')"
-          >{{ status.label }}</el-tag
-        >
+      <div class="stat-card stat-online">
+        <div class="stat-icon"><el-icon :size="28"><CircleCheck /></el-icon></div>
+        <div class="stat-content">
+          <div class="stat-value">{{ menuStatistics.online }}</div>
+          <div class="stat-label">上架中</div>
+        </div>
       </div>
-    </div>
-
-    <div class="menu-table-container">
-      <el-table
-        :data="filteredMenus"
-        :row-class-name="(row) => (selectedMenu?.id === row.id ? 'active' : '')"
-        @row-click="switchMenu"
-      >
-        <el-table-column prop="name" label="菜单名称" min-width="200" />
-        <el-table-column prop="status" label="状态" width="140">
-          <template #default="scope">
-            <el-tag :type="menuStatusMap[scope.row.status].type">
-              {{ menuStatusMap[scope.row.status].icon }}
-              {{ menuStatusMap[scope.row.status].text }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="dishes" label="菜品数量" width="120">
-          <template #default="scope"> 🍴 {{ scope.row.dishes }} 菜品 </template>
-        </el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" width="200" />
-        <el-table-column prop="autoOnline" label="自动上架" width="180" />
-        <el-table-column prop="autoOffline" label="自动下架" width="180" />
-
-        <!-- 自定义空数据提示 -->
-        <template #empty>
-          <div class="empty-state">
-            <span class="el-icon-info"></span>
-            <p>🍽️ 今日咱未设置菜单</p>
-          </div>
-        </template>
-      </el-table>
-    </div>
-
-    <div class="view-all">
-      <el-button type="text" @click="navigateToMenu">📤 查看全部菜单</el-button>
-    </div>
-
-    <!-- 菜品列表 -->
-    <div v-if="selectedMenu" class="quick-actions-card dishes-card">
-      <div class="menu-header">
-        <h3 class="card-title">🍽️ {{ selectedMenu.name }} - 菜品列表</h3>
+      <div class="stat-card stat-dishes">
+        <div class="stat-icon"><el-icon :size="28"><Dish /></el-icon></div>
+        <div class="stat-content">
+          <div class="stat-value">{{ menuStatistics.totalDishes }}</div>
+          <div class="stat-label">总菜品</div>
+        </div>
       </div>
-
-      <div class="dish-list">
-        <div class="dish-item" v-for="dish in currentMenuDishes" :key="dish.id">
-          <div class="dish-cover">
-            {{ dish.image || '🍱' }}
-          </div>
-          <div class="dish-info">
-            <div class="dish-name">
-              <span class="name">{{ dish.name }}</span>
-              <el-tag :type="dishStatusMap[dish.status].type" size="small">
-                {{ dishStatusMap[dish.status].text }}
-              </el-tag>
-            </div>
-
-            <div class="dish-desc">
-              {{ dish.description || '美味可口，欢迎品尝' }}
-            </div>
-
-            <div class="dish-stats">
-              <span class="dish-category">📁 {{ dish.category }}</span>
-              <span class="dish-price">💰 ¥{{ dish.price }}</span>
-              <span
-                class="dish-stock"
-                :class="{
-                  'stock-almost': dish.status === 'almost_sold',
-                  'stock-off': dish.status === 'offline'
-                }"
-              >
-                {{
-                  dish.status === 'almost_sold'
-                    ? '⏳ 即将售罄'
-                    : dish.status === 'offline'
-                      ? '❌ 已下架'
-                      : `📦 ${dish.stock} 份`
-                }}
-              </span>
-            </div>
-          </div>
-          <div class="dish-actions">
-            <el-button type="primary" size="small" @click="editDish(dish)"> ✏️ 编辑 </el-button>
-            <el-button
-              :type="dish.status === 'online' ? 'warning' : 'success'"
-              size="small"
-              @click="toggleDishStatus(dish)"
-            >
-              {{ dish.status === 'online' ? '🔴 下架' : '🟢 上架' }}
-            </el-button>
-          </div>
+      <div class="stat-card stat-time">
+        <div class="stat-icon"><el-icon :size="28"><Clock /></el-icon></div>
+        <div class="stat-content">
+          <div class="stat-value-small">{{ menuStatistics.latestUpdate }}</div>
+          <div class="stat-label">最近更新</div>
         </div>
       </div>
     </div>
+
+    <!-- 菜单卡片 -->
+    <div class="quick-actions-card today-menu-card">
+      <div class="menu-header">
+        <h3 class="card-title"><el-icon :size="22"><Document /></el-icon> 今日菜单</h3>
+        <div class="filter-section">
+          <span class="filter-label">分类：</span>
+          <el-tag
+            v-for="category in menuCategories"
+            :key="category"
+            effect="plain"
+            class="menu-filter-tag"
+            :class="{ active: activeMenuTypeFilter === category }"
+            @click="filterMenus(category, 'type')"
+            >{{ category }}</el-tag
+          >
+        </div>
+      </div>
+
+      <div class="menu-header">
+        <div class="filter-section">
+          <span class="filter-label">状态：</span>
+          <el-tag
+            v-for="status in menuStatuses"
+            :key="status.value"
+            effect="plain"
+            class="menu-status-tag"
+            :class="[
+              { active: activeMenuFilter === status.value },
+              status.value === 'online' ? 'tag-online' :
+              status.value === 'offline' ? 'tag-offline' :
+              status.value === 'draft' ? 'tag-draft' : ''
+            ]"
+            @click="filterMenus(status.value, 'status')"
+            >{{ status.label }}</el-tag
+          >
+        </div>
+      </div>
+
+      <!-- 菜单卡片网格 -->
+      <transition name="fade" mode="out-in">
+        <div class="menu-grid" :key="activeMenuFilter + activeMenuTypeFilter">
+          <div
+            v-for="menu in filteredMenus"
+            :key="menu.id"
+            class="menu-card"
+            :class="[
+              { selected: selectedMenu?.id === menu.id },
+              `status-${menu.status}`
+            ]"
+            @click="switchMenu(menu)"
+          >
+            <div class="menu-card-header">
+              <div class="menu-icon">
+                <el-icon :size="24">
+                  <Sunny v-if="menu.name.includes('早餐') || menu.name.includes('午餐')" />
+                  <Moon v-else-if="menu.name.includes('晚餐')" />
+                  <Coffee v-else-if="menu.name.includes('加餐')" />
+                  <Dish v-else />
+                </el-icon>
+              </div>
+              <div class="menu-status-badge">
+                <el-icon :size="14">
+                  <CircleCheck v-if="menu.status === 'online'" />
+                  <CircleClose v-else-if="menu.status === 'offline'" />
+                  <Clock v-else />
+                </el-icon>
+                <span>{{ menuStatusMap[menu.status].text }}</span>
+              </div>
+            </div>
+            <div class="menu-name">{{ menu.name }}</div>
+            <div class="menu-info">
+              <span class="dishes-count"><el-icon :size="14"><Dish /></el-icon> {{ menu.dishes }} 菜品</span>
+              <span class="update-time"><el-icon :size="14"><Clock /></el-icon> {{ formatTime(menu.updateTime) }}</span>
+            </div>
+            <div class="menu-auto-time" v-if="menu.autoOnline || menu.autoOffline">
+              <span v-if="menu.autoOnline"><el-icon :size="12"><ArrowRight /></el-icon> {{ formatTime(menu.autoOnline) }}</span>
+              <span v-if="menu.autoOffline"><el-icon :size="12"><ArrowRight /></el-icon> {{ formatTime(menu.autoOffline) }}</span>
+            </div>
+          </div>
+        </div>
+      </transition>
+
+      <!-- 空状态 -->
+      <div v-if="filteredMenus.length === 0" class="empty-state">
+        <div class="empty-icon"><el-icon :size="64"><Dish /></el-icon></div>
+        <p class="empty-text">今日暂未设置菜单</p>
+      </div>
+
+      <div class="view-all">
+        <el-button type="text" @click="navigateToMenu">
+          <el-icon :size="18"><ArrowRight /></el-icon> 查看全部菜单
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 菜品列表 -->
+    <transition name="slide-up">
+      <div v-if="selectedMenu" class="quick-actions-card dishes-card">
+        <div class="menu-header">
+          <h3 class="card-title">
+            <el-icon :size="20"><Dish /></el-icon> {{ selectedMenu.name }} - 菜品列表
+            <el-tag size="small" class="menu-tag" effect="plain">
+              {{ selectedMenu.dishes }} 道菜品
+            </el-tag>
+          </h3>
+        </div>
+
+        <div class="dish-list">
+          <transition-group name="list" tag="div">
+            <div
+              class="dish-item"
+              v-for="dish in currentMenuDishes"
+              :key="dish.id"
+            >
+              <div class="dish-cover">
+                <div class="dish-image"><el-icon :size="40"><Dish /></el-icon></div>
+              </div>
+              <div class="dish-info">
+                <div class="dish-name">
+                  <span class="name">{{ dish.name }}</span>
+                  <el-tag
+                    :type="dishStatusMap[dish.status].type"
+                    size="small"
+                    effect="plain"
+                  >
+                    {{ dishStatusMap[dish.status].text }}
+                  </el-tag>
+                </div>
+
+                <div class="dish-desc">
+                  {{ dish.description || '美味可口，欢迎品尝' }}
+                </div>
+
+                <div class="dish-stats">
+                  <span class="dish-category"><el-icon :size="14"><FolderOpened /></el-icon> {{ dish.category }}</span>
+                  <span class="dish-price">¥{{ dish.price }}</span>
+                  <span
+                    class="dish-stock"
+                    :class="{
+                      'stock-almost': dish.status === 'almost_sold',
+                      'stock-off': dish.status === 'offline'
+                    }"
+                  >
+                    <el-icon :size="12">
+                      <CircleClose v-if="dish.status === 'offline'" />
+                      <Clock v-else-if="dish.status === 'almost_sold'" />
+                      <CircleCheck v-else />
+                    </el-icon>
+                    {{
+                      dish.status === 'almost_sold'
+                        ? ' 即将售罄'
+                        : dish.status === 'offline'
+                          ? ' 已下架'
+                          : ` ${dish.stock} 份`
+                    }}
+                  </span>
+                </div>
+              </div>
+              <div class="dish-actions">
+                <el-button type="primary" size="small" @click="editDish(dish)">
+                  <el-icon :size="14"><Edit /></el-icon> 编辑
+                </el-button>
+                <el-button
+                  :type="dish.status === 'online' ? 'warning' : 'success'"
+                  size="small"
+                  effect="plain"
+                  @click="toggleDishStatus(dish)"
+                >
+                  <el-icon :size="14">
+                    <CircleClose v-if="dish.status === 'online'" />
+                    <CircleCheck v-else />
+                  </el-icon>
+                  {{ dish.status === 'online' ? ' 下架' : ' 上架' }}
+                </el-button>
+              </div>
+            </div>
+          </transition-group>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <style scoped lang="less">
-.quick-actions-card {
-  margin-bottom: 24px;
+.today-menu-container {
+  // 统计概览卡片
+  .statistics-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
 
-  // 今日菜单
-  .today-menu-card {
-    padding: 24px;
-    border: 2px solid #67c23a;
-    border-radius: 12px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 20px rgba(103, 194, 58, 0.08);
-
-    .menu-header {
+    .stat-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
       display: flex;
-      justify-content: flex-start;
       align-items: center;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-      gap: 24px;
+      gap: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+      border: 1px solid #f0f0f0;
+      transition: all 0.3s ease;
+      cursor: default;
 
-      // 处理只有标题的情况 (第一行)
-      &:has(.card-title) {
-        padding-bottom: 16px;
-        border-bottom: 1px solid #f0f9eb;
-        margin-bottom: 24px;
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
       }
 
-      .card-title {
-        font-size: 20px;
-        font-weight: 700;
-        margin: 0;
-        color: #67c23a;
-      }
-
-      .filter-label {
-        font-weight: 600;
-        margin-right: 12px;
-        color: #606266;
-        font-size: 14px;
-      }
-
-      .filter-section {
+      .stat-icon {
+        font-size: 36px;
+        width: 60px;
+        height: 60px;
         display: flex;
         align-items: center;
-        gap: 20px;
-        flex-wrap: wrap;
+        justify-content: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+        flex-shrink: 0;
 
-        .menu-filter-tag,
-        .menu-status-tag {
-          cursor: pointer;
-          transition: all 0.3s ease;
-          border-radius: 20px;
-          margin-right: 12px;
-          margin-bottom: 8px;
-
-          &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
-          }
-
-          &.active {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-          }
+        .el-icon {
+          color: #909399;
         }
       }
-    }
 
-    .menu-table-container {
-      margin-bottom: 20px;
-    }
+      .stat-content {
+        flex: 1;
 
-    .view-all {
-      text-align: right;
-      margin-top: 24px;
-
-      .el-button {
-        color: #67c23a;
-        border-color: #67c23a;
-        transition: all 0.3s ease;
-
-        &:hover {
-          background-color: #67c23a;
-          color: #fff;
-          transform: translateX(4px);
+        .stat-value {
+          font-size: 28px;
+          font-weight: 700;
+          color: #303133;
+          line-height: 1;
+          margin-bottom: 6px;
         }
+
+        .stat-value-small {
+          font-size: 13px;
+          font-weight: 500;
+          color: #606266;
+          line-height: 1.4;
+          margin-bottom: 6px;
+        }
+
+        .stat-label {
+          font-size: 13px;
+          color: #909399;
+          font-weight: 500;
+        }
+      }
+
+      &.stat-total .stat-icon {
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      }
+
+      &.stat-online .stat-icon {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      }
+
+      &.stat-dishes .stat-icon {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      }
+
+      &.stat-time .stat-icon {
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
       }
     }
   }
 
-  // 菜品列表样式
-  .dishes-card {
+  // 今日菜单卡片
+  .quick-actions-card {
     margin-bottom: 24px;
-    padding: 24px;
-    border: 2px solid #67c23a;
-    border-radius: 12px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 20px rgba(103, 194, 58, 0.08);
-    border-top: none;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
 
-    .dish-list {
-      margin-bottom: 20px;
+    &.today-menu-card {
+      padding: 24px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e8e8e8;
 
-      .dish-item {
-        padding: 20px;
-        border: 2px solid #f0f9eb;
-        border-radius: 10px;
-        margin-bottom: 16px;
-        background-color: #fff;
-        transition: all 0.3s ease;
+      .menu-header {
         display: flex;
-        align-items: flex-start;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
         gap: 16px;
-        overflow: hidden;
 
-        &:hover {
-          box-shadow: 0 4px 16px rgba(103, 194, 58, 0.12);
-          border-color: #67c23a;
-          transform: translateY(-4px);
+        &:first-child {
+          padding-bottom: 16px;
+          border-bottom: 2px solid #f0f0f0;
         }
 
-        .dish-cover {
-          font-size: 48px;
-          width: 90px;
-          height: 90px;
+        .card-title {
+          font-size: 20px;
+          font-weight: 700;
+          margin: 0;
+          color: #303133;
+          margin-right: auto;
           display: flex;
           align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #67c23a, #eaf5ec);
-          border-radius: 10px;
-          flex-shrink: 0;
-          color: #fff;
-          box-shadow: 0 2px 8px rgba(103, 194, 58, 0.2);
-          transition: all 0.3s ease;
-        }
+          gap: 8px;
 
-        &:hover .dish-cover {
-          transform: scale(1.1);
-        }
-
-        .dish-info {
-          flex: 1;
-
-          .dish-name {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
-
-            .name {
-              font-size: 18px;
-              font-weight: 600;
-              color: #303133;
-            }
-          }
-
-          .dish-desc {
-            font-size: 14px;
-            color: #606266;
-            margin-bottom: 14px;
-            line-height: 1.6;
-          }
-
-          .dish-stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            font-size: 14px;
-            color: #606266;
-
-            .dish-category {
-              background-color: #eaf5ec;
-              color: #67c23a;
-              padding: 4px 12px;
-              border-radius: 6px;
-              font-size: 12px;
-              font-weight: 500;
-            }
-
-            .dish-price {
-              color: #e6a23c;
-              font-weight: 600;
-              font-size: 16px;
-            }
-
-            .dish-stock {
-              font-size: 13px;
-              font-weight: 500;
-
-              &.stock-almost {
-                color: #f59f00;
-              }
-
-              &.stock-off {
-                color: #f56c6c;
-              }
-            }
+          .el-icon {
+            color: #909399;
           }
         }
 
-        .dish-actions {
+        .filter-label {
+          font-weight: 600;
+          margin-right: 12px;
+          color: #606266;
+          font-size: 14px;
+        }
+
+        .filter-section {
           display: flex;
-          flex-direction: column;
-          gap: 10px;
-          flex-shrink: 0;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
 
-          .el-button {
-            width: 90px;
+          .menu-filter-tag,
+          .menu-status-tag {
+            cursor: pointer;
             transition: all 0.3s ease;
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1.5px solid #e0e0e0;
+            background: #fafafa;
+            color: #606266;
 
             &:hover {
               transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+              background: #f0f0f0;
+            }
+
+            &.active {
+              background: #409eff;
+              color: #ffffff;
+              border-color: #409eff;
+              box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+            }
+
+            &.tag-online {
+              &:hover, &.active {
+                background: #409eff;
+                border-color: #409eff;
+                color: #ffffff;
+              }
+            }
+
+            &.tag-offline {
+              &:hover, &.active {
+                background: #909399;
+                border-color: #909399;
+                color: #ffffff;
+              }
+            }
+
+            &.tag-draft {
+              &:hover, &.active {
+                background: #e6a23c;
+                border-color: #e6a23c;
+                color: #ffffff;
+              }
             }
           }
+        }
+      }
+
+      // 菜单卡片网格
+      .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+
+        .menu-card {
+          background: #ffffff;
+          border-radius: 12px;
+          padding: 18px;
+          border: 2px solid #f0f0f0;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #409eff 0%, #66b1ff 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+          }
+
+          &:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border-color: #409eff;
+
+            &::before {
+              opacity: 1;
+            }
+
+            .menu-icon {
+              transform: scale(1.1) rotate(5deg);
+            }
+          }
+
+          &.selected {
+            border-color: #409eff;
+            background: linear-gradient(135deg, #ecf5ff 0%, #ffffff 100%);
+            box-shadow: 0 4px 16px rgba(64, 158, 255, 0.2);
+
+            &::before {
+              opacity: 1;
+            }
+          }
+
+          &.status-online {
+            border-left: 4px solid #409eff;
+          }
+
+          &.status-offline {
+            border-left: 4px solid #909399;
+          }
+
+          &.status-draft {
+            border-left: 4px solid #e6a23c;
+          }
+
+          .menu-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+
+            .menu-icon {
+              font-size: 32px;
+              width: 50px;
+              height: 50px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+              border-radius: 10px;
+              transition: transform 0.3s ease;
+
+              .el-icon {
+                color: #909399;
+              }
+            }
+
+            .menu-status-badge {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              font-size: 12px;
+              font-weight: 500;
+              padding: 4px 10px;
+              border-radius: 12px;
+              background: #f5f7fa;
+
+              .el-icon {
+                &.el-icon-circle-check {
+                  color: #409eff;
+                }
+
+                &.el-icon-circle-close {
+                  color: #909399;
+                }
+
+                &.el-icon-clock {
+                  color: #909399;
+                }
+              }
+            }
+          }
+
+          .menu-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 12px;
+            line-height: 1.4;
+          }
+
+          .menu-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 13px;
+            color: #909399;
+            margin-bottom: 8px;
+
+            .dishes-count {
+              color: #606266;
+              font-weight: 500;
+              display: flex;
+              align-items: center;
+              gap: 4px;
+
+              .el-icon {
+                color: #909399;
+              }
+            }
+
+            .update-time {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+
+              .el-icon {
+                color: #909399;
+              }
+            }
+          }
+
+          .menu-auto-time {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: #909399;
+            padding-top: 8px;
+            border-top: 1px dashed #e8e8e8;
+
+            span {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+
+              .el-icon {
+                color: #909399;
+              }
+            }
+          }
+        }
+      }
+
+      // 空状态
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #909399;
+
+        .empty-icon {
+          font-size: 64px;
+          margin-bottom: 16px;
+          opacity: 0.5;
+
+          .el-icon {
+            color: #c0c4cc;
+          }
+        }
+
+        .empty-text {
+          font-size: 16px;
+          margin: 0;
+          font-weight: 500;
+        }
+      }
+
+      .view-all {
+        text-align: right;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #f0f0f0;
+
+        .el-button {
+          color: #409eff;
+          font-weight: 600;
+          transition: all 0.3s ease;
+
+          &:hover {
+            color: #66b1ff;
+            transform: translateX(4px);
+          }
+        }
+      }
+    }
+
+    // 菜品列表卡片
+    .dishes-card {
+      margin-bottom: 24px;
+      padding: 24px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e8e8e8;
+
+      .menu-header {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #f0f0f0;
+
+        .card-title {
+          font-size: 18px;
+          font-weight: 700;
+          color: #303133;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          .el-icon {
+            color: #909399;
+          }
+
+          .menu-tag {
+            background: linear-gradient(135deg, #e8f4fd 0%, #d0e8ff 100%);
+            color: #409eff;
+            border: none;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .dish-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .dish-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 18px;
+          background: #ffffff;
+          border: 2px solid #f5f5f5;
+          border-radius: 12px;
+          transition: all 0.3s ease;
+          overflow: hidden;
+
+          &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #409eff 0%, #66b1ff 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+          }
+
+          &:hover {
+            transform: translateX(6px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            border-color: #409eff;
+
+            &::before {
+              transform: scaleY(1);
+            }
+
+            .dish-cover .dish-image {
+              transform: scale(1.05);
+            }
+          }
+
+          .dish-cover {
+            flex-shrink: 0;
+
+            .dish-image {
+              font-size: 48px;
+              width: 90px;
+              height: 90px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+              border-radius: 12px;
+              transition: transform 0.3s ease;
+
+              .el-icon {
+                color: #909399;
+              }
+            }
+          }
+
+          .dish-info {
+            flex: 1;
+            min-width: 0;
+
+            .dish-name {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              margin-bottom: 10px;
+
+              .name {
+                font-size: 17px;
+                font-weight: 600;
+                color: #303133;
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+            }
+
+            .dish-desc {
+              font-size: 13px;
+              color: #909399;
+              margin-bottom: 12px;
+              line-height: 1.6;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+            }
+
+            .dish-stats {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 16px;
+              font-size: 13px;
+
+              .dish-category {
+                background: linear-gradient(135deg, #e8f4fd 0%, #d0e8ff 100%);
+                color: #409eff;
+                padding: 4px 12px;
+                border-radius: 6px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+
+                .el-icon {
+                  color: #409eff;
+                }
+              }
+
+              .dish-price {
+                color: #606266;
+                font-weight: 600;
+                font-size: 15px;
+              }
+
+              .dish-stock {
+                font-size: 13px;
+                font-weight: 500;
+                color: #909399;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+
+                .el-icon {
+                  color: inherit;
+                }
+
+                &.stock-almost {
+                  color: #e6a23c;
+
+                  .el-icon {
+                    color: #e6a23c;
+                  }
+                }
+
+                &.stock-off {
+                  color: #909399;
+
+                  .el-icon {
+                    color: #909399;
+                  }
+                }
+              }
+            }
+          }
+
+          .dish-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+
+            .el-button {
+              min-width: 80px;
+              border-radius: 8px;
+              font-weight: 500;
+              transition: all 0.3s ease;
+
+              &.el-button--primary {
+                background-color: #409eff;
+                border-color: #409eff;
+
+                &:hover {
+                  background-color: #66b1ff;
+                  border-color: #66b1ff;
+                  transform: translateY(-2px);
+                }
+              }
+
+              &.el-button--warning {
+                color: #909399;
+                border-color: #dcdfe6;
+                background: #fff;
+
+                &:hover {
+                  color: #909399;
+                  background-color: #f5f7fa;
+                  border-color: #c0c4cc;
+                  transform: translateY(-2px);
+                }
+              }
+
+              &.el-button--success {
+                background-color: #409eff;
+                border-color: #409eff;
+                color: #ffffff;
+
+                &:hover {
+                  background-color: #66b1ff;
+                  border-color: #66b1ff;
+                  transform: translateY(-2px);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 动画效果
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active {
+  transition: all 0.4s ease;
+}
+
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
+}
+
+.list-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .today-menu-container {
+    .statistics-overview {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+
+      .stat-card {
+        padding: 16px;
+
+        .stat-icon {
+          font-size: 28px;
+          width: 48px;
+          height: 48px;
+        }
+
+        .stat-content {
+          .stat-value {
+            font-size: 22px;
+          }
+
+          .stat-value-small {
+            font-size: 11px;
+          }
+
+          .stat-label {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+
+    .quick-actions-card.today-menu-card {
+      .menu-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .dishes-card .dish-list .dish-item {
+      flex-direction: column;
+
+      .dish-actions {
+        flex-direction: row;
+        width: 100%;
+
+        .el-button {
+          flex: 1;
         }
       }
     }
