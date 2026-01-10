@@ -286,12 +286,25 @@ const shopAlbum = ref({
 // 上传相关变量
 const uploadAlbumType = ref('environment')
 const imageUploadList = ref([])
-const fullAlbumPreviewVisible = ref(false)
+const uploadSectionRef = ref(null) // 上传区域引用
+const uploadInputRef = ref(null) // 上传输入框引用
+const uploadComponentRef = ref(null) // 上传组件引用
 
-// 获取所有照片用于全屏预览
-const getAllImages = computed(() => {
-  return [...shopAlbum.value.environment, ...shopAlbum.value.dishes]
-})
+// 获取店铺相册数据
+const fetchMerchantAlbum = async () => {
+  try {
+    const response = await api.get(API_CONFIG.merchant.album.replace('{merchantId}', merchantInfo.value.id))
+    console.log('获取相册响应:', response)
+    console.log('相册数据类型:', typeof response.data)
+    console.log('相册原始数据:', response.data)
+    if (response.success && response.data) {
+      shopAlbum.value = response.data
+      console.log('处理后的相册数据:', shopAlbum.value)
+    }
+  } catch (error) {
+    console.error('获取相册数据失败:', error)
+  }
+}
 
 // 上传照片变更处理
 const handleUpload = (file, fileList) => {
@@ -312,16 +325,21 @@ const confirmUpload = () => {
     return
   }
 
-  const albumTypeText = uploadAlbumType.value === 'environment' ? '店铺环境' : '菜品展示'
+  const albumTypeText = '店铺环境'
   const formData = new FormData()
 
-  // 添加照片文件到FormData
+  // 添加照片文件到FormData（注意：后端期望的参数名是 'images'）
   imageUploadList.value.forEach((file) => {
-    formData.append('files', file.raw)
+    formData.append('images', file.raw)
   })
 
   // 添加相册类型
   formData.append('albumType', uploadAlbumType.value)
+
+  console.log('开始上传照片...', {
+    albumType: uploadAlbumType.value,
+    fileCount: imageUploadList.value.length
+  })
 
   // 调用后端API上传照片
   api
@@ -331,22 +349,39 @@ const confirmUpload = () => {
       }
     })
     .then((response) => {
-      if (response.data && response.data.success) {
-        const uploadedImages = response.data.data
+      console.log('上传响应完整数据:', response)
+      console.log('上传响应success:', response?.success)
+      console.log('上传响应data:', response?.data)
 
-        // 将上传的照片添加到对应相册
-        shopAlbum.value[uploadAlbumType.value].push(...uploadedImages)
+      // 兼容不同的响应格式 - 检查 response 本身是否成功
+      const isSuccess = response?.success || response?.data?.success
+      const responseData = response?.data !== undefined ? response.data : response
+
+      console.log('处理后的响应数据:', responseData)
+      console.log('上传的图片数组:', responseData)
+
+      if (isSuccess && responseData) {
+        const uploadedImages = Array.isArray(responseData) ? responseData : []
+
+        console.log('最终上传成功的图片:', uploadedImages)
+        console.log('图片数组类型:', Array.isArray(uploadedImages))
+
+        // 重新获取相册数据以确保一致性
+        fetchMerchantAlbum()
 
         // 上传完成后清空上传列表
         imageUploadList.value = []
 
         // 显示上传成功提示
-        ElMessage.success(`已成功上传${uploadedImages.length}张照片到${albumTypeText}相册`)
+        ElMessage.success(`已成功追加上传${uploadedImages.length}张照片到${albumTypeText}相册`)
+      } else {
+        console.error('上传失败，响应格式不正确:', response)
+        ElMessage.error('上传失败：' + (response?.message || '服务器返回错误'))
       }
     })
     .catch((error) => {
       console.error('上传照片失败:', error)
-      ElMessage.error('上传照片失败')
+      ElMessage.error('上传照片失败：' + (error.message || '网络错误'))
     })
 }
 
@@ -386,9 +421,19 @@ const deleteAlbumImage = (type, index) => {
     })
 }
 
-// 打开全屏相册预览
-const openFullAlbumPreview = () => {
-  fullAlbumPreviewVisible.value = true
+// 触发立即上传（从空状态按钮）
+const triggerUpload = () => {
+  // 滚动到上传区域
+  if (uploadSectionRef.value) {
+    uploadSectionRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+  // 触发文件选择对话框
+  setTimeout(() => {
+    const uploadInput = document.querySelector('.upload-area .el-upload__input')
+    if (uploadInput) {
+      uploadInput.click()
+    }
+  }, 500)
 }
 
 // 公告栏配置
@@ -897,6 +942,9 @@ onMounted(() => {
 
   // 获取优惠活动列表
   fetchDiscounts()
+
+  // 获取店铺相册数据
+  fetchMerchantAlbum()
 })
 
 // 获取优惠活动列表
@@ -1089,20 +1137,12 @@ const fetchDiscounts = () => {
       <!-- 店铺相册 -->
       <div class="shop-album-card">
         <div class="album-header">
-          <h4 class="card-title">📸 店铺相册</h4>
-          <el-button type="primary" size="small" @click="openFullAlbumPreview">
-            <el-icon class="el-icon-full-screen"></el-icon> 放大预览
-          </el-button>
-        </div>
-        <div class="album-stats">
-          <span class="stat-item">🔍 店铺环境 ({{ shopAlbum.environment.length }}张)</span>
-          <span class="stat-item">🍽️ 菜品展示 ({{ shopAlbum.dishes.length }}张)</span>
+          <h4 class="card-title">📸 店铺环境 ({{ shopAlbum.environment.length }}张)</h4>
         </div>
 
         <!-- 店铺环境图片 -->
         <div class="album-section">
-          <h5 class="section-title">店铺环境</h5>
-          <div class="album-grid">
+          <div v-if="shopAlbum.environment.length > 0" class="album-grid">
             <div
               v-for="(image, index) in shopAlbum.environment"
               :key="`env-${index}`"
@@ -1112,107 +1152,83 @@ const fetchDiscounts = () => {
                 <el-button
                   type="danger"
                   size="small"
-                  class="delete-img-btn"
+                  circle
                   @click.stop="deleteAlbumImage('environment', index)"
                 >
-                  <el-icon class="el-icon-delete"></el-icon>
+                  <el-icon><Delete /></el-icon>
                 </el-button>
               </div>
-              <el-image :src="image" :preview-src-list="shopAlbum.environment" fit="cover" />
+              <el-image
+                :src="image"
+                :preview-src-list="shopAlbum.environment"
+                :initial-index="index"
+                fit="contain"
+              />
             </div>
           </div>
-          <!-- 美化的空状态提示 -->
-          <div v-if="shopAlbum.environment.length === 0" class="album-empty-beautify">
-            <el-icon class="empty-icon el-icon-picture-outline"></el-icon>
+
+          <!-- 简化的空状态提示 -->
+          <div v-if="shopAlbum.environment.length === 0" class="album-empty-simple">
+            <el-icon class="empty-icon"><Picture /></el-icon>
             <p class="empty-text">暂无店铺环境图片</p>
-            <p class="empty-subtext">点击下方上传按钮添加图片</p>
+            <el-button type="primary" size="small" @click="triggerUpload()">
+              <el-icon><Plus /></el-icon> 立即上传
+            </el-button>
           </div>
         </div>
 
-        <!-- 菜品展示图片 -->
-        <div class="album-section">
-          <h5 class="section-title">菜品展示</h5>
-          <div class="album-grid">
-            <div
-              v-for="(image, index) in shopAlbum.dishes"
-              :key="`dish-${index}`"
-              class="album-item"
-            >
-              <div class="album-item-overlay">
-                <el-button
-                  type="danger"
-                  size="small"
-                  class="delete-img-btn"
-                  @click.stop="deleteAlbumImage('dishes', index)"
-                >
-                  <el-icon class="el-icon-delete"></el-icon>
-                </el-button>
-              </div>
-              <el-image :src="image" :preview-src-list="shopAlbum.dishes" fit="cover" />
+        <!-- 上传图片 -->
+        <div class="upload-section" ref="uploadSectionRef">
+          <div class="upload-header">
+            <h6 class="upload-title">
+              <el-icon><Upload /></el-icon>
+              上传店铺环境图片
+            </h6>
+          </div>
+
+          <div class="upload-controls">
+            <div class="upload-tips">
+              <el-icon><InfoFilled /></el-icon>
+              <span>支持 JPG/PNG 格式，单张不超过 5MB</span>
             </div>
-          </div>
-          <!-- 美化的空状态提示 -->
-          <div v-if="shopAlbum.dishes.length === 0" class="album-empty-beautify">
-            <el-icon class="empty-icon el-icon-food"></el-icon>
-            <p class="empty-text">暂无菜品展示图片</p>
-            <p class="empty-subtext">点击下方上传按钮添加图片</p>
-          </div>
-        </div>
-
-        <!-- 上传按钮及相册选择 -->
-        <div class="upload-section">
-          <div class="upload-select">
-            <label class="upload-label">选择相册：</label>
-            <el-select
-              v-model="uploadAlbumType"
-              placeholder="请选择相册类型"
-              size="small"
-              style="width: 180px"
-            >
-              <el-option label="店铺环境" value="environment" />
-              <el-option label="菜品展示" value="dishes" />
-            </el-select>
           </div>
 
           <!-- 照片上传组件 -->
-          <div class="upload-button">
+          <div class="upload-area">
             <el-upload
+              ref="uploadComponentRef"
               action="#"
-              list-type="picture-card"
               :on-change="handleUpload"
               :on-remove="handleUploadRemove"
               :auto-upload="false"
               :file-list="imageUploadList"
+              drag
+              multiple
+              :show-file-list="true"
             >
-              <el-icon class="el-icon-plus"></el-icon>
-              <div class="el-upload__text">上传照片</div>
+              <el-icon class="el-icon-plus"><Plus /></el-icon>
+              <div class="el-upload__text">
+                <p class="upload-text">点击或拖拽文件到此处上传</p>
+                <p class="upload-hint">支持多张图片同时上传</p>
+              </div>
             </el-upload>
 
             <!-- 上传确认按钮 -->
-            <el-button
-              type="success"
-              size="small"
-              class="upload-confirm-btn"
-              @click="confirmUpload"
-              :disabled="imageUploadList.length === 0"
-            >
-              <el-icon class="el-icon-check"></el-icon> 确认上传
-            </el-button>
+            <div class="upload-actions">
+              <el-button
+                type="success"
+                size="large"
+                class="upload-confirm-btn"
+                @click="confirmUpload"
+                :disabled="imageUploadList.length === 0"
+              >
+                <el-icon><Select /></el-icon>
+                确认上传 {{ imageUploadList.length > 0 ? `(${imageUploadList.length}张)` : '' }}
+              </el-button>
+            </div>
           </div>
-          <div class="el-upload__tip">仅支持 JPG/PNG 格式，单张不超过 5MB</div>
         </div>
       </div>
-
-      <!-- 全屏相册预览对话框 -->
-      <el-dialog v-model="fullAlbumPreviewVisible" title="店铺相册全屏预览" width="90%" top="5%">
-        <div class="full-album-preview">
-          <el-image-viewer
-            v-if="fullAlbumPreviewVisible"
-            :url-list="getAllImages"
-            @close="fullAlbumPreviewVisible = false"
-          />
-        </div>
-      </el-dialog>
 
       <!-- 公告栏配置 -->
       <div class="announcement-section">
@@ -2403,49 +2419,83 @@ const fetchDiscounts = () => {
   .shop-album-card {
     margin-bottom: 24px;
     padding: 24px;
-    border: 2px solid #f56c6c; /* 错误红 */
+    border: 2px solid #e6a23c; /* 橙色主题 */
     border-radius: 12px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 20px rgba(245, 108, 108, 0.1);
+    background: linear-gradient(135deg, #ffffff 0%, #fffbf5 100%);
+    box-shadow: 0 4px 20px rgba(230, 162, 60, 0.15);
 
     .album-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      .card-title {
-        margin: 0;
-        font-size: 20px;
-        font-weight: 700;
-      }
-    }
-
-    .album-stats {
-      display: flex;
-      gap: 32px;
+      align-items: flex-start;
       margin-bottom: 24px;
-      font-size: 16px;
-      color: #606266;
+      flex-wrap: wrap;
+      gap: 16px;
 
-      .stat-item {
+      .header-left {
+        flex: 1;
+
+        .card-title {
+          margin: 0 0 12px 0;
+          font-size: 20px;
+          font-weight: 700;
+          color: #e6a23c;
+        }
+
+        .album-stats {
+          display: flex;
+          gap: 24px;
+          font-size: 14px;
+          color: #606266;
+
+          .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background-color: #fff7e6;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+
+            &:hover {
+              background-color: #ffe7ba;
+              transform: translateY(-2px);
+            }
+          }
+        }
+      }
+
+      .header-actions {
         display: flex;
-        align-items: center;
-        gap: 8px;
+        gap: 12px;
+        flex-wrap: wrap;
       }
     }
 
     .album-section {
-      margin-bottom: 24px;
+      margin-bottom: 32px;
 
-      .section-title {
-        font-size: 16px;
-        font-weight: 600;
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 16px;
-        color: #303133;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #f56c6c;
-        width: fit-content;
+
+        .section-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #303133;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding-bottom: 8px;
+          border-bottom: 2px solid #e6a23c;
+
+          .title-icon {
+            font-size: 20px;
+          }
+        }
       }
 
       .album-grid {
@@ -2457,21 +2507,34 @@ const fetchDiscounts = () => {
 
       .album-item {
         position: relative;
-        border-radius: 8px;
+        border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
         transition: all 0.3s ease;
         cursor: pointer;
+        background: #fff;
 
         &:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+          transform: translateY(-6px);
+          box-shadow: 0 8px 24px rgba(230, 162, 60, 0.25);
+        }
+
+        .album-item-checkbox {
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          z-index: 2;
+          background: rgba(255, 255, 255, 0.9);
+          border-radius: 6px;
+          padding: 4px;
+          backdrop-filter: blur(4px);
         }
 
         .album-item-overlay {
           position: absolute;
           top: 8px;
           right: 8px;
+          z-index: 2;
           opacity: 0;
           transition: opacity 0.3s ease;
         }
@@ -2481,82 +2544,293 @@ const fetchDiscounts = () => {
         }
 
         .delete-img-btn {
-          border-radius: 50%;
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           padding: 0;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
+          box-shadow: 0 2px 12px rgba(245, 108, 108, 0.4);
+          background: linear-gradient(135deg, #f56c6c, #ff8787);
+          border: none;
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 16px rgba(245, 108, 108, 0.6);
+          }
         }
 
         :deep(.el-image) {
           width: 100%;
-          height: 140px;
+          height: 160px;
           object-fit: cover;
+          display: block;
         }
       }
     }
 
-    // 美化的空状态样式
-    .album-empty-beautify {
+    // 增强的空状态样式
+    .album-empty-enhanced {
       text-align: center;
-      padding: 60px 20px;
-      background-color: #fafafa;
-      border: 2px dashed #dcdfe6;
-      border-radius: 8px;
+      padding: 60px 40px;
+      background: linear-gradient(135deg, #fff9f0 0%, #ffffff 100%);
+      border: 2px dashed #e6a23c;
+      border-radius: 12px;
       margin-top: 8px;
       transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(230, 162, 60, 0.03) 1px, transparent 1px);
+        background-size: 20px 20px;
+        animation: gridMove 20s linear infinite;
+      }
+
+      @keyframes gridMove {
+        0% {
+          transform: translate(0, 0);
+        }
+        100% {
+          transform: translate(20px, 20px);
+        }
+      }
 
       &:hover {
-        background-color: #f5f7fa;
-        border-color: #c6e2ff;
+        background: linear-gradient(135deg, #ffe7ba 0%, #ffffff 100%);
+        border-color: #d9a066;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(230, 162, 60, 0.15);
       }
 
-      .empty-icon {
-        font-size: 48px;
-        color: #c0c4cc;
-        margin-bottom: 16px;
-      }
+      .empty-content {
+        position: relative;
+        z-index: 1;
 
-      .empty-text {
-        font-size: 16px;
-        color: #303133;
-        margin-bottom: 8px;
-        font-weight: 500;
-      }
+        .empty-icon-wrapper {
+          width: 80px;
+          height: 80px;
+          margin: 0 auto 20px;
+          background: linear-gradient(135deg, #ffe7ba, #ffd591);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 16px rgba(230, 162, 60, 0.3);
+          animation: float 3s ease-in-out infinite;
 
-      .empty-subtext {
-        font-size: 14px;
-        color: #909399;
+          @keyframes float {
+            0%,
+            100% {
+              transform: translateY(0px);
+            }
+            50% {
+              transform: translateY(-10px);
+            }
+          }
+
+          .empty-icon {
+            font-size: 40px;
+            color: #e6a23c;
+          }
+        }
+
+        .empty-title {
+          font-size: 18px;
+          color: #303133;
+          margin-bottom: 8px;
+          font-weight: 600;
+        }
+
+        .empty-desc {
+          font-size: 14px;
+          color: #909399;
+          margin-bottom: 20px;
+          line-height: 1.6;
+        }
+
+        .el-button {
+          animation: pulse 2s ease-in-out infinite;
+
+          @keyframes pulse {
+            0%,
+            100% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.05);
+            }
+          }
+        }
       }
     }
 
     // 上传区域样式优化
     .upload-section {
-      background-color: #fafafa;
+      background: linear-gradient(135deg, #fffaf0 0%, #ffffff 100%);
       padding: 24px;
-      border-radius: 8px;
-      border: 1px solid #e4e7ed;
+      border-radius: 12px;
+      border: 2px solid #ffe7ba;
       margin-top: 24px;
+      box-shadow: 0 2px 12px rgba(230, 162, 60, 0.08);
 
-      .upload-select {
+      .upload-header {
         margin-bottom: 20px;
 
-        .upload-label {
-          font-weight: 500;
-          color: #303133;
-          margin-right: 12px;
+        .upload-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #e6a23c;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
       }
 
-      .upload-button {
+      .upload-controls {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 16px;
+        margin-bottom: 20px;
         flex-wrap: wrap;
-        margin-bottom: 16px;
+        gap: 16px;
+
+        .upload-select {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          .upload-label {
+            font-weight: 600;
+            color: #303133;
+            font-size: 14px;
+          }
+
+          :deep(.el-select) {
+            width: 200px;
+          }
+        }
+
+        .upload-tips {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 13px;
+          color: #909399;
+          padding: 6px 12px;
+          background-color: #f5f7fa;
+          border-radius: 6px;
+
+          .el-icon {
+            color: #409eff;
+            font-size: 14px;
+          }
+        }
+      }
+
+      .upload-area {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+
+        :deep(.el-upload) {
+          width: 100%;
+        }
+
+        :deep(.el-upload-dragger) {
+          width: 100%;
+          height: 200px;
+          border: 2px dashed #d9a066;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #fff9f0 0%, #ffffff 100%);
+          transition: all 0.3s ease;
+
+          &:hover {
+            border-color: #e6a23c;
+            background: linear-gradient(135deg, #ffe7ba 0%, #ffffff 100%);
+          }
+
+          .el-icon-plus {
+            font-size: 48px;
+            color: #e6a23c;
+            margin-bottom: 16px;
+          }
+
+          .el-upload__text {
+            .upload-text {
+              font-size: 16px;
+              color: #303133;
+              font-weight: 500;
+              margin-bottom: 8px;
+            }
+
+            .upload-hint {
+              font-size: 13px;
+              color: #909399;
+            }
+          }
+        }
+
+        // 文件列表样式优化
+        :deep(.el-upload-list) {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-top: 16px;
+
+          .el-upload-list__item {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+
+            &:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+          }
+        }
+
+        .upload-actions {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 16px;
+          background: linear-gradient(135deg, #f0f9eb 0%, #ffffff 100%);
+          border-radius: 12px;
+          border: 2px solid #e1f3d8;
+          box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
+
+          .upload-confirm-btn {
+            min-width: 200px;
+            font-size: 16px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #67c23a, #85ce61);
+            border: none;
+            box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
+            transition: all 0.3s ease;
+
+            &:hover:not(:disabled) {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 20px rgba(103, 194, 58, 0.4);
+            }
+
+            &:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+              background: #c0c4cc;
+              box-shadow: none;
+            }
+          }
+        }
       }
     }
   }

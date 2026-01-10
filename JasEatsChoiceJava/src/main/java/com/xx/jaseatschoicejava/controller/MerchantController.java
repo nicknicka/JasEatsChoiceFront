@@ -13,6 +13,7 @@ import com.xx.jaseatschoicejava.entity.Order;
 import com.xx.jaseatschoicejava.service.UserService;
 import com.xx.jaseatschoicejava.entity.User;
 import com.xx.jaseatschoicejava.util.JwtUtil;
+import com.xx.jaseatschoicejava.config.FileUploadConfig;
 import com.xx.jaseatschoicejava.entity.OrderDish;
 import com.xx.jaseatschoicejava.service.OrderDishService;
 import com.xx.jaseatschoicejava.entity.Dish;
@@ -74,6 +75,9 @@ public class MerchantController {
 
     @Autowired
     private MessageRecordService messageRecordService;
+
+    @Autowired
+    private FileUploadConfig fileUploadConfig;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -443,32 +447,50 @@ public class MerchantController {
      * 获取店铺相册
      */
     @GetMapping("/{merchantId}/album")
-    public ResponseResult<?> getMerchantAlbum(@PathVariable Long merchantId) {
-        Merchant merchant = merchantService.getById(merchantId);
-        if (merchant != null) {
-            JsonNode album = merchant.getAlbum();
-            if (album != null) {
+    public ResponseResult<?> getMerchantAlbum(@PathVariable String merchantId) {
+        logger.info("获取店铺相册，merchantId={}", merchantId);
+
+        try {
+            // 使用原生SQL直接查询album字段（因为JacksonTypeHandler在读取时有问题）
+            String albumJson = jdbcTemplate.queryForObject(
+                "SELECT album FROM t_merchant WHERE id = ?",
+                String.class,
+                merchantId
+            );
+            logger.info("查询到的album JSON字符串：{}", albumJson);
+
+            if (albumJson != null && !albumJson.isEmpty()) {
+                // 手动解析JSON字符串
+                JsonNode album = objectMapper.readTree(albumJson);
+                logger.info("解析后的相册数据：{}", album);
                 return ResponseResult.success(album);
             } else {
                 // 如果相册为空，返回默认结构
+                logger.info("相册为空，返回默认结构");
                 ObjectNode defaultAlbum = objectMapper.createObjectNode();
                 defaultAlbum.set("environment", objectMapper.createArrayNode());
                 defaultAlbum.set("dishes", objectMapper.createArrayNode());
                 return ResponseResult.success(defaultAlbum);
             }
+        } catch (Exception e) {
+            logger.error("获取相册数据失败：{}", e.getMessage(), e);
+            // 出错时返回默认结构
+            ObjectNode defaultAlbum = objectMapper.createObjectNode();
+            defaultAlbum.set("environment", objectMapper.createArrayNode());
+            defaultAlbum.set("dishes", objectMapper.createArrayNode());
+            return ResponseResult.success(defaultAlbum);
         }
-        return ResponseResult.fail("404", "商家不存在");
     }
 
     /**
      * 上传店铺相册照片
      */
     @PostMapping("/{merchantId}/album")
-    public ResponseResult<?> uploadMerchantAlbum(@PathVariable Long merchantId,
+    public ResponseResult<?> uploadMerchantAlbum(@PathVariable String merchantId,
                                                 @RequestParam("images") MultipartFile[] images,
                                                 @RequestParam("albumType") String albumType) {
-        // 配置上传目录 - 实际项目中应放在配置文件或常量中
-        String uploadDir = "/tmp/jia_shi_yi_xuan/uploads/";
+        // 从配置中获取上传目录
+        String uploadDir = fileUploadConfig.getUploadPath();
 
         try {
             // 创建上传目录（如果不存在）
@@ -477,50 +499,69 @@ public class MerchantController {
                 directory.mkdirs();
             }
 
-            Merchant merchant = merchantService.getById(merchantId);
-            if (merchant != null) {
-                JsonNode album = merchant.getAlbum();
-                ObjectNode albumObject;
+            // 使用原生SQL直接查询album字段（避免JacksonTypeHandler的bug）
+            String albumJson = jdbcTemplate.queryForObject(
+                "SELECT album FROM t_merchant WHERE id = ?",
+                String.class,
+                merchantId
+            );
+            logger.info("上传前查询到的album JSON字符串：{}", albumJson);
 
-                if (album != null) {
-                    albumObject = (ObjectNode) album;
-                } else {
-                    albumObject = objectMapper.createObjectNode();
-                    albumObject.set("environment", objectMapper.createArrayNode());
-                    albumObject.set("dishes", objectMapper.createArrayNode());
-                }
-
-                // 获取对应类型的相册数组
-                ArrayNode albumArray = (ArrayNode) albumObject.get(albumType);
-
-                // 实际上传图片并保存
-                for (MultipartFile image : images) {
-                    // 生成唯一文件名，避免覆盖
-                    String originalFilename = image.getOriginalFilename();
-                    String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                    String uniqueFilename = System.currentTimeMillis() + "-" + UUID.randomUUID().toString() + fileExtension;
-
-                    // 保存文件到磁盘
-                    String filePath = uploadDir + uniqueFilename;
-                    try (FileOutputStream fos = new FileOutputStream(filePath)) {
-                        fos.write(image.getBytes());
-                    }
-
-                    // 生成访问URL（这里使用本地服务器地址，实际项目中可以用域名或CDN地址）
-                    String imageUrl = ApiConstants.UPLOAD_URL_PREFIX + uniqueFilename;
-                    albumArray.add(imageUrl);
-                }
-
-                // 更新商家相册
-                merchant.setAlbum(albumObject);
-                merchantService.updateById(merchant);
-
-                // 返回上传的图片URL
-                return ResponseResult.success(albumArray);
+            ObjectNode albumObject;
+            if (albumJson != null && !albumJson.isEmpty()) {
+                albumObject = (ObjectNode) objectMapper.readTree(albumJson);
+            } else {
+                // 如果相册为空，创建默认结构
+                albumObject = objectMapper.createObjectNode();
+                albumObject.set("environment", objectMapper.createArrayNode());
+                albumObject.set("dishes", objectMapper.createArrayNode());
             }
-            return ResponseResult.fail("404", "商家不存在");
+
+            // 获取对应类型的相册数组
+            ArrayNode albumArray = (ArrayNode) albumObject.get(albumType);
+
+            // 实际上传图片并保存
+            for (MultipartFile image : images) {
+                // 生成唯一文件名，避免覆盖
+                String originalFilename = image.getOriginalFilename();
+                String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                String uniqueFilename = System.currentTimeMillis() + "-" + UUID.randomUUID().toString() + fileExtension;
+
+                // 保存文件到磁盘
+                String filePath = uploadDir + uniqueFilename;
+                try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                    fos.write(image.getBytes());
+                }
+
+                // 生成访问URL（这里使用本地服务器地址，实际项目中可以用域名或CDN地址）
+                String imageUrl = ApiConstants.UPLOAD_URL_PREFIX + uniqueFilename;
+                albumArray.add(imageUrl);
+            }
+
+            // 更新商家相册 - 使用原生SQL更新（因为JacksonTypeHandler在更新时有问题）
+            String updatedAlbumJson = objectMapper.writeValueAsString(albumObject);
+            logger.info("更新商家相册，merchantId={}, albumJson={}", merchantId, updatedAlbumJson);
+
+            // 使用原生SQL更新album字段
+            int updateCount = jdbcTemplate.update(
+                "UPDATE t_merchant SET album = ?, update_time = NOW() WHERE id = ?",
+                updatedAlbumJson,
+                merchantId
+            );
+            logger.info("使用SQL更新商家相册结果：影响行数={}", updateCount);
+
+            // 验证更新是否成功 - 重新查询
+            Map<String, Object> result = jdbcTemplate.queryForMap(
+                "SELECT album FROM t_merchant WHERE id = ?",
+                merchantId
+            );
+            logger.info("验证更新后的相册数据: {}", result.get("album"));
+
+            // 返回上传的图片URL
+            return ResponseResult.success(albumArray);
+
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("上传相册照片失败：{}", e.getMessage(), e);
             return ResponseResult.fail("500", "上传失败: " + e.getMessage());
         }
     }
@@ -529,7 +570,7 @@ public class MerchantController {
      * 删除店铺相册照片
      */
     @DeleteMapping("/{merchantId}/album")
-    public ResponseResult<?> deleteMerchantAlbum(@PathVariable Long merchantId,
+    public ResponseResult<?> deleteMerchantAlbum(@PathVariable String merchantId,
                                                 @RequestParam("imageUrl") String imageUrl,
                                                 @RequestParam("albumType") String albumType) {
         try {
@@ -548,16 +589,25 @@ public class MerchantController {
                         }
                     }
 
-                    // 更新商家相册
-                    merchant.setAlbum(albumObject);
-                    merchantService.updateById(merchant);
+                    // 更新商家相册 - 使用原生SQL更新（因为JacksonTypeHandler在更新时有问题）
+                    String albumJson = objectMapper.writeValueAsString(albumObject);
+                    logger.info("删除后更新商家相册，merchantId={}, albumJson={}", merchantId, albumJson);
+
+                    // 使用原生SQL更新album字段
+                    int updateCount = jdbcTemplate.update(
+                        "UPDATE t_merchant SET album = ?, update_time = NOW() WHERE id = ?",
+                        albumJson,
+                        merchantId
+                    );
+                    logger.info("删除后使用SQL更新商家相册结果：影响行数={}", updateCount);
 
                     // 从文件系统删除图片
                     String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
-                    String filePath = "/tmp/jia_shi_yi_xuan/uploads/" + fileName;
+                    String filePath = fileUploadConfig.getUploadPath() + fileName;
                     File file = new File(filePath);
                     if (file.exists()) {
                         file.delete();
+                        logger.info("已删除文件: {}", filePath);
                     }
 
                     return ResponseResult.success("删除成功");
@@ -574,10 +624,10 @@ public class MerchantController {
      * 上传店铺头像
      */
     @PostMapping("/{merchantId}/avatar")
-    public ResponseResult<?> uploadMerchantAvatar(@PathVariable Long merchantId,
+    public ResponseResult<?> uploadMerchantAvatar(@PathVariable String merchantId,
                                                  @RequestParam("avatar") MultipartFile avatar) {
-        // 配置上传目录
-        String uploadDir = "/tmp/jia_shi_yi_xuan/uploads/";
+        // 从配置中获取上传目录
+        String uploadDir = fileUploadConfig.getUploadPath();
 
         try {
             // 创建上传目录（如果不存在）
@@ -620,7 +670,7 @@ public class MerchantController {
      * 获取今日营业概览
      */
     @GetMapping("/{merchantId}/business-overview")
-    public ResponseResult<?> getBusinessOverview(@PathVariable Long merchantId) {
+    public ResponseResult<?> getBusinessOverview(@PathVariable String merchantId) {
         try {
             // 从数据库获取真实数据
             Map<String, Object> overview = new HashMap<>();
@@ -768,7 +818,7 @@ public class MerchantController {
      * 获取经营统计数据
      */
     @GetMapping("/{merchantId}/statistics")
-    public ResponseResult<?> getStatistics(@PathVariable Long merchantId, @RequestParam String timeRange) {
+    public ResponseResult<?> getStatistics(@PathVariable String merchantId, @RequestParam String timeRange) {
         try {
             LocalDate today = LocalDate.now();
             LocalDateTime startTime = null;

@@ -5,19 +5,36 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
+
+import java.io.File;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private FileUploadConfig fileUploadConfig;
 
     /**
      * 配置静态资源访问路径
      */
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
+        // 获取上传目录的绝对路径
+        String uploadPath = fileUploadConfig.getUploadPath();
+        File uploadDir = new File(uploadPath);
+        String absolutePath = uploadDir.getAbsolutePath();
+
+        // 确保路径以/结尾
+        if (!absolutePath.endsWith(File.separator)) {
+            absolutePath += File.separator;
+        }
+
         // 配置上传文件访问路径
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:/tmp/jia_shi_yi_xuan/uploads/");
+                .addResourceLocations("file:" + absolutePath)
+                .setCachePeriod(0); // 禁用缓存，便于调试
     }
 
     /**

@@ -54,7 +54,7 @@ jwt:
 # 文件上传配置
 file:
   upload:
-    path: ./uploads/  # 文件上传保存路径
+    path: /Users/nickxiao/JasEatsChoice/uploads/  # 文件上传保存路径
     url-prefix: /api/uploads/  # 访问URL前缀
 
 # Netty配置

@@ -18,7 +18,7 @@ public class ApiConstants {
     /**
      * 上传文件路径前缀
      */
-    public static final String UPLOAD_URL_PREFIX = "http://localhost:8080/uploads/";
+    public static final String UPLOAD_URL_PREFIX = "http://localhost:8080/api/uploads/";
 
     // 其他API相关常量可以在此处添加
 }
