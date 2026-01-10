@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import {
   Document,
   CircleCheck,
@@ -10,15 +9,12 @@ import {
   Sunny,
   Moon,
   Coffee,
-  FolderOpened,
   ArrowRight,
-  Edit,
   CircleClose,
   CircleCheckFilled
 } from '@element-plus/icons-vue'
 import api from '../../utils/api.js'
 import { useAuthStore } from '../../store/authStore'
-import { API_CONFIG } from '../../config/index.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -39,8 +35,6 @@ const todayMenus = ref([])
 
 // 当前选中的菜单
 const selectedMenu = ref(null)
-// 当前菜单的菜品
-const currentMenuDishes = ref([])
 
 // 筛选后的菜单
 const filteredMenus = ref([...todayMenus.value])
@@ -69,13 +63,6 @@ const menuStatusMap = {
   offline: { text: '下架中', icon: '🔴', type: 'danger' }
 }
 
-// 菜品状态映射
-const dishStatusMap = {
-  online: { text: '在售', type: 'success' },
-  almost_sold: { text: '即将售罄', type: 'warning' },
-  offline: { text: '下架', type: 'danger' }
-}
-
 // 统计数据
 const menuStatistics = computed(() => {
   const total = todayMenus.value.length
@@ -95,74 +82,6 @@ const menuStatistics = computed(() => {
   }
 })
 
-// 模拟菜品数据，关联到各个菜单
-const dishData = {
-  早餐菜单: [
-    {
-      id: 1,
-      name: '豆浆',
-      price: 3,
-      category: '饮品',
-      status: 'online',
-      stock: 100,
-      updateTime: '2024-11-21 06:00'
-    },
-    {
-      id: 2,
-      name: '油条',
-      price: 2,
-      category: '主食',
-      status: 'online',
-      stock: 80,
-      updateTime: '2024-11-21 06:30'
-    }
-  ],
-  午餐菜单: [
-    {
-      id: 4,
-      name: '鱼香肉丝',
-      price: 18,
-      category: '热菜',
-      status: 'online',
-      stock: 50,
-      updateTime: '2024-11-21 10:30'
-    }
-  ],
-  晚餐菜单: [
-    {
-      id: 7,
-      name: '红烧肉',
-      price: 22,
-      category: '热菜',
-      status: 'online',
-      stock: 30,
-      updateTime: '2024-11-21 16:30'
-    }
-  ],
-  下午茶菜单: [
-    {
-      id: 9,
-      name: '奶茶',
-      price: 15,
-      category: '饮品',
-      status: 'online',
-      stock: 70,
-      updateTime: '2024-11-21 14:00'
-    }
-  ],
-  今日特色菜单: [
-    {
-      id: 4,
-      name: '鱼香肉丝',
-      price: 18,
-      category: '热菜',
-      status: 'online',
-      stock: 50,
-      updateTime: '2024-11-21 10:30'
-    }
-  ]
-}
-
 // 从后端获取今日菜单数据
 const fetchTodayMenus = () => {
   api
@@ -173,10 +92,10 @@ const fetchTodayMenus = () => {
           ...menu,
           // 后端直接返回 online/offline，不需要转换
           status: menu.status || 'offline',
-          dishes: menu.dishCount || 0,
+          dishes: Array.isArray(menu.dishes) ? menu.dishes.length : (menu.dishes || 0),
           updateTime: menu.updateTime ? menu.updateTime.replace('T', ' ') : '',
-          autoOnline: menu.autoStartTime ? menu.autoStartTime.replace('T', ' ') : '',
-          autoOffline: menu.autoEndTime ? menu.autoEndTime.replace('T', ' ') : ''
+          autoOnline: menu.autoOnline ? menu.autoOnline.replace('T', ' ') : '',
+          autoOffline: menu.autoOffline ? menu.autoOffline.replace('T', ' ') : ''
         }))
         filteredMenus.value = [...todayMenus.value]
       }
@@ -189,7 +108,6 @@ const fetchTodayMenus = () => {
 // 切换菜单
 const switchMenu = (menu) => {
   selectedMenu.value = menu
-  currentMenuDishes.value = dishData[menu.name] || []
 }
 
 // 筛选菜单：先按类型，再按状态
@@ -243,53 +161,6 @@ const formatTime = (timeStr) => {
     return parts[1].substring(0, 5)
   }
   return timeStr.substring(0, 5)
-}
-
-// 编辑菜品
-const editDish = (dish) => {
-  // 导航到菜品编辑页面
-  router.push({
-    path: '/merchant/home/dish-edit',
-    query: { dishId: dish.id, menuName: selectedMenu.value.name }
-  })
-}
-
-// 切换菜品状态
-const toggleDishStatus = (dish) => {
-  // 计算新状态
-  const currentStatus = dish.status
-  let newStatus
-
-  if (currentStatus === 'online' || currentStatus === 'almost_sold') {
-    newStatus = 'offline'
-  } else if (currentStatus === 'offline') {
-    newStatus = dish.stock <= 10 ? 'almost_sold' : 'online'
-  }
-
-  // 更新本地状态
-  const oldStatusText =
-    currentStatus === 'online' ? '上架' : currentStatus === 'almost_sold' ? '即将售罄' : '下架'
-  const newStatusText =
-    newStatus === 'online' ? '上架' : newStatus === 'almost_sold' ? '即将售罄' : '下架'
-
-  // 调用API更新菜品状态
-  const updateData = {
-    dishId: dish.id,
-    status: newStatus
-  }
-
-  api
-    .put(API_CONFIG.merchant.updateDishStatus.replace('{dishId}', dish.id), updateData)
-    .then((response) => {
-      if (response.data && response.data.success) {
-        dish.status = newStatus
-        ElMessage.success(`菜品 ${dish.name} 已从${oldStatusText}状态切换为${newStatusText}状态`)
-      }
-    })
-    .catch((error) => {
-      console.error('切换菜品状态失败:', error)
-      ElMessage.error('切换菜品状态失败')
-    })
 }
 
 onMounted(() => {
@@ -391,7 +262,7 @@ onMounted(() => {
                   <Dish v-else />
                 </el-icon>
               </div>
-              <div class="menu-status-badge">
+              <div class="menu-status-badge" :class="`status-badge-${menu.status}`">
                 <el-icon :size="14">
                   <CircleCheck v-if="menu.status === 'online'" />
                   <CircleClose v-else-if="menu.status === 'offline'" />
@@ -425,92 +296,6 @@ onMounted(() => {
         </el-button>
       </div>
     </div>
-
-    <!-- 菜品列表 -->
-    <transition name="slide-up">
-      <div v-if="selectedMenu" class="quick-actions-card dishes-card">
-        <div class="menu-header">
-          <h3 class="card-title">
-            <el-icon :size="20"><Dish /></el-icon> {{ selectedMenu.name }} - 菜品列表
-            <el-tag size="small" class="menu-tag" effect="plain">
-              {{ selectedMenu.dishes }} 道菜品
-            </el-tag>
-          </h3>
-        </div>
-
-        <div class="dish-list">
-          <transition-group name="list" tag="div">
-            <div
-              class="dish-item"
-              v-for="dish in currentMenuDishes"
-              :key="dish.id"
-            >
-              <div class="dish-cover">
-                <div class="dish-image"><el-icon :size="40"><Dish /></el-icon></div>
-              </div>
-              <div class="dish-info">
-                <div class="dish-name">
-                  <span class="name">{{ dish.name }}</span>
-                  <el-tag
-                    :type="dishStatusMap[dish.status].type"
-                    size="small"
-                    effect="plain"
-                  >
-                    {{ dishStatusMap[dish.status].text }}
-                  </el-tag>
-                </div>
-
-                <div class="dish-desc">
-                  {{ dish.description || '美味可口，欢迎品尝' }}
-                </div>
-
-                <div class="dish-stats">
-                  <span class="dish-category"><el-icon :size="14"><FolderOpened /></el-icon> {{ dish.category }}</span>
-                  <span class="dish-price">¥{{ dish.price }}</span>
-                  <span
-                    class="dish-stock"
-                    :class="{
-                      'stock-almost': dish.status === 'almost_sold',
-                      'stock-off': dish.status === 'offline'
-                    }"
-                  >
-                    <el-icon :size="12">
-                      <CircleClose v-if="dish.status === 'offline'" />
-                      <Clock v-else-if="dish.status === 'almost_sold'" />
-                      <CircleCheck v-else />
-                    </el-icon>
-                    {{
-                      dish.status === 'almost_sold'
-                        ? ' 即将售罄'
-                        : dish.status === 'offline'
-                          ? ' 已下架'
-                          : ` ${dish.stock} 份`
-                    }}
-                  </span>
-                </div>
-              </div>
-              <div class="dish-actions">
-                <el-button type="primary" size="small" @click="editDish(dish)">
-                  <el-icon :size="14"><Edit /></el-icon> 编辑
-                </el-button>
-                <el-button
-                  :type="dish.status === 'online' ? 'warning' : 'success'"
-                  size="small"
-                  effect="plain"
-                  @click="toggleDishStatus(dish)"
-                >
-                  <el-icon :size="14">
-                    <CircleClose v-if="dish.status === 'online'" />
-                    <CircleCheck v-else />
-                  </el-icon>
-                  {{ dish.status === 'online' ? ' 下架' : ' 上架' }}
-                </el-button>
-              </div>
-            </div>
-          </transition-group>
-        </div>
-      </div>
-    </transition>
   </div>
 </template>
 
@@ -671,16 +456,16 @@ onMounted(() => {
             }
 
             &.active {
-              background: #409eff;
+              background: #67c23a;
               color: #ffffff;
-              border-color: #409eff;
-              box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+              border-color: #67c23a;
+              box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
             }
 
             &.tag-online {
               &:hover, &.active {
-                background: #409eff;
-                border-color: #409eff;
+                background: #67c23a;
+                border-color: #67c23a;
                 color: #ffffff;
               }
             }
@@ -758,7 +543,7 @@ onMounted(() => {
           }
 
           &.status-online {
-            border-left: 4px solid #409eff;
+            border-left: 4px solid #67c23a;
           }
 
           &.status-offline {
@@ -802,16 +587,33 @@ onMounted(() => {
               background: #f5f7fa;
 
               .el-icon {
-                &.el-icon-circle-check {
-                  color: #409eff;
-                }
+                color: #909399;
+              }
 
-                &.el-icon-circle-close {
+              &.status-badge-online {
+                background: #f0f9ff;
+                color: #67c23a;
+
+                .el-icon {
+                  color: #67c23a;
+                }
+              }
+
+              &.status-badge-offline {
+                background: #f5f7fa;
+                color: #909399;
+
+                .el-icon {
                   color: #909399;
                 }
+              }
 
-                &.el-icon-clock {
-                  color: #909399;
+              &.status-badge-draft {
+                background: #fdf6ec;
+                color: #e6a23c;
+
+                .el-icon {
+                  color: #e6a23c;
                 }
               }
             }
@@ -919,242 +721,336 @@ onMounted(() => {
       }
     }
 
-    // 菜品列表卡片
-    .dishes-card {
+    .quick-actions-card {
       margin-bottom: 24px;
-      padding: 24px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-      border: 1px solid #e8e8e8;
 
-      .menu-header {
-        margin-bottom: 20px;
-        padding-bottom: 16px;
-        border-bottom: 2px solid #f0f0f0;
+      &.today-menu-card {
+        padding: 24px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8e8e8;
 
-        .card-title {
-          font-size: 18px;
-          font-weight: 700;
-          color: #303133;
-          margin: 0;
+        .menu-header {
           display: flex;
+          justify-content: flex-start;
           align-items: center;
-          gap: 12px;
+          margin-bottom: 20px;
+          flex-wrap: wrap;
+          gap: 16px;
 
-          .el-icon {
-            color: #909399;
+          &:first-child {
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
           }
 
-          .menu-tag {
-            background: linear-gradient(135deg, #e8f4fd 0%, #d0e8ff 100%);
-            color: #409eff;
-            border: none;
+          .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+            color: #303133;
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .el-icon {
+              color: #909399;
+            }
+          }
+
+          .filter-label {
             font-weight: 600;
+            margin-right: 12px;
+            color: #606266;
+            font-size: 14px;
+          }
+
+          .filter-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+
+            .menu-filter-tag,
+            .menu-status-tag {
+              cursor: pointer;
+              transition: all 0.3s ease;
+              border-radius: 20px;
+              padding: 6px 16px;
+              font-size: 13px;
+              font-weight: 500;
+              border: 1.5px solid #e0e0e0;
+              background: #fafafa;
+              color: #606266;
+
+              &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                background: #f0f0f0;
+              }
+
+              &.active {
+                background: #67c23a;
+                color: #ffffff;
+                border-color: #67c23a;
+                box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
+              }
+
+              &.tag-online {
+                &:hover, &.active {
+                  background: #67c23a;
+                  border-color: #67c23a;
+                  color: #ffffff;
+                }
+              }
+
+              &.tag-offline {
+                &:hover, &.active {
+                  background: #909399;
+                  border-color: #909399;
+                  color: #ffffff;
+                }
+              }
+
+              &.tag-draft {
+                &:hover, &.active {
+                  background: #e6a23c;
+                  border-color: #e6a23c;
+                  color: #ffffff;
+                }
+              }
+            }
           }
         }
-      }
 
-      .dish-list {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-
-        .dish-item {
-          display: flex;
-          align-items: flex-start;
+        // 菜单卡片网格
+        .menu-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
           gap: 16px;
-          padding: 18px;
-          background: #ffffff;
-          border: 2px solid #f5f5f5;
-          border-radius: 12px;
-          transition: all 0.3s ease;
-          overflow: hidden;
+          margin-bottom: 20px;
 
-          &::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: linear-gradient(180deg, #409eff 0%, #66b1ff 100%);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
-          }
-
-          &:hover {
-            transform: translateX(6px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            border-color: #409eff;
+          .menu-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 18px;
+            border: 2px solid #f0f0f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
 
             &::before {
-              transform: scaleY(1);
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 4px;
+              background: linear-gradient(90deg, #409eff 0%, #66b1ff 100%);
+              opacity: 0;
+              transition: opacity 0.3s ease;
             }
 
-            .dish-cover .dish-image {
-              transform: scale(1.05);
-            }
-          }
+            &:hover {
+              transform: translateY(-6px);
+              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+              border-color: #409eff;
 
-          .dish-cover {
-            flex-shrink: 0;
-
-            .dish-image {
-              font-size: 48px;
-              width: 90px;
-              height: 90px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
-              border-radius: 12px;
-              transition: transform 0.3s ease;
-
-              .el-icon {
-                color: #909399;
+              &::before {
+                opacity: 1;
               }
-            }
-          }
 
-          .dish-info {
-            flex: 1;
-            min-width: 0;
-
-            .dish-name {
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              margin-bottom: 10px;
-
-              .name {
-                font-size: 17px;
-                font-weight: 600;
-                color: #303133;
-                flex: 1;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+              .menu-icon {
+                transform: scale(1.1) rotate(5deg);
               }
             }
 
-            .dish-desc {
-              font-size: 13px;
-              color: #909399;
+            &.selected {
+              border-color: #409eff;
+              background: linear-gradient(135deg, #ecf5ff 0%, #ffffff 100%);
+              box-shadow: 0 4px 16px rgba(64, 158, 255, 0.2);
+
+              &::before {
+                opacity: 1;
+              }
+            }
+
+            &.status-online {
+              border-left: 4px solid #67c23a;
+            }
+
+            &.status-offline {
+              border-left: 4px solid #909399;
+            }
+
+            &.status-draft {
+              border-left: 4px solid #e6a23c;
+            }
+
+            .menu-card-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
               margin-bottom: 12px;
-              line-height: 1.6;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              display: -webkit-box;
-              -webkit-line-clamp: 2;
-              -webkit-box-orient: vertical;
-            }
 
-            .dish-stats {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 16px;
-              font-size: 13px;
-
-              .dish-category {
-                background: linear-gradient(135deg, #e8f4fd 0%, #d0e8ff 100%);
-                color: #409eff;
-                padding: 4px 12px;
-                border-radius: 6px;
-                font-weight: 500;
+              .menu-icon {
+                font-size: 32px;
+                width: 50px;
+                height: 50px;
                 display: flex;
                 align-items: center;
-                gap: 4px;
+                justify-content: center;
+                background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+                border-radius: 10px;
+                transition: transform 0.3s ease;
 
                 .el-icon {
-                  color: #409eff;
+                  color: #909399;
                 }
               }
 
-              .dish-price {
-                color: #606266;
-                font-weight: 600;
-                font-size: 15px;
-              }
-
-              .dish-stock {
-                font-size: 13px;
-                font-weight: 500;
-                color: #909399;
+              .menu-status-badge {
                 display: flex;
                 align-items: center;
                 gap: 4px;
+                font-size: 12px;
+                font-weight: 500;
+                padding: 4px 10px;
+                border-radius: 12px;
+                background: #f5f7fa;
 
                 .el-icon {
-                  color: inherit;
+                  color: #909399;
                 }
 
-                &.stock-almost {
-                  color: #e6a23c;
+                &.status-badge-online {
+                  background: #f0f9ff;
+                  color: #67c23a;
 
                   .el-icon {
-                    color: #e6a23c;
+                    color: #67c23a;
                   }
                 }
 
-                &.stock-off {
+                &.status-badge-offline {
+                  background: #f5f7fa;
                   color: #909399;
 
                   .el-icon {
                     color: #909399;
                   }
                 }
+
+                &.status-badge-draft {
+                  background: #fdf6ec;
+                  color: #e6a23c;
+
+                  .el-icon {
+                    color: #e6a23c;
+                  }
+                }
+              }
+            }
+
+            .menu-name {
+              font-size: 16px;
+              font-weight: 600;
+              color: #303133;
+              margin-bottom: 12px;
+              line-height: 1.4;
+            }
+
+            .menu-info {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 12px;
+              font-size: 13px;
+              color: #909399;
+              margin-bottom: 8px;
+
+              .dishes-count {
+                color: #606266;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+
+                .el-icon {
+                  color: #909399;
+                }
+              }
+
+              .update-time {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+
+                .el-icon {
+                  color: #909399;
+                }
+              }
+            }
+
+            .menu-auto-time {
+              display: flex;
+              gap: 12px;
+              font-size: 12px;
+              color: #909399;
+              padding-top: 8px;
+              border-top: 1px dashed #e8e8e8;
+
+              span {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+
+                .el-icon {
+                  color: #909399;
+                }
               }
             }
           }
+        }
 
-          .dish-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex-shrink: 0;
+        // 空状态
+        .empty-state {
+          text-align: center;
+          padding: 60px 20px;
+          color: #909399;
 
-            .el-button {
-              min-width: 80px;
-              border-radius: 8px;
-              font-weight: 500;
-              transition: all 0.3s ease;
+          .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
 
-              &.el-button--primary {
-                background-color: #409eff;
-                border-color: #409eff;
+            .el-icon {
+              color: #c0c4cc;
+            }
+          }
 
-                &:hover {
-                  background-color: #66b1ff;
-                  border-color: #66b1ff;
-                  transform: translateY(-2px);
-                }
-              }
+          .empty-text {
+            font-size: 16px;
+            margin: 0;
+            font-weight: 500;
+          }
+        }
 
-              &.el-button--warning {
-                color: #909399;
-                border-color: #dcdfe6;
-                background: #fff;
+        .view-all {
+          text-align: right;
+          margin-top: 20px;
+          padding-top: 20px;
+          border-top: 1px solid #f0f0f0;
 
-                &:hover {
-                  color: #909399;
-                  background-color: #f5f7fa;
-                  border-color: #c0c4cc;
-                  transform: translateY(-2px);
-                }
-              }
+          .el-button {
+            color: #409eff;
+            font-weight: 600;
+            transition: all 0.3s ease;
 
-              &.el-button--success {
-                background-color: #409eff;
-                border-color: #409eff;
-                color: #ffffff;
-
-                &:hover {
-                  background-color: #66b1ff;
-                  border-color: #66b1ff;
-                  transform: translateY(-2px);
-                }
-              }
+            &:hover {
+              color: #66b1ff;
+              transform: translateX(4px);
             }
           }
         }
@@ -1242,19 +1138,6 @@ onMounted(() => {
     .quick-actions-card.today-menu-card {
       .menu-grid {
         grid-template-columns: 1fr;
-      }
-    }
-
-    .dishes-card .dish-list .dish-item {
-      flex-direction: column;
-
-      .dish-actions {
-        flex-direction: row;
-        width: 100%;
-
-        .el-button {
-          flex: 1;
-        }
       }
     }
   }
