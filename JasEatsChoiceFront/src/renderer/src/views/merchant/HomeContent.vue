@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElImageViewer } from 'element-plus'
 import api from '../../utils/api.js'
 import { API_CONFIG } from '../../config/index.js'
 import { useAuthStore } from '../../store/authStore'
@@ -290,6 +291,23 @@ const uploadSectionRef = ref(null) // 上传区域引用
 const uploadInputRef = ref(null) // 上传输入框引用
 const uploadComponentRef = ref(null) // 上传组件引用
 
+// 图片预览相关
+const showImageViewer = ref(false)
+const previewImages = ref([])
+const initialPreviewIndex = ref(0)
+
+// 打开图片预览
+const openImagePreview = (images, index) => {
+  previewImages.value = images
+  initialPreviewIndex.value = index
+  showImageViewer.value = true
+}
+
+// 关闭图片预览
+const closeImagePreview = () => {
+  showImageViewer.value = false
+}
+
 // 获取店铺相册数据
 const fetchMerchantAlbum = async () => {
   try {
@@ -405,10 +423,14 @@ const deleteAlbumImage = (type, index) => {
           }
         })
         .then((response) => {
-          if (response.data && response.data.success) {
-            // 从本地相册中删除图片
-            shopAlbum.value[type].splice(index, 1)
+          console.log('删除响应:', response)
+          // 修复响应判断逻辑
+          if (response && response.success) {
+            // 重新获取相册数据以确保一致性
+            fetchMerchantAlbum()
             ElMessage.success('照片已删除')
+          } else {
+            ElMessage.error(response?.message || '删除失败')
           }
         })
         .catch((error) => {
@@ -1147,6 +1169,7 @@ const fetchDiscounts = () => {
               v-for="(image, index) in shopAlbum.environment"
               :key="`env-${index}`"
               class="album-item"
+              @click="openImagePreview(shopAlbum.environment, index)"
             >
               <div class="album-item-overlay">
                 <el-button
@@ -1160,10 +1183,14 @@ const fetchDiscounts = () => {
               </div>
               <el-image
                 :src="image"
-                :preview-src-list="shopAlbum.environment"
-                :initial-index="index"
-                fit="contain"
-              />
+                fit="cover"
+              >
+                <template #error>
+                  <div class="image-slot">
+                    <el-icon><Picture /></el-icon>
+                  </div>
+                </template>
+              </el-image>
             </div>
           </div>
 
@@ -1507,6 +1534,15 @@ const fetchDiscounts = () => {
         </div>
       </div>
     </div>
+
+    <!-- 图片预览查看器 -->
+    <el-image-viewer
+      v-if="showImageViewer"
+      :url-list="previewImages"
+      :initial-index="initialPreviewIndex"
+      @close="closeImagePreview"
+      :teleported="true"
+    />
   </div>
 </template>
 
@@ -2519,6 +2555,31 @@ const fetchDiscounts = () => {
           box-shadow: 0 8px 24px rgba(230, 162, 60, 0.25);
         }
 
+        // 添加预览提示层
+        &::after {
+          content: '🔍 点击预览';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.5);
+          color: #fff;
+          font-size: 14px;
+          font-weight: 500;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          z-index: 1;
+          backdrop-filter: blur(2px);
+        }
+
+        &:hover::after {
+          opacity: 1;
+        }
+
         .album-item-checkbox {
           position: absolute;
           top: 8px;
@@ -2566,6 +2627,55 @@ const fetchDiscounts = () => {
           height: 160px;
           object-fit: cover;
           display: block;
+
+          .image-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
+            color: #909399;
+            font-size: 32px;
+          }
+
+          // 优化预览遮罩层样式
+          .el-image-viewer__mask {
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+          }
+
+          // 优化预览工具栏样式
+          .el-image-viewer__toolbar {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+
+            .el-icon {
+              color: #fff;
+              font-size: 20px;
+
+              &:hover {
+                color: #409eff;
+              }
+            }
+          }
+
+          // 优化左右切换按钮样式
+          .el-image-viewer__btn {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+
+            &:hover {
+              background-color: rgba(0, 0, 0, 0.8);
+              transform: scale(1.1);
+            }
+
+            .el-icon {
+              color: #fff;
+              font-size: 24px;
+            }
+          }
         }
       }
     }

@@ -574,48 +574,52 @@ public class MerchantController {
                                                 @RequestParam("imageUrl") String imageUrl,
                                                 @RequestParam("albumType") String albumType) {
         try {
-            Merchant merchant = merchantService.getById(merchantId);
-            if (merchant != null) {
-                JsonNode album = merchant.getAlbum();
-                if (album != null) {
-                    ObjectNode albumObject = (ObjectNode) album;
-                    ArrayNode albumArray = (ArrayNode) albumObject.get(albumType);
+            // 使用原生SQL直接查询album字段（避免JacksonTypeHandler的bug）
+            String albumJson = jdbcTemplate.queryForObject(
+                "SELECT album FROM t_merchant WHERE id = ?",
+                String.class,
+                merchantId
+            );
+            logger.info("删除前查询到的album JSON字符串：{}", albumJson);
 
-                    // 查找并删除图片URL
-                    for (int i = 0; i < albumArray.size(); i++) {
-                        if (albumArray.get(i).asText().equals(imageUrl)) {
-                            albumArray.remove(i);
-                            break;
-                        }
+            if (albumJson != null && !albumJson.isEmpty()) {
+                ObjectNode albumObject = (ObjectNode) objectMapper.readTree(albumJson);
+                ArrayNode albumArray = (ArrayNode) albumObject.get(albumType);
+
+                // 查找并删除图片URL
+                for (int i = 0; i < albumArray.size(); i++) {
+                    if (albumArray.get(i).asText().equals(imageUrl)) {
+                        albumArray.remove(i);
+                        break;
                     }
-
-                    // 更新商家相册 - 使用原生SQL更新（因为JacksonTypeHandler在更新时有问题）
-                    String albumJson = objectMapper.writeValueAsString(albumObject);
-                    logger.info("删除后更新商家相册，merchantId={}, albumJson={}", merchantId, albumJson);
-
-                    // 使用原生SQL更新album字段
-                    int updateCount = jdbcTemplate.update(
-                        "UPDATE t_merchant SET album = ?, update_time = NOW() WHERE id = ?",
-                        albumJson,
-                        merchantId
-                    );
-                    logger.info("删除后使用SQL更新商家相册结果：影响行数={}", updateCount);
-
-                    // 从文件系统删除图片
-                    String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
-                    String filePath = fileUploadConfig.getUploadPath() + fileName;
-                    File file = new File(filePath);
-                    if (file.exists()) {
-                        file.delete();
-                        logger.info("已删除文件: {}", filePath);
-                    }
-
-                    return ResponseResult.success("删除成功");
                 }
+
+                // 更新商家相册 - 使用原生SQL更新
+                String updatedAlbumJson = objectMapper.writeValueAsString(albumObject);
+                logger.info("删除后更新商家相册，merchantId={}, albumJson={}", merchantId, updatedAlbumJson);
+
+                // 使用原生SQL更新album字段
+                int updateCount = jdbcTemplate.update(
+                    "UPDATE t_merchant SET album = ?, update_time = NOW() WHERE id = ?",
+                    updatedAlbumJson,
+                    merchantId
+                );
+                logger.info("删除后使用SQL更新商家相册结果：影响行数={}", updateCount);
+
+                // 从文件系统删除图片
+                String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+                String filePath = fileUploadConfig.getUploadPath() + fileName;
+                File file = new File(filePath);
+                if (file.exists()) {
+                    file.delete();
+                    logger.info("已删除文件: {}", filePath);
+                }
+
+                return ResponseResult.success("删除成功");
             }
-            return ResponseResult.fail("404", "商家不存在");
+            return ResponseResult.fail("404", "相册不存在或为空");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("删除相册照片失败：{}", e.getMessage(), e);
             return ResponseResult.fail("500", "删除失败: " + e.getMessage());
         }
     }
