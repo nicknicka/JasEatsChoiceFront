@@ -440,21 +440,6 @@ public class MerchantController {
     }
 
     /**
-     * 更新商家优惠信息
-     */
-    @PutMapping("/{merchantId}/discounts")
-    public ResponseResult<?> updateMerchantDiscounts(@PathVariable Long merchantId, @RequestBody Object discounts) {
-        // 参数验证
-        if (merchantId == null) {
-            return ResponseResult.fail("400", "参数错误");
-        }
-
-        // 实现商家优惠信息更新逻辑
-        // TODO: 需要根据具体业务需求实现
-        return ResponseResult.success("优惠信息更新成功");
-    }
-
-    /**
      * 获取店铺相册
      */
     @GetMapping("/{merchantId}/album")

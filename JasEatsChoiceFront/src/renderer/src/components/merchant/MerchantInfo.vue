@@ -36,13 +36,13 @@ const addressOptions = ref([])
 // 获取地址数据
 const fetchAddressOptions = async () => {
   try {
-    console.log('开始获取地址数据，API配置:', API_CONFIG.baseURL + API_CONFIG.location.cascaderData)
+    // console.log('开始获取地址数据，API配置:', API_CONFIG.baseURL + API_CONFIG.location.cascaderData)
     const response = await api.get(API_CONFIG.location.cascaderData)
-    console.log('地址数据API响应:', response)
+    // console.log('地址数据API响应:', response)
 
     if (response && response.success) {
       addressOptions.value = response.data || []
-      console.log('地址数据设置成功:', addressOptions.value)
+      // console.log('地址数据设置成功:', addressOptions.value)
       // 将成功获取的地址数据保存到 localStorage 中
       localStorage.setItem('addressOptions', JSON.stringify(addressOptions.value))
     } else {
@@ -94,13 +94,13 @@ const toggleQuickCategories = () => {
 // 获取常用品类数据
 const fetchCommonCategories = async () => {
   try {
-    console.log('开始获取常用品类数据')
+    // console.log('开始获取常用品类数据')
     const response = await api.get(API_CONFIG.category.common)
-    console.log('常用品类API响应:', response)
+    // console.log('常用品类API响应:', response)
 
     if (response && response.success) {
       commonCategories.value = response.data || []
-      console.log('常用品类数据设置成功:', commonCategories.value)
+      // console.log('常用品类数据设置成功:', commonCategories.value)
       // 将成功获取的数据保存到 localStorage 中
       localStorage.setItem('commonCategories', JSON.stringify(commonCategories.value))
     } else {
@@ -134,13 +134,13 @@ const fetchCommonCategories = async () => {
 // 获取所有品类数据
 const fetchAllCategories = async () => {
   try {
-    console.log('开始获取所有品类数据')
+    // console.log('开始获取所有品类数据')
     const response = await api.get(API_CONFIG.category.list)
-    console.log('所有品类API响应:', response)
+    // console.log('所有品类API响应:', response)
 
     if (response && response.success) {
       allCategories.value = response.data || []
-      console.log('所有品类数据设置成功:', allCategories.value)
+      // console.log('所有品类数据设置成功:', allCategories.value)
       // 将成功获取的数据保存到 localStorage 中
       localStorage.setItem('allCategories', JSON.stringify(allCategories.value))
     } else {
@@ -241,7 +241,7 @@ const searchLocation = async () => {
   try {
     // 构建完整地址字符串
     const fullAddress = editForm.value.areaAddress.join('') + editForm.value.detailAddress
-    console.log('搜索地址:', fullAddress)
+    // console.log('搜索地址:', fullAddress)
 
     // 调用地址搜索API
     const response = await api.get(API_CONFIG.location.search, {
@@ -250,7 +250,7 @@ const searchLocation = async () => {
       }
     })
 
-    console.log('地址搜索API响应:', response)
+    // console.log('地址搜索API响应:', response)
 
     if (response && response.success && response.data) {
       // 处理搜索结果，后端返回的是数组
@@ -276,7 +276,7 @@ const searchLocation = async () => {
 
 // 选择搜索结果
 const selectSearchResult = (result) => {
-  console.log('选择的地址:', result)
+  // console.log('选择的地址:', result)
 
   // 将坐标信息保存到表单中
   if (result.latitude && result.longitude) {
@@ -519,8 +519,8 @@ const validateForm = () => {
   }
 
   // 营业时间验证：确保选择了营业时间
-  console.log('businessHours 类型:', typeof editForm.value.businessHours)
-  console.log('businessHours 值:', editForm.value.businessHours)
+  // console.log('businessHours 类型:', typeof editForm.value.businessHours)
+  // console.log('businessHours 值:', editForm.value.businessHours)
 
   if (!editForm.value.businessHours) {
     ElMessage.warning('请选择营业时间')
