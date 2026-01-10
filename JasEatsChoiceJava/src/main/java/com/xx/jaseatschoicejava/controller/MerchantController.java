@@ -17,8 +17,10 @@ import com.xx.jaseatschoicejava.entity.OrderDish;
 import com.xx.jaseatschoicejava.service.OrderDishService;
 import com.xx.jaseatschoicejava.entity.Dish;
 import com.xx.jaseatschoicejava.entity.Review;
+import com.xx.jaseatschoicejava.entity.MessageRecord;
 import com.xx.jaseatschoicejava.service.DishService;
 import com.xx.jaseatschoicejava.service.ReviewService;
+import com.xx.jaseatschoicejava.service.MessageRecordService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
@@ -69,6 +71,9 @@ public class MerchantController {
 
     @Autowired
     private ReviewService reviewService;
+
+    @Autowired
+    private MessageRecordService messageRecordService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -640,6 +645,11 @@ public class MerchantController {
             LocalDateTime startOfDay = today.atStartOfDay();
             LocalDateTime endOfDay = today.plusDays(1).atStartOfDay().minusSeconds(1);
 
+            // 获取昨天的日期
+            LocalDate yesterday = today.minusDays(1);
+            LocalDateTime startOfYesterday = yesterday.atStartOfDay();
+            LocalDateTime endOfYesterday = yesterday.plusDays(1).atStartOfDay().minusSeconds(1);
+
             // 查询今日订单
             LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(Order::getMerchantId, merchantId)
@@ -649,20 +659,49 @@ public class MerchantController {
             // 获取订单列表
             List<Order> orders = orderService.list(queryWrapper);
 
-            // 计算营业额（排除已取消的订单）
+            // 计算今日营业额（排除已取消的订单）
             BigDecimal totalSales = orders.stream()
                     .filter(order -> order.getStatus() != 6) // status 6 是已取消
                     .map(Order::getTotalAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // 计算订单数（排除已取消的订单）
+            // 计算今日订单数（排除已取消的订单）
             long totalOrders = orders.stream()
                     .filter(order -> order.getStatus() != 6) // status 6 是已取消
                     .count();
 
+            // 查询昨日订单
+            LambdaQueryWrapper<Order> yesterdayQueryWrapper = new LambdaQueryWrapper<>();
+            yesterdayQueryWrapper.eq(Order::getMerchantId, merchantId)
+                                .ge(Order::getCreateTime, startOfYesterday)
+                                .le(Order::getCreateTime, endOfYesterday);
+
+            // 获取昨日订单列表
+            List<Order> yesterdayOrders = orderService.list(yesterdayQueryWrapper);
+
+            // 计算昨日营业额（排除已取消的订单）
+            BigDecimal yesterdaySales = yesterdayOrders.stream()
+                    .filter(order -> order.getStatus() != 6)
+                    .map(Order::getTotalAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // 计算昨日订单数（排除已取消的订单）
+            long yesterdayOrdersCount = yesterdayOrders.stream()
+                    .filter(order -> order.getStatus() != 6)
+                    .count();
+
+            // 计算趋势百分比和方向
+            String salesTrend = calculateTrend(totalSales, yesterdaySales);
+            String ordersTrend = calculateTrend(
+                BigDecimal.valueOf(totalOrders),
+                BigDecimal.valueOf(yesterdayOrdersCount)
+            );
+
             // 设置结果
-            overview.put("sales", totalSales.doubleValue());  // 营业额
-            overview.put("orders", totalOrders);               // 订单数
+            overview.put("sales", totalSales.doubleValue());       // 营业额
+            overview.put("orders", totalOrders);                    // 订单数
+            overview.put("salesTrend", salesTrend);                 // 营业额趋势
+            overview.put("ordersTrend", ordersTrend);               // 订单数趋势
 
             // 新增评价数量（使用真实数据，过去7天内的评价）
             LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
@@ -673,13 +712,70 @@ public class MerchantController {
             long newCommentsCount = reviewService.count(reviewQueryWrapper);
             overview.put("newComments", newCommentsCount);  // 新增评价
 
-            // 未读消息功能暂未实现，这里使用模拟数据
-            overview.put("unreadMessages", 3);                // 未读消息
+            // 上周同期的评价数量（用于趋势对比）
+            LocalDateTime twoWeeksAgo = LocalDateTime.now().minusDays(14);
+            LambdaQueryWrapper<Review> lastWeekReviewQueryWrapper = new LambdaQueryWrapper<>();
+            lastWeekReviewQueryWrapper.eq(Review::getMerchantId, merchantId)
+                                    .eq(Review::getStatus, 0)
+                                    .ge(Review::getCreateTime, twoWeeksAgo)
+                                    .le(Review::getCreateTime, oneWeekAgo);
+            long lastWeekCommentsCount = reviewService.count(lastWeekReviewQueryWrapper);
+
+            String commentsTrend = calculateTrend(
+                BigDecimal.valueOf(newCommentsCount),
+                BigDecimal.valueOf(lastWeekCommentsCount)
+            );
+            overview.put("commentsTrend", commentsTrend);  // 新增评价趋势
+
+            // 未读消息数量（查询接收者为该商家且未读的消息）
+            LambdaQueryWrapper<MessageRecord> messageQueryWrapper = new LambdaQueryWrapper<>();
+            messageQueryWrapper.eq(MessageRecord::getReceiverId, merchantId)
+                             .eq(MessageRecord::getReadStatus, 0); // 0表示未读
+            long unreadMessagesCount = messageRecordService.count(messageQueryWrapper);
+            overview.put("unreadMessages", unreadMessagesCount);  // 未读消息
+
+            // 未读消息趋势（简单处理：有消息显示上升，无消息显示持平）
+            String messagesTrend = unreadMessagesCount > 0 ? "↑ 100%" : "→ 0%";
+            overview.put("messagesTrend", messagesTrend);  // 未读消息趋势
 
             return ResponseResult.success(overview);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseResult.fail("500", "获取营业概览失败");
+        }
+    }
+
+    /**
+     * 计算趋势百分比和方向
+     * @param current 当前值
+     * @param previous 对比值
+     * @return 趋势字符串，如 "↑ 12.5%"、"↓ 2.1%"、"→ 0%"
+     */
+    private String calculateTrend(BigDecimal current, BigDecimal previous) {
+        if (previous == null || previous.compareTo(BigDecimal.ZERO) == 0) {
+            // 如果昨天的数据为0，无法计算百分比
+            if (current.compareTo(BigDecimal.ZERO) == 0) {
+                return "→ 0%";  // 今天也是0
+            } else {
+                return "↑ 100%";  // 昨天是0，今天有数据，显示上升100%
+            }
+        }
+
+        // 计算变化百分比
+        BigDecimal change = current.subtract(previous);
+        BigDecimal percentage = change.divide(previous, 4, BigDecimal.ROUND_HALF_UP)
+                                       .multiply(BigDecimal.valueOf(100));
+
+        // 格式化百分比，保留1位小数
+        double percentageValue = percentage.setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+        // 判断趋势方向
+        if (percentageValue > 0) {
+            return "↑ " + Math.abs(percentageValue) + "%";
+        } else if (percentageValue < 0) {
+            return "↓ " + Math.abs(percentageValue) + "%";
+        } else {
+            return "→ 0%";
         }
     }
 

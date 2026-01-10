@@ -7,7 +7,11 @@ const businessOverview = ref({
   sales: 0,
   orders: 0,
   newComments: 0,
-  unreadMessages: 3
+  unreadMessages: 0,
+  salesTrend: '→ 0%',
+  ordersTrend: '→ 0%',
+  commentsTrend: '→ 0%',
+  messagesTrend: '→ 0%'
 })
 
 const authStore = useAuthStore()
@@ -22,42 +26,50 @@ if (!merchantId) {
   }
 }
 
-// 概览项导航配置
+// 概览项导航配置（使用计算属性动态获取趋势）
 const overviewConfig = ref([
   {
     key: 'sales',
     icon: '💰',
     label: '营业额',
     onClick: () => router.push('/merchant/home/statistics'),
-    trend: '↑ 12.5%',
     trendClass: 'trend-up',
-    suffix: '¥'
+    suffix: '¥',
+    trendKey: 'salesTrend'
   },
   {
     key: 'orders',
     icon: '🍽️',
     label: '订单数',
     onClick: () => router.push('/merchant/home/orders'),
-    trend: '↑ 8.3%',
-    trendClass: 'trend-up'
+    trendClass: 'trend-up',
+    trendKey: 'ordersTrend'
   },
   {
     key: 'newComments',
     icon: '🌟',
     label: '新增评价',
     onClick: () => router.push('/merchant/home/comments'),
-    trend: '↓ 2.1%',
-    trendClass: 'trend-down'
+    trendClass: 'trend-down',
+    trendKey: 'commentsTrend'
   },
   {
     key: 'unreadMessages',
     icon: '📞',
     label: '未读消息',
     onClick: () => router.push('/merchant/home/messages'),
-    trend: '→ 0%',
-    trendClass: 'trend-neutral'
+    trendClass: 'trend-neutral',
+    trendKey: 'messagesTrend'
   }
 ])
+
+// 获取趋势样式类
+const getTrendClass = (trend) => {
+  if (!trend) return 'trend-neutral'
+  if (trend.includes('↑')) return 'trend-up'
+  if (trend.includes('↓')) return 'trend-down'
+  return 'trend-neutral'
+}
 
 // 获取营业概览
 const fetchBusinessOverview = () => {
@@ -98,8 +110,11 @@ onMounted(() => {
               item.key === 'sales' ? businessOverview.sales.toFixed(0) : businessOverview[item.key]
             }}
           </div>
-          <div class="item-trend" :class="item.trendClass">
-            {{ item.trend }}
+          <div
+            class="item-trend"
+            :class="getTrendClass(businessOverview[item.trendKey])"
+          >
+            {{ businessOverview[item.trendKey] }}
           </div>
         </div>
       </div>

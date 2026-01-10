@@ -86,6 +86,12 @@ export const API_CONFIG = {
     search: '/v1/location/search' // 地址搜索接口
   },
 
+  // 经营品类API端点
+  category: {
+    list: '/v1/category/list', // 获取所有经营品类接口
+    common: '/v1/category/common' // 获取常用品类接口
+  },
+
   // 订单API端点
   order: {
     list: '/v1/orders/user/', // 获取用户订单列表接口

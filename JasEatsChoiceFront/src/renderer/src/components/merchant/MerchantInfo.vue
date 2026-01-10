@@ -83,15 +83,82 @@ const fetchAddressOptions = async () => {
 const categoryOptions = ref([])
 const categoryLoading = ref(false)
 const quickCategoriesExpanded = ref(false) // 快捷选择是否展开
-
-// 常用品类（只保留最常用的8个）
-const commonCategories = [
-  '中式快餐', '火锅', '烧烤', '川菜', '湘菜', '粤菜', '西餐', '日韩料理'
-]
+const commonCategories = ref([]) // 常用品类（从后端获取）
+const allCategories = ref([]) // 所有品类（从后端获取，用于搜索）
 
 // 切换快捷选择展开/收起
 const toggleQuickCategories = () => {
   quickCategoriesExpanded.value = !quickCategoriesExpanded.value
+}
+
+// 获取常用品类数据
+const fetchCommonCategories = async () => {
+  try {
+    console.log('开始获取常用品类数据')
+    const response = await api.get(API_CONFIG.category.common)
+    console.log('常用品类API响应:', response)
+
+    if (response && response.success) {
+      commonCategories.value = response.data || []
+      console.log('常用品类数据设置成功:', commonCategories.value)
+      // 将成功获取的数据保存到 localStorage 中
+      localStorage.setItem('commonCategories', JSON.stringify(commonCategories.value))
+    } else {
+      console.error('获取常用品类失败：API返回失败', response)
+      // 从 localStorage 中获取缓存数据
+      const cachedCategories = localStorage.getItem('commonCategories')
+      if (cachedCategories) {
+        commonCategories.value = JSON.parse(cachedCategories)
+        ElMessage.warning('常用品类数据加载失败，使用缓存数据')
+      } else {
+        // 如果没有缓存，使用默认数据
+        commonCategories.value = ['中式快餐', '火锅', '烧烤', '川菜', '湘菜', '粤菜', '西餐', '日韩料理']
+        ElMessage.warning('常用品类数据加载失败，使用默认数据')
+      }
+    }
+  } catch (error) {
+    console.error('获取常用品类失败:', error)
+    // 从 localStorage 中获取缓存数据
+    const cachedCategories = localStorage.getItem('commonCategories')
+    if (cachedCategories) {
+      commonCategories.value = JSON.parse(cachedCategories)
+      ElMessage.warning('常用品类数据加载失败，使用缓存数据')
+    } else {
+      // 如果没有缓存，使用默认数据
+      commonCategories.value = ['中式快餐', '火锅', '烧烤', '川菜', '湘菜', '粤菜', '西餐', '日韩料理']
+      ElMessage.warning('常用品类数据加载失败，使用默认数据')
+    }
+  }
+}
+
+// 获取所有品类数据
+const fetchAllCategories = async () => {
+  try {
+    console.log('开始获取所有品类数据')
+    const response = await api.get(API_CONFIG.category.list)
+    console.log('所有品类API响应:', response)
+
+    if (response && response.success) {
+      allCategories.value = response.data || []
+      console.log('所有品类数据设置成功:', allCategories.value)
+      // 将成功获取的数据保存到 localStorage 中
+      localStorage.setItem('allCategories', JSON.stringify(allCategories.value))
+    } else {
+      console.error('获取所有品类失败：API返回失败', response)
+      // 从 localStorage 中获取缓存数据
+      const cachedCategories = localStorage.getItem('allCategories')
+      if (cachedCategories) {
+        allCategories.value = JSON.parse(cachedCategories)
+      }
+    }
+  } catch (error) {
+    console.error('获取所有品类失败:', error)
+    // 从 localStorage 中获取缓存数据
+    const cachedCategories = localStorage.getItem('allCategories')
+    if (cachedCategories) {
+      allCategories.value = JSON.parse(cachedCategories)
+    }
+  }
 }
 
 // 经营品类搜索方法
@@ -104,11 +171,13 @@ const remoteSearchCategory = async (query) => {
   categoryLoading.value = true
 
   try {
-    // 模拟API搜索，实际项目中应调用真实API
-    await new Promise(resolve => setTimeout(resolve, 300))
+    // 如果还没有加载所有品类，先加载
+    if (allCategories.value.length === 0) {
+      await fetchAllCategories()
+    }
 
-    // 从常用品类中搜索匹配的结果
-    const filtered = commonCategories.filter(category =>
+    // 从所有品类中搜索匹配的结果
+    const filtered = allCategories.value.filter(category =>
       category.includes(query)
     )
 
@@ -265,10 +334,11 @@ const fetchMerchantInfo = async () => {
   }
 }
 
-// 组件挂载时获取商家信息和地址数据
+// 组件挂载时获取商家信息、地址数据和品类数据
 onMounted(async () => {
   await fetchMerchantInfo()
   await fetchAddressOptions()
+  await fetchCommonCategories()
 })
 
 // 格式化营业时间
