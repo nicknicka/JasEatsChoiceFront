@@ -331,7 +331,10 @@
       "Bash(/Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron:*)",
       "Bash(npm uninstall:*)",
       "Bash(./node_modules/.bin/electron:*)",
-      "Bash(/Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/node_modules/.bin/electron:*)"
+      "Bash(/Users/nickxiao/JasEatsChoice/JasEatsChoiceFront/node_modules/.bin/electron:*)",
+      "Bash(awk:*)",
+      "Bash(timeout 5 npm run dev:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

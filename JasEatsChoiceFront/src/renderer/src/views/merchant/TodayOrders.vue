@@ -1,6 +1,23 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  View,
+  CircleCheck,
+  CircleCheckFilled,
+  Goods,
+  Dish,
+  Select,
+  MoreFilled,
+  User,
+  CircleClose,
+  Delete,
+  Search,
+  Refresh,
+  Reading,
+  Filter,
+  List
+} from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import CommonBackButton from '../../components/common/CommonBackButton.vue'
 
@@ -426,7 +443,14 @@ const getTagType = (status) => {
 // 获取状态标签文本（显示全部订单的数量，不受搜索影响）
 const getStatusLabel = (status) => {
   if (status === 'all') return `全部 (${orders.value.length})`
-  return `${orderStatusMap[status].text} (${orders.value.filter(o => o.status === status).length})`
+  const count = orders.value.filter(o => o.status === status).length
+  return `${orderStatusMap[status].text} (${count})`
+}
+
+// 获取状态的订单数量
+const getStatusCount = (status) => {
+  if (status === 'all') return orders.value.length
+  return orders.value.filter(o => o.status === status).length
 }
 
 // 获取空状态描述
@@ -537,205 +561,295 @@ onMounted(() => {
     <!-- 筛选和搜索 -->
     <div class="filter-section">
       <div class="filter-left">
-        <span class="filter-label">订单列表 (状态筛选：</span>
-        <el-tag
-          v-for="status in ['all', 1, 2, 3, 4, 5]"
-          :key="status"
-          :type="activeStatusFilter === status ? getTagType(status) : 'info'"
-          effect="plain"
-          class="status-tag"
-          @click="activeStatusFilter = status"
-        >
-          {{ getStatusLabel(status) }}
-        </el-tag>
-        <span>)</span>
+        <div class="filter-header">
+          <el-icon class="filter-icon"><Filter /></el-icon>
+          <span class="filter-label">状态筛选</span>
+        </div>
+        <div class="status-filter-group">
+          <div
+            v-for="status in ['all', 1, 2, 3, 4, 5]"
+            :key="status"
+            :class="['custom-status-tag', `status-tag-${status}`, { 'active': activeStatusFilter === status, 'zero-count': getStatusCount(status) === 0 }]"
+            @click="activeStatusFilter = status"
+          >
+            <template v-if="status === 'all'">
+              <el-icon class="tag-icon"><List /></el-icon>
+            </template>
+            <template v-else-if="status === 1">
+              <el-icon class="tag-icon"><CircleClose /></el-icon>
+            </template>
+            <template v-else-if="status === 2 || status === 3">
+              <el-icon class="tag-icon"><Goods /></el-icon>
+            </template>
+            <template v-else-if="status === 4">
+              <el-icon class="tag-icon"><Dish /></el-icon>
+            </template>
+            <template v-else-if="status === 5">
+              <el-icon class="tag-icon"><CircleCheckFilled /></el-icon>
+            </template>
+            <span class="tag-text">{{ getStatusLabel(status) }}</span>
+            <el-icon v-if="activeStatusFilter === status && status !== 'all'" class="close-icon" @click.stop="activeStatusFilter = 'all'">
+              <CircleClose />
+            </el-icon>
+          </div>
+        </div>
       </div>
 
       <div class="filter-right">
         <el-input
           v-model="searchKeyword"
-          placeholder="输入订单号/用户名称..."
-          style="width: 300px"
+          placeholder="搜索订单号/用户/电话"
+          class="search-input"
           clearable
-        />
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+      </div>
+    </div>
+
+    <!-- 快捷操作栏 -->
+    <div class="quick-actions">
+      <div class="quick-actions-left">
+        <el-button
+          v-if="orderOverview.unreadCount > 0"
+          type="warning"
+          size="small"
+          @click="markAllAsRead"
+          class="quick-action-btn"
+        >
+          <el-icon><Reading /></el-icon>
+          <span>全部已读</span>
+        </el-button>
+        <el-button
+          size="small"
+          @click="refreshOrders"
+          :loading="loading"
+          class="quick-action-btn"
+        >
+          <el-icon><Refresh /></el-icon>
+          <span>刷新</span>
+        </el-button>
+      </div>
+      <div class="quick-actions-right">
+        <span class="order-count-info">
+          共 <strong>{{ filteredOrders.length }}</strong> 个订单
+        </span>
       </div>
     </div>
 
     <!-- 订单列表 -->
-    <transition-group name="list" tag="div" v-loading="loading" class="orders-list-section">
-      <div v-for="order in filteredOrders" :key="order.id" :class="['order-item', getOrderCardClass(order)]">
-        <div class="order-main">
-          <div class="order-left">
-            <div class="order-basic-info">
-              <div class="order-no">
-                <span class="no-label">订单号</span>
-                <span class="no-value">{{ order.orderNo }}</span>
-                <el-tag
-                  v-if="order.priority === 'high'"
-                  size="small"
-                  type="danger"
-                  effect="dark"
-                  class="priority-tag"
-                >
-                  加急
-                </el-tag>
-              </div>
-              <div class="order-amount">
-                <span class="amount-label">金额</span>
-                <span class="amount-value">¥{{ order.totalAmount.toFixed(2) }}</span>
-              </div>
-              <div class="order-time" :title="order.createTime">
-                <span class="time-label">时间</span>
-                <span class="time-value">{{ getRelativeTime(order.createTime) }}</span>
-              </div>
-            </div>
-
-            <!-- 可折叠的用户信息 -->
-            <transition name="slide-fade">
-              <div v-show="expandedUserInfo.has(order.id)" class="order-user-info">
-                <div class="user-name">
-                  <span class="info-label">用户</span>
-                  <span class="info-value">{{ order.user }}</span>
+    <div v-loading="loading" class="orders-list-section">
+      <transition-group name="list" tag="div">
+        <div v-for="order in filteredOrders" :key="order.id" :class="['order-item', getOrderCardClass(order)]">
+          <div class="order-main">
+            <div class="order-content">
+              <div class="order-left">
+                <div class="order-basic-info">
+                  <div class="order-no">
+                    <span class="no-label">订单号</span>
+                    <span class="no-value">{{ order.orderNo }}</span>
+                    <el-tag
+                      v-if="order.priority === 'high'"
+                      size="small"
+                      type="danger"
+                      effect="dark"
+                      class="priority-tag"
+                    >
+                      加急
+                    </el-tag>
+                  </div>
+                  <div class="order-amount">
+                    <span class="amount-label">金额</span>
+                    <span class="amount-value">¥{{ order.totalAmount.toFixed(2) }}</span>
+                  </div>
+                  <div class="order-time" :title="order.createTime">
+                    <span class="time-label">时间</span>
+                    <span class="time-value">{{ getRelativeTime(order.createTime) }}</span>
+                  </div>
                 </div>
-                <div class="user-phone">
-                  <span class="info-label">电话</span>
-                  <span class="info-value">{{ order.phone }}</span>
+
+                <!-- 可折叠的用户信息 -->
+                <transition name="slide-fade">
+                  <div v-show="expandedUserInfo.has(order.id)" class="order-user-info">
+                    <div class="user-name">
+                      <span class="info-label">用户</span>
+                      <span class="info-value">{{ order.user }}</span>
+                    </div>
+                    <div class="user-phone">
+                      <span class="info-label">电话</span>
+                      <span class="info-value">{{ order.phone }}</span>
+                    </div>
+                    <div class="user-address">
+                      <span class="info-label">地址</span>
+                      <span class="info-value">{{ order.address }}</span>
+                    </div>
+                  </div>
+                </transition>
+
+                <!-- 订单备注（始终显示） -->
+                <div v-if="order.remark" class="order-remark">
+                  <div class="remark-icon">📝</div>
+                  <div class="remark-content">
+                    <span class="remark-label">备注：</span>
+                    <span class="remark-text">{{ order.remark }}</span>
+                  </div>
                 </div>
-                <div class="user-address">
-                  <span class="info-label">地址</span>
-                  <span class="info-value">{{ order.address }}</span>
+
+                <div class="order-items">
+                  <div class="items-label">菜品</div>
+                  <div class="items-list">
+                    <template v-if="order.orderDishes.length > 3 && !expandedItems.has(order.id)">
+                      <el-tag
+                        v-for="(dish, index) in order.orderDishes.slice(0, 3)"
+                        :key="index"
+                        size="small"
+                        type="info"
+                        effect="plain"
+                        class="item-tag"
+                      >
+                        {{ dish.dishName }}x{{ dish.quantity }}
+                        <span v-if="dish.customization" class="customization">({{ dish.customization }})</span>
+                      </el-tag>
+                      <el-tag
+                        size="small"
+                        class="more-tag"
+                        @click="toggleItemsExpand(order.id)"
+                      >
+                        +{{ order.orderDishes.length - 3 }}
+                      </el-tag>
+                    </template>
+                    <template v-else>
+                      <el-tag
+                        v-for="(dish, index) in order.orderDishes"
+                        :key="index"
+                        size="small"
+                        type="info"
+                        effect="plain"
+                        class="item-tag"
+                      >
+                        {{ dish.dishName }}x{{ dish.quantity }}
+                        <span v-if="dish.customization" class="customization">({{ dish.customization }})</span>
+                      </el-tag>
+                      <el-tag
+                        v-if="order.orderDishes.length > 3"
+                        size="small"
+                        type="warning"
+                        effect="plain"
+                        class="collapse-tag"
+                        @click="toggleItemsExpand(order.id)"
+                      >
+                        收起
+                      </el-tag>
+                    </template>
+                  </div>
                 </div>
               </div>
-            </transition>
 
-            <!-- 订单备注（始终显示） -->
-            <div v-if="order.remark" class="order-remark">
-              <div class="remark-icon">📝</div>
-              <div class="remark-content">
-                <span class="remark-label">备注：</span>
-                <span class="remark-text">{{ order.remark }}</span>
+              <div class="order-right">
+                <div class="order-status">
+                  <el-tag :type="orderStatusMap[order.status].type" size="large">
+                    {{ orderStatusMap[order.status].text }}
+                  </el-tag>
+                  <el-badge v-if="order.unread" :value="''" type="danger" class="unread-badge" />
+                </div>
               </div>
             </div>
 
-            <div class="order-items">
-              <div class="items-label">菜品</div>
-              <div class="items-list">
-                <template v-if="order.orderDishes.length > 3 && !expandedItems.has(order.id)">
-                  <el-tag
-                    v-for="(dish, index) in order.orderDishes.slice(0, 3)"
-                    :key="index"
-                    size="small"
-                    type="info"
-                    effect="plain"
-                    class="item-tag"
-                  >
-                    {{ dish.dishName }}x{{ dish.quantity }}
-                    <span v-if="dish.customization" class="customization">({{ dish.customization }})</span>
-                  </el-tag>
-                  <el-tag
-                    size="small"
-                    class="more-tag"
-                    @click="toggleItemsExpand(order.id)"
-                  >
-                    +{{ order.orderDishes.length - 3 }}
-                  </el-tag>
-                </template>
-                <template v-else>
-                  <el-tag
-                    v-for="(dish, index) in order.orderDishes"
-                    :key="index"
-                    size="small"
-                    type="info"
-                    effect="plain"
-                    class="item-tag"
-                  >
-                    {{ dish.dishName }}x{{ dish.quantity }}
-                    <span v-if="dish.customization" class="customization">({{ dish.customization }})</span>
-                  </el-tag>
-                  <el-tag
-                    v-if="order.orderDishes.length > 3"
-                    size="small"
-                    type="warning"
-                    effect="plain"
-                    class="collapse-tag"
-                    @click="toggleItemsExpand(order.id)"
-                  >
-                    收起
-                  </el-tag>
-                </template>
-              </div>
-            </div>
-          </div>
-
-          <div class="order-right">
-            <div class="order-status">
-              <el-tag :type="orderStatusMap[order.status].type" size="large">
-                {{ orderStatusMap[order.status].text }}
-              </el-tag>
-              <el-badge v-if="order.unread" :value="''" type="danger" class="unread-badge" />
-            </div>
+            <div class="order-divider"></div>
 
             <div class="order-actions">
-              <el-button type="primary" size="small" @click="viewOrderDetails(order)">
-                详情
-              </el-button>
+              <!-- 主要操作按钮组 -->
+              <div class="primary-actions">
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="viewOrderDetails(order)"
+                  class="detail-btn"
+                >
+                  <el-icon><View /></el-icon>
+                  <span>详情</span>
+                </el-button>
 
-              <!-- 状态转换按钮（根据数字状态码） -->
-              <el-button
-                v-if="order.status === 1"
-                type="success"
-                size="small"
-                @click="updateOrderStatus(order, 2)"
-              >
-                接单
-              </el-button>
+                <!-- 状态转换按钮 -->
+                <el-button
+                  v-if="order.status === 1"
+                  type="success"
+                  size="small"
+                  @click="updateOrderStatus(order, 2)"
+                  class="action-btn"
+                >
+                  <el-icon><CircleCheck /></el-icon>
+                  <span>接单</span>
+                </el-button>
 
-              <el-button
-                v-if="order.status === 2"
-                type="warning"
-                size="small"
-                @click="updateOrderStatus(order, 3)"
-              >
-                开始烹饪
-              </el-button>
+                <el-button
+                  v-if="order.status === 2"
+                  type="warning"
+                  size="small"
+                  @click="updateOrderStatus(order, 3)"
+                  class="action-btn"
+                >
+                  <el-icon><Goods /></el-icon>
+                  <span>烹饪</span>
+                </el-button>
 
-              <el-button
-                v-if="order.status === 3"
-                type="primary"
-                size="small"
-                @click="updateOrderStatus(order, 4)"
-              >
-                待上菜
-              </el-button>
+                <el-button
+                  v-if="order.status === 3"
+                  type="primary"
+                  size="small"
+                  @click="updateOrderStatus(order, 4)"
+                  class="action-btn"
+                >
+                  <el-icon><Dish /></el-icon>
+                  <span>上菜</span>
+                </el-button>
 
-              <el-button
-                v-if="order.status === 4"
-                type="success"
-                size="small"
-                @click="updateOrderStatus(order, 5)"
-              >
-                完成
-              </el-button>
+                <el-button
+                  v-if="order.status === 4"
+                  type="success"
+                  size="small"
+                  @click="updateOrderStatus(order, 5)"
+                  class="action-btn complete-btn"
+                >
+                  <el-icon><CircleCheckFilled /></el-icon>
+                  <span>完成</span>
+                </el-button>
 
-              <el-button
-                v-if="order.status < 5"
-                type="warning"
-                size="small"
-                @click="cancelOrder(order)"
-              >
-                取消
-              </el-button>
+                <el-button
+                  v-if="order.status === 5"
+                  type="info"
+                  size="small"
+                  disabled
+                  class="action-btn"
+                >
+                  <el-icon><Select /></el-icon>
+                  <span>已完成</span>
+                </el-button>
+              </div>
 
+              <!-- 更多操作下拉菜单 -->
               <el-dropdown trigger="click" class="more-dropdown">
-                <el-button type="info" size="small" plain>
-                  更多
+                <el-button type="info" size="small" plain class="more-btn">
+                  <el-icon><MoreFilled /></el-icon>
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="toggleUserInfoExpand(order.id)">
-                      {{ expandedUserInfo.has(order.id) ? '隐藏' : '显示' }}用户信息
+                      <el-icon><User /></el-icon>
+                      <span>{{ expandedUserInfo.has(order.id) ? '隐藏' : '显示' }}用户信息</span>
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      v-if="order.status < 5"
+                      divided
+                      @click="cancelOrder(order)"
+                    >
+                      <el-icon><CircleClose /></el-icon>
+                      <span style="color: #e6a23c">取消订单</span>
                     </el-dropdown-item>
                     <el-dropdown-item divided @click="deleteOrder(order)">
+                      <el-icon><Delete /></el-icon>
                       <span style="color: #f56c6c">删除订单</span>
                     </el-dropdown-item>
                   </el-dropdown-menu>
@@ -744,13 +858,13 @@ onMounted(() => {
             </div>
           </div>
         </div>
-      </div>
 
       <!-- 空数据提示 -->
       <div v-if="filteredOrders.length === 0" key="empty" class="empty-orders">
         <el-empty :description="getEmptyDescription()"></el-empty>
       </div>
-    </transition-group>
+      </transition-group>
+    </div>
   </div>
 </template>
 
@@ -998,36 +1112,321 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
-    background: #ffffff;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-radius: 12px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e8eef5;
     transition: all 0.3s ease;
 
     &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
     .filter-left {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 8px;
-      flex-wrap: wrap;
+      flex: 1;
 
-      .filter-label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #606266;
+      .filter-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .filter-icon {
+          font-size: 16px;
+          color: #409eff;
+        }
+
+        .filter-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: #303133;
+        }
       }
 
-      .status-tag {
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      .status-filter-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+
+        .custom-status-tag {
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          padding: 4px 10px;
+          font-size: 12px;
+          font-weight: 500;
+          border-radius: 6px;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          position: relative;
+          user-select: none;
+
+          .tag-icon {
+            font-size: 12px;
+          }
+
+          .tag-text {
+            font-size: 12px;
+          }
+
+          .close-icon {
+            font-size: 10px;
+            margin-left: 2px;
+            opacity: 0.8;
+            transition: all 0.2s ease;
+
+            &:hover {
+              opacity: 1;
+              transform: scale(1.1);
+            }
+          }
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+          }
+
+          &:active {
+            transform: translateY(0);
+          }
+
+          // 全部标签样式
+          &.status-tag-all {
+            background: #f0f2f5;
+            color: #606266;
+            border: 1px solid #dcdfe6;
+
+            &:hover {
+              background: #e9ecef;
+              border-color: #c0c4cc;
+            }
+
+            &.active {
+              background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+              color: #ffffff;
+              border-color: #1890ff;
+              box-shadow: 0 2px 6px rgba(24, 144, 255, 0.3);
+            }
+          }
+
+          // 待接单样式 - 红色
+          &.status-tag-1 {
+            background: #fff1f0;
+            color: #f56c6c;
+            border: 1px solid #ffccc7;
+
+            &:hover {
+              background: #ffccc7;
+              border-color: #ffa39e;
+            }
+
+            &.active {
+              background: linear-gradient(135deg, #f56c6c 0%, #ff7875 100%);
+              color: #ffffff;
+              border-color: #f56c6c;
+              box-shadow: 0 2px 6px rgba(245, 108, 108, 0.4);
+            }
+
+            &.zero-count {
+              background: #f5f5f5;
+              color: #bfbfbf;
+              border-color: #d9d9d9;
+
+              &:hover {
+                background: #f0f0f0;
+                border-color: #d0d0d0;
+              }
+            }
+          }
+
+          // 备菜中样式 - 橙色
+          &.status-tag-2 {
+            background: #fff7e6;
+            color: #e6a23c;
+            border: 1px solid #ffd591;
+
+            &:hover {
+              background: #ffe7ba;
+              border-color: #ffc069;
+            }
+
+            &.active {
+              background: linear-gradient(135deg, #e6a23c 0%, #f0a858 100%);
+              color: #ffffff;
+              border-color: #e6a23c;
+              box-shadow: 0 2px 6px rgba(230, 162, 60, 0.4);
+            }
+
+            &.zero-count {
+              background: #f5f5f5;
+              color: #bfbfbf;
+              border-color: #d9d9d9;
+
+              &:hover {
+                background: #f0f0f0;
+                border-color: #d0d0d0;
+              }
+            }
+          }
+
+          // 烹饪中样式 - 深橙色
+          &.status-tag-3 {
+            background: #fff2e8;
+            color: #ff9800;
+            border: 1px solid #ffd8bf;
+
+            &:hover {
+              background: #ffdcc8;
+              border-color: #ffb380;
+            }
+
+            &.active {
+              background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+              color: #ffffff;
+              border-color: #ff9800;
+              box-shadow: 0 2px 6px rgba(255, 152, 0, 0.4);
+            }
+
+            &.zero-count {
+              background: #f5f5f5;
+              color: #bfbfbf;
+              border-color: #d9d9d9;
+
+              &:hover {
+                background: #f0f0f0;
+                border-color: #d0d0d0;
+              }
+            }
+          }
+
+          // 待上菜样式 - 蓝色
+          &.status-tag-4 {
+            background: #e6f7ff;
+            color: #409eff;
+            border: 1px solid #91d5ff;
+
+            &:hover {
+              background: #bae7ff;
+              border-color: #69c0ff;
+            }
+
+            &.active {
+              background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+              color: #ffffff;
+              border-color: #409eff;
+              box-shadow: 0 2px 6px rgba(64, 158, 255, 0.4);
+            }
+
+            &.zero-count {
+              background: #f5f5f5;
+              color: #bfbfbf;
+              border-color: #d9d9d9;
+
+              &:hover {
+                background: #f0f0f0;
+                border-color: #d0d0d0;
+              }
+            }
+          }
+
+          // 已完成样式 - 绿色
+          &.status-tag-5 {
+            background: #f6ffed;
+            color: #67c23a;
+            border: 1px solid #b7eb8f;
+
+            &:hover {
+              background: #d9f7be;
+              border-color: #95de64;
+            }
+
+            &.active {
+              background: linear-gradient(135deg, #67c23a 0%, #7bcf58 100%);
+              color: #ffffff;
+              border-color: #67c23a;
+              box-shadow: 0 2px 6px rgba(103, 194, 58, 0.4);
+            }
+
+            &.zero-count {
+              background: #f5f5f5;
+              color: #bfbfbf;
+              border-color: #d9d9d9;
+
+              &:hover {
+                background: #f0f0f0;
+                border-color: #d0d0d0;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .filter-right {
+      flex-shrink: 0;
+
+      :deep(.search-input) {
+        width: 320px;
+
+        .el-input__wrapper {
+          border-radius: 10px;
+          padding: 8px 12px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+          transition: all 0.3s ease;
+
+          &:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+          }
+
+          &.is-focus {
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2), 0 2px 8px rgba(64, 158, 255, 0.3);
+          }
+        }
+
+        .el-input__prefix {
+          color: #909399;
+        }
+      }
+    }
+  }
+
+  .quick-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f0f0f0;
+
+    .quick-actions-left {
+      display: flex;
+      gap: 10px;
+
+      .quick-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+        .el-icon {
+          font-size: 14px;
+        }
 
         &:hover {
-          opacity: 0.8;
-          transform: translateY(-1px);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         &:active {
@@ -1036,8 +1435,21 @@ onMounted(() => {
       }
     }
 
-    .filter-right {
-      flex-shrink: 0;
+    .quick-actions-right {
+      .order-count-info {
+        font-size: 14px;
+        color: #606266;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-radius: 8px;
+        border: 1px solid #bae6fd;
+
+        strong {
+          color: #0284c7;
+          font-size: 16px;
+          font-weight: 700;
+        }
+      }
     }
   }
 
@@ -1054,8 +1466,7 @@ onMounted(() => {
 
       .order-main {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
         padding: 18px 20px;
         border: 2px solid #e2e8f0;
         border-radius: 12px;
@@ -1063,6 +1474,20 @@ onMounted(() => {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         position: relative;
         overflow: visible;
+        gap: 16px;
+
+        .order-content {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 20px;
+        }
+
+        .order-divider {
+          height: 1px;
+          background: linear-gradient(90deg, transparent 0%, #e2e8f0 10%, #e2e8f0 90%, transparent 100%);
+          margin: 0;
+        }
 
         &::before {
           content: '';
@@ -1078,12 +1503,11 @@ onMounted(() => {
 
         &:hover {
           box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-          transform: translateY(-3px);
           border-color: #cbd5e1;
         }
 
         &:active {
-          transform: translateY(-1px);
+          transform: scale(0.998);
         }
       }
 
@@ -1158,9 +1582,7 @@ onMounted(() => {
 
       .order-left {
         flex: 1;
-        margin-right: 20px;
         min-width: 0;
-        align-self: center;
 
         .order-basic-info {
           display: grid;
@@ -1408,9 +1830,9 @@ onMounted(() => {
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-        gap: 10px;
-        z-index: 1;
-        align-self: center;
+        gap: 12px;
+        flex-shrink: 0;
+        align-self: flex-start;
 
         .order-status {
           position: relative;
@@ -1421,28 +1843,114 @@ onMounted(() => {
             right: -5px;
           }
         }
+      }
 
-        .order-actions {
+      .order-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        align-items: center;
+        width: 100%;
+        padding-top: 4px;
+
+        .primary-actions {
           display: flex;
-          flex-wrap: wrap;
           gap: 6px;
+          flex-wrap: wrap;
           justify-content: flex-end;
-          align-items: center;
+        }
 
-          :deep(.el-button) {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        :deep(.el-button) {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 6px 12px;
+          font-weight: 500;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 8px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+          .el-icon {
+            font-size: 14px;
+          }
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+          }
+
+          &:active {
+            transform: translateY(0);
+          }
+
+          &.detail-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
 
             &:hover {
-              transform: translateY(-1px);
-            }
-
-            &:active {
-              transform: translateY(0);
+              background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
             }
           }
 
-          .more-dropdown {
-            margin-left: 4px;
+          &.action-btn {
+            min-width: 70px;
+            font-weight: 600;
+          }
+
+          &.complete-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: none;
+            color: white;
+
+            &:hover {
+              background: linear-gradient(135deg, #0e837a 0%, #2ed16b 100%);
+              box-shadow: 0 4px 12px rgba(56, 239, 125, 0.4);
+            }
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f5f5f5;
+            border-color: #d9d9d9;
+            color: #999;
+
+            &:hover {
+              transform: none;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+          }
+        }
+
+        .more-dropdown {
+          :deep(.el-button) {
+            &.more-btn {
+              width: 32px;
+              height: 32px;
+              padding: 0;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 50%;
+            }
+          }
+        }
+
+        :deep(.el-dropdown-menu) {
+          .el-dropdown-menu__item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+
+            .el-icon {
+              font-size: 16px;
+            }
+
+            &:hover {
+              background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+            }
           }
         }
       }
@@ -1546,15 +2054,17 @@ onMounted(() => {
     .orders-list-section {
       .order-item {
         .order-main {
-          .order-left {
-            .order-basic-info {
-              grid-template-columns: auto auto 1fr;
-              gap: 10px 14px;
-            }
+          .order-content {
+            .order-left {
+              .order-basic-info {
+                grid-template-columns: auto auto 1fr;
+                gap: 10px 14px;
+              }
 
-            .order-user-info {
-              grid-template-columns: repeat(2, 1fr);
-              gap: 8px 14px;
+              .order-user-info {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px 14px;
+              }
             }
           }
         }
@@ -1609,13 +2119,65 @@ onMounted(() => {
 
     .filter-section {
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
+      padding: 16px;
+
+      .filter-left {
+        width: 100%;
+
+        .filter-header {
+          .filter-label {
+            font-size: 14px;
+          }
+        }
+
+        .status-filter-group {
+          gap: 4px;
+
+          .custom-status-tag {
+            padding: 3px 8px;
+            font-size: 11px;
+
+            .tag-icon {
+              font-size: 11px;
+            }
+
+            .tag-text {
+              font-size: 11px;
+            }
+
+            .close-icon {
+              font-size: 9px;
+            }
+          }
+        }
+      }
 
       .filter-right {
         width: 100%;
 
-        :deep(.el-input) {
+        :deep(.search-input) {
           width: 100% !important;
+        }
+      }
+    }
+
+    .quick-actions {
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+
+      .quick-actions-left {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .quick-actions-right {
+        width: 100%;
+        text-align: center;
+
+        .order-count-info {
+          display: inline-block;
         }
       }
     }
@@ -1627,8 +2189,12 @@ onMounted(() => {
           gap: 12px;
           padding: 14px;
 
+          .order-content {
+            flex-direction: column;
+            gap: 12px;
+          }
+
           .order-left {
-            margin-right: 0;
             width: 100%;
 
             .order-basic-info {
@@ -1685,22 +2251,42 @@ onMounted(() => {
           }
 
           .order-right {
-            align-items: stretch;
+            align-items: flex-start;
             width: 100%;
+          }
 
-            .order-actions {
-              flex-direction: column;
+          .order-actions {
+            flex-direction: column;
+            width: 100%;
+            gap: 10px;
+
+            .primary-actions {
+              width: 100%;
+              justify-content: center;
+            }
+
+            :deep(.el-button) {
+              width: 100%;
+              justify-content: center;
+              padding: 8px 12px;
+              font-size: 13px;
+
+              .el-icon {
+                font-size: 16px;
+              }
+            }
+
+            .more-dropdown {
               width: 100%;
 
               :deep(.el-button) {
                 width: 100%;
-              }
+                border-radius: 8px;
+                padding: 8px;
 
-              .more-dropdown {
-                width: 100%;
-
-                :deep(.el-button) {
+                &.more-btn {
                   width: 100%;
+                  border-radius: 8px;
                 }
               }
             }
