@@ -371,7 +371,7 @@ onMounted(() => {
 
 			<!-- 快捷操作 -->
 			<div class="quick-actions-card">
-				<h3 class="card-title">🎯 快捷操作：</h3>
+				<h3 class="card-title">🎯 快捷操作</h3>
 				<div class="actions-grid">
 					<div class="action-item" @click="navigateToMenu">
 						<div class="action-icon">➕</div>
@@ -664,65 +664,90 @@ onMounted(() => {
 
 	.quick-actions-card {
 		margin-bottom: 24px;
-		padding: 24px; /* 添加内边距 */
-		border: 2px solid #e6a23c; /* 使用警告橙 */
-		border-radius: 12px; /* 统一圆角 */
-		background-color: #ffffff; /* 白色背景 */
-		box-shadow: 0 4px 20px rgba(230, 162, 60, 0.1); /* 增强阴影 */
+		padding: 24px;
+		border: 2px solid #e6a23c;
+		border-radius: 12px;
+		background: linear-gradient(135deg, #ffffff 0%, #fffbf5 100%);
+		box-shadow: 0 4px 20px rgba(230, 162, 60, 0.12);
 
 		.card-title {
-			font-size: 18px;
-			font-weight: 600;
-			margin-bottom: 16px;
+			font-size: 20px;
+			font-weight: 700;
+			margin-bottom: 24px;
+			color: #e6a23c;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding-bottom: 16px;
+			border-bottom: 2px solid #f5e6d3;
 		}
 
 		.actions-grid {
 			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-			gap: 20px;
-			padding: 16px;
-			border-radius: 8px;
-			transition: all 0.3s ease;
-
-			&:hover {
-				background-color: #fff9f0;
-				box-shadow: 0 4px 16px rgba(230, 162, 60, 0.1);
-			}
+			grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+			gap: 16px;
 
 			.action-item {
 				display: flex;
 				flex-direction: column;
 				align-items: center;
-				padding: 24px;
-				border: 1px solid #e4e7ed;
-				border-radius: 4px;
+				padding: 28px 20px;
+				border: 2px solid #f5e6d3;
+				border-radius: 12px;
 				cursor: pointer;
-				transition: all 0.3s;
+				transition: all 0.3s ease;
+				background: linear-gradient(135deg, #ffffff 0%, #fffbf8 100%);
+				position: relative;
+				overflow: hidden;
+
+				&::before {
+					content: "";
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 0;
+					bottom: 0;
+					background: linear-gradient(135deg, #ffe7ba 0%, #ffffff 100%);
+					opacity: 0;
+					transition: opacity 0.3s ease;
+				}
 
 				&:hover {
-					box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+					transform: translateY(-8px);
+					box-shadow: 0 8px 24px rgba(230, 162, 60, 0.25);
+					border-color: #e6a23c;
+
+					&::before {
+						opacity: 1;
+					}
 				}
 
 				.action-icon {
-					font-size: 48px;
-					margin-bottom: 8px;
-					transition: transform 0.3s ease;
+					font-size: 52px;
+					margin-bottom: 12px;
+					transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 					transform-origin: center center;
+					position: relative;
+					z-index: 1;
 				}
 
 				&:hover .action-icon {
-					transform: scale(1.15);
+					transform: scale(1.2) rotate(5deg);
 				}
 
 				.action-label {
-					font-size: 14px;
-					font-weight: 500;
+					font-size: 15px;
+					font-weight: 600;
+					color: #303133;
+					position: relative;
+					z-index: 1;
 				}
 			}
 		}
+	}
 
-		// 今日菜单
-		.today-menu-card {
+	// 今日菜单
+	.today-menu-card {
 			margin-bottom: 24px;
 			padding: 24px; /* 添加内边距 */
 			border: 2px solid #67c23a; /* 绿色主题边框 */
@@ -890,137 +915,136 @@ onMounted(() => {
 				}
 			}
 		}
+	}
 
-		// 菜品列表样式
-		.dishes-card {
-			margin-bottom: 24px;
-			padding: 24px; /* 添加内边距 */
-			border: 2px solid #67c23a; /* 绿色边框 */
-			border-radius: 12px; /* 统一圆角 */
-			background-color: #ffffff; /* 白色背景 */
-			box-shadow: 0 4px 20px rgba(103, 194, 58, 0.08); /* 增强阴影 */
-			border-top: none;
-			border-top-left-radius: 0;
-			border-top-right-radius: 0;
+	// 菜品列表样式
+	.dishes-card {
+		margin-bottom: 24px;
+		padding: 24px; /* 添加内边距 */
+		border: 2px solid #67c23a; /* 绿色边框 */
+		border-radius: 12px; /* 统一圆角 */
+		background-color: #ffffff; /* 白色背景 */
+		box-shadow: 0 4px 20px rgba(103, 194, 58, 0.08); /* 增强阴影 */
+		border-top: none;
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
 
-			.dish-list {
-				margin-bottom: 20px;
+		.dish-list {
+			margin-bottom: 20px;
 
-				.dish-item {
-					padding: 20px;
-					border: 2px solid #f0f9eb; /* 淡绿色边框 */
-					border-radius: 10px;
-					margin-bottom: 16px;
-					background-color: #fff;
-					transition: all 0.3s ease;
+			.dish-item {
+				padding: 20px;
+				border: 2px solid #f0f9eb; /* 淡绿色边框 */
+				border-radius: 10px;
+				margin-bottom: 16px;
+				background-color: #fff;
+				transition: all 0.3s ease;
+				display: flex;
+				align-items: flex-start;
+				gap: 16px;
+				overflow: hidden;
+
+				&:hover {
+					box-shadow: 0 4px 16px rgba(103, 194, 58, 0.12); /* 绿色主题阴影 */
+					border-color: #67c23a;
+					transform: translateY(-4px);
+				}
+
+				.dish-cover {
+					font-size: 48px;
+					width: 90px;
+					height: 90px;
 					display: flex;
-					align-items: flex-start;
-					gap: 16px;
-					overflow: hidden;
+					align-items: center;
+					justify-content: center;
+					background: linear-gradient(
+						135deg,
+						#67c23a,
+						#eaf5ec
+					); /* 绿色渐变背景 */
+					border-radius: 10px;
+					flex-shrink: 0;
+					color: #fff;
+					box-shadow: 0 2px 8px rgba(103, 194, 58, 0.2);
+					transition: all 0.3s ease;
+				}
 
-					&:hover {
-						box-shadow: 0 4px 16px rgba(103, 194, 58, 0.12); /* 绿色主题阴影 */
-						border-color: #67c23a;
-						transform: translateY(-4px);
-					}
+				&:hover .dish-cover {
+					transform: scale(1.1);
+				}
 
-					.dish-cover {
-						font-size: 48px;
-						width: 90px;
-						height: 90px;
+				.dish-info {
+					flex: 1;
+
+					.dish-name {
 						display: flex;
 						align-items: center;
-						justify-content: center;
-						background: linear-gradient(
-							135deg,
-							#67c23a,
-							#eaf5ec
-						); /* 绿色渐变背景 */
-						border-radius: 10px;
-						flex-shrink: 0;
-						color: #fff;
-						box-shadow: 0 2px 8px rgba(103, 194, 58, 0.2);
-						transition: all 0.3s ease;
-					}
+						gap: 12px;
+						margin-bottom: 10px;
 
-					&:hover .dish-cover {
-						transform: scale(1.1);
-					}
-
-					.dish-info {
-						flex: 1;
-
-						.dish-name {
-							display: flex;
-							align-items: center;
-							gap: 12px;
-							margin-bottom: 10px;
-
-							.name {
-								font-size: 18px;
-								font-weight: 600;
-								color: #303133;
-							}
-						}
-
-						.dish-desc {
-							font-size: 14px;
-							color: #606266;
-							margin-bottom: 14px;
-							line-height: 1.6;
-						}
-
-						.dish-stats {
-							display: flex;
-							flex-wrap: wrap;
-							gap: 20px;
-							font-size: 14px;
-							color: #606266;
-
-							.dish-category {
-								background-color: #eaf5ec;
-								color: #67c23a;
-								padding: 4px 12px;
-								border-radius: 6px;
-								font-size: 12px;
-								font-weight: 500;
-							}
-
-							.dish-price {
-								color: #e6a23c;
-								font-weight: 600;
-								font-size: 16px;
-							}
-
-							.dish-stock {
-								font-size: 13px;
-								font-weight: 500;
-
-								&.stock-almost {
-									color: #f59f00;
-								}
-
-								&.stock-off {
-									color: #f56c6c;
-								}
-							}
+						.name {
+							font-size: 18px;
+							font-weight: 600;
+							color: #303133;
 						}
 					}
 
-					.dish-actions {
+					.dish-desc {
+						font-size: 14px;
+						color: #606266;
+						margin-bottom: 14px;
+						line-height: 1.6;
+					}
+
+					.dish-stats {
 						display: flex;
-						flex-direction: column;
-						gap: 10px;
-						flex-shrink: 0;
+						flex-wrap: wrap;
+						gap: 20px;
+						font-size: 14px;
+						color: #606266;
 
-						.el-button {
-							width: 90px;
-							transition: all 0.3s ease;
+						.dish-category {
+							background-color: #eaf5ec;
+							color: #67c23a;
+							padding: 4px 12px;
+							border-radius: 6px;
+							font-size: 12px;
+							font-weight: 500;
+						}
 
-							&:hover {
-								transform: translateY(-2px);
+						.dish-price {
+							color: #e6a23c;
+							font-weight: 600;
+							font-size: 16px;
+						}
+
+						.dish-stock {
+							font-size: 13px;
+							font-weight: 500;
+
+							&.stock-almost {
+								color: #f59f00;
+							}
+
+							&.stock-off {
+								color: #f56c6c;
 							}
 						}
+					}
+				}
+
+			.dish-actions {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+				flex-shrink: 0;
+
+				.el-button {
+					width: 90px;
+					transition: all 0.3s ease;
+
+					&:hover {
+						transform: translateY(-2px);
 					}
 				}
 			}

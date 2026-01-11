@@ -708,15 +708,12 @@ onMounted(() => {
 				justify-content: center;
 				align-items: center;
 				padding: 16px;
-				background: linear-gradient(135deg, #f0f9eb 0%, #ffffff 100%);
 				border-radius: 12px;
-				box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
 
 				.upload-confirm-btn {
 					min-width: 200px;
 					font-size: 16px;
 					font-weight: 600;
-					background: linear-gradient(135deg, #67c23a, #85ce61);
 					border: none;
 					box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
 					transition: all 0.3s ease;
@@ -741,7 +738,7 @@ onMounted(() => {
 // 自定义图片预览查看器样式
 :deep(.el-image-viewer-wrapper) {
 	.el-image-viewer__mask {
-		background-color: #ffffff !important;
+		background-color: #f5f5f5 !important;
 	}
 
 	.el-image-viewer__canvas {
@@ -749,14 +746,19 @@ onMounted(() => {
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		padding: 40px;
+		box-shadow: 0 0 60px rgba(0, 0, 0, 0.1);
 
 		img {
 			background-color: #ffffff;
 			object-fit: contain;
-			max-width: 80vw;
-			max-height: 80vh;
+			max-width: 85vw;
+			max-height: 85vh;
 			width: auto !important;
 			height: auto !important;
+			padding: 20px;
+			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+			border-radius: 8px;
 		}
 	}
 

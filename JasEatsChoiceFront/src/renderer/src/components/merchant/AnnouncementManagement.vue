@@ -30,8 +30,12 @@ const getAnnouncements = () => {
 	api
 		.get(url)
 		.then(function (response) {
-			if (response.data && response.data.success) {
-				announcements.value = response.data.data;
+			console.log("获取公告列表响应:", response);
+			// 兼容不同的响应格式
+			if (response && (response.success || response.code === "200")) {
+				announcements.value = response.data || [];
+			} else if (response.data && (response.data.success || response.data.code === "200")) {
+				announcements.value = response.data.data || [];
 			}
 		})
 		.catch(function (error) {
@@ -74,18 +78,28 @@ const saveAnnouncement = function () {
 		apiUrl = apiUrl + "/" + currentAnnouncement.value.id;
 	}
 
+	console.log("保存公告，URL:", apiUrl, "数据:", currentAnnouncement.value);
+
 	apiMethod(apiUrl, currentAnnouncement.value)
 		.then(function (response) {
-			if (response.data && response.data.success) {
+			console.log("保存公告响应:", response);
+			// 兼容不同的响应格式
+			const isSuccess = response && (response.success || response.code === "200");
+			const isSuccessData = response.data && (response.data.success || response.data.code === "200");
+
+			if (isSuccess || isSuccessData) {
 				let message = isEditingAnnouncement.value ? "公告已更新" : "公告已添加";
 				ElMessage.success(message);
 				getAnnouncements(); // 刷新公告列表
 				announcementDialogVisible.value = false;
+			} else {
+				console.error("保存公告失败，响应格式:", response);
+				ElMessage.error("保存公告失败：" + (response?.message || "未知错误"));
 			}
 		})
 		.catch(function (error) {
 			console.error("保存公告失败:", error);
-			ElMessage.error("保存公告失败");
+			ElMessage.error("保存公告失败：" + (error.message || "网络错误"));
 		});
 };
 
@@ -109,14 +123,21 @@ const deleteAnnouncement = function (announcement) {
 			api
 				.delete(url)
 				.then(function (response) {
-					if (response.data && response.data.success) {
+					console.log("删除公告响应:", response);
+					// 兼容不同的响应格式
+					const isSuccess = response && (response.success || response.code === "200");
+					const isSuccessData = response.data && (response.data.success || response.data.code === "200");
+
+					if (isSuccess || isSuccessData) {
 						ElMessage.success("公告已删除");
 						getAnnouncements(); // 刷新公告列表
+					} else {
+						ElMessage.error("删除公告失败：" + (response?.message || "未知错误"));
 					}
 				})
 				.catch(function (error) {
 					console.error("删除公告失败:", error);
-					ElMessage.error("删除公告失败");
+					ElMessage.error("删除公告失败：" + (error.message || "网络错误"));
 				});
 		})
 		.catch(function () {
@@ -138,14 +159,21 @@ const toggleAnnouncementStatus = function (announcement) {
 	api
 		.put(url, { status: newStatus })
 		.then(function (response) {
-			if (response.data && response.data.success) {
+			console.log("切换公告状态响应:", response);
+			// 兼容不同的响应格式
+			const isSuccess = response && (response.success || response.code === "200");
+			const isSuccessData = response.data && (response.data.success || response.data.code === "200");
+
+			if (isSuccess || isSuccessData) {
 				announcement.status = newStatus;
 				ElMessage.success("公告已" + statusText);
+			} else {
+				ElMessage.error("切换公告状态失败：" + (response?.message || "未知错误"));
 			}
 		})
 		.catch(function (error) {
 			console.error("切换公告状态失败:", error);
-			ElMessage.error("切换公告状态失败");
+			ElMessage.error("切换公告状态失败：" + (error.message || "网络错误"));
 		});
 };
 
@@ -275,21 +303,257 @@ onMounted(() => {
 .announcement-section {
 	margin-bottom: 24px;
 	padding: 24px;
-	border: 2px solid #909399; /* 中性灰 */
+	border: 2px solid #909399;
 	border-radius: 12px;
-	background-color: #ffffff;
-	box-shadow: 0 4px 20px rgba(144, 147, 153, 0.1);
+	background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+	box-shadow: 0 4px 20px rgba(144, 147, 153, 0.15);
 
 	.announcement-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 20px;
+		margin-bottom: 24px;
+		padding-bottom: 20px;
+		border-bottom: 2px solid #e4e7ed;
 
 		.card-title {
 			margin: 0;
-			font-size: 20px;
+			font-size: 22px;
 			font-weight: 700;
+			color: #606266;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+		}
+
+		:deep(.el-button) {
+			border-radius: 8px;
+			padding: 10px 20px;
+			font-weight: 600;
+			transition: all 0.3s ease;
+
+			&:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 16px rgba(144, 147, 153, 0.3);
+			}
+		}
+	}
+
+	.announcement-table-container {
+		background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+		border-radius: 12px;
+		padding: 20px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+		border: 1px solid #e4e7ed;
+
+		:deep(.el-table) {
+			border-radius: 8px;
+			overflow: hidden;
+
+			&::before {
+				display: none;
+			}
+
+			.el-table__header-wrapper {
+				th {
+					background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf0 100%);
+					color: #303133;
+					font-weight: 700;
+					border-bottom: 2px solid #d4d7de;
+					padding: 14px 0;
+				}
+			}
+
+			.el-table__body-wrapper {
+				tr {
+					transition: all 0.3s ease;
+					background-color: #ffffff;
+
+					&:hover {
+						background: linear-gradient(90deg, #f5f7fa 0%, #ffffff 100%);
+						transform: scale(1.005);
+						box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+					}
+
+					td {
+						border-bottom: 1px solid #f0f0f0;
+						padding: 14px 0;
+					}
+				}
+			}
+
+			.el-tag {
+				border-radius: 6px;
+				padding: 6px 12px;
+				font-weight: 600;
+				border: none;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			}
+
+			.el-button {
+				border-radius: 6px;
+				font-weight: 500;
+				transition: all 0.3s ease;
+
+				&:hover {
+					transform: translateY(-2px);
+					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+				}
+			}
+		}
+
+		.empty-state {
+			padding: 80px 20px;
+			text-align: center;
+			color: #909399;
+			font-size: 15px;
+			background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+			border-radius: 8px;
+			border: 2px dashed #dcdfe6;
+
+			span {
+				font-size: 64px;
+				display: block;
+				margin-bottom: 16px;
+				opacity: 0.6;
+			}
+
+			p {
+				margin: 0;
+				line-height: 1.8;
+				font-weight: 500;
+			}
+		}
+	}
+
+	:deep(.el-dialog) {
+		border-radius: 16px;
+		box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+		overflow: hidden;
+
+		.el-dialog__header {
+			padding: 24px 28px;
+			border-bottom: 2px solid #e4e7ed;
+			background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+
+			.el-dialog__title {
+				font-size: 20px;
+				font-weight: 700;
+				color: #303133;
+			}
+
+			.el-dialog__headerbtn {
+				top: 24px;
+				right: 24px;
+				width: 32px;
+				height: 32px;
+				border-radius: 50%;
+				transition: all 0.3s ease;
+
+				&:hover {
+					background-color: #f5f7fa;
+				}
+
+				.el-dialog__close {
+					font-size: 18px;
+					color: #909399;
+				}
+			}
+		}
+
+		.el-dialog__body {
+			padding: 28px;
+
+			.el-form {
+				.el-form-item {
+					margin-bottom: 24px;
+
+					.el-form-item__label {
+						font-weight: 600;
+						color: #606266;
+						font-size: 14px;
+					}
+
+					.el-input__inner,
+					.el-textarea__inner {
+						border-radius: 8px;
+						border: 2px solid #dcdfe6;
+						transition: all 0.3s ease;
+						font-size: 14px;
+
+						&:focus {
+							border-color: #909399;
+							box-shadow: 0 0 0 3px rgba(144, 147, 153, 0.1);
+						}
+
+						&:hover {
+							border-color: #c0c4cc;
+						}
+					}
+
+					.el-textarea__inner {
+						padding: 12px;
+						line-height: 1.6;
+					}
+
+					.el-select {
+						width: 100%;
+
+						.el-input__inner {
+							cursor: pointer;
+						}
+					}
+
+					.el-date-editor {
+						width: 100%;
+					}
+				}
+			}
+		}
+
+		.el-dialog__footer {
+			padding: 20px 28px;
+			border-top: 2px solid #e4e7ed;
+			background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+
+			.dialog-footer {
+				display: flex;
+				justify-content: flex-end;
+				gap: 16px;
+
+				.el-button {
+					border-radius: 8px;
+					padding: 12px 24px;
+					font-weight: 600;
+					font-size: 14px;
+					transition: all 0.3s ease;
+					border: 2px solid transparent;
+
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+					}
+
+					&.el-button--primary {
+						background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+						border: none;
+
+						&:hover {
+							background: linear-gradient(135deg, #66b1ff 0%, #409eff 100%);
+						}
+					}
+
+					&.el-button--default {
+						border-color: #dcdfe6;
+
+						&:hover {
+							border-color: #c0c4cc;
+							background-color: #f5f7fa;
+						}
+					}
+				}
+			}
 		}
 	}
 }
