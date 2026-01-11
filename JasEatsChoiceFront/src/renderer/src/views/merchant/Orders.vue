@@ -225,6 +225,12 @@ const getStatusCount = (status) => {
   return orders.value.filter(o => o.status === status).length
 }
 
+// 获取状态标签文本
+const getStatusLabel = (status) => {
+  if (status === 'all') return '全部'
+  return statusFilterMap[status]?.text || '未知'
+}
+
 // 获取空状态描述
 const getEmptyDescription = () => {
   if (searchKeyword.value) {
@@ -600,9 +606,9 @@ onMounted(() => {
     justify-content: space-between;
     align-items: center;
     padding: 20px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
     border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 16px rgba(33, 150, 243, 0.3);
 
     .header-left {
       display: flex;
