@@ -254,7 +254,7 @@ onMounted(() => {
 							<el-icon><Delete /></el-icon>
 						</el-button>
 					</div>
-					<el-image :src="image" fit="cover">
+					<el-image :src="image" fit="contain">
 						<template #error>
 							<div class="image-slot">
 								<el-icon><Picture /></el-icon>
@@ -427,8 +427,8 @@ onMounted(() => {
 
 		.album-grid {
 			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-			gap: 16px;
+			grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+			gap: 12px;
 			margin-bottom: 12px;
 		}
 
@@ -440,6 +440,8 @@ onMounted(() => {
 			transition: all 0.3s ease;
 			cursor: pointer;
 			background: #fff;
+			padding: 8px;
+			border: 1px solid #f0f0f0;
 
 			&:hover {
 				transform: translateY(-6px);
@@ -515,9 +517,14 @@ onMounted(() => {
 
 			:deep(.el-image) {
 				width: 100%;
-				height: 160px;
-				object-fit: cover;
-				display: block;
+				height: 120px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background-color: #fff;
+				overflow: hidden;
+				border-radius: 8px;
+				box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
 
 				.image-slot {
 					display: flex;
@@ -528,6 +535,15 @@ onMounted(() => {
 					background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
 					color: #909399;
 					font-size: 32px;
+				}
+
+				:deep(img) {
+					max-width: 100%;
+					max-height: 100%;
+					width: auto;
+					height: auto;
+					object-fit: contain;
+					padding: 4px;
 				}
 			}
 		}
@@ -694,7 +710,6 @@ onMounted(() => {
 				padding: 16px;
 				background: linear-gradient(135deg, #f0f9eb 0%, #ffffff 100%);
 				border-radius: 12px;
-				border: 2px solid #e1f3d8;
 				box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
 
 				.upload-confirm-btn {
@@ -720,6 +735,46 @@ onMounted(() => {
 				}
 			}
 		}
+	}
+}
+
+// 自定义图片预览查看器样式
+:deep(.el-image-viewer-wrapper) {
+	.el-image-viewer__mask {
+		background-color: #ffffff !important;
+	}
+
+	.el-image-viewer__canvas {
+		background-color: #ffffff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		img {
+			background-color: #ffffff;
+			object-fit: contain;
+			max-width: 80vw;
+			max-height: 80vh;
+			width: auto !important;
+			height: auto !important;
+		}
+	}
+
+	.el-image-viewer__btn {
+		background-color: rgba(0, 0, 0, 0.6);
+		color: #fff;
+		border-radius: 50%;
+		width: 44px;
+		height: 44px;
+
+		&:hover {
+			background-color: rgba(0, 0, 0, 0.8);
+		}
+	}
+
+	.el-image-viewer__close {
+		top: 40px;
+		right: 40px;
 	}
 }
 </style>
