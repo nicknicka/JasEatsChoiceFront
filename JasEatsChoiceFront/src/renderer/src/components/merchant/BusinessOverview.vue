@@ -1,7 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../../utils/api.js'
 import { useAuthStore } from '../../store/authStore'
+
+const router = useRouter()
 
 const businessOverview = ref({
   sales: 0,

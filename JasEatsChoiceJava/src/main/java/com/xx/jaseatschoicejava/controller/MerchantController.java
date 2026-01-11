@@ -12,6 +12,8 @@ import com.xx.jaseatschoicejava.service.OrderService;
 import com.xx.jaseatschoicejava.entity.Order;
 import com.xx.jaseatschoicejava.service.UserService;
 import com.xx.jaseatschoicejava.entity.User;
+import com.xx.jaseatschoicejava.service.AnnouncementService;
+import com.xx.jaseatschoicejava.entity.Announcement;
 import com.xx.jaseatschoicejava.util.JwtUtil;
 import com.xx.jaseatschoicejava.config.FileUploadConfig;
 import com.xx.jaseatschoicejava.entity.OrderDish;
@@ -78,6 +80,9 @@ public class MerchantController {
 
     @Autowired
     private FileUploadConfig fileUploadConfig;
+
+    @Autowired
+    private AnnouncementService announcementService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -998,6 +1003,128 @@ public class MerchantController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseResult.fail("500", "获取统计数据失败");
+        }
+    }
+
+    /**
+     * 获取商家的公告列表
+     */
+    @GetMapping("/{merchantId}/announcements")
+    public ResponseResult<?> getAnnouncements(@PathVariable String merchantId) {
+        try {
+            LambdaQueryWrapper<Announcement> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Announcement::getMerchantId, merchantId)
+                    .orderByDesc(Announcement::getCreateTime);
+            List<Announcement> announcements = announcementService.list(queryWrapper);
+            return ResponseResult.success(announcements);
+        } catch (Exception e) {
+            logger.error("获取公告列表失败: {}", e.getMessage(), e);
+            return ResponseResult.fail("500", "获取公告列表失败");
+        }
+    }
+
+    /**
+     * 添加公告
+     */
+    @PostMapping("/{merchantId}/announcements")
+    public ResponseResult<?> addAnnouncement(@PathVariable String merchantId, @RequestBody Announcement announcement) {
+        try {
+            announcement.setMerchantId(Long.valueOf(merchantId));
+            boolean success = announcementService.save(announcement);
+            if (success) {
+                // 重新查询数据库以获取完整的字段值（包括自动填充的createTime和updateTime）
+                Announcement savedAnnouncement = announcementService.getById(announcement.getId());
+                return ResponseResult.success(savedAnnouncement, "公告添加成功");
+            }
+            return ResponseResult.fail("500", "公告添加失败");
+        } catch (Exception e) {
+            logger.error("添加公告失败: {}", e.getMessage(), e);
+            return ResponseResult.fail("500", "公告添加失败");
+        }
+    }
+
+    /**
+     * 更新公告
+     */
+    @PutMapping("/{merchantId}/announcements/{announcementId}")
+    public ResponseResult<?> updateAnnouncement(
+            @PathVariable String merchantId,
+            @PathVariable String announcementId,
+            @RequestBody Announcement announcement) {
+        try {
+            // 验证公告属于该商家
+            Announcement existingAnnouncement = announcementService.getById(announcementId);
+            if (existingAnnouncement == null || !existingAnnouncement.getMerchantId().equals(Long.valueOf(merchantId))) {
+                return ResponseResult.fail("404", "公告不存在");
+            }
+
+            // 确保ID一致
+            announcement.setId(Long.valueOf(announcementId));
+            announcement.setMerchantId(Long.valueOf(merchantId));
+
+            boolean success = announcementService.updateById(announcement);
+            if (success) {
+                return ResponseResult.success(announcement, "公告更新成功");
+            }
+            return ResponseResult.fail("500", "公告更新失败");
+        } catch (Exception e) {
+            logger.error("更新公告失败: {}", e.getMessage(), e);
+            return ResponseResult.fail("500", "公告更新失败");
+        }
+    }
+
+    /**
+     * 切换公告状态
+     */
+    @PutMapping("/{merchantId}/announcements/{announcementId}/status")
+    public ResponseResult<?> toggleAnnouncementStatus(
+            @PathVariable String merchantId,
+            @PathVariable String announcementId,
+            @RequestBody Map<String, String> request) {
+        try {
+            String status = request.get("status");
+
+            // 验证公告属于该商家
+            Announcement announcement = announcementService.getById(announcementId);
+            if (announcement == null || !announcement.getMerchantId().equals(Long.valueOf(merchantId))) {
+                return ResponseResult.fail("404", "公告不存在");
+            }
+
+            // 更新状态
+            announcement.setStatus(status);
+            boolean success = announcementService.updateById(announcement);
+            if (success) {
+                return ResponseResult.success(announcement, "状态更新成功");
+            }
+            return ResponseResult.fail("500", "状态更新失败");
+        } catch (Exception e) {
+            logger.error("切换公告状态失败: {}", e.getMessage(), e);
+            return ResponseResult.fail("500", "状态更新失败");
+        }
+    }
+
+    /**
+     * 删除公告
+     */
+    @DeleteMapping("/{merchantId}/announcements/{announcementId}")
+    public ResponseResult<?> deleteAnnouncement(
+            @PathVariable String merchantId,
+            @PathVariable String announcementId) {
+        try {
+            // 验证公告属于该商家
+            Announcement announcement = announcementService.getById(announcementId);
+            if (announcement == null || !announcement.getMerchantId().equals(Long.valueOf(merchantId))) {
+                return ResponseResult.fail("404", "公告不存在");
+            }
+
+            boolean success = announcementService.removeById(announcementId);
+            if (success) {
+                return ResponseResult.success(null, "公告删除成功");
+            }
+            return ResponseResult.fail("500", "公告删除失败");
+        } catch (Exception e) {
+            logger.error("删除公告失败: {}", e.getMessage(), e);
+            return ResponseResult.fail("500", "公告删除失败");
         }
     }
 }

@@ -47,6 +47,7 @@ export const API_CONFIG = {
     comments: '/v1/merchant/{merchantId}/comments', // 商家评价接口
     album: '/v1/merchant/{merchantId}/album', // 商家相册接口
     discounts: '/v1/merchant/{merchantId}/discounts', // 商家优惠接口
+    announcements: '/v1/merchant/{merchantId}/announcements', // 商家公告接口
     businessOverview: '/v1/merchant/{merchantId}/business-overview', // 营业概览接口
     avatar: '/v1/merchant/{merchantId}/avatar' // 商家头像接口
   },

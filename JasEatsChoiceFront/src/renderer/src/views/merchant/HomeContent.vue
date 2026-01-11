@@ -1,1000 +1,344 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { ElImageViewer } from 'element-plus'
-import api from '../../utils/api.js'
-import { API_CONFIG } from '../../config/index.js'
-import { useAuthStore } from '../../store/authStore'
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import api from "../../utils/api.js";
+import { API_CONFIG } from "../../config/index.js";
+import { useAuthStore } from "../../store/authStore";
 // 导入拆分后的组件
-import MerchantInfo from '../../components/merchant/MerchantInfo.vue'
-import BusinessOverview from '../../components/merchant/BusinessOverview.vue'
-import OrderCenter from '../../components/merchant/OrderCenter.vue'
-import TodayMenu from '../../components/merchant/TodayMenu.vue'
+import MerchantInfo from "../../components/merchant/MerchantInfo.vue";
+import BusinessOverview from "../../components/merchant/BusinessOverview.vue";
+import OrderCenter from "../../components/merchant/OrderCenter.vue";
+import TodayMenu from "../../components/merchant/TodayMenu.vue";
+import ShopAlbum from "../../components/merchant/ShopAlbum.vue";
+import DiscountManagement from "../../components/merchant/DiscountManagement.vue";
+import AnnouncementManagement from "../../components/merchant/AnnouncementManagement.vue";
 
-const router = useRouter()
+const router = useRouter();
 
 // 从 Pinia store 获取商家ID
-const authStore = useAuthStore()
-let merchantId = authStore.merchantId
+const authStore = useAuthStore();
+let merchantId = authStore.merchantId;
 
 // 如果 Pinia 中没有商家ID，尝试从 localStorage 读取
 if (!merchantId) {
-  const localStorageMerchantId = localStorage.getItem('auth_merchantId')
-  if (localStorageMerchantId) {
-    merchantId = localStorageMerchantId
-    authStore.setMerchantId(localStorageMerchantId) // 更新到 Pinia 中
-  } else {
-    // 如果 localStorage 中也没有，回到首页或注册页
-    ElMessage.error('未检测到商家ID，请重新登录')
-    router.push('/merchant/register') // 跳转到注册页或首页
-  }
+	const localStorageMerchantId = localStorage.getItem("auth_merchantId");
+	if (localStorageMerchantId) {
+		merchantId = localStorageMerchantId;
+		authStore.setMerchantId(localStorageMerchantId); // 更新到 Pinia 中
+	} else {
+		// 如果 localStorage 中也没有，回到首页或注册页
+		ElMessage.error("未检测到商家ID，请重新登录");
+		router.push("/merchant/register"); // 跳转到注册页或首页
+	}
 }
 
 // 商家信息
 const merchantInfo = ref({
-  id: merchantId, // 确保id始终存在
-  name: '健康轻食馆',
-  rating: 4.8,
-  phone: '138-1234-5678',
-  email: 'health-food@example.com',
-  address: '北京市朝阳区建国路88号'
-})
+	id: merchantId, // 确保id始终存在
+	name: "健康轻食馆",
+	rating: 4.8,
+	phone: "138-1234-5678",
+	email: "health-food@example.com",
+	address: "北京市朝阳区建国路88号",
+});
 
 // 商家营业概览
 const businessOverview = ref({
-  sales: 0,
-  orders: 0,
-  newComments: 0,
-  unreadMessages: 3
-})
-
-// 优惠活动列表 - 初始化为空，等待后端数据
-const discounts = ref([])
-
-// 优惠管理对话框
-const discountDialogVisible = ref(false)
-const currentDiscountForm = ref({})
-const isEditingDiscount = ref(false)
-
-// 优惠表单验证规则引用
-const discountFormRef = ref(null)
-
-// 优惠类型单位计算
-const discountUnit = computed(() => {
-  const type = currentDiscountForm.value?.type
-  if (type === '满减') return '元'
-  if (type === '折扣') return '%'
-  return ''
-})
-
-// 批量操作选中的优惠
-const selectedDiscounts = ref([])
-
-// 处理表格选择变化
-const handleSelectionChange = (selection) => {
-  selectedDiscounts.value = selection
-  console.log('当前选中的优惠:', selectedDiscounts.value)
-}
-
-// 优惠表单验证规则
-const discountRules = {
-  name: [
-    { required: true, message: '请输入优惠名称', trigger: 'blur' },
-    { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' }
-  ],
-  type: [{ required: true, message: '请选择优惠类型', trigger: 'change' }],
-  discountValue: [{ required: true, message: '请输入优惠力度', trigger: 'blur' }],
-  description: [
-    { required: true, message: '请输入优惠描述', trigger: 'blur' },
-    { min: 5, max: 200, message: '长度在 5 到 200 个字符', trigger: 'blur' }
-  ],
-  validityType: [{ required: true, message: '请选择有效期类型', trigger: 'change' }]
-}
-
-// 批量删除优惠
-const batchDeleteDiscounts = () => {
-  if (selectedDiscounts.value.length === 0) {
-    ElMessage.warning('请先选择要删除的优惠')
-    return
-  }
-
-  const discountIds = selectedDiscounts.value.map((discount) => discount.id)
-
-  ElMessageBox.confirm(
-    `确定要删除选中的 ${selectedDiscounts.value.length} 个优惠活动吗？`,
-    '批量删除',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  )
-    .then(() => {
-      console.log('批量删除优惠ID列表:', discountIds)
-      // 调用后端API批量删除优惠 - 使用新的批量删除endpoint
-      api
-        .delete(`${API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id)}/batch`, {
-          params: { ids: discountIds.join(',') } // 使用查询参数发送ID列表
-        })
-        .then((response) => {
-          console.log('批量删除响应:', response)
-          if (response && response.success) {
-            // 更新本地数据
-            discounts.value = discounts.value.filter(
-              (discount) => !discountIds.includes(discount.id)
-            )
-            selectedDiscounts.value = []
-            ElMessage.success('优惠活动批量删除成功')
-          } else {
-            ElMessage.error(response?.message || '批量删除优惠活动失败')
-          }
-        })
-        .catch((error) => {
-          console.error('批量删除优惠活动失败:', error)
-          ElMessage.error('批量删除优惠活动失败')
-        })
-    })
-    .catch(() => {
-      ElMessage.info('已取消删除')
-    })
-}
-
-// 批量更新优惠状态
-const batchUpdateStatus = (status) => {
-  if (selectedDiscounts.value.length === 0) {
-    ElMessage.warning('请先选择要操作的优惠')
-    return
-  }
-
-  const statusText = status === 'active' ? '启用' : '禁用'
-  const discountIds = selectedDiscounts.value.map((discount) => discount.id)
-
-  ElMessageBox.confirm(
-    `确定要批量${statusText}选中的 ${selectedDiscounts.value.length} 个优惠活动吗？`,
-    `批量${statusText}`,
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  )
-    .then(() => {
-      console.log(`批量${statusText}优惠ID列表:`, discountIds, '目标状态:', status)
-      // 调用后端API批量更新状态 - 使用新的批量更新endpoint
-      api
-        .put(`${API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id)}/batch`, {
-          discountIds,
-          status
-        })
-        .then((response) => {
-          console.log(`批量${statusText}响应:`, response)
-          if (response && response.success) {
-            // 更新本地数据
-            discounts.value.forEach((discount) => {
-              if (discountIds.includes(discount.id)) {
-                discount.status = status
-              }
-            })
-            selectedDiscounts.value = []
-            ElMessage.success(`优惠活动批量${statusText}成功`)
-          } else {
-            ElMessage.error(response?.message || `批量${statusText}优惠活动失败`)
-          }
-        })
-        .catch((error) => {
-          console.error(`批量${statusText}优惠状态失败:`, error)
-          ElMessage.error(`批量${statusText}优惠状态失败`)
-        })
-    })
-    .catch(() => {
-      ElMessage.info('已取消操作')
-    })
-}
-
-// 打开优惠管理对话框
-const openDiscountDialog = (discount = null) => {
-  discountDialogVisible.value = true
-  if (discount) {
-    // 编辑模式
-    isEditingDiscount.value = true
-    currentDiscountForm.value = { ...discount }
-  } else {
-    // 新增模式
-    isEditingDiscount.value = false
-    currentDiscountForm.value = {
-      name: '',
-      type: '满减',
-      discountValue: 0,
-      minAmount: 0,
-      limitPerUser: 1,
-      validityType: 'permanent',
-      validityPeriod: null,
-      validDays: 30,
-      usageNotes: '',
-      description: '',
-      status: 'active'
-    }
-  }
-}
-
-// 保存优惠
-const saveDiscount = () => {
-  // 简单的表单验证
-  if (!currentDiscountForm.value.name || !currentDiscountForm.value.description) {
-    ElMessage.error('请填写完整的优惠信息')
-    return
-  }
-
-  if (isEditingDiscount.value) {
-    // 编辑模式 - 更新现有优惠 - 使用新的路由包含 discountId
-    api
-      .put(
-        `${API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id)}/${currentDiscountForm.value.id}`,
-        currentDiscountForm.value
-      )
-      .then((response) => {
-        console.log('更新优惠响应:', response)
-        if (response && response.success) {
-          // 更新本地数据
-          const index = discounts.value.findIndex((d) => d.id === currentDiscountForm.value.id)
-          if (index !== -1) {
-            discounts.value[index] = { ...currentDiscountForm.value }
-          }
-          ElMessage.success('优惠活动已更新')
-          discountDialogVisible.value = false
-        } else {
-          ElMessage.error(response?.message || '更新优惠活动失败')
-        }
-      })
-      .catch((error) => {
-        console.error('更新优惠活动失败:', error)
-        ElMessage.error('更新优惠活动失败')
-      })
-  } else {
-    // 新增模式 - 添加新优惠
-    api
-      .post(
-        API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id),
-        currentDiscountForm.value
-      )
-      .then((response) => {
-        console.log('添加优惠响应:', response)
-        if (response && response.success) {
-          ElMessage.success('优惠活动已添加')
-          discountDialogVisible.value = false
-          // 刷新优惠列表以确保数据格式一致
-          fetchDiscounts()
-        } else {
-          ElMessage.error(response?.message || '添加优惠活动失败')
-        }
-      })
-      .catch((error) => {
-        console.error('添加优惠活动失败:', error)
-        ElMessage.error('添加优惠活动失败')
-      })
-  }
-
-  currentDiscountForm.value = {}
-}
-
-// 店铺相册
-const shopAlbum = ref({
-  environment: [],
-  dishes: []
-})
-
-// 上传相关变量
-const uploadAlbumType = ref('environment')
-const imageUploadList = ref([])
-const uploadSectionRef = ref(null) // 上传区域引用
-const uploadInputRef = ref(null) // 上传输入框引用
-const uploadComponentRef = ref(null) // 上传组件引用
-
-// 图片预览相关
-const showImageViewer = ref(false)
-const previewImages = ref([])
-const initialPreviewIndex = ref(0)
-
-// 打开图片预览
-const openImagePreview = (images, index) => {
-  previewImages.value = images
-  initialPreviewIndex.value = index
-  showImageViewer.value = true
-}
-
-// 关闭图片预览
-const closeImagePreview = () => {
-  showImageViewer.value = false
-}
-
-// 获取店铺相册数据
-const fetchMerchantAlbum = async () => {
-  try {
-    const response = await api.get(API_CONFIG.merchant.album.replace('{merchantId}', merchantInfo.value.id))
-    console.log('获取相册响应:', response)
-    console.log('相册数据类型:', typeof response.data)
-    console.log('相册原始数据:', response.data)
-    if (response.success && response.data) {
-      shopAlbum.value = response.data
-      console.log('处理后的相册数据:', shopAlbum.value)
-    }
-  } catch (error) {
-    console.error('获取相册数据失败:', error)
-  }
-}
-
-// 上传照片变更处理
-const handleUpload = (file, fileList) => {
-  console.log('上传照片变更:', file, fileList)
-  imageUploadList.value = fileList
-}
-
-// 移除上传的照片
-const handleUploadRemove = (removedFile, fileList) => {
-  console.log('移除上传的照片:', removedFile)
-  imageUploadList.value = fileList
-}
-
-// 确认上传照片
-const confirmUpload = () => {
-  if (imageUploadList.value.length === 0) {
-    ElMessage.warning('请先选择要上传的照片')
-    return
-  }
-
-  const albumTypeText = '店铺环境'
-  const formData = new FormData()
-
-  // 添加照片文件到FormData（注意：后端期望的参数名是 'images'）
-  imageUploadList.value.forEach((file) => {
-    formData.append('images', file.raw)
-  })
-
-  // 添加相册类型
-  formData.append('albumType', uploadAlbumType.value)
-
-  console.log('开始上传照片...', {
-    albumType: uploadAlbumType.value,
-    fileCount: imageUploadList.value.length
-  })
-
-  // 调用后端API上传照片
-  api
-    .post(API_CONFIG.merchant.album.replace('{merchantId}', merchantInfo.value.id), formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-    .then((response) => {
-      console.log('上传响应完整数据:', response)
-      console.log('上传响应success:', response?.success)
-      console.log('上传响应data:', response?.data)
-
-      // 兼容不同的响应格式 - 检查 response 本身是否成功
-      const isSuccess = response?.success || response?.data?.success
-      const responseData = response?.data !== undefined ? response.data : response
-
-      console.log('处理后的响应数据:', responseData)
-      console.log('上传的图片数组:', responseData)
-
-      if (isSuccess && responseData) {
-        const uploadedImages = Array.isArray(responseData) ? responseData : []
-
-        console.log('最终上传成功的图片:', uploadedImages)
-        console.log('图片数组类型:', Array.isArray(uploadedImages))
-
-        // 重新获取相册数据以确保一致性
-        fetchMerchantAlbum()
-
-        // 上传完成后清空上传列表
-        imageUploadList.value = []
-
-        // 显示上传成功提示
-        ElMessage.success(`已成功追加上传${uploadedImages.length}张照片到${albumTypeText}相册`)
-      } else {
-        console.error('上传失败，响应格式不正确:', response)
-        ElMessage.error('上传失败：' + (response?.message || '服务器返回错误'))
-      }
-    })
-    .catch((error) => {
-      console.error('上传照片失败:', error)
-      ElMessage.error('上传照片失败：' + (error.message || '网络错误'))
-    })
-}
-
-// 删除相册图片
-const deleteAlbumImage = (type, index) => {
-  const imageUrl = shopAlbum.value[type][index]
-
-  // 确认删除
-  ElMessageBox.confirm('确定要删除这张照片吗？', '删除照片', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  })
-    .then(() => {
-      // 调用后端API删除照片
-      api
-        .delete(API_CONFIG.merchant.album.replace('{merchantId}', merchantInfo.value.id), {
-          params: {
-            imageUrl,
-            albumType: type
-          }
-        })
-        .then((response) => {
-          console.log('删除响应:', response)
-          // 修复响应判断逻辑
-          if (response && response.success) {
-            // 重新获取相册数据以确保一致性
-            fetchMerchantAlbum()
-            ElMessage.success('照片已删除')
-          } else {
-            ElMessage.error(response?.message || '删除失败')
-          }
-        })
-        .catch((error) => {
-          console.error('删除照片失败:', error)
-          ElMessage.error('删除照片失败')
-        })
-    })
-    .catch(() => {
-      ElMessage.info('已取消删除')
-    })
-}
-
-// 触发立即上传（从空状态按钮）
-const triggerUpload = () => {
-  // 滚动到上传区域
-  if (uploadSectionRef.value) {
-    uploadSectionRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
-  // 触发文件选择对话框
-  setTimeout(() => {
-    const uploadInput = document.querySelector('.upload-area .el-upload__input')
-    if (uploadInput) {
-      uploadInput.click()
-    }
-  }, 500)
-}
-
-// 公告栏配置
-const announcements = ref([])
-const announcementDialogVisible = ref(false)
-const currentAnnouncement = ref({
-  title: '',
-  content: '',
-  status: 'active',
-  startTime: null,
-  endTime: null
-})
-const isEditingAnnouncement = ref(false)
-
-// 获取公告列表
-const getAnnouncements = () => {
-  // 调用后端API获取公告列表
-  let url = API_CONFIG.merchant.announcements
-  url = url.replace('{merchantId}', merchantInfo.value.id)
-  api
-    .get(url)
-    .then(function (response) {
-      if (response.data && response.data.success) {
-        announcements.value = response.data.data
-      }
-    })
-    .catch(function (error) {
-      console.error('获取公告列表失败:', error)
-    })
-}
-
-// 打开公告编辑对话框
-const openAnnouncementDialog = function (announcement = null) {
-  announcementDialogVisible.value = true
-  if (announcement) {
-    isEditingAnnouncement.value = true
-    currentAnnouncement.value = JSON.parse(JSON.stringify(announcement))
-  } else {
-    isEditingAnnouncement.value = false
-    currentAnnouncement.value = {
-      title: '',
-      content: '',
-      status: 'active',
-      startTime: null,
-      endTime: null
-    }
-  }
-}
-
-// 保存公告
-const saveAnnouncement = function () {
-  // 简单验证
-  if (!currentAnnouncement.value.title || !currentAnnouncement.value.content) {
-    ElMessage.error('请填写完整的公告信息')
-    return
-  }
-
-  let apiMethod = isEditingAnnouncement.value ? api.put : api.post
-  let apiUrl = API_CONFIG.merchant.announcements.replace('{merchantId}', merchantInfo.value.id)
-  if (isEditingAnnouncement.value) {
-    apiUrl = apiUrl + '/' + currentAnnouncement.value.id
-  }
-
-  apiMethod(apiUrl, currentAnnouncement.value)
-    .then(function (response) {
-      if (response.data && response.data.success) {
-        let message = isEditingAnnouncement.value ? '公告已更新' : '公告已添加'
-        ElMessage.success(message)
-        getAnnouncements() // 刷新公告列表
-        announcementDialogVisible.value = false
-      }
-    })
-    .catch(function (error) {
-      console.error('保存公告失败:', error)
-      ElMessage.error('保存公告失败')
-    })
-}
-
-// 删除公告
-const deleteAnnouncement = function (announcement) {
-  ElMessageBox.confirm("确定要删除公告 '" + announcement.title + "' 吗？", '删除公告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  })
-    .then(function () {
-      let url = API_CONFIG.merchant.announcements.replace('{merchantId}', merchantInfo.value.id)
-      url = url + '/' + announcement.id
-      api
-        .delete(url)
-        .then(function (response) {
-          if (response.data && response.data.success) {
-            ElMessage.success('公告已删除')
-            getAnnouncements() // 刷新公告列表
-          }
-        })
-        .catch(function (error) {
-          console.error('删除公告失败:', error)
-          ElMessage.error('删除公告失败')
-        })
-    })
-    .catch(function () {
-      ElMessage.info('已取消删除')
-    })
-}
-
-// 切换公告状态
-const toggleAnnouncementStatus = function (announcement) {
-  let newStatus = announcement.status === 'active' ? 'inactive' : 'active'
-  let statusText = newStatus === 'active' ? '已启用' : '已禁用'
-
-  let url = API_CONFIG.merchant.announcements.replace('{merchantId}', merchantInfo.value.id)
-  url = url + '/' + announcement.id + '/status'
-
-  api
-    .put(url, { status: newStatus })
-    .then(function (response) {
-      if (response.data && response.data.success) {
-        announcement.status = newStatus
-        ElMessage.success('公告已' + statusText)
-      }
-    })
-    .catch(function (error) {
-      console.error('切换公告状态失败:', error)
-      ElMessage.error('切换公告状态失败')
-    })
-}
-
-// 删除单个优惠
-const deleteDiscount = (discount) => {
-  ElMessageBox.confirm(`确定要删除优惠活动 "${discount.name}" 吗？`, '删除优惠', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  })
-    .then(() => {
-      // 调用后端API删除优惠
-      api
-        .delete(
-          `${API_CONFIG.merchant.discounts.replace(
-            '{merchantId}',
-            merchantInfo.value.id
-          )}/${discount.id}`
-        )
-        .then((response) => {
-          if (response && response.success) {
-            const index = discounts.value.findIndex((d) => d.id === discount.id)
-            if (index !== -1) {
-              discounts.value.splice(index, 1)
-            }
-            ElMessage.success('优惠活动删除成功')
-          }
-        })
-        .catch((error) => {
-          console.error('删除优惠活动失败:', error)
-          ElMessage.error('删除优惠活动失败')
-        })
-    })
-    .catch(() => {
-      ElMessage.info('已取消删除')
-    })
-}
-
-// 切换优惠状态
-const toggleDiscountStatus = (discount) => {
-  const newStatus = discount.status === 'active' ? 'inactive' : 'active'
-  const statusText = newStatus === 'active' ? '启用' : '禁用'
-
-  ElMessageBox.confirm(
-    `确定要${statusText}优惠活动 "${discount.name}" 吗？`,
-    `${statusText}优惠`,
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  )
-    .then(() => {
-      api
-        .put(
-          `${API_CONFIG.merchant.discounts.replace('{merchantId}', merchantInfo.value.id)}/${
-            discount.id
-          }/status`,
-          { status: newStatus }
-        )
-        .then((response) => {
-          if (response && response.success) {
-            discount.status = newStatus
-            ElMessage.success(`优惠活动已${statusText}`)
-          }
-        })
-        .catch((error) => {
-          console.error('切换优惠状态失败:', error)
-          ElMessage.error('切换优惠状态失败')
-        })
-    })
-    .catch(() => {
-      ElMessage.info('已取消操作')
-    })
-}
-
-// 获取优惠类型标签颜色
-const getDiscountTypeTag = (type) => {
-  const typeMap = {
-    满减: 'danger',
-    折扣: 'warning',
-    买赠: 'success',
-    特价: 'primary'
-  }
-  return typeMap[type] || ''
-}
-
-// 格式化日期时间
-const formatDateTime = (dateTime) => {
-  if (!dateTime) return '-'
-  const date = new Date(dateTime)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}`
-}
+	sales: 0,
+	orders: 0,
+	newComments: 0,
+	unreadMessages: 3,
+});
 
 // 页面跳转
 const navigateToOrders = () => {
-  router.push('/merchant/home/orders')
-}
+	router.push("/merchant/home/orders");
+};
 
 // 查看订单详情
 const viewOrderDetails = (order) => {
-  // 跳转到订单详情页面
-  router.push(`/merchant/home/orders/details?orderId=${order.id}`)
-}
+	// 跳转到订单详情页面
+	router.push(`/merchant/home/orders/details?orderId=${order.id}`);
+};
 
 // 更新订单状态
 const updateOrderStatus = (order) => {
-  // 定义订单状态流转逻辑
-  const statusFlow = {
-    1: 2, // 待处理 -> 备菜中
-    2: 3, // 备菜中 -> 烹饪中
-    3: 4, // 烹饪中 -> 待配送
-    4: 5, // 待配送 -> 已完成
-    5: 5, // 已完成 -> 已完成（不可再改）
-    6: 6 // 已取消 -> 已取消（不可再改）
-  }
+	// 定义订单状态流转逻辑
+	const statusFlow = {
+		1: 2, // 待处理 -> 备菜中
+		2: 3, // 备菜中 -> 烹饪中
+		3: 4, // 烹饪中 -> 待配送
+		4: 5, // 待配送 -> 已完成
+		5: 5, // 已完成 -> 已完成（不可再改）
+		6: 6, // 已取消 -> 已取消（不可再改）
+	};
 
-  const nextStatus = statusFlow[order.status] || order.status
+	const nextStatus = statusFlow[order.status] || order.status;
 
-  // 如果状态没有变化
-  if (nextStatus === order.status) {
-    ElMessage.warning(`订单 ${order.id} 当前状态不可变更`)
-    return
-  }
+	// 如果状态没有变化
+	if (nextStatus === order.status) {
+		ElMessage.warning(`订单 ${order.id} 当前状态不可变更`);
+		return;
+	}
 
-  // 调用API更新订单状态
-  const updateData = {
-    orderId: order.id,
-    status: nextStatus
-  }
+	// 调用API更新订单状态
+	const updateData = {
+		orderId: order.id,
+		status: nextStatus,
+	};
 
-  api
-    .put(API_CONFIG.merchant.updateOrderStatus.replace('{orderId}', order.id), updateData)
-    .then((response) => {
-      if (response.data && response.data.success) {
-        // 更新本地订单状态
-        order.status = nextStatus
-        ElMessage.success(`订单 ${order.id} 状态已更新为 ${orderStatusMap[nextStatus]}`)
-      }
-    })
-    .catch((error) => {
-      console.error('更新订单状态失败:', error)
-      ElMessage.error('更新订单状态失败')
-    })
-}
+	api.put(
+		API_CONFIG.merchant.updateOrderStatus.replace("{orderId}", order.id),
+		updateData
+	)
+		.then((response) => {
+			if (response.data && response.data.success) {
+				// 更新本地订单状态
+				order.status = nextStatus;
+				ElMessage.success(
+					`订单 ${order.id} 状态已更新为 ${orderStatusMap[nextStatus]}`
+				);
+			}
+		})
+		.catch((error) => {
+			console.error("更新订单状态失败:", error);
+			ElMessage.error("更新订单状态失败");
+		});
+};
 
 // 通知用户
 const notifyUser = (order) => {
-  // 调用API通知用户
-  const notifyData = {
-    orderId: order.id,
-    message: `您的订单 ${order.id} 状态已更新为 ${orderStatusMap[order.status]}`
-  }
+	// 调用API通知用户
+	const notifyData = {
+		orderId: order.id,
+		message: `您的订单 ${order.id} 状态已更新为 ${orderStatusMap[order.status]}`,
+	};
 
-  api
-    .post(API_CONFIG.merchant.notifyUser.replace('{orderId}', order.id), notifyData)
-    .then((response) => {
-      if (response.data && response.data.success) {
-        ElMessage.success(`已成功通知用户订单 ${order.id} 的最新状态`)
-      }
-    })
-    .catch((error) => {
-      console.error('通知用户失败:', error)
-      ElMessage.error('通知用户失败')
-    })
-}
+	api.post(API_CONFIG.merchant.notifyUser.replace("{orderId}", order.id), notifyData)
+		.then((response) => {
+			if (response.data && response.data.success) {
+				ElMessage.success(`已成功通知用户订单 ${order.id} 的最新状态`);
+			}
+		})
+		.catch((error) => {
+			console.error("通知用户失败:", error);
+			ElMessage.error("通知用户失败");
+		});
+};
 
 // 概览项导航
 const navigateToStatistics = () => {
-  router.push('/merchant/home/statistics')
-}
+	router.push("/merchant/home/statistics");
+};
 
 const navigateToComments = () => {
-  router.push('/merchant/home/comments')
-}
+	router.push("/merchant/home/comments");
+};
 
 const navigateToMessages = () => {
-  router.push('/merchant/home/messages')
-}
+	router.push("/merchant/home/messages");
+};
 
 // 营业概览配置数组 - 使用循环减少冗余
 const overviewConfig = ref([
-  {
-    key: 'sales',
-    icon: '💰',
-    label: '营业额',
-    onClick: navigateToStatistics,
-    trend: '↑ 12.5%',
-    trendClass: 'trend-up',
-    suffix: '¥'
-  },
-  {
-    key: 'orders',
-    icon: '🍽️',
-    label: '订单数',
-    onClick: navigateToOrders,
-    trend: '↑ 8.3%',
-    trendClass: 'trend-up'
-  },
-  {
-    key: 'newComments',
-    icon: '🌟',
-    label: '新增评价',
-    onClick: navigateToComments,
-    trend: '↓ 2.1%',
-    trendClass: 'trend-down'
-  },
-  {
-    key: 'unreadMessages',
-    icon: '📞',
-    label: '未读消息',
-    onClick: navigateToMessages,
-    trend: '→ 0%',
-    trendClass: 'trend-neutral'
-  }
-])
+	{
+		key: "sales",
+		icon: "💰",
+		label: "营业额",
+		onClick: navigateToStatistics,
+		trend: "↑ 12.5%",
+		trendClass: "trend-up",
+		suffix: "¥",
+	},
+	{
+		key: "orders",
+		icon: "🍽️",
+		label: "订单数",
+		onClick: navigateToOrders,
+		trend: "↑ 8.3%",
+		trendClass: "trend-up",
+	},
+	{
+		key: "newComments",
+		icon: "🌟",
+		label: "新增评价",
+		onClick: navigateToComments,
+		trend: "↓ 2.1%",
+		trendClass: "trend-down",
+	},
+	{
+		key: "unreadMessages",
+		icon: "📞",
+		label: "未读消息",
+		onClick: navigateToMessages,
+		trend: "→ 0%",
+		trendClass: "trend-neutral",
+	},
+]);
 
 // 筛选功能
-const activeFilter = ref('today')
+const activeFilter = ref("today");
 
 // 所有订单数据
-const allOrders = ref([])
+const allOrders = ref([]);
 
 // 筛选后的订单
-const filteredOrders = ref([])
+const filteredOrders = ref([]);
 
 // 订单状态映射
 const orderStatusMap = {
-  1: '待处理',
-  2: '备菜中',
-  3: '烹饪中',
-  4: '待配送',
-  5: '已完成',
-  6: '已取消'
-}
+	1: "待处理",
+	2: "备菜中",
+	3: "烹饪中",
+	4: "待配送",
+	5: "已完成",
+	6: "已取消",
+};
 
 // 筛选订单
 const filterOrders = (filterType) => {
-  activeFilter.value = filterType
+	activeFilter.value = filterType;
 
-  // 简单的筛选逻辑，根据实际时间处理
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+	// 简单的筛选逻辑，根据实际时间处理
+	const now = new Date();
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const weekStart = new Date(
+		now.getFullYear(),
+		now.getMonth(),
+		now.getDate() - now.getDay()
+	);
+	const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  filteredOrders.value = allOrders.value.filter((order) => {
-    const orderDate = new Date(order.createTime)
+	filteredOrders.value = allOrders.value.filter((order) => {
+		const orderDate = new Date(order.createTime);
 
-    // 时间范围过滤
-    let timeMatch = true
-    switch (filterType) {
-      case 'today':
-        timeMatch = orderDate >= today
-        break
-      case 'week':
-        timeMatch = orderDate >= weekStart
-        break
-      case 'month':
-        timeMatch = orderDate >= monthStart
-        break
-    }
+		// 时间范围过滤
+		let timeMatch = true;
+		switch (filterType) {
+			case "today":
+				timeMatch = orderDate >= today;
+				break;
+			case "week":
+				timeMatch = orderDate >= weekStart;
+				break;
+			case "month":
+				timeMatch = orderDate >= monthStart;
+				break;
+		}
 
-    return timeMatch
-  })
-}
+		return timeMatch;
+	});
+};
 
 const navigateToMenu = () => {
-  router.push('/merchant/home/menu')
-}
+	router.push("/merchant/home/menu");
+};
 
 // 快捷操作函数 - 设置优惠
 const setDiscount = () => {
-  // 优惠活动管理在当前页面，无需跳转
-}
+	// 优惠活动管理在当前页面，无需跳转
+};
 
 // 快捷操作函数 - 联系客服
 const contactCustomerService = () => {
-  ElMessage.info('联系客服功能已触发')
-  // 可以在此处添加具体的实现逻辑
-}
+	ElMessage.info("联系客服功能已触发");
+	// 可以在此处添加具体的实现逻辑
+};
 
 // 菜单状态映射
 const menuStatusMap = {
-  online: { text: '上架中', icon: '🟢', type: 'success' },
-  draft: { text: '草稿', icon: '🟡', type: 'warning' },
-  offline: { text: '下架中', icon: '🔴', type: 'danger' }
-}
+	online: { text: "上架中", icon: "🟢", type: "success" },
+	draft: { text: "草稿", icon: "🟡", type: "warning" },
+	offline: { text: "下架中", icon: "🔴", type: "danger" },
+};
 
 // 菜品状态映射
 // 今日菜单数据
-const todayMenus = ref([])
+const todayMenus = ref([]);
 
 // 从后端获取今日菜单数据
 const fetchTodayMenus = () => {
-  api
-    .get(`/v1/menus/merchants/${merchantId}/menu`)
-    .then((response) => {
-      if (response.code === '200' && response.data) {
-        // 假设后端返回的菜单数据结构与我们需要的基本一致
-        // 如果需要转换数据格式，可以在这里处理
-        todayMenus.value = response.data.map((menu) => ({
-          ...menu,
-          status: menu.status === 'active' ? 'online' : 'offline',
-          // 暂时设置dishes为0，后面需要实现获取菜品数量的接口
-          dishes: 0,
-          // 格式转换：LocalDateTime to String
-          updateTime: menu.updateTime ? menu.updateTime.replace('T', ' ') : '',
-          autoOnline: menu.autoStartTime ? menu.autoStartTime.replace('T', ' ') : '',
-          autoOffline: menu.autoEndTime ? menu.autoEndTime.replace('T', ' ') : ''
-        }))
-        // 初始化筛选后的菜单
-        filteredMenus.value = [...todayMenus.value]
-      }
-    })
-    .catch((error) => {
-      console.error('获取今日菜单数据失败:', error)
-    })
-}
+	api.get(`/v1/menus/merchants/${merchantId}/menu`)
+		.then((response) => {
+			if (response.code === "200" && response.data) {
+				// 假设后端返回的菜单数据结构与我们需要的基本一致
+				// 如果需要转换数据格式，可以在这里处理
+				todayMenus.value = response.data.map((menu) => ({
+					...menu,
+					status: menu.status === "active" ? "online" : "offline",
+					// 暂时设置dishes为0，后面需要实现获取菜品数量的接口
+					dishes: 0,
+					// 格式转换：LocalDateTime to String
+					updateTime: menu.updateTime ? menu.updateTime.replace("T", " ") : "",
+					autoOnline: menu.autoStartTime
+						? menu.autoStartTime.replace("T", " ")
+						: "",
+					autoOffline: menu.autoEndTime
+						? menu.autoEndTime.replace("T", " ")
+						: "",
+				}));
+				// 初始化筛选后的菜单
+				filteredMenus.value = [...todayMenus.value];
+			}
+		})
+		.catch((error) => {
+			console.error("获取今日菜单数据失败:", error);
+		});
+};
 
 // 筛选后的菜单
-const filteredMenus = ref([...todayMenus.value])
+const filteredMenus = ref([...todayMenus.value]);
 
 // 菜单类型筛选
 
 // 页面加载
 onMounted(() => {
-  // ElMessage.success("欢迎进入商家中心");
-  console.log('商家ID:', merchantId)
-  // 调用后端API获取今日营业概览数据
+	// ElMessage.success("欢迎进入商家中心");
+	// console.log("商家ID:", merchantId);
+	// 调用后端API获取今日营业概览数据
 
-  // 获取营业概览
-  api
-    .get(`/v1/merchant/${merchantId}/business-overview`)
-    .then((response) => {
-      if (response.code === '200' && response.data) {
-        businessOverview.value = response.data
-      }
-    })
-    .catch((error) => {
-      console.error('获取营业概览数据失败:', error)
-      // 如果获取失败，保留模拟数据
-    })
+	// 获取营业概览
+	api.get(`/v1/merchant/${merchantId}/business-overview`)
+		.then((response) => {
+			if (response.code === "200" && response.data) {
+				businessOverview.value = response.data;
+			}
+		})
+		.catch((error) => {
+			console.error("获取营业概览数据失败:", error);
+			// 如果获取失败，保留模拟数据
+		});
 
-  // 获取订单列表
-  api
-    .get(`/v1/orders/merchant/${merchantId}`)
-    .then((response) => {
-      if (response.code === '200' && response.data) {
-        allOrders.value = response.data
-        // 默认显示今日订单
-        filterOrders('today')
-      }
-    })
-    .catch((error) => {
-      console.error('获取订单列表失败:', error)
-      allOrders.value = []
-      filteredOrders.value = []
-    })
+	// 获取订单列表
+	api.get(`/v1/orders/merchant/${merchantId}`)
+		.then((response) => {
+			if (response.code === "200" && response.data) {
+				allOrders.value = response.data;
+				// 默认显示今日订单
+				filterOrders("today");
+			}
+		})
+		.catch((error) => {
+			console.error("获取订单列表失败:", error);
+			allOrders.value = [];
+			filteredOrders.value = [];
+		});
 
-  // 获取商家信息
-  api
-    .get(`/v1/merchant/${merchantId}`)
-    .then((response) => {
-      if (response.code === '200' && response.data) {
-        merchantInfo.value = response.data
-      }
-    })
-    .catch((error) => {
-      console.error('获取商家信息失败:', error)
-      
-    })
+	// 获取商家信息
+	api.get(`/v1/merchant/${merchantId}`)
+		.then((response) => {
+			if (response.code === "200" && response.data) {
+				merchantInfo.value = response.data;
+			}
+		})
+		.catch((error) => {
+			console.error("获取商家信息失败:", error);
+		});
 
-  // 获取今日菜单数据
-  fetchTodayMenus()
-
-  // 获取优惠活动列表
-  fetchDiscounts()
-
-  // 获取店铺相册数据
-  fetchMerchantAlbum()
-})
-
-// 获取优惠活动列表
-const fetchDiscounts = () => {
-  api
-    .get(API_CONFIG.merchant.discounts.replace('{merchantId}', merchantId))
-    .then((response) => {
-      console.log('获取优惠活动列表响应:', response)
-      if (response && response.success && response.data) {
-        // 确保数字字段正确转换
-        discounts.value = response.data.map(discount => ({
-          ...discount,
-          discountValue: discount.discountValue !== null && discount.discountValue !== undefined ? Number(discount.discountValue) : 0,
-          minAmount: discount.minAmount !== null && discount.minAmount !== undefined ? Number(discount.minAmount) : 0,
-          limitPerUser: discount.limitPerUser || 1,
-          usedCount: discount.usedCount || 0,
-          validDays: discount.validDays || 30
-        }))
-        console.log('处理后的优惠数据:', discounts.value)
-      } else {
-        discounts.value = []
-      }
-    })
-    .catch((error) => {
-      console.error('获取优惠活动列表失败:', error)
-      discounts.value = []
-    })
-}
+	// 获取今日菜单数据
+	fetchTodayMenus();
+});
 
 // onUnmounted(() => {
 //   ElMessage.success('欢迎下次再来');
@@ -1002,1970 +346,685 @@ const fetchDiscounts = () => {
 </script>
 
 <template>
-  <div class="merchant-home-container">
-    <div class="merchant-content">
-      <!-- 商家信息 -->
-      <MerchantInfo />
+	<div class="merchant-home-container">
+		<div class="merchant-content">
+			<!-- 商家信息 -->
+			<MerchantInfo />
 
-      <!-- 今日营业概览 -->
-      <BusinessOverview />
+			<!-- 今日营业概览 -->
+			<BusinessOverview />
 
-      <!-- 订单中心 -->
-      <OrderCenter />
+			<!-- 订单中心 -->
+			<OrderCenter />
 
-      <!-- 今日菜单 -->
-      <TodayMenu />
+			<!-- 今日菜单 -->
+			<TodayMenu />
 
-      <!-- 优惠管理部分 -->
-      <div class="discounts-section">
-        <div class="discounts-header">
-          <div class="discount-title">
-            <h3 class="card-title">💰 优惠活动管理</h3>
-            <div class="active-discounts">{{ discounts.length }}个活动</div>
-          </div>
-          <div class="discount-actions">
-            <el-button type="primary" size="small" @click="openDiscountDialog()">
-              <el-icon><Plus /></el-icon> 添加优惠
-            </el-button>
-            <el-button
-              type="success"
-              size="small"
-              @click="batchUpdateStatus('active')"
-              :disabled="selectedDiscounts.length === 0"
-            >
-              批量启用
-            </el-button>
-            <el-button
-              type="warning"
-              size="small"
-              @click="batchUpdateStatus('inactive')"
-              :disabled="selectedDiscounts.length === 0"
-            >
-              批量禁用
-            </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              @click="batchDeleteDiscounts()"
-              :disabled="selectedDiscounts.length === 0"
-            >
-              批量删除
-            </el-button>
-          </div>
-        </div>
-        <div class="discounts-table-container">
-          <el-table
-            :data="discounts"
-            :default-sort="{ prop: 'createTime', order: 'descending' }"
-            @selection-change="handleSelectionChange"
-            style="width: 100%"
-            :row-style="{ height: '60px' }"
-            :cell-style="{ padding: '8px' }"
-            :table-layout="'auto'"
-          >
-            <el-table-column type="selection" width="50" align="center" fixed="left" />
-            <el-table-column prop="name" label="优惠名称" min-width="150" width="180" show-overflow-tooltip />
-            <el-table-column prop="type" label="类型" width="80" align="center">
-              <template #default="scope">
-                <el-tag :type="getDiscountTypeTag(scope.row.type)" size="small">
-                  {{ scope.row.type }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="优惠规则" min-width="160" width="200">
-              <template #default="scope">
-                <div class="discount-rule">
-                  <template v-if="scope.row.type === '满减' && scope.row.discountValue">
-                    <span class="rule-highlight">满 {{ scope.row.minAmount || 0 }}</span>
-                    <span class="rule-divider">减</span>
-                    <span class="rule-value">{{ scope.row.discountValue }}元</span>
-                  </template>
-                  <template v-else-if="scope.row.type === '折扣' && scope.row.discountValue">
-                    <span class="rule-value">{{ scope.row.discountValue }}折</span>
-                  </template>
-                  <template v-else-if="scope.row.type === '特价' && scope.row.discountValue">
-                    <span class="rule-value">{{ scope.row.discountValue }}元</span>
-                  </template>
-                  <template v-else>
-                    <span class="rule-empty">-</span>
-                  </template>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="description" label="优惠描述" min-width="200" width="250" show-overflow-tooltip />
-            <el-table-column label="使用情况" width="110" align="center">
-              <template #default="scope">
-                <div class="usage-stats">
-                  <div class="usage-item">
-                    <el-icon><User /></el-icon>
-                    <span>{{ scope.row.usedCount || 0 }}次</span>
-                  </div>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" width="80" align="center">
-              <template #default="scope">
-                <el-tag :type="scope.row.status === 'active' ? 'success' : 'info'" size="small">
-                  {{ scope.row.status === 'active' ? '启用' : '禁用' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" width="150" align="center" class-name="time-column">
-              <template #default="scope">
-                {{ formatDateTime(scope.row.createTime) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="180" fixed="right" align="center" class-name="operation-column">
-              <template #default="scope">
-                <div class="operation-buttons">
-                  <el-button
-                    :type="scope.row.status === 'active' ? 'warning' : 'success'"
-                    size="small"
-                    @click="toggleDiscountStatus(scope.row)"
-                    link
-                  >
-                    {{ scope.row.status === 'active' ? '禁用' : '启用' }}
-                  </el-button>
-                  <el-button type="primary" size="small" @click="openDiscountDialog(scope.row)" link>
-                    编辑
-                  </el-button>
-                  <el-button type="danger" size="small" @click="() => deleteDiscount(scope.row)" link>
-                    删除
-                  </el-button>
-                </div>
-              </template>
-            </el-table-column>
+			<!-- 优惠管理 -->
+			<DiscountManagement :merchant-id="String(merchantId)" />
 
-            <!-- 优化的空状态提示 -->
-            <template #empty>
-              <div class="empty-discount-state">
-                <el-result icon="info" title="暂无优惠活动">
-                  <template #sub-title>
-                    <p>还没有创建任何优惠活动</p>
-                    <p class="empty-tips">💡 添加优惠活动可以吸引更多用户下单哦～</p>
-                  </template>
-                  <template #extra>
-                    <el-button type="primary" @click="openDiscountDialog()">
-                      立即创建优惠
-                    </el-button>
-                  </template>
-                </el-result>
-              </div>
-            </template>
-          </el-table>
-        </div>
-      </div>
+			<!-- 店铺相册 -->
+			<ShopAlbum :merchant-id="String(merchantId)" />
 
-      <!-- 店铺相册 -->
-      <div class="shop-album-card">
-        <div class="album-header">
-          <h4 class="card-title">📸 店铺环境 ({{ shopAlbum.environment.length }}张)</h4>
-        </div>
+			<!-- 公告栏配置 -->
+			<AnnouncementManagement :merchant-id="String(merchantId)" />
 
-        <!-- 店铺环境图片 -->
-        <div class="album-section">
-          <div v-if="shopAlbum.environment.length > 0" class="album-grid">
-            <div
-              v-for="(image, index) in shopAlbum.environment"
-              :key="`env-${index}`"
-              class="album-item"
-              @click="openImagePreview(shopAlbum.environment, index)"
-            >
-              <div class="album-item-overlay">
-                <el-button
-                  type="danger"
-                  size="small"
-                  circle
-                  @click.stop="deleteAlbumImage('environment', index)"
-                >
-                  <el-icon><Delete /></el-icon>
-                </el-button>
-              </div>
-              <el-image
-                :src="image"
-                fit="cover"
-              >
-                <template #error>
-                  <div class="image-slot">
-                    <el-icon><Picture /></el-icon>
-                  </div>
-                </template>
-              </el-image>
-            </div>
-          </div>
-
-          <!-- 简化的空状态提示 -->
-          <div v-if="shopAlbum.environment.length === 0" class="album-empty-simple">
-            <el-icon class="empty-icon"><Picture /></el-icon>
-            <p class="empty-text">暂无店铺环境图片</p>
-            <el-button type="primary" size="small" @click="triggerUpload()">
-              <el-icon><Plus /></el-icon> 立即上传
-            </el-button>
-          </div>
-        </div>
-
-        <!-- 上传图片 -->
-        <div class="upload-section" ref="uploadSectionRef">
-          <div class="upload-header">
-            <h6 class="upload-title">
-              <el-icon><Upload /></el-icon>
-              上传店铺环境图片
-            </h6>
-          </div>
-
-          <div class="upload-controls">
-            <div class="upload-tips">
-              <el-icon><InfoFilled /></el-icon>
-              <span>支持 JPG/PNG 格式，单张不超过 5MB</span>
-            </div>
-          </div>
-
-          <!-- 照片上传组件 -->
-          <div class="upload-area">
-            <el-upload
-              ref="uploadComponentRef"
-              action="#"
-              :on-change="handleUpload"
-              :on-remove="handleUploadRemove"
-              :auto-upload="false"
-              :file-list="imageUploadList"
-              drag
-              multiple
-              :show-file-list="true"
-            >
-              <el-icon class="el-icon-plus"><Plus /></el-icon>
-              <div class="el-upload__text">
-                <p class="upload-text">点击或拖拽文件到此处上传</p>
-                <p class="upload-hint">支持多张图片同时上传</p>
-              </div>
-            </el-upload>
-
-            <!-- 上传确认按钮 -->
-            <div class="upload-actions">
-              <el-button
-                type="success"
-                size="large"
-                class="upload-confirm-btn"
-                @click="confirmUpload"
-                :disabled="imageUploadList.length === 0"
-              >
-                <el-icon><Select /></el-icon>
-                确认上传 {{ imageUploadList.length > 0 ? `(${imageUploadList.length}张)` : '' }}
-              </el-button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 公告栏配置 -->
-      <div class="announcement-section">
-        <div class="announcement-header">
-          <h3 class="card-title">📢 公告栏管理</h3>
-          <el-button type="primary" size="small" @click="openAnnouncementDialog()">
-            <el-icon><Plus /></el-icon> 添加公告
-          </el-button>
-        </div>
-        <div class="announcement-table-container">
-          <el-table
-            :data="announcements"
-            :default-sort="{ prop: 'createdTime', order: 'descending' }"
-          >
-            <el-table-column prop="title" label="公告标题" min-width="200" />
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="scope">
-                <el-tag :type="scope.row.status === 'active' ? 'success' : 'warning'">
-                  {{ scope.row.status === 'active' ? '已启用' : '已禁用' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="startTime" label="开始时间" width="180" />
-            <el-table-column prop="endTime" label="结束时间" width="180" />
-            <el-table-column label="操作" width="200" fixed="right">
-              <template #default="scope">
-                <el-button type="primary" size="small" @click="openAnnouncementDialog(scope.row)">
-                  编辑
-                </el-button>
-                <el-button
-                  :type="scope.row.status === 'active' ? 'warning' : 'success'"
-                  size="small"
-                  @click="toggleAnnouncementStatus(scope.row)"
-                >
-                  {{ scope.row.status === 'active' ? '禁用' : '启用' }}
-                </el-button>
-                <el-button type="danger" size="small" @click="() => deleteAnnouncement(scope.row)">
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-            <template #empty>
-              <div class="empty-state">
-                <span class="el-icon-info" />
-                <p>暂无公告，请点击右上角"添加公告"创建</p>
-              </div>
-            </template>
-          </el-table>
-        </div>
-      </div>
-
-      <!-- 优惠管理对话框 -->
-      <el-dialog
-        v-model="discountDialogVisible"
-        :title="isEditingDiscount ? '编辑优惠活动' : '添加优惠活动'"
-        width="700px"
-        top="5%"
-      >
-        <div class="discount-dialog-content">
-          <el-form
-            ref="discountFormRef"
-            :model="currentDiscountForm"
-            :rules="discountRules"
-            label-width="120px"
-            status-icon
-          >
-            <el-form-item label="优惠名称" prop="name" required>
-              <el-input v-model="currentDiscountForm.name" placeholder="请输入优惠名称" />
-            </el-form-item>
-            <el-form-item label="优惠类型" prop="type" required>
-              <el-select v-model="currentDiscountForm.type" placeholder="请选择优惠类型">
-                <el-option label="满减" value="满减" />
-                <el-option label="折扣" value="折扣" />
-                <el-option label="买赠" value="买赠" />
-                <el-option label="特价" value="特价" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="优惠力度" prop="discountValue" required>
-              <el-input-number
-                v-model="currentDiscountForm.discountValue"
-                :min="0"
-                :max="100"
-                :precision="2"
-                :step="1"
-                controls-position="right"
-              />
-              <span class="unit-text">{{ discountUnit }}</span>
-            </el-form-item>
-            <el-form-item
-              label="最低消费"
-              prop="minAmount"
-              v-if="currentDiscountForm.type === '满减'"
-            >
-              <el-input-number
-                v-model="currentDiscountForm.minAmount"
-                :min="0"
-                :precision="2"
-                controls-position="right"
-                placeholder="满多少可用"
-              />
-              <span class="unit-text">元</span>
-            </el-form-item>
-            <el-form-item label="每人限领" prop="limitPerUser">
-              <el-input-number
-                v-model="currentDiscountForm.limitPerUser"
-                :min="1"
-                :max="99"
-                controls-position="right"
-              />
-              <span class="unit-text">张</span>
-            </el-form-item>
-            <el-form-item label="有效期类型" prop="validityType" required>
-              <el-radio-group v-model="currentDiscountForm.validityType">
-                <el-radio value="permanent">永久有效</el-radio>
-                <el-radio value="time_range">时间段</el-radio>
-                <el-radio value="days">领取后天数</el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item
-              label="有效期"
-              prop="validityPeriod"
-              v-if="currentDiscountForm.validityType === 'time_range'"
-            >
-              <el-date-picker
-                v-model="currentDiscountForm.validityPeriod"
-                type="datetimerange"
-                range-separator="至"
-                start-placeholder="开始时间"
-                end-placeholder="结束时间"
-                style="width: 100%"
-              />
-            </el-form-item>
-            <el-form-item
-              label="有效天数"
-              prop="validDays"
-              v-if="currentDiscountForm.validityType === 'days'"
-            >
-              <el-input-number
-                v-model="currentDiscountForm.validDays"
-                :min="1"
-                :max="365"
-                controls-position="right"
-              />
-              <span class="unit-text">天</span>
-            </el-form-item>
-            <el-form-item label="使用说明" prop="usageNotes">
-              <el-input
-                v-model="currentDiscountForm.usageNotes"
-                type="textarea"
-                :rows="2"
-                placeholder="如：仅限堂食、不可与其他优惠同享等"
-              />
-            </el-form-item>
-            <el-form-item label="优惠描述" prop="description" required>
-              <el-input
-                v-model="currentDiscountForm.description"
-                placeholder="请输入优惠描述"
-                type="textarea"
-                :rows="3"
-              />
-            </el-form-item>
-            <el-form-item label="优惠状态" prop="status" required>
-              <el-select v-model="currentDiscountForm.status" placeholder="请选择优惠状态">
-                <el-option label="已启用" value="active" />
-                <el-option label="已禁用" value="inactive" />
-              </el-select>
-            </el-form-item>
-          </el-form>
-
-          <!-- 优惠预览卡片 -->
-          <div class="discount-preview">
-            <div class="preview-label">💳 优惠预览</div>
-            <div class="preview-card" :class="`type-${currentDiscountForm.type}`">
-              <div class="preview-header">
-                <span class="preview-badge">{{ currentDiscountForm.type || '类型' }}</span>
-                <span class="preview-name">{{ currentDiscountForm.name || '优惠名称' }}</span>
-              </div>
-              <div class="preview-value" v-if="currentDiscountForm.discountValue">
-                <template v-if="currentDiscountForm.type === '满减'">
-                  满{{ currentDiscountForm.minAmount }}减{{ currentDiscountForm.discountValue }}元
-                </template>
-                <template v-else-if="currentDiscountForm.type === '折扣'">
-                  {{ currentDiscountForm.discountValue }}折
-                </template>
-                <template v-else-if="currentDiscountForm.type === '买赠'">
-                  买一送一
-                </template>
-                <template v-else-if="currentDiscountForm.type === '特价'">
-                  {{ currentDiscountForm.discountValue }}元特价
-                </template>
-              </div>
-              <div class="preview-desc">
-                {{ currentDiscountForm.description || '优惠描述' }}
-              </div>
-              <div class="preview-footer" v-if="currentDiscountForm.usageNotes">
-                <el-icon><InfoFilled /></el-icon>
-                <span>{{ currentDiscountForm.usageNotes }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <template #footer>
-          <span class="dialog-footer">
-            <el-button @click="discountDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="saveDiscount">确定</el-button>
-          </span>
-        </template>
-      </el-dialog>
-
-      <!-- 公告编辑对话框 -->
-      <el-dialog
-        v-model="announcementDialogVisible"
-        :title="isEditingAnnouncement ? '编辑公告' : '添加公告'"
-        width="600px"
-        top="10%"
-      >
-        <el-form :model="currentAnnouncement" label-width="100px" status-icon>
-          <el-form-item label="公告标题" prop="title" required>
-            <el-input v-model="currentAnnouncement.title" placeholder="请输入公告标题" />
-          </el-form-item>
-          <el-form-item label="公告内容" prop="content" required>
-            <el-input
-              v-model="currentAnnouncement.content"
-              placeholder="请输入公告内容"
-              type="textarea"
-              :rows="4"
-            />
-          </el-form-item>
-          <el-form-item label="状态" prop="status" required>
-            <el-select v-model="currentAnnouncement.status" placeholder="请选择公告状态">
-              <el-option label="已启用" value="active" />
-              <el-option label="已禁用" value="inactive" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="开始时间" prop="startTime">
-            <el-date-picker
-              v-model="currentAnnouncement.startTime"
-              type="datetime"
-              placeholder="选择开始时间"
-              style="width: 100%"
-            />
-          </el-form-item>
-          <el-form-item label="结束时间" prop="endTime">
-            <el-date-picker
-              v-model="currentAnnouncement.endTime"
-              type="datetime"
-              placeholder="选择结束时间"
-              style="width: 100%"
-            />
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <span class="dialog-footer">
-            <el-button @click="announcementDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="saveAnnouncement">确定</el-button>
-          </span>
-        </template>
-      </el-dialog>
-
-      <!-- 快捷操作 -->
-      <div class="quick-actions-card">
-        <h3 class="card-title">🎯 快捷操作：</h3>
-        <div class="actions-grid">
-          <div class="action-item" @click="navigateToMenu">
-            <div class="action-icon">➕</div>
-            <div class="action-label">新增菜单</div>
-          </div>
-          <div class="action-item" @click="setDiscount">
-            <div class="action-icon">💰</div>
-            <div class="action-label">设置优惠</div>
-          </div>
-          <div class="action-item" @click="contactCustomerService">
-            <div class="action-icon">📞</div>
-            <div class="action-label">联系客服</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 图片预览查看器 -->
-    <el-image-viewer
-      v-if="showImageViewer"
-      :url-list="previewImages"
-      :initial-index="initialPreviewIndex"
-      @close="closeImagePreview"
-      :teleported="true"
-    />
-  </div>
+			<!-- 快捷操作 -->
+			<div class="quick-actions-card">
+				<h3 class="card-title">🎯 快捷操作：</h3>
+				<div class="actions-grid">
+					<div class="action-item" @click="navigateToMenu">
+						<div class="action-icon">➕</div>
+						<div class="action-label">新增菜单</div>
+					</div>
+					<div class="action-item" @click="setDiscount">
+						<div class="action-icon">💰</div>
+						<div class="action-label">设置优惠</div>
+					</div>
+					<div class="action-item" @click="contactCustomerService">
+						<div class="action-icon">📞</div>
+						<div class="action-label">联系客服</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
 
 <style scoped lang="less">
 .merchant-home-container {
-  padding: 0 20px 20px 20px;
-
-  .merchant-info-card {
-    margin-bottom: 24px;
-    padding: 24px; /* 添加内边距 */
-    border: 2px solid #409eff; /* 使用Element Plus主色 */
-    border-radius: 12px; /* 增加圆角 */
-    background-color: #ffffff; /* 白色背景 */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* 增强阴影效果 */
-
-    .info-header {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-
-      .avatar-section {
-        .avatar {
-          font-size: 64px;
-        }
-        .edit-btn {
-          margin-top: 10px;
-        }
-      }
-
-      .detail-section {
-        flex: 1;
-
-        .merchant-name {
-          font-size: 20px;
-          font-weight: 600;
-          margin-bottom: 8px;
-        }
-
-        .merchant-rating {
-          margin-bottom: 8px;
-        }
-
-        .contact-info {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 20px;
-          font-size: 14px;
-          color: #606266;
-        }
-      }
-    }
-  }
-
-  .overview-card {
-    margin-bottom: 24px;
-    padding: 24px;
-    border: 2px solid #67c23a; /* 使用成功绿 */
-    border-radius: 12px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 20px rgba(103, 194, 58, 0.12);
-
-    .card-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      color: #e6a23c;
-      display: flex;
-      align-items: center;
-
-      &::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: linear-gradient(to right, #e6a23c, transparent);
-        margin-left: 15px;
-      }
-    }
-
-    .overview-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
-
-      .overview-item {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 20px;
-        border-radius: 12px;
-        background: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: 1px solid #f0f0f0;
-
-        &:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-          border-color: #ffd7a3;
-        }
-
-        &.sales {
-          border-left: 4px solid #67c23a;
-
-          &:hover {
-            border-left: 4px solid #67c23a;
-          }
-        }
-
-        &.orders {
-          border-left: 4px solid #409eff;
-
-          &:hover {
-            border-left: 4px solid #409eff;
-          }
-        }
-
-        &.comments {
-          border-left: 4px solid #e6a23c;
-
-          &:hover {
-            border-left: 4px solid #e6a23c;
-          }
-        }
-
-        &.messages {
-          border-left: 4px solid #f56c6c;
-
-          &:hover {
-            border-left: 4px solid #f56c6c;
-          }
-        }
-
-        .item-icon {
-          font-size: 32px;
-          width: 60px;
-          height: 60px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          background: rgba(230, 162, 60, 0.1);
-        }
-
-        .item-content {
-          flex: 1;
-
-          .overview-label {
-            font-size: 14px;
-            color: #909399;
-            margin-bottom: 4px;
-            font-weight: 500;
-          }
-
-          .overview-value {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 4px;
-          }
-
-          .item-trend {
-            font-size: 12px;
-            font-weight: 600;
-
-            &.trend-up {
-              color: #67c23a;
-            }
-
-            &.trend-down {
-              color: #f56c6c;
-            }
-
-            &.trend-neutral {
-              color: #909399;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  .orders-card {
-    margin-bottom: 24px;
-    padding: 24px; /* 添加内边距 */
-    border: 2px solid #409eff; /* 加强边框 */
-    border-radius: 12px; /* 统一圆角 */
-    background-color: #ffffff; /* 白色背景 */
-    box-shadow: 0 4px 20px rgba(64, 158, 255, 0.1); /* 增强阴影 */
-
-    .orders-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      .card-title {
-        font-size: 18px;
-        font-weight: 600;
-        margin: 0;
-      }
-
-      .filter-section {
-        .order-filter-tag {
-          margin-right: 10px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          border-radius: 20px;
-
-          &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
-          }
-
-          &.active {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-          }
-        }
-      }
-    }
-
-    .orders-list {
-      max-height: 400px;
-      overflow-y: auto;
-      padding-right: 8px;
-
-      .no-orders {
-        text-align: center;
-        padding: 80px 0;
-        color: #909399;
-        font-size: 16px;
-      }
-
-      .order-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        padding: 16px;
-        border: 1px solid #e4e7ed;
-        border-radius: 4px;
-        margin-bottom: 12px;
-
-        .order-info {
-          .order-no {
-            font-weight: 600;
-            margin-bottom: 8px;
-          }
-
-          .order-details {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            font-size: 14px;
-
-            .amount {
-              font-weight: 600;
-            }
-          }
-        }
-
-        .order-actions {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-      }
-    }
-
-    .view-all {
-      text-align: right;
-      margin-top: 12px;
-    }
-  }
-
-  .quick-actions-card {
-    margin-bottom: 24px;
-    padding: 24px; /* 添加内边距 */
-    border: 2px solid #e6a23c; /* 使用警告橙 */
-    border-radius: 12px; /* 统一圆角 */
-    background-color: #ffffff; /* 白色背景 */
-    box-shadow: 0 4px 20px rgba(230, 162, 60, 0.1); /* 增强阴影 */
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
-
-    .actions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 20px;
-
-      .action-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 24px;
-        border: 1px solid #e4e7ed;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.3s;
-
-        &:hover {
-          box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-        }
-
-        .action-icon {
-          font-size: 48px;
-          margin-bottom: 8px;
-        }
-
-        .action-label {
-          font-size: 14px;
-          font-weight: 500;
-        }
-      }
-    }
-
-    // 今日菜单
-    .today-menu-card {
-      margin-bottom: 24px;
-      padding: 24px; /* 添加内边距 */
-      border: 2px solid #67c23a; /* 绿色主题边框 */
-      border-radius: 12px; /* 统一圆角 */
-      background-color: #ffffff; /* 白色背景 */
-      box-shadow: 0 4px 20px rgba(103, 194, 58, 0.08); /* 增强阴影 */
-
-      .menu-header {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        margin-bottom: 28px; /* 增加底部间距 */
-        flex-wrap: wrap;
-        gap: 24px; /* 增加整体间距 */
-
-        // 处理只有标题的情况 (第一行)
-        &:has(.card-title) {
-          padding-bottom: 16px; /* 添加底部内边距 */
-          border-bottom: 1px solid #f0f9eb; /* 添加分隔线 */
-          margin-bottom: 24px; /* 调整标题行与筛选行的间距 */
-        }
-
-        .card-title {
-          font-size: 20px;
-          font-weight: 700;
-          margin: 0;
-          color: #67c23a; /* 绿色主题标题 */
-        }
-
-        .filter-label {
-          font-weight: 600; /* 加粗标签 */
-          margin-right: 12px; /* 增加标签右侧间距 */
-          color: #606266;
-          font-size: 14px;
-        }
-
-        .filter-section {
-          display: flex;
-          align-items: center;
-          gap: 20px; /* 增加标签之间的间距 */
-          flex-wrap: wrap;
-
-          .menu-filter-tag,
-          .menu-status-tag {
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-radius: 20px;
-            margin-right: 12px;
-            margin-bottom: 8px;
-
-            &:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
-            }
-
-            &.active {
-              transform: translateY(-1px);
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-            }
-          }
-        }
-      }
-
-      .menu-list {
-        margin-bottom: 20px;
-
-        .menu-item,
-        .menu-card {
-          padding: 20px;
-          border: 2px solid #eaf5ec; /* 淡绿色边框 */
-          border-radius: 10px;
-          margin-bottom: 16px;
-          background-color: #fff;
-          transition: all 0.3s ease;
-          cursor: pointer;
-
-          &:hover {
-            box-shadow: 0 4px 16px rgba(103, 194, 58, 0.12); /* 绿色主题阴影 */
-            border-color: #67c23a;
-            transform: translateY(-4px);
-          }
-
-          &.active {
-            border-color: #67c23a;
-            box-shadow: 0 4px 16px rgba(103, 194, 58, 0.15);
-            background-color: #f0f9eb; /* 淡绿色背景 */
-          }
-
-          .menu-info {
-            .menu-name {
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              margin-bottom: 16px;
-
-              .name {
-                font-size: 18px;
-                font-weight: 600;
-                color: #303133;
-              }
-            }
-
-            .menu-stats,
-            .auto-times {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 24px;
-              margin-bottom: 8px;
-              font-size: 14px;
-
-              .dishes-count {
-                color: #67c23a;
-                font-weight: 500;
-              }
-            }
-
-            .auto-times {
-              font-size: 13px;
-              color: #909399;
-            }
-          }
-        }
-
-        .empty-menu {
-          text-align: center;
-          padding: 80px 20px; /* 增加上下内边距 */
-          color: #909399;
-          font-size: 18px;
-          background-color: #f7fff9; /* 淡绿色背景 */
-          border: 2px dashed #67c23a; /* 绿色虚线边框 */
-          border-radius: 12px;
-          margin-bottom: 28px; /* 与其他元素保持一致的间距 */
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
-          transition: all 0.3s ease; /* 平滑过渡效果 */
-
-          &:hover {
-            box-shadow: 0 4px 16px rgba(103, 194, 58, 0.1); /* 悬停时增强阴影 */
-            background-color: #eaf5ec; /* 悬停时加深背景色 */
-          }
-
-          span {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px; /* 文字和图标间距 */
-          }
-        }
-      }
-
-      .view-all {
-        text-align: right;
-        margin-top: 24px;
-
-        .el-button {
-          color: #67c23a;
-          border-color: #67c23a;
-          transition: all 0.3s ease;
-
-          &:hover {
-            background-color: #67c23a;
-            color: #fff;
-            transform: translateX(4px);
-          }
-        }
-      }
-    }
-
-    // 菜品列表样式
-    .dishes-card {
-      margin-bottom: 24px;
-      padding: 24px; /* 添加内边距 */
-      border: 2px solid #67c23a; /* 绿色边框 */
-      border-radius: 12px; /* 统一圆角 */
-      background-color: #ffffff; /* 白色背景 */
-      box-shadow: 0 4px 20px rgba(103, 194, 58, 0.08); /* 增强阴影 */
-      border-top: none;
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
-
-      .dish-list {
-        margin-bottom: 20px;
-
-        .dish-item {
-          padding: 20px;
-          border: 2px solid #f0f9eb; /* 淡绿色边框 */
-          border-radius: 10px;
-          margin-bottom: 16px;
-          background-color: #fff;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: flex-start;
-          gap: 16px;
-          overflow: hidden;
-
-          &:hover {
-            box-shadow: 0 4px 16px rgba(103, 194, 58, 0.12); /* 绿色主题阴影 */
-            border-color: #67c23a;
-            transform: translateY(-4px);
-          }
-
-          .dish-cover {
-            font-size: 48px;
-            width: 90px;
-            height: 90px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #67c23a, #eaf5ec); /* 绿色渐变背景 */
-            border-radius: 10px;
-            flex-shrink: 0;
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(103, 194, 58, 0.2);
-            transition: all 0.3s ease;
-          }
-
-          &:hover .dish-cover {
-            transform: scale(1.1);
-          }
-
-          .dish-info {
-            flex: 1;
-
-            .dish-name {
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              margin-bottom: 10px;
-
-              .name {
-                font-size: 18px;
-                font-weight: 600;
-                color: #303133;
-              }
-            }
-
-            .dish-desc {
-              font-size: 14px;
-              color: #606266;
-              margin-bottom: 14px;
-              line-height: 1.6;
-            }
-
-            .dish-stats {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 20px;
-              font-size: 14px;
-              color: #606266;
-
-              .dish-category {
-                background-color: #eaf5ec;
-                color: #67c23a;
-                padding: 4px 12px;
-                border-radius: 6px;
-                font-size: 12px;
-                font-weight: 500;
-              }
-
-              .dish-price {
-                color: #e6a23c;
-                font-weight: 600;
-                font-size: 16px;
-              }
-
-              .dish-stock {
-                font-size: 13px;
-                font-weight: 500;
-
-                &.stock-almost {
-                  color: #f59f00;
-                }
-
-                &.stock-off {
-                  color: #f56c6c;
-                }
-              }
-            }
-          }
-
-          .dish-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex-shrink: 0;
-
-            .el-button {
-              width: 90px;
-              transition: all 0.3s ease;
-
-              &:hover {
-                transform: translateY(-2px);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // 优惠活动管理
-  .discounts-section {
-    margin-bottom: 24px;
-    padding: 24px;
-    border: 2px solid #409eff; /* 主蓝色 */
-    border-radius: 12px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 20px rgba(64, 158, 255, 0.1);
-
-    .discounts-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 16px;
-
-      .discount-title {
-        .card-title {
-          margin: 0;
-          font-size: 20px;
-          font-weight: 700;
-        }
-
-        .active-discounts {
-          font-size: 14px;
-          color: #909399;
-          margin-top: 4px;
-        }
-      }
-
-      .discount-actions {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-    }
-
-    // 表格容器样式
-    .discounts-table-container {
-      width: 100%;
-      overflow-x: auto;
-      overflow-y: visible;
-
-      :deep(.el-table) {
-        font-size: 13px;
-        table-layout: auto;
-
-        .el-table__header-wrapper {
-          th {
-            background-color: #f5f7fa;
-            color: #303133;
-            font-weight: 600;
-            font-size: 13px;
-            padding: 12px 0;
-            white-space: nowrap;
-          }
-        }
-
-        .el-table__body-wrapper {
-          .el-table__row {
-            &:hover {
-              background-color: #f5f7fa;
-            }
-          }
-
-          td {
-            padding: 10px 0;
-          }
-        }
-
-        // 确保表格单元格内容不换行
-        .el-table__cell {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
-    }
-
-    // 使用统计样式
-    .usage-stats {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-
-      .usage-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 13px;
-        color: #606266;
-
-        .el-icon {
-          font-size: 14px;
-          color: #409eff;
-        }
-      }
-    }
-
-    // 优惠规则样式
-    .discount-rule {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 14px;
-      font-weight: 500;
-
-      .rule-highlight {
-        color: #606266;
-        font-weight: normal;
-      }
-
-      .rule-divider {
-        color: #909399;
-        margin: 0 2px;
-      }
-
-      .rule-value {
-        color: #f56c6c;
-        font-weight: 600;
-        font-size: 15px;
-      }
-
-      .rule-empty {
-        color: #c0c4cc;
-      }
-    }
-
-    // 优化的空状态样式
-    .empty-discount-state {
-      padding: 40px 20px;
-
-      .empty-tips {
-        margin-top: 8px;
-        color: #909399;
-        font-size: 14px;
-      }
-    }
-
-    // 时间列样式优化
-    :deep(.time-column) {
-      font-size: 12px;
-      color: #909399;
-
-      .cell {
-        padding: 8px 0;
-      }
-    }
-
-    // 操作列样式优化
-    :deep(.operation-column) {
-      .cell {
-        padding: 0;
-      }
-
-      .operation-buttons {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        height: 100%;
-        padding: 8px 0;
-
-        .el-button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0;
-          vertical-align: middle;
-          height: 24px;
-          line-height: 24px;
-        }
-      }
-    }
-  }
-
-  // 优惠对话框样式
-  .discount-dialog-content {
-    display: flex;
-    gap: 24px;
-
-    .el-form {
-      flex: 1;
-    }
-
-    .unit-text {
-      margin-left: 8px;
-      color: #909399;
-      font-size: 14px;
-    }
-
-    // 优惠预览卡片
-    .discount-preview {
-      width: 280px;
-      flex-shrink: 0;
-
-      .preview-label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #303133;
-        margin-bottom: 12px;
-      }
-
-      .preview-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
-        padding: 20px;
-        color: white;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-        transition: all 0.3s ease;
-
-        &:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-        }
-
-        // 不同优惠类型的主题色
-        &.type-满减 {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        &.type-折扣 {
-          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        &.type-买赠 {
-          background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-
-        &.type-特价 {
-          background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        .preview-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 16px;
-
-          .preview-badge {
-            background: rgba(255, 255, 255, 0.25);
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-            backdrop-filter: blur(10px);
-          }
-
-          .preview-name {
-            font-size: 16px;
-            font-weight: 600;
-            flex: 1;
-            text-align: right;
-          }
-        }
-
-        .preview-value {
-          font-size: 32px;
-          font-weight: 700;
-          margin-bottom: 12px;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .preview-desc {
-          font-size: 14px;
-          opacity: 0.95;
-          margin-bottom: 12px;
-          line-height: 1.6;
-        }
-
-        .preview-footer {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 12px;
-          opacity: 0.9;
-          padding-top: 12px;
-          border-top: 1px solid rgba(255, 255, 255, 0.2);
-
-          .el-icon {
-            font-size: 14px;
-          }
-        }
-      }
-    }
-  }
-
-  // 店铺相册
-  .shop-album-card {
-    margin-bottom: 24px;
-    padding: 24px;
-    border: 2px solid #e6a23c; /* 橙色主题 */
-    border-radius: 12px;
-    background: linear-gradient(135deg, #ffffff 0%, #fffbf5 100%);
-    box-shadow: 0 4px 20px rgba(230, 162, 60, 0.15);
-
-    .album-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-      gap: 16px;
-
-      .header-left {
-        flex: 1;
-
-        .card-title {
-          margin: 0 0 12px 0;
-          font-size: 20px;
-          font-weight: 700;
-          color: #e6a23c;
-        }
-
-        .album-stats {
-          display: flex;
-          gap: 24px;
-          font-size: 14px;
-          color: #606266;
-
-          .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            background-color: #fff7e6;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-
-            &:hover {
-              background-color: #ffe7ba;
-              transform: translateY(-2px);
-            }
-          }
-        }
-      }
-
-      .header-actions {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-    }
-
-    .album-section {
-      margin-bottom: 32px;
-
-      .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-
-        .section-title {
-          font-size: 16px;
-          font-weight: 600;
-          color: #303133;
-          margin: 0;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding-bottom: 8px;
-          border-bottom: 2px solid #e6a23c;
-
-          .title-icon {
-            font-size: 20px;
-          }
-        }
-      }
-
-      .album-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 16px;
-        margin-bottom: 12px;
-      }
-
-      .album-item {
-        position: relative;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        background: #fff;
-
-        &:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 8px 24px rgba(230, 162, 60, 0.25);
-        }
-
-        // 添加预览提示层
-        &::after {
-          content: '🔍 点击预览';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(0, 0, 0, 0.5);
-          color: #fff;
-          font-size: 14px;
-          font-weight: 500;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          z-index: 1;
-          backdrop-filter: blur(2px);
-        }
-
-        &:hover::after {
-          opacity: 1;
-        }
-
-        .album-item-checkbox {
-          position: absolute;
-          top: 8px;
-          left: 8px;
-          z-index: 2;
-          background: rgba(255, 255, 255, 0.9);
-          border-radius: 6px;
-          padding: 4px;
-          backdrop-filter: blur(4px);
-        }
-
-        .album-item-overlay {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          z-index: 2;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-
-        &:hover .album-item-overlay {
-          opacity: 1;
-        }
-
-        .delete-img-btn {
-          width: 36px;
-          height: 36px;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 12px rgba(245, 108, 108, 0.4);
-          background: linear-gradient(135deg, #f56c6c, #ff8787);
-          border: none;
-          transition: all 0.3s ease;
-
-          &:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 16px rgba(245, 108, 108, 0.6);
-          }
-        }
-
-        :deep(.el-image) {
-          width: 100%;
-          height: 160px;
-          object-fit: cover;
-          display: block;
-
-          .image-slot {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
-            color: #909399;
-            font-size: 32px;
-          }
-
-          // 优化预览遮罩层样式
-          .el-image-viewer__mask {
-            background-color: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-          }
-
-          // 优化预览工具栏样式
-          .el-image-viewer__toolbar {
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-
-            .el-icon {
-              color: #fff;
-              font-size: 20px;
-
-              &:hover {
-                color: #409eff;
-              }
-            }
-          }
-
-          // 优化左右切换按钮样式
-          .el-image-viewer__btn {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            transition: all 0.3s ease;
-
-            &:hover {
-              background-color: rgba(0, 0, 0, 0.8);
-              transform: scale(1.1);
-            }
-
-            .el-icon {
-              color: #fff;
-              font-size: 24px;
-            }
-          }
-        }
-      }
-    }
-
-    // 增强的空状态样式
-    .album-empty-enhanced {
-      text-align: center;
-      padding: 60px 40px;
-      background: linear-gradient(135deg, #fff9f0 0%, #ffffff 100%);
-      border: 2px dashed #e6a23c;
-      border-radius: 12px;
-      margin-top: 8px;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(230, 162, 60, 0.03) 1px, transparent 1px);
-        background-size: 20px 20px;
-        animation: gridMove 20s linear infinite;
-      }
-
-      @keyframes gridMove {
-        0% {
-          transform: translate(0, 0);
-        }
-        100% {
-          transform: translate(20px, 20px);
-        }
-      }
-
-      &:hover {
-        background: linear-gradient(135deg, #ffe7ba 0%, #ffffff 100%);
-        border-color: #d9a066;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(230, 162, 60, 0.15);
-      }
-
-      .empty-content {
-        position: relative;
-        z-index: 1;
-
-        .empty-icon-wrapper {
-          width: 80px;
-          height: 80px;
-          margin: 0 auto 20px;
-          background: linear-gradient(135deg, #ffe7ba, #ffd591);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 4px 16px rgba(230, 162, 60, 0.3);
-          animation: float 3s ease-in-out infinite;
-
-          @keyframes float {
-            0%,
-            100% {
-              transform: translateY(0px);
-            }
-            50% {
-              transform: translateY(-10px);
-            }
-          }
-
-          .empty-icon {
-            font-size: 40px;
-            color: #e6a23c;
-          }
-        }
-
-        .empty-title {
-          font-size: 18px;
-          color: #303133;
-          margin-bottom: 8px;
-          font-weight: 600;
-        }
-
-        .empty-desc {
-          font-size: 14px;
-          color: #909399;
-          margin-bottom: 20px;
-          line-height: 1.6;
-        }
-
-        .el-button {
-          animation: pulse 2s ease-in-out infinite;
-
-          @keyframes pulse {
-            0%,
-            100% {
-              transform: scale(1);
-            }
-            50% {
-              transform: scale(1.05);
-            }
-          }
-        }
-      }
-    }
-
-    // 上传区域样式优化
-    .upload-section {
-      background: linear-gradient(135deg, #fffaf0 0%, #ffffff 100%);
-      padding: 24px;
-      border-radius: 12px;
-      border: 2px solid #ffe7ba;
-      margin-top: 24px;
-      box-shadow: 0 2px 12px rgba(230, 162, 60, 0.08);
-
-      .upload-header {
-        margin-bottom: 20px;
-
-        .upload-title {
-          font-size: 16px;
-          font-weight: 600;
-          color: #e6a23c;
-          margin: 0;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-      }
-
-      .upload-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-        gap: 16px;
-
-        .upload-select {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-
-          .upload-label {
-            font-weight: 600;
-            color: #303133;
-            font-size: 14px;
-          }
-
-          :deep(.el-select) {
-            width: 200px;
-          }
-        }
-
-        .upload-tips {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 13px;
-          color: #909399;
-          padding: 6px 12px;
-          background-color: #f5f7fa;
-          border-radius: 6px;
-
-          .el-icon {
-            color: #409eff;
-            font-size: 14px;
-          }
-        }
-      }
-
-      .upload-area {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-
-        :deep(.el-upload) {
-          width: 100%;
-        }
-
-        :deep(.el-upload-dragger) {
-          width: 100%;
-          height: 200px;
-          border: 2px dashed #d9a066;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #fff9f0 0%, #ffffff 100%);
-          transition: all 0.3s ease;
-
-          &:hover {
-            border-color: #e6a23c;
-            background: linear-gradient(135deg, #ffe7ba 0%, #ffffff 100%);
-          }
-
-          .el-icon-plus {
-            font-size: 48px;
-            color: #e6a23c;
-            margin-bottom: 16px;
-          }
-
-          .el-upload__text {
-            .upload-text {
-              font-size: 16px;
-              color: #303133;
-              font-weight: 500;
-              margin-bottom: 8px;
-            }
-
-            .upload-hint {
-              font-size: 13px;
-              color: #909399;
-            }
-          }
-        }
-
-        // 文件列表样式优化
-        :deep(.el-upload-list) {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-top: 16px;
-
-          .el-upload-list__item {
-            width: 120px;
-            height: 120px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-
-            &:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            }
-          }
-        }
-
-        .upload-actions {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 16px;
-          background: linear-gradient(135deg, #f0f9eb 0%, #ffffff 100%);
-          border-radius: 12px;
-          border: 2px solid #e1f3d8;
-          box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
-
-          .upload-confirm-btn {
-            min-width: 200px;
-            font-size: 16px;
-            font-weight: 600;
-            background: linear-gradient(135deg, #67c23a, #85ce61);
-            border: none;
-            box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
-            transition: all 0.3s ease;
-
-            &:hover:not(:disabled) {
-              transform: translateY(-2px);
-              box-shadow: 0 6px 20px rgba(103, 194, 58, 0.4);
-            }
-
-            &:disabled {
-              opacity: 0.5;
-              cursor: not-allowed;
-              background: #c0c4cc;
-              box-shadow: none;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // 公告栏配置
-  .announcement-section {
-    margin-bottom: 24px;
-    padding: 24px;
-    border: 2px solid #909399; /* 中性灰 */
-    border-radius: 12px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 20px rgba(144, 147, 153, 0.1);
-
-    .announcement-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      .card-title {
-        margin: 0;
-        font-size: 20px;
-        font-weight: 700;
-      }
-    }
-  }
+	padding: 0 20px 20px 20px;
+
+	.merchant-info-card {
+		margin-bottom: 24px;
+		padding: 24px; /* 添加内边距 */
+		border: 2px solid #409eff; /* 使用Element Plus主色 */
+		border-radius: 12px; /* 增加圆角 */
+		background-color: #ffffff; /* 白色背景 */
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* 增强阴影效果 */
+
+		.info-header {
+			display: flex;
+			align-items: center;
+			gap: 20px;
+
+			.avatar-section {
+				.avatar {
+					font-size: 64px;
+				}
+				.edit-btn {
+					margin-top: 10px;
+				}
+			}
+
+			.detail-section {
+				flex: 1;
+
+				.merchant-name {
+					font-size: 20px;
+					font-weight: 600;
+					margin-bottom: 8px;
+				}
+
+				.merchant-rating {
+					margin-bottom: 8px;
+				}
+
+				.contact-info {
+					display: flex;
+					flex-wrap: wrap;
+					gap: 20px;
+					font-size: 14px;
+					color: #606266;
+				}
+			}
+		}
+	}
+
+	.overview-card {
+		margin-bottom: 24px;
+		padding: 24px;
+		border: 2px solid #67c23a; /* 使用成功绿 */
+		border-radius: 12px;
+		background-color: #ffffff;
+		box-shadow: 0 4px 20px rgba(103, 194, 58, 0.12);
+
+		.card-title {
+			font-size: 20px;
+			font-weight: 700;
+			margin-bottom: 20px;
+			color: #e6a23c;
+			display: flex;
+			align-items: center;
+
+			&::after {
+				content: "";
+				flex: 1;
+				height: 1px;
+				background: linear-gradient(to right, #e6a23c, transparent);
+				margin-left: 15px;
+			}
+		}
+
+		.overview-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+			gap: 20px;
+
+			.overview-item {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				padding: 20px;
+				border-radius: 12px;
+				background: white;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+				transition: all 0.3s ease;
+				cursor: pointer;
+				border: 1px solid #f0f0f0;
+
+				&:hover {
+					transform: translateY(-5px);
+					box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+					border-color: #ffd7a3;
+				}
+
+				&.sales {
+					border-left: 4px solid #67c23a;
+
+					&:hover {
+						border-left: 4px solid #67c23a;
+					}
+				}
+
+				&.orders {
+					border-left: 4px solid #409eff;
+
+					&:hover {
+						border-left: 4px solid #409eff;
+					}
+				}
+
+				&.comments {
+					border-left: 4px solid #e6a23c;
+
+					&:hover {
+						border-left: 4px solid #e6a23c;
+					}
+				}
+
+				&.messages {
+					border-left: 4px solid #f56c6c;
+
+					&:hover {
+						border-left: 4px solid #f56c6c;
+					}
+				}
+
+				.item-icon {
+					font-size: 32px;
+					width: 60px;
+					height: 60px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					border-radius: 50%;
+					background: rgba(230, 162, 60, 0.1);
+				}
+
+				.item-content {
+					flex: 1;
+
+					.overview-label {
+						font-size: 14px;
+						color: #909399;
+						margin-bottom: 4px;
+						font-weight: 500;
+					}
+
+					.overview-value {
+						font-size: 24px;
+						font-weight: 700;
+						margin-bottom: 4px;
+					}
+
+					.item-trend {
+						font-size: 12px;
+						font-weight: 600;
+
+						&.trend-up {
+							color: #67c23a;
+						}
+
+						&.trend-down {
+							color: #f56c6c;
+						}
+
+						&.trend-neutral {
+							color: #909399;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	.orders-card {
+		margin-bottom: 24px;
+		padding: 24px; /* 添加内边距 */
+		border: 2px solid #409eff; /* 加强边框 */
+		border-radius: 12px; /* 统一圆角 */
+		background-color: #ffffff; /* 白色背景 */
+		box-shadow: 0 4px 20px rgba(64, 158, 255, 0.1); /* 增强阴影 */
+
+		.orders-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 20px;
+
+			.card-title {
+				font-size: 18px;
+				font-weight: 600;
+				margin: 0;
+			}
+
+			.filter-section {
+				.order-filter-tag {
+					margin-right: 10px;
+					cursor: pointer;
+					transition: all 0.3s ease;
+					border-radius: 20px;
+
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+					}
+
+					&.active {
+						transform: translateY(-1px);
+						box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+					}
+				}
+			}
+		}
+
+		.orders-list {
+			max-height: 400px;
+			overflow-y: auto;
+			padding-right: 8px;
+
+			.no-orders {
+				text-align: center;
+				padding: 80px 0;
+				color: #909399;
+				font-size: 16px;
+			}
+
+			.order-item {
+				display: flex;
+				justify-content: space-between;
+				align-items: flex-start;
+				padding: 16px;
+				border: 1px solid #e4e7ed;
+				border-radius: 4px;
+				margin-bottom: 12px;
+
+				.order-info {
+					.order-no {
+						font-weight: 600;
+						margin-bottom: 8px;
+					}
+
+					.order-details {
+						display: flex;
+						flex-wrap: wrap;
+						gap: 16px;
+						font-size: 14px;
+
+						.amount {
+							font-weight: 600;
+						}
+					}
+				}
+
+				.order-actions {
+					display: flex;
+					gap: 8px;
+					flex-wrap: wrap;
+				}
+			}
+		}
+
+		.view-all {
+			text-align: right;
+			margin-top: 12px;
+		}
+	}
+
+	.quick-actions-card {
+		margin-bottom: 24px;
+		padding: 24px; /* 添加内边距 */
+		border: 2px solid #e6a23c; /* 使用警告橙 */
+		border-radius: 12px; /* 统一圆角 */
+		background-color: #ffffff; /* 白色背景 */
+		box-shadow: 0 4px 20px rgba(230, 162, 60, 0.1); /* 增强阴影 */
+
+		.card-title {
+			font-size: 18px;
+			font-weight: 600;
+			margin-bottom: 16px;
+		}
+
+		.actions-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+			gap: 20px;
+			padding: 16px;
+			border-radius: 8px;
+			transition: all 0.3s ease;
+
+			&:hover {
+				background-color: #fff9f0;
+				box-shadow: 0 4px 16px rgba(230, 162, 60, 0.1);
+			}
+
+			.action-item {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				padding: 24px;
+				border: 1px solid #e4e7ed;
+				border-radius: 4px;
+				cursor: pointer;
+				transition: all 0.3s;
+
+				&:hover {
+					box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+				}
+
+				.action-icon {
+					font-size: 48px;
+					margin-bottom: 8px;
+					transition: transform 0.3s ease;
+					transform-origin: center center;
+				}
+
+				&:hover .action-icon {
+					transform: scale(1.15);
+				}
+
+				.action-label {
+					font-size: 14px;
+					font-weight: 500;
+				}
+			}
+		}
+
+		// 今日菜单
+		.today-menu-card {
+			margin-bottom: 24px;
+			padding: 24px; /* 添加内边距 */
+			border: 2px solid #67c23a; /* 绿色主题边框 */
+			border-radius: 12px; /* 统一圆角 */
+			background-color: #ffffff; /* 白色背景 */
+			box-shadow: 0 4px 20px rgba(103, 194, 58, 0.08); /* 增强阴影 */
+
+			.menu-header {
+				display: flex;
+				justify-content: flex-start;
+				align-items: center;
+				margin-bottom: 28px; /* 增加底部间距 */
+				flex-wrap: wrap;
+				gap: 24px; /* 增加整体间距 */
+
+				// 处理只有标题的情况 (第一行)
+				&:has(.card-title) {
+					padding-bottom: 16px; /* 添加底部内边距 */
+					border-bottom: 1px solid #f0f9eb; /* 添加分隔线 */
+					margin-bottom: 24px; /* 调整标题行与筛选行的间距 */
+				}
+
+				.card-title {
+					font-size: 20px;
+					font-weight: 700;
+					margin: 0;
+					color: #67c23a; /* 绿色主题标题 */
+				}
+
+				.filter-label {
+					font-weight: 600; /* 加粗标签 */
+					margin-right: 12px; /* 增加标签右侧间距 */
+					color: #606266;
+					font-size: 14px;
+				}
+
+				.filter-section {
+					display: flex;
+					align-items: center;
+					gap: 20px; /* 增加标签之间的间距 */
+					flex-wrap: wrap;
+
+					.menu-filter-tag,
+					.menu-status-tag {
+						cursor: pointer;
+						transition: all 0.3s ease;
+						border-radius: 20px;
+						margin-right: 12px;
+						margin-bottom: 8px;
+
+						&:hover {
+							transform: translateY(-2px);
+							box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+						}
+
+						&.active {
+							transform: translateY(-1px);
+							box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+						}
+					}
+				}
+			}
+
+			.menu-list {
+				margin-bottom: 20px;
+
+				.menu-item,
+				.menu-card {
+					padding: 20px;
+					border: 2px solid #eaf5ec; /* 淡绿色边框 */
+					border-radius: 10px;
+					margin-bottom: 16px;
+					background-color: #fff;
+					transition: all 0.3s ease;
+					cursor: pointer;
+
+					&:hover {
+						box-shadow: 0 4px 16px rgba(103, 194, 58, 0.12); /* 绿色主题阴影 */
+						border-color: #67c23a;
+						transform: translateY(-4px);
+					}
+
+					&.active {
+						border-color: #67c23a;
+						box-shadow: 0 4px 16px rgba(103, 194, 58, 0.15);
+						background-color: #f0f9eb; /* 淡绿色背景 */
+					}
+
+					.menu-info {
+						.menu-name {
+							display: flex;
+							align-items: center;
+							gap: 12px;
+							margin-bottom: 16px;
+
+							.name {
+								font-size: 18px;
+								font-weight: 600;
+								color: #303133;
+							}
+						}
+
+						.menu-stats,
+						.auto-times {
+							display: flex;
+							flex-wrap: wrap;
+							gap: 24px;
+							margin-bottom: 8px;
+							font-size: 14px;
+
+							.dishes-count {
+								color: #67c23a;
+								font-weight: 500;
+							}
+						}
+
+						.auto-times {
+							font-size: 13px;
+							color: #909399;
+						}
+					}
+				}
+
+				.empty-menu {
+					text-align: center;
+					padding: 80px 20px; /* 增加上下内边距 */
+					color: #909399;
+					font-size: 18px;
+					background-color: #f7fff9; /* 淡绿色背景 */
+					border: 2px dashed #67c23a; /* 绿色虚线边框 */
+					border-radius: 12px;
+					margin-bottom: 28px; /* 与其他元素保持一致的间距 */
+					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
+					transition: all 0.3s ease; /* 平滑过渡效果 */
+
+					&:hover {
+						box-shadow: 0 4px 16px rgba(103, 194, 58, 0.1); /* 悬停时增强阴影 */
+						background-color: #eaf5ec; /* 悬停时加深背景色 */
+					}
+
+					span {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						gap: 8px; /* 文字和图标间距 */
+					}
+				}
+			}
+
+			.view-all {
+				text-align: right;
+				margin-top: 24px;
+
+				.el-button {
+					color: #67c23a;
+					border-color: #67c23a;
+					transition: all 0.3s ease;
+					transform-origin: center center;
+
+					&:hover {
+						background-color: #67c23a;
+						color: #fff;
+						transform: scale(1.05);
+					}
+				}
+			}
+		}
+
+		// 菜品列表样式
+		.dishes-card {
+			margin-bottom: 24px;
+			padding: 24px; /* 添加内边距 */
+			border: 2px solid #67c23a; /* 绿色边框 */
+			border-radius: 12px; /* 统一圆角 */
+			background-color: #ffffff; /* 白色背景 */
+			box-shadow: 0 4px 20px rgba(103, 194, 58, 0.08); /* 增强阴影 */
+			border-top: none;
+			border-top-left-radius: 0;
+			border-top-right-radius: 0;
+
+			.dish-list {
+				margin-bottom: 20px;
+
+				.dish-item {
+					padding: 20px;
+					border: 2px solid #f0f9eb; /* 淡绿色边框 */
+					border-radius: 10px;
+					margin-bottom: 16px;
+					background-color: #fff;
+					transition: all 0.3s ease;
+					display: flex;
+					align-items: flex-start;
+					gap: 16px;
+					overflow: hidden;
+
+					&:hover {
+						box-shadow: 0 4px 16px rgba(103, 194, 58, 0.12); /* 绿色主题阴影 */
+						border-color: #67c23a;
+						transform: translateY(-4px);
+					}
+
+					.dish-cover {
+						font-size: 48px;
+						width: 90px;
+						height: 90px;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						background: linear-gradient(
+							135deg,
+							#67c23a,
+							#eaf5ec
+						); /* 绿色渐变背景 */
+						border-radius: 10px;
+						flex-shrink: 0;
+						color: #fff;
+						box-shadow: 0 2px 8px rgba(103, 194, 58, 0.2);
+						transition: all 0.3s ease;
+					}
+
+					&:hover .dish-cover {
+						transform: scale(1.1);
+					}
+
+					.dish-info {
+						flex: 1;
+
+						.dish-name {
+							display: flex;
+							align-items: center;
+							gap: 12px;
+							margin-bottom: 10px;
+
+							.name {
+								font-size: 18px;
+								font-weight: 600;
+								color: #303133;
+							}
+						}
+
+						.dish-desc {
+							font-size: 14px;
+							color: #606266;
+							margin-bottom: 14px;
+							line-height: 1.6;
+						}
+
+						.dish-stats {
+							display: flex;
+							flex-wrap: wrap;
+							gap: 20px;
+							font-size: 14px;
+							color: #606266;
+
+							.dish-category {
+								background-color: #eaf5ec;
+								color: #67c23a;
+								padding: 4px 12px;
+								border-radius: 6px;
+								font-size: 12px;
+								font-weight: 500;
+							}
+
+							.dish-price {
+								color: #e6a23c;
+								font-weight: 600;
+								font-size: 16px;
+							}
+
+							.dish-stock {
+								font-size: 13px;
+								font-weight: 500;
+
+								&.stock-almost {
+									color: #f59f00;
+								}
+
+								&.stock-off {
+									color: #f56c6c;
+								}
+							}
+						}
+					}
+
+					.dish-actions {
+						display: flex;
+						flex-direction: column;
+						gap: 10px;
+						flex-shrink: 0;
+
+						.el-button {
+							width: 90px;
+							transition: all 0.3s ease;
+
+							&:hover {
+								transform: translateY(-2px);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 </style>
