@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import api from "../../utils/api.js";
 import { API_CONFIG } from "../../config/index.js";
@@ -18,9 +18,6 @@ const discounts = ref([]);
 const discountDialogVisible = ref(false);
 const currentDiscountForm = ref({});
 const isEditingDiscount = ref(false);
-
-// 优惠表单验证规则引用
-const discountFormRef = ref(null);
 
 // 优惠类型单位计算
 const discountUnit = computed(() => {
@@ -384,8 +381,127 @@ const fetchDiscounts = () => {
 		});
 };
 
+// 表格滚动同步
+const tableRef = ref(null);
+let scrollSynced = false;
+
+const syncScroll = () => {
+	// 防止重复绑定事件
+	if (scrollSynced) return;
+
+	const table = tableRef.value?.$el;
+	if (!table) return;
+
+	const headerWrapper = table.querySelector('.el-table__header-wrapper');
+	const bodyWrapper = table.querySelector('.el-table__body-wrapper');
+
+	if (headerWrapper && bodyWrapper) {
+		// 用于防止循环触发
+		let isHeaderSyncing = false;
+		let isBodySyncing = false;
+
+		// 表头滚动时，同步表体
+		const headerScrollHandler = () => {
+			if (isHeaderSyncing) return;
+			isBodySyncing = true;
+			bodyWrapper.scrollLeft = headerWrapper.scrollLeft;
+			// 使用 setTimeout 确保 scroll 事件处理完成后再重置标志
+			setTimeout(() => {
+				isBodySyncing = false;
+			}, 0);
+		};
+
+		// 表体滚动时，同步表头
+		const bodyScrollHandler = () => {
+			if (isBodySyncing) return;
+			isHeaderSyncing = true;
+			headerWrapper.scrollLeft = bodyWrapper.scrollLeft;
+			setTimeout(() => {
+				isHeaderSyncing = false;
+			}, 0);
+		};
+
+		headerWrapper.addEventListener('scroll', headerScrollHandler);
+		bodyWrapper.addEventListener('scroll', bodyScrollHandler);
+
+		// 表头拖动滚动功能
+		let isDragging = false;
+		let startX = 0;
+		let bodyStartScroll = 0;
+		let animationFrame = null;
+
+		headerWrapper.style.cursor = 'grab';
+
+		headerWrapper.addEventListener('mousedown', (e) => {
+			// 只在左键点击时启用拖动
+			if (e.button !== 0) return;
+
+			isDragging = true;
+			startX = e.pageX;
+			bodyStartScroll = bodyWrapper.scrollLeft;
+			headerWrapper.style.cursor = 'grabbing';
+			e.preventDefault();
+		});
+
+		const endDrag = () => {
+			if (isDragging) {
+				isDragging = false;
+				headerWrapper.style.cursor = 'grab';
+				if (animationFrame) {
+					cancelAnimationFrame(animationFrame);
+					animationFrame = null;
+				}
+			}
+		};
+
+		headerWrapper.addEventListener('mouseleave', endDrag);
+		headerWrapper.addEventListener('mouseup', endDrag);
+
+		headerWrapper.addEventListener('mousemove', (e) => {
+			if (!isDragging) return;
+
+			if (animationFrame) {
+				cancelAnimationFrame(animationFrame);
+			}
+
+			animationFrame = requestAnimationFrame(() => {
+				const x = e.pageX;
+				const walk = (x - startX) * 1.5; // 滚动速度倍数
+
+				// 同时更新表头和表体的滚动位置
+				const newScrollLeft = Math.max(0, bodyStartScroll - walk);
+				headerWrapper.scrollLeft = newScrollLeft;
+				bodyWrapper.scrollLeft = newScrollLeft;
+			});
+		});
+
+		// 表头滚轮滚动支持
+		headerWrapper.addEventListener('wheel', (e) => {
+			// 只处理横向滚轮事件
+			if (e.deltaY === 0 && e.deltaX !== 0) {
+				e.preventDefault();
+				const newScrollLeft = Math.max(
+					0,
+					Math.min(
+						headerWrapper.scrollLeft + e.deltaX,
+						headerWrapper.scrollWidth - headerWrapper.clientWidth
+					)
+				);
+				headerWrapper.scrollLeft = newScrollLeft;
+				bodyWrapper.scrollLeft = newScrollLeft;
+			}
+		}, { passive: false });
+
+		scrollSynced = true;
+	}
+};
+
 onMounted(() => {
 	fetchDiscounts();
+	// 等待 DOM 更新后同步滚动
+	nextTick(() => {
+		syncScroll();
+	});
 });
 </script>
 
@@ -428,42 +544,42 @@ onMounted(() => {
 		</div>
 		<div class="discounts-table-container">
 			<el-table
+				ref="tableRef"
 				:data="discounts"
 				:default-sort="{ prop: 'createTime', order: 'descending' }"
 				@selection-change="handleSelectionChange"
 				style="width: 100%"
 				:row-style="{ height: '60px' }"
 				:cell-style="{ padding: '8px' }"
-				:table-layout="'auto'"
+				flexible
 			>
 				<el-table-column
 					type="selection"
-					width="50"
+					width="55"
 					align="center"
-					fixed="left"
+					fixed
 				/>
 				<el-table-column
 					prop="name"
 					label="优惠名称"
-					min-width="150"
-					width="180"
+					min-width="120"
 					show-overflow-tooltip
 				/>
-				<el-table-column prop="type" label="类型" width="80" align="center">
+				<el-table-column prop="type" label="类型" width="75" align="center">
 					<template #default="scope">
 						<el-tag :type="getDiscountTypeTag(scope.row.type)" size="small">
 							{{ scope.row.type }}
 						</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column label="优惠规则" min-width="160" width="200">
+				<el-table-column label="优惠规则" min-width="130" show-overflow-tooltip>
 					<template #default="scope">
 						<div class="discount-rule">
 							<template
 								v-if="scope.row.type === '满减' && scope.row.discountValue"
 							>
 								<span class="rule-highlight"
-									>满 {{ scope.row.minAmount || 0 }}</span
+									>满{{ scope.row.minAmount || 0 }}</span
 								>
 								<span class="rule-divider">减</span>
 								<span class="rule-value">{{ scope.row.discountValue }}元</span>
@@ -487,21 +603,20 @@ onMounted(() => {
 				<el-table-column
 					prop="description"
 					label="优惠描述"
-					min-width="200"
-					width="250"
+					min-width="150"
 					show-overflow-tooltip
 				/>
-				<el-table-column label="使用情况" width="110" align="center">
+				<el-table-column label="使用情况" width="90" align="center">
 					<template #default="scope">
 						<div class="usage-stats">
 							<div class="usage-item">
 								<el-icon><User /></el-icon>
-								<span>{{ scope.row.usedCount || 0 }}次</span>
+								<span>{{ scope.row.usedCount || 0 }}</span>
 							</div>
 						</div>
 					</template>
 				</el-table-column>
-				<el-table-column prop="status" label="状态" width="80" align="center">
+				<el-table-column prop="status" label="状态" width="75" align="center">
 					<template #default="scope">
 						<el-tag
 							:type="scope.row.status === 'active' ? 'success' : 'info'"
@@ -514,7 +629,7 @@ onMounted(() => {
 				<el-table-column
 					prop="createTime"
 					label="创建时间"
-					width="150"
+					width="160"
 					align="center"
 					class-name="time-column"
 				>
@@ -524,9 +639,9 @@ onMounted(() => {
 				</el-table-column>
 				<el-table-column
 					label="操作"
-					width="180"
-					fixed="right"
+					width="185"
 					align="center"
+					fixed="right"
 					class-name="operation-column"
 				>
 					<template #default="scope">
@@ -765,30 +880,42 @@ onMounted(() => {
 .discounts-section {
 	margin-bottom: 24px;
 	padding: 24px;
-	border: 2px solid #409eff; /* 主蓝色 */
+	border: 2px solid #409eff;
 	border-radius: 12px;
-	background-color: #ffffff;
-	box-shadow: 0 4px 20px rgba(64, 158, 255, 0.1);
+	background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+	box-shadow: 0 4px 20px rgba(64, 158, 255, 0.15);
 
 	.discounts-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 20px;
+		margin-bottom: 24px;
+		padding-bottom: 20px;
+		border-bottom: 2px solid #d4e7ff;
 		flex-wrap: wrap;
 		gap: 16px;
 
 		.discount-title {
 			.card-title {
 				margin: 0;
-				font-size: 20px;
+				font-size: 22px;
 				font-weight: 700;
+				color: #409eff;
+				text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+				display: flex;
+				align-items: center;
+				gap: 10px;
 			}
 
 			.active-discounts {
 				font-size: 14px;
 				color: #909399;
-				margin-top: 4px;
+				margin-top: 6px;
+				font-weight: 500;
+				padding: 4px 12px;
+				background: linear-gradient(135deg, #e8f4ff 0%, #ffffff 100%);
+				border-radius: 12px;
+				display: inline-block;
 			}
 		}
 
@@ -796,38 +923,115 @@ onMounted(() => {
 			display: flex;
 			gap: 12px;
 			flex-wrap: wrap;
+
+			:deep(.el-button) {
+				border-radius: 8px;
+				font-weight: 600;
+				transition: all 0.3s ease;
+				border: none;
+
+				&:hover:not(:disabled) {
+					transform: translateY(-2px);
+					box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
+				}
+
+				&:disabled {
+					opacity: 0.5;
+				}
+
+				&.el-button--primary {
+					background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+
+					&:hover:not(:disabled) {
+						background: linear-gradient(135deg, #66b1ff 0%, #409eff 100%);
+					}
+				}
+
+				&.el-button--success {
+					background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
+
+					&:hover:not(:disabled) {
+						background: linear-gradient(135deg, #85ce61 0%, #67c23a 100%);
+					}
+				}
+
+				&.el-button--warning {
+					background: linear-gradient(135deg, #e6a23c 0%, #f0c78a 100%);
+
+					&:hover:not(:disabled) {
+						background: linear-gradient(135deg, #f0c78a 0%, #e6a23c 100%);
+					}
+				}
+
+				&.el-button--danger {
+					background: linear-gradient(135deg, #f56c6c 0%, #f89898 100%);
+
+					&:hover:not(:disabled) {
+						background: linear-gradient(135deg, #f89898 0%, #f56c6c 100%);
+					}
+				}
+			}
 		}
 	}
 
 	.discounts-table-container {
 		width: 100%;
+		max-width: 100%;
 		overflow-x: auto;
 		overflow-y: visible;
+		background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+		border-radius: 12px;
+		padding: 20px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+		border: 1px solid #e4e7ed;
+		box-sizing: border-box;
 
 		:deep(.el-table) {
-			font-size: 13px;
+			font-size: 14px;
 			table-layout: auto;
+			border-radius: 8px;
+			overflow: hidden;
+			max-width: 100%;
+
+			&::before {
+				display: none;
+			}
 
 			.el-table__header-wrapper {
+				/* 隐藏表头滚动条但保持滚动功能 */
+				scrollbar-width: none; /* Firefox */
+				-ms-overflow-style: none; /* IE and Edge */
+
+				&::-webkit-scrollbar {
+					display: none; /* Chrome, Safari, Opera */
+				}
+
 				th {
-					background-color: #f5f7fa;
+					background: linear-gradient(135deg, #e8f4ff 0%, #d4e7ff 100%);
 					color: #303133;
-					font-weight: 600;
-					font-size: 13px;
-					padding: 12px 0;
+					font-weight: 700;
+					font-size: 14px;
+					padding: 14px 12px;
 					white-space: nowrap;
+					border-bottom: 2px solid #b3d8ff;
+					text-align: center;
 				}
 			}
 
 			.el-table__body-wrapper {
 				.el-table__row {
-					&:hover {
-						background-color: #f5f7fa;
-					}
-				}
+					transition: all 0.3s ease;
 
-				td {
-					padding: 10px 0;
+					&:hover {
+						background: linear-gradient(90deg, #f0f7ff 0%, #ffffff 100%);
+						transform: scale(1.002);
+						box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
+					}
+
+					td {
+					padding: 12px 12px;
+					border-bottom: 1px solid #f0f0f0;
+				}
 				}
 			}
 
@@ -835,6 +1039,21 @@ onMounted(() => {
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
+				padding: 0 12px;
+				word-break: break-all;
+			}
+
+			.el-table__header-wrapper,
+			.el-table__body-wrapper {
+				overflow-x: auto;
+			}
+
+			.el-tag {
+				border-radius: 6px;
+				padding: 6px 12px;
+				font-weight: 600;
+				border: none;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 			}
 		}
 	}
@@ -842,14 +1061,19 @@ onMounted(() => {
 	.usage-stats {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: 6px;
 
 		.usage-item {
 			display: flex;
 			align-items: center;
+			justify-content: center;
 			gap: 4px;
-			font-size: 13px;
+			font-size: 12px;
 			color: #606266;
+			font-weight: 500;
+			padding: 4px 6px;
+			background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+			border-radius: 6px;
 
 			.el-icon {
 				font-size: 14px;
@@ -862,23 +1086,30 @@ onMounted(() => {
 		display: flex;
 		align-items: center;
 		gap: 4px;
-		font-size: 14px;
+		font-size: 13px;
 		font-weight: 500;
+		padding: 4px 6px;
+		background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+		border-radius: 6px;
+		border: 1px solid #ffebeb;
 
 		.rule-highlight {
 			color: #606266;
-			font-weight: normal;
+			font-weight: 500;
 		}
 
 		.rule-divider {
 			color: #909399;
 			margin: 0 2px;
+			font-weight: 400;
+			font-size: 12px;
 		}
 
 		.rule-value {
 			color: #f56c6c;
-			font-weight: 600;
-			font-size: 15px;
+			font-weight: 700;
+			font-size: 14px;
+			text-shadow: 0 1px 2px rgba(245, 108, 108, 0.2);
 		}
 
 		.rule-empty {
@@ -887,21 +1118,56 @@ onMounted(() => {
 	}
 
 	.empty-discount-state {
-		padding: 40px 20px;
+		padding: 60px 20px;
+		background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+		border-radius: 12px;
+		border: 2px dashed #d4e7ff;
 
 		.empty-tips {
-			margin-top: 8px;
+			margin-top: 12px;
 			color: #909399;
-			font-size: 14px;
+			font-size: 15px;
+			font-weight: 500;
+		}
+
+		:deep(.el-result) {
+			.el-result__title {
+				font-size: 18px;
+				font-weight: 600;
+				color: #606266;
+			}
+
+			.el-result__subtitle {
+				p {
+					margin: 8px 0;
+					line-height: 1.8;
+				}
+			}
+
+			.el-button {
+				border-radius: 8px;
+				font-weight: 600;
+				padding: 12px 24px;
+				background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+				border: none;
+				transition: all 0.3s ease;
+
+				&:hover {
+					transform: translateY(-2px);
+					box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+					background: linear-gradient(135deg, #66b1ff 0%, #409eff 100%);
+				}
+			}
 		}
 	}
 
 	:deep(.time-column) {
-		font-size: 12px;
+		font-size: 13px;
 		color: #909399;
+		font-weight: 500;
 
 		.cell {
-			padding: 8px 0;
+			padding: 10px 0;
 		}
 	}
 
@@ -914,7 +1180,7 @@ onMounted(() => {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			gap: 8px;
+			gap: 6px;
 			height: 100%;
 			padding: 8px 0;
 
@@ -924,79 +1190,191 @@ onMounted(() => {
 				justify-content: center;
 				margin: 0;
 				vertical-align: middle;
-				height: 24px;
-				line-height: 24px;
+				height: 26px;
+				line-height: 26px;
+				font-weight: 600;
+				border-radius: 6px;
+				padding: 0 10px;
+				font-size: 13px;
+				transition: all 0.3s ease;
+
+				&:hover {
+					transform: translateY(-2px);
+					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+				}
 			}
 		}
 	}
 
 	.discount-dialog-content {
 		display: flex;
-		gap: 24px;
+		gap: 32px;
 
 		.el-form {
 			flex: 1;
+
+			.el-form-item {
+				margin-bottom: 22px;
+
+				.el-form-item__label {
+					font-weight: 600;
+					color: #606266;
+					font-size: 14px;
+				}
+
+				.el-input__inner,
+				.el-textarea__inner {
+					border-radius: 8px;
+					border: 2px solid #dcdfe6;
+					transition: all 0.3s ease;
+					font-size: 14px;
+
+					&:focus {
+						border-color: #409eff;
+						box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+					}
+
+					&:hover {
+						border-color: #c0c4cc;
+					}
+				}
+
+				.el-input-number {
+					width: 100%;
+
+					.el-input__inner {
+						text-align: left;
+					}
+				}
+
+				.el-select {
+					width: 100%;
+				}
+
+				.el-radio-group {
+					display: flex;
+					gap: 16px;
+
+					.el-radio {
+						margin-right: 0;
+
+						.el-radio__label {
+							font-weight: 500;
+							padding-left: 8px;
+						}
+					}
+				}
+			}
 		}
 
 		.unit-text {
-			margin-left: 8px;
+			margin-left: 12px;
 			color: #909399;
 			font-size: 14px;
+			font-weight: 500;
 		}
 
 		.discount-preview {
-			width: 280px;
+			width: 300px;
 			flex-shrink: 0;
 
 			.preview-label {
-				font-size: 14px;
-				font-weight: 600;
+				font-size: 16px;
+				font-weight: 700;
 				color: #303133;
-				margin-bottom: 12px;
+				margin-bottom: 16px;
+				display: flex;
+				align-items: center;
+				gap: 8px;
 			}
 
 			.preview-card {
 				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-				border-radius: 12px;
-				padding: 20px;
+				border-radius: 16px;
+				padding: 24px;
 				color: white;
-				box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-				transition: all 0.3s ease;
+				box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+				transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+				position: relative;
+				overflow: hidden;
+
+				&::before {
+					content: "";
+					position: absolute;
+					top: -50%;
+					right: -50%;
+					width: 200%;
+					height: 200%;
+					background: radial-gradient(
+						circle,
+						rgba(255, 255, 255, 0.1) 0%,
+						transparent 70%
+					);
+					transition: all 0.6s ease;
+				}
 
 				&:hover {
-					transform: translateY(-4px);
-					box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+					transform: translateY(-8px) scale(1.02);
+					box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+
+					&::before {
+						top: -30%;
+						right: -30%;
+					}
 				}
 
 				&.type-满减 {
 					background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+					box-shadow: 0 8px 24px rgba(245, 87, 108, 0.4);
+
+					&:hover {
+						box-shadow: 0 12px 32px rgba(245, 87, 108, 0.5);
+					}
 				}
 
 				&.type-折扣 {
 					background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+					box-shadow: 0 8px 24px rgba(79, 172, 254, 0.4);
+
+					&:hover {
+						box-shadow: 0 12px 32px rgba(79, 172, 254, 0.5);
+					}
 				}
 
 				&.type-买赠 {
 					background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+					box-shadow: 0 8px 24px rgba(67, 233, 123, 0.4);
+
+					&:hover {
+						box-shadow: 0 12px 32px rgba(67, 233, 123, 0.5);
+					}
 				}
 
 				&.type-特价 {
 					background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+					box-shadow: 0 8px 24px rgba(250, 112, 154, 0.4);
+
+					&:hover {
+						box-shadow: 0 12px 32px rgba(250, 112, 154, 0.5);
+					}
 				}
 
 				.preview-header {
 					display: flex;
 					justify-content: space-between;
 					align-items: center;
-					margin-bottom: 16px;
+					margin-bottom: 20px;
+					position: relative;
+					z-index: 1;
 
 					.preview-badge {
-						background: rgba(255, 255, 255, 0.25);
-						padding: 4px 12px;
-						border-radius: 12px;
+						background: rgba(255, 255, 255, 0.3);
+						padding: 6px 14px;
+						border-radius: 16px;
 						font-size: 12px;
-						font-weight: 500;
+						font-weight: 600;
 						backdrop-filter: blur(10px);
+						box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 					}
 
 					.preview-name {
@@ -1004,34 +1382,126 @@ onMounted(() => {
 						font-weight: 600;
 						flex: 1;
 						text-align: right;
+						text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 					}
 				}
 
 				.preview-value {
-					font-size: 32px;
-					font-weight: 700;
-					margin-bottom: 12px;
-					text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+					font-size: 36px;
+					font-weight: 800;
+					margin-bottom: 16px;
+					text-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+					position: relative;
+					z-index: 1;
+					line-height: 1.2;
 				}
 
 				.preview-desc {
 					font-size: 14px;
 					opacity: 0.95;
-					margin-bottom: 12px;
+					margin-bottom: 16px;
 					line-height: 1.6;
+					position: relative;
+					z-index: 1;
 				}
 
 				.preview-footer {
 					display: flex;
 					align-items: center;
-					gap: 6px;
+					gap: 8px;
 					font-size: 12px;
 					opacity: 0.9;
-					padding-top: 12px;
-					border-top: 1px solid rgba(255, 255, 255, 0.2);
+					padding-top: 16px;
+					border-top: 1px solid rgba(255, 255, 255, 0.25);
+					position: relative;
+					z-index: 1;
 
 					.el-icon {
-						font-size: 14px;
+						font-size: 15px;
+					}
+				}
+			}
+		}
+	}
+
+	:deep(.el-dialog) {
+		border-radius: 16px;
+		box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+		overflow: hidden;
+
+		.el-dialog__header {
+			padding: 24px 28px;
+			border-bottom: 2px solid #e4e7ed;
+			background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+
+			.el-dialog__title {
+				font-size: 20px;
+				font-weight: 700;
+				color: #409eff;
+			}
+
+			.el-dialog__headerbtn {
+				top: 24px;
+				right: 24px;
+				width: 32px;
+				height: 32px;
+				border-radius: 50%;
+				transition: all 0.3s ease;
+
+				&:hover {
+					background-color: #f0f7ff;
+				}
+
+				.el-dialog__close {
+					font-size: 18px;
+					color: #909399;
+				}
+			}
+		}
+
+		.el-dialog__body {
+			padding: 28px;
+		}
+
+		.el-dialog__footer {
+			padding: 20px 28px;
+			border-top: 2px solid #e4e7ed;
+			background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+
+			.dialog-footer {
+				display: flex;
+				justify-content: flex-end;
+				gap: 16px;
+
+				.el-button {
+					border-radius: 8px;
+					padding: 12px 28px;
+					font-weight: 600;
+					font-size: 14px;
+					transition: all 0.3s ease;
+					border: 2px solid transparent;
+
+					&:hover {
+						transform: translateY(-2px);
+						box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+					}
+
+					&.el-button--primary {
+						background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+						border: none;
+
+						&:hover {
+							background: linear-gradient(135deg, #66b1ff 0%, #409eff 100%);
+						}
+					}
+
+					&.el-button--default {
+						border-color: #dcdfe6;
+
+						&:hover {
+							border-color: #c0c4cc;
+							background-color: #f5f7fa;
+						}
 					}
 				}
 			}
