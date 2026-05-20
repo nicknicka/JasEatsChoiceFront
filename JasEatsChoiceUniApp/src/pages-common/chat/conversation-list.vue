@@ -431,7 +431,7 @@ const handleLongPressAction = async (action) => {
  */
 const showSystemNotifications = () => {
   uni.navigateTo({
-    url: '/pages/notification/index'
+    url: '/pages-user/notification/index'
   })
 }
 
@@ -454,10 +454,9 @@ const closeNewChatMenu = () => {
  */
 const createSingleChat = () => {
   closeNewChatMenu()
-
-  // IM-031: 跳转到选择联系人页面
-  uni.navigateTo({
-    url: '/chat/contact-selector'
+  uni.showToast({
+    title: '发起单聊功能整理中',
+    icon: 'none'
   })
 }
 
@@ -466,8 +465,9 @@ const createSingleChat = () => {
  */
 const createGroupChat = () => {
   closeNewChatMenu()
-  uni.navigateTo({
-    url: '/chat/group-detail?action=create'
+  uni.showToast({
+    title: '创建群聊功能整理中',
+    icon: 'none'
   })
 }
 
@@ -477,7 +477,7 @@ const createGroupChat = () => {
 const createGroupOrder = () => {
   closeNewChatMenu()
   uni.navigateTo({
-    url: '/pages/group-order/create'
+    url: '/pages-user/group-order/create'
   })
 }
 </script>

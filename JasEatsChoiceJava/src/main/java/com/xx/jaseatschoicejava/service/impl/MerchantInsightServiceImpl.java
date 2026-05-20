@@ -190,36 +190,31 @@ public class MerchantInsightServiceImpl implements MerchantInsightService {
         LocalDateTime[] timeRangeArray = calculateTimeRange(timeRange);
         LocalDateTime startTime = timeRangeArray[0];
         LocalDateTime endTime = timeRangeArray[1];
+        LocalDateTime[] compareTimeRange = calculateCompareTimeRange(timeRange);
+        LocalDateTime compareStart = compareTimeRange[0];
+        LocalDateTime compareEnd = compareTimeRange[1];
 
-        // 获取订单
         List<Order> orders = getOrdersByTimeRange(merchantId, startTime, endTime);
-        List<String> orderIds = orders.stream()
-                .filter(o -> o.getStatus() != 4)
-                .map(Order::getId)
-                .collect(Collectors.toList());
-
-        if (orderIds.isEmpty()) {
+        List<Order> compareOrders = getOrdersByTimeRange(merchantId, compareStart, compareEnd);
+        Map<String, Integer> currentDishSalesMap = getDishSalesMap(orders);
+        if (currentDishSalesMap.isEmpty()) {
             return new ArrayList<>();
         }
-
-        // 查询订单菜品
-        LambdaQueryWrapper<OrderDish> query = new LambdaQueryWrapper<>();
-        query.in(OrderDish::getOrderId, orderIds);
-        List<OrderDish> orderDishes = orderDishService.list(query);
-
-        // 按菜品分组统计
-        Map<String, Integer> dishSalesMap = orderDishes.stream()
-                .collect(Collectors.groupingBy(OrderDish::getDishId, Collectors.summingInt(OrderDish::getQuantity)));
+        Map<String, Integer> compareDishSalesMap = getDishSalesMap(compareOrders);
 
         // 获取菜品信息并构建结果
         List<TopDishDTO> topDishes = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : dishSalesMap.entrySet()) {
+        for (Map.Entry<String, Integer> entry : currentDishSalesMap.entrySet()) {
             Dish dish = dishService.getById(entry.getKey());
             if (dish != null) {
                 TopDishDTO dto = new TopDishDTO();
                 dto.setName(dish.getName());
                 dto.setSales(entry.getValue());
-                dto.setTrend((int) (Math.random() * 30 - 10)); // 简化处理，实际需要对比历史数据
+                int previousSales = compareDishSalesMap.getOrDefault(entry.getKey(), 0);
+                double trend = calculateChangePercent(
+                        BigDecimal.valueOf(entry.getValue()),
+                        BigDecimal.valueOf(previousSales));
+                dto.setTrend((int) Math.round(trend));
                 topDishes.add(dto);
             }
         }
@@ -337,6 +332,24 @@ public class MerchantInsightServiceImpl implements MerchantInsightService {
              .ge(startTime != null, Order::getCreateTime, startTime)
              .le(Order::getCreateTime, endTime);
         return orderService.list(query);
+    }
+
+    private Map<String, Integer> getDishSalesMap(List<Order> orders) {
+        List<String> orderIds = orders.stream()
+                .filter(o -> o.getStatus() != 4)
+                .map(Order::getId)
+                .collect(Collectors.toList());
+
+        if (orderIds.isEmpty()) {
+            return Map.of();
+        }
+
+        LambdaQueryWrapper<OrderDish> query = new LambdaQueryWrapper<>();
+        query.in(OrderDish::getOrderId, orderIds);
+        List<OrderDish> orderDishes = orderDishService.list(query);
+
+        return orderDishes.stream()
+                .collect(Collectors.groupingBy(OrderDish::getDishId, Collectors.summingInt(OrderDish::getQuantity)));
     }
 
     private Double calculateChangePercent(BigDecimal current, BigDecimal previous) {

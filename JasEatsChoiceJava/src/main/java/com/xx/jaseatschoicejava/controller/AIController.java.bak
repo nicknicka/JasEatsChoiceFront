@@ -21,7 +21,7 @@ import java.util.Map;
  * - 智能推荐 → RecommendationAgent
  * - 对话聊天 → NutritionAgent
  *
- * @author Claude
+
  * @since 2026-03-22
  */
 @RestController

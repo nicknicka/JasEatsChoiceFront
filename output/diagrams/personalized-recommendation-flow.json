@@ -1,0 +1,385 @@
+{
+  "template_type": "flowchart",
+  "style": 1,
+  "width": 1500,
+  "height": 840,
+  "title": "佳食宜选个性化饮食推荐流程图",
+  "subtitle": "基于用户画像、健康目标、时段位置、商家与营养约束的推荐闭环",
+  "containers": [
+    {
+      "x": 36,
+      "y": 88,
+      "width": 1428,
+      "height": 140,
+      "label": "输入与上下文层",
+      "stroke": "#cbd5e1",
+      "fill": "#f8fbff"
+    },
+    {
+      "x": 36,
+      "y": 258,
+      "width": 1428,
+      "height": 110,
+      "label": "智能编排层",
+      "stroke": "#cbd5e1",
+      "fill": "#faf7ff"
+    },
+    {
+      "x": 36,
+      "y": 396,
+      "width": 1428,
+      "height": 208,
+      "label": "推荐处理层",
+      "stroke": "#cbd5e1",
+      "fill": "#fbfdff"
+    },
+    {
+      "x": 36,
+      "y": 632,
+      "width": 1428,
+      "height": 152,
+      "label": "输出与反馈层",
+      "stroke": "#cbd5e1",
+      "fill": "#f7fcf8"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "kind": "speech",
+      "x": 60,
+      "y": 120,
+      "width": 150,
+      "height": 64,
+      "label": "用户需求",
+      "sublabel": "推荐菜品 / 控制热量 / 场景点餐",
+      "fill": "#ffffff",
+      "stroke": "#2563eb",
+      "flat": true
+    },
+    {
+      "id": "profile",
+      "kind": "rect",
+      "x": 250,
+      "y": 118,
+      "width": 180,
+      "height": 72,
+      "label": "用户画像",
+      "sublabel": "偏好 / 忌口 / 身体数据 / 饮食目标",
+      "fill": "#eff6ff",
+      "stroke": "#93c5fd",
+      "flat": true
+    },
+    {
+      "id": "history",
+      "kind": "rect",
+      "x": 470,
+      "y": 118,
+      "width": 190,
+      "height": 72,
+      "label": "历史行为",
+      "sublabel": "订单 / 收藏 / 点击 / 复购偏好",
+      "fill": "#eff6ff",
+      "stroke": "#93c5fd",
+      "flat": true
+    },
+    {
+      "id": "scene",
+      "kind": "rect",
+      "x": 700,
+      "y": 118,
+      "width": 200,
+      "height": 72,
+      "label": "场景信号",
+      "sublabel": "时间段 / 位置 / 首页天气信息",
+      "fill": "#f0fdf4",
+      "stroke": "#86efac",
+      "flat": true
+    },
+    {
+      "id": "catalog",
+      "kind": "cylinder",
+      "x": 960,
+      "y": 106,
+      "width": 210,
+      "height": 96,
+      "label": "菜品与商家数据",
+      "sublabel": "在线菜品 / 评分 / 价格 / 营业状态",
+      "fill": "#fff7ed",
+      "stroke": "#fdba74"
+    },
+    {
+      "id": "agent",
+      "kind": "double_rect",
+      "x": 510,
+      "y": 278,
+      "width": 300,
+      "height": 72,
+      "label": "智能推荐智能体",
+      "sublabel": "解析需求并编排用户 / 推荐 / 营养 / 时间 / 位置 / 商家工具",
+      "fill": "#ffffff",
+      "stroke": "#8b5cf6"
+    },
+    {
+      "id": "query",
+      "kind": "rect",
+      "x": 100,
+      "y": 442,
+      "width": 190,
+      "height": 72,
+      "label": "推荐查询",
+      "sublabel": "按分类 / 标签 / 在线状态检索菜品",
+      "fill": "#ffffff",
+      "stroke": "#60a5fa",
+      "flat": true
+    },
+    {
+      "id": "filter",
+      "kind": "rect",
+      "x": 350,
+      "y": 442,
+      "width": 200,
+      "height": 72,
+      "label": "约束筛选",
+      "sublabel": "热量 / 价格 / 营养 / 过敏源过滤",
+      "fill": "#ffffff",
+      "stroke": "#60a5fa",
+      "flat": true
+    },
+    {
+      "id": "rank",
+      "kind": "double_rect",
+      "x": 610,
+      "y": 430,
+      "width": 280,
+      "height": 96,
+      "label": "综合排序",
+      "sublabel": "用户匹配30% / 健康25% / 时段20% / 商家15% / 性价比10%",
+      "fill": "#ffffff",
+      "stroke": "#16a34a"
+    },
+    {
+      "id": "nutrition",
+      "kind": "rect",
+      "x": 980,
+      "y": 424,
+      "width": 210,
+      "height": 72,
+      "label": "营养分析",
+      "sublabel": "菜品热量 / 餐食营养 / 每日摄入建议",
+      "fill": "#f0fdf4",
+      "stroke": "#4ade80",
+      "flat": true
+    },
+    {
+      "id": "merchant",
+      "kind": "rect",
+      "x": 980,
+      "y": 516,
+      "width": 210,
+      "height": 72,
+      "label": "商家约束",
+      "sublabel": "评分 / 距离 / 营业中 / 配送或到店范围",
+      "fill": "#fff7ed",
+      "stroke": "#fb923c",
+      "flat": true
+    },
+    {
+      "id": "cards",
+      "kind": "rect",
+      "x": 110,
+      "y": 674,
+      "width": 220,
+      "height": 78,
+      "label": "卡片化推荐结果",
+      "sublabel": "菜品 / 商家 / 价格 / 热量 / 评分",
+      "fill": "#ecfdf5",
+      "stroke": "#34d399",
+      "flat": true
+    },
+    {
+      "id": "reason",
+      "kind": "rect",
+      "x": 410,
+      "y": 674,
+      "width": 230,
+      "height": 78,
+      "label": "推荐理由说明",
+      "sublabel": "目标适配 / 口味匹配 / 时段匹配 / 营养解释",
+      "fill": "#ecfdf5",
+      "stroke": "#34d399",
+      "flat": true
+    },
+    {
+      "id": "action",
+      "kind": "rect",
+      "x": 730,
+      "y": 674,
+      "width": 220,
+      "height": 78,
+      "label": "用户决策",
+      "sublabel": "收藏 / 加购 / 立即下单 / 查看详情",
+      "fill": "#ffffff",
+      "stroke": "#10b981",
+      "flat": true
+    },
+    {
+      "id": "feedback",
+      "kind": "rect",
+      "x": 1040,
+      "y": 674,
+      "width": 250,
+      "height": 78,
+      "label": "行为反馈回流",
+      "sublabel": "订单结果 / 收藏变化 / 点击反馈 / 偏好沉淀",
+      "fill": "#ffffff",
+      "stroke": "#f59e0b",
+      "flat": true
+    }
+  ],
+  "arrows": [
+    {
+      "source": "request",
+      "target": "agent",
+      "source_port": "bottom",
+      "target_port": "top",
+      "flow": "read",
+      "route_points": [[135, 196], [135, 240], [660, 240], [660, 278]]
+    },
+    {
+      "source": "profile",
+      "target": "agent",
+      "source_port": "bottom",
+      "target_port": "top",
+      "flow": "read"
+    },
+    {
+      "source": "history",
+      "target": "agent",
+      "source_port": "bottom",
+      "target_port": "top",
+      "flow": "read"
+    },
+    {
+      "source": "scene",
+      "target": "agent",
+      "source_port": "bottom",
+      "target_port": "top",
+      "flow": "read"
+    },
+    {
+      "source": "catalog",
+      "target": "agent",
+      "source_port": "bottom",
+      "target_port": "top",
+      "flow": "data",
+      "route_points": [[1065, 214], [1065, 240], [770, 240], [770, 278]]
+    },
+    {
+      "source": "agent",
+      "target": "query",
+      "source_port": "bottom",
+      "target_port": "top",
+      "flow": "read",
+      "route_points": [[600, 364], [600, 396], [195, 396], [195, 442]]
+    },
+    {
+      "source": "query",
+      "target": "filter",
+      "source_port": "right",
+      "target_port": "left",
+      "flow": "read"
+    },
+    {
+      "source": "filter",
+      "target": "rank",
+      "source_port": "right",
+      "target_port": "left",
+      "flow": "read"
+    },
+    {
+      "source": "nutrition",
+      "target": "rank",
+      "source_port": "left",
+      "target_port": "right",
+      "flow": "data"
+    },
+    {
+      "source": "merchant",
+      "target": "rank",
+      "source_port": "left",
+      "target_port": "right",
+      "flow": "data",
+      "route_points": [[980, 552], [936, 552], [936, 504], [890, 504]]
+    },
+    {
+      "source": "rank",
+      "target": "cards",
+      "source_port": "bottom",
+      "target_port": "top",
+      "flow": "data",
+      "route_points": [[700, 538], [700, 620], [220, 620], [220, 674]]
+    },
+    {
+      "source": "rank",
+      "target": "reason",
+      "source_port": "bottom",
+      "target_port": "top",
+      "flow": "data",
+      "route_points": [[760, 538], [760, 630], [525, 630], [525, 674]]
+    },
+    {
+      "source": "cards",
+      "target": "action",
+      "source_port": "right",
+      "target_port": "left",
+      "flow": "read",
+      "label": "展示结果",
+      "label_dy": -8
+    },
+    {
+      "source": "reason",
+      "target": "action",
+      "source_port": "right",
+      "target_port": "left",
+      "flow": "read",
+      "label": "辅助解释",
+      "label_dy": 16
+    },
+    {
+      "source": "action",
+      "target": "feedback",
+      "source_port": "right",
+      "target_port": "left",
+      "flow": "feedback"
+    },
+    {
+      "source": "feedback",
+      "target": "history",
+      "source_port": "top",
+      "target_port": "bottom",
+      "flow": "feedback",
+      "label": "持续更新偏好",
+      "route_points": [[1165, 664], [1165, 620], [1380, 620], [1380, 220], [565, 220]],
+      "label_dx": -24,
+      "label_dy": -10
+    }
+  ],
+  "legend": [
+    {
+      "flow": "read",
+      "label": "主流程"
+    },
+    {
+      "flow": "data",
+      "label": "数据补充与打分"
+    },
+    {
+      "flow": "feedback",
+      "label": "行为反馈闭环"
+    }
+  ],
+  "legend_position": "bottom-right",
+  "legend_box": true,
+  "footer": "依据项目文档重绘：突出智能推荐智能体、多工具协同、卡片化输出与行为反馈闭环"
+}

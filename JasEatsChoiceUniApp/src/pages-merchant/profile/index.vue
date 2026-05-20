@@ -207,7 +207,7 @@ const formatMoney = (amount) => {
  */
 const toEditShop = () => {
   uni.navigateTo({
-    url: '/profile/shop'
+    url: '/pages-merchant/profile/shop'
   })
 }
 
@@ -216,7 +216,7 @@ const toEditShop = () => {
  */
 const toShopSettings = () => {
   uni.navigateTo({
-    url: '/profile/shop'
+    url: '/pages-merchant/profile/shop'
   })
 }
 
@@ -225,7 +225,7 @@ const toShopSettings = () => {
  */
 const toMenuManage = () => {
   uni.navigateTo({
-    url: '/menu/index'
+    url: '/pages-merchant/menu/index'
   })
 }
 
@@ -234,7 +234,7 @@ const toMenuManage = () => {
  */
 const toTutorials = () => {
   uni.navigateTo({
-    url: '/profile/tutorials'
+    url: '/pages-merchant/profile/tutorials'
   })
 }
 
@@ -243,7 +243,7 @@ const toTutorials = () => {
  */
 const toFinance = () => {
   uni.navigateTo({
-    url: '/profile/finance'
+    url: '/pages-merchant/profile/finance'
   })
 }
 
@@ -252,7 +252,7 @@ const toFinance = () => {
  */
 const toWithdraw = () => {
   uni.navigateTo({
-    url: '/profile/withdraw'
+    url: '/pages-merchant/profile/withdraw'
   })
 }
 
@@ -261,7 +261,7 @@ const toWithdraw = () => {
  */
 const toEditProfile = () => {
   uni.navigateTo({
-    url: '/profile/edit'
+    url: '/pages-merchant/profile/edit'
   })
 }
 
@@ -270,7 +270,7 @@ const toEditProfile = () => {
  */
 const toSettings = () => {
   uni.navigateTo({
-    url: '/profile/settings'
+    url: '/pages-merchant/profile/settings'
   })
 }
 
@@ -279,7 +279,7 @@ const toSettings = () => {
  */
 const toComment = () => {
   uni.navigateTo({
-    url: '/comment/index'
+    url: '/pages-merchant/comment/index'
   })
 }
 

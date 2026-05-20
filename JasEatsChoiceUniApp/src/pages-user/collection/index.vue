@@ -146,6 +146,8 @@ import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/store'
 import Empty from '@/components/common/Empty.vue'
 import { favoriteApi } from '@/api'
+import { HOME } from '@/constants/routes'
+import { toDishDetail, toMerchantDetail } from '@/utils/router'
 
 // 用户信息store
 const userStore = useUserStore()
@@ -269,27 +271,21 @@ const onLoadMore = () => {
  * 查看菜品详情
  */
 const viewDishDetail = (dish) => {
-  uni.navigateTo({
-    url: `/pages/dish/detail/index?id=${dish.id}`
-  })
+  toDishDetail(dish.id)
 }
 
 /**
  * 查看商家详情
  */
 const viewMerchantDetail = (merchant) => {
-  uni.navigateTo({
-    url: `/pages/merchant/detail/index?id=${merchant.id}`
-  })
+  toMerchantDetail(merchant.id)
 }
 
 /**
  * 跳转商家
  */
 const toMerchant = (merchantId) => {
-  uni.navigateTo({
-    url: `/pages/merchant/detail/index?id=${merchantId}`
-  })
+  toMerchantDetail(merchantId)
 }
 
 /**
@@ -387,7 +383,7 @@ const toggleMerchantFavorite = async (merchant) => {
  */
 const goToHome = () => {
   uni.switchTab({
-    url: '/pages/index/index'
+    url: HOME
   })
 }
 

@@ -9,7 +9,7 @@ import dev.langchain4j.service.UserMessage;
  *
  * 专注于位置相关的智能服务（堂食/自取模式）
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 public interface LocationServiceAgent {

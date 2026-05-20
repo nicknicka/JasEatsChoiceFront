@@ -191,6 +191,8 @@ const handleHotTopicClick = () => {
   router.push('/user/home/hot-topic')
 }
 
+const TRUSTED_LOCATION_SOURCES = ['gps', 'manual', 'search']
+
 // 处理位置选择
 const handleLocationSelected = async (locationData) => {
   const { address, source, position } = locationData
@@ -214,13 +216,16 @@ const handleLocationSelected = async (locationData) => {
         { location: address }
       )
 
-      localStorage.setItem('user_last_location', JSON.stringify({
-        address,
-        lng: position?.lng ?? null,
-        lat: position?.lat ?? null,
-        timestamp: Date.now(),
-        source: locationSource.value
-      }))
+      if (TRUSTED_LOCATION_SOURCES.includes(locationSource.value) && position?.lng && position?.lat) {
+        localStorage.setItem('user_last_location', JSON.stringify({
+          address,
+          lng: position.lng,
+          lat: position.lat,
+          timestamp: Date.now(),
+          source: locationSource.value,
+          accuracy: locationSource.value
+        }))
+      }
 
       // 更新本地用户信息
       if (userStore.userInfo) {
@@ -267,9 +272,14 @@ const loadLastLocation = async () => {
       const locationData = JSON.parse(stored)
       locationSource.value = locationData.source || 'cache'
 
-      // 检查是否过期（7天内有效）
-      const sevenDays = 7 * 24 * 60 * 60 * 1000
-      if (Date.now() - locationData.timestamp < sevenDays) {
+      // 检查是否过期（24小时内有效）
+      const LOCATION_CACHE_DURATION = 24 * 60 * 60 * 1000
+      if (!TRUSTED_LOCATION_SOURCES.includes(locationSource.value)) {
+        localStorage.removeItem('user_last_location')
+        return
+      }
+
+      if (Date.now() - locationData.timestamp < LOCATION_CACHE_DURATION) {
         const { lng, lat, address } = locationData
 
         if (address) {
@@ -646,12 +656,18 @@ const fetchFeaturedTutorials = async () => {
       return await api.get(API_CONFIG.tutorial.featured)
     })
 
-    // Handle both null/undefined and empty array cases for consistency
-    if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-      featuredTutorials.value = response.data
-    } else {
-      featuredTutorials.value = []
-    }
+    const tutorials = Array.isArray(response)
+      ? response
+      : Array.isArray(response?.data)
+        ? response.data
+        : []
+
+    featuredTutorials.value = tutorials.map((tutorial) => ({
+      ...tutorial,
+      title: tutorial.title || tutorial.name || '教程',
+      thumbnail: tutorial.thumbnail || tutorial.coverImage || tutorial.cover_image || '',
+      type: tutorial.type || 'article'
+    }))
   } catch (error) {
     console.error('加载精选教程失败:', error)
     // 失败时使用模拟数据作为备份

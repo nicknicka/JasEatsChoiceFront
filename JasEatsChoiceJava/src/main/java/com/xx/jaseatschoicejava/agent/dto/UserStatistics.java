@@ -8,7 +8,7 @@ import lombok.Data;
  *
  * 用于Agent工具类返回用户统计数据
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Data

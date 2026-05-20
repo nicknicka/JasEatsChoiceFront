@@ -7,7 +7,7 @@
  * - 支持加载失败处理
  * - 支持淡入动画
  *
- * @author Claude
+
  * @date 2026-03-31
  */
 
@@ -197,6 +197,7 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
+@import '@/styles/mixins.scss';
 
 .lazy-image {
 	position: relative;

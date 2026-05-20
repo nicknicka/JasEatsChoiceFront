@@ -18,7 +18,7 @@ import static org.hamcrest.Matchers.*;
  *
  * 测试SupervisorAgent的HTTP接口
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @SpringBootTest(

@@ -17,7 +17,7 @@ import java.util.List;
  *
  * 为Agent提供菜品推荐排序功能
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

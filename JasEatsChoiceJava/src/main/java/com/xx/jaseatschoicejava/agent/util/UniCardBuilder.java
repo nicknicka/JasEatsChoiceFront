@@ -24,7 +24,7 @@ import java.util.List;
  *     .buildJson();
  * </pre>
  *
- * @author Claude
+
  * @since 2026-04-03
  */
 public class UniCardBuilder {

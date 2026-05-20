@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 节日推荐服务接口
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 public interface FestivalService {

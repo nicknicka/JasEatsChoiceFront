@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  *
  * 为Agent提供订单信息的查询功能
  *
- * @author Claude
+
  * @since 2026-03-24
  * @updated 2026-04-04 getUserOrders 改为返回 UniCard 卡片格式
  */

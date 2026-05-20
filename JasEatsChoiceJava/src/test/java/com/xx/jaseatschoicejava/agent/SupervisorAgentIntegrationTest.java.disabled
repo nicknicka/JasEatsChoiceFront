@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * 验证监督代理架构是否正确配置
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @SpringBootTest(classes = JasEatsChoiceJavaApplication.class)

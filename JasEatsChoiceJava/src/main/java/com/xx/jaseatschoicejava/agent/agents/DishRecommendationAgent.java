@@ -9,7 +9,6 @@ import dev.langchain4j.service.UserMessage;
  *
  * 专注于智能菜品推荐和菜单查询
  *
- * @author Claude
  * @since 2026-03-24
  */
 public interface DishRecommendationAgent {

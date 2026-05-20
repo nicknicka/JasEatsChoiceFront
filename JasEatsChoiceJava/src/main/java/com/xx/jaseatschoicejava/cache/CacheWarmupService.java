@@ -23,7 +23,7 @@ import java.util.List;
  * 2. 定时刷新热点数据
  * 3. 支持配置预热策略
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

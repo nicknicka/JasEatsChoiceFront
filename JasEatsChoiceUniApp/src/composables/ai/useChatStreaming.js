@@ -8,11 +8,11 @@ import { debug, info, warn, error } from '@/utils/logger.js'
  * - 请求取消
  * - 卡片数据解析
  *
- * @author Claude
+
  * @date 2026-03-31
  */
 
-import { ref, nextTick } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { aiApi } from '@/api'
 import { parseCardDataFromContent } from '@/utils/cardParser'
 

@@ -29,7 +29,7 @@ import java.time.Duration;
  * 2. 配置RedisCacheManager，支持Spring Cache注解
  * 3. 设置默认缓存过期时间为30分钟
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

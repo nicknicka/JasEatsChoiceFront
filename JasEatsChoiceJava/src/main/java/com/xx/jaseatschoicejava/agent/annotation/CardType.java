@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Target(ElementType.METHOD)

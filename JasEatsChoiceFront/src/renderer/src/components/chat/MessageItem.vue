@@ -168,7 +168,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['command', 'resend'])
+defineEmits(['command', 'resend'])
 
 // ========== 移动端检测 ==========
 const isMobile = ref(false)
@@ -398,6 +398,8 @@ const handleDownloadFile = async () => {
 </script>
 
 <style scoped lang="less">
+@import '../../assets/css/nordic-theme.less';
+
 .message-item {
   margin-bottom: 16px;
   display: flex;
@@ -407,9 +409,12 @@ const handleDownloadFile = async () => {
     align-items: flex-start;
 
     .message-content {
-      background-color: #fff;
-      border: 1px solid #e4e7ed;
-      border-radius: 0 12px 12px 12px;
+      background: linear-gradient(180deg, #fffdfb 0%, #fbf7f2 100%);
+      border: 1px solid fade(@nordic-border, 94%);
+      border-radius: 0 16px 16px 16px;
+      box-shadow:
+        0 10px 22px rgba(105, 78, 57, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84);
     }
   }
 
@@ -417,9 +422,12 @@ const handleDownloadFile = async () => {
     align-items: flex-end;
 
     .message-content {
-      background-color: #95ec69;
-      border: 1px solid #86d35e;
-      border-radius: 12px 0 12px 12px;
+      background: linear-gradient(180deg, #f7efe7 0%, #f2dfcf 100%);
+      border: 1px solid fade(@nordic-accent, 30%);
+      border-radius: 16px 0 16px 16px;
+      box-shadow:
+        0 12px 24px fade(@nordic-accent, 12%),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
     }
   }
 
@@ -429,8 +437,8 @@ const handleDownloadFile = async () => {
 
   &.message-failed {
     .message-content {
-      background-color: #fef0f0;
-      border-color: #fbc4c4;
+      background: linear-gradient(180deg, #fff7f7 0%, @nordic-red-light 100%);
+      border-color: fade(@nordic-red, 36%);
     }
   }
 
@@ -461,9 +469,11 @@ const handleDownloadFile = async () => {
     position: relative;
     word-break: break-word;
     white-space: pre-wrap;
+    color: @nordic-text;
 
     .text-content {
       white-space: pre-wrap;
+      line-height: 1.7;
     }
 
     .image-content {
@@ -474,13 +484,14 @@ const handleDownloadFile = async () => {
         gap: 8px;
 
         .loading-text {
-          font-size: 0.857rem /* 原值: 12px */;
-          color: #909399;
+          font-size: @nordic-text-xs;
+          color: @nordic-text-muted;
         }
 
         :deep(.el-skeleton) {
-          background-color: #f5f7fa;
-          border-radius: 8px;
+          background: #fbf7f2;
+          border: 1px solid fade(@nordic-border, 92%);
+          border-radius: 14px;
           padding: 8px;
         }
       }
@@ -488,14 +499,21 @@ const handleDownloadFile = async () => {
       .image-wrapper {
         position: relative;
         display: inline-block;
-        border-radius: 12px;
+        border-radius: 18px;
         overflow: hidden;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background:
+          radial-gradient(circle at top left, rgba(212, 132, 90, 0.08) 0%, rgba(255, 255, 255, 0.96) 45%);
+        border: 1px solid fade(@nordic-border, 90%);
+        box-shadow:
+          0 14px 28px rgba(105, 78, 57, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.86);
+        transition: all @nordic-transition-base ease;
 
         &:hover {
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-          transform: translateY(-2px);
+          box-shadow:
+            0 20px 34px rgba(105, 78, 57, 0.12),
+            0 0 0 6px fade(@nordic-accent-light, 22%);
+          transform: translateY(-1px);
 
           .message-image {
             transform: scale(1.02);
@@ -508,8 +526,8 @@ const handleDownloadFile = async () => {
             opacity: 1 !important;
             background: linear-gradient(
               to top,
-              rgba(0, 0, 0, 0.75) 0%,
-              rgba(0, 0, 0, 0.6) 50%,
+              rgba(88, 62, 42, 0.78) 0%,
+              rgba(88, 62, 42, 0.58) 48%,
               transparent 100%
             );
             pointer-events: auto;
@@ -526,9 +544,9 @@ const handleDownloadFile = async () => {
 
         .message-image {
           display: block;
-          border-radius: 12px;
+          border-radius: 18px;
           cursor: pointer;
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: transform @nordic-transition-base ease;
 
           // 根据图片方向调整尺寸
           &.landscape {
@@ -550,7 +568,7 @@ const handleDownloadFile = async () => {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 12px;
+            border-radius: 18px;
             // 添加渐显动画
             animation: image-fadein 0.4s ease-out;
           }
@@ -563,9 +581,10 @@ const handleDownloadFile = async () => {
           justify-content: center;
           width: 200px;
           height: 150px;
-          background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
-          border-radius: 12px;
-          color: #909399;
+          background:
+            radial-gradient(circle at 30% 20%, #fffdfb 0%, #f5ece3 58%, #eedbcd 100%);
+          border-radius: 18px;
+          color: @nordic-accent-dark;
 
           .el-icon {
             font-size: 2.286rem /* 原值: 32px */;
@@ -579,13 +598,13 @@ const handleDownloadFile = async () => {
           bottom: 0;
           left: 0;
           right: 0;
-          background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
-          padding: 12px;
+          background: linear-gradient(to top, rgba(88, 62, 42, 0.8) 0%, rgba(88, 62, 42, 0.18) 100%);
+          padding: 14px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 8px;
-          border-radius: 0 0 12px 12px;
+          border-radius: 0 0 18px 18px;
 
           .image-info {
             display: flex;
@@ -606,17 +625,18 @@ const handleDownloadFile = async () => {
 
           .download-btn {
             flex-shrink: 0;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
+            background: rgba(255, 248, 240, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(12px);
+            color: #fff;
+            transition: all @nordic-transition-fast ease;
             min-width: 36px;
             min-height: 36px;
 
             &:hover {
-              background: rgba(255, 255, 255, 0.3);
-              border-color: rgba(255, 255, 255, 0.5);
-              transform: scale(1.1);
+              background: rgba(255, 248, 240, 0.28);
+              border-color: rgba(255, 255, 255, 0.38);
+              transform: translateY(-1px);
             }
 
             &:active {
@@ -630,7 +650,7 @@ const handleDownloadFile = async () => {
 
               &:active {
                 transform: scale(0.9);
-                background: rgba(255, 255, 255, 0.4);
+                background: rgba(255, 248, 240, 0.34);
               }
             }
           }
@@ -655,11 +675,12 @@ const handleDownloadFile = async () => {
         justify-content: center;
         width: 200px;
         height: 150px;
-        background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
-        border-radius: 12px;
-        color: #f56c6c;
+        background: linear-gradient(180deg, #fff8f8 0%, @nordic-red-light 100%);
+        border-radius: 18px;
+        color: @nordic-red;
         gap: 8px;
-        box-shadow: 0 2px 8px rgba(245, 108, 108, 0.1);
+        border: 1px solid fade(@nordic-red, 26%);
+        box-shadow: 0 8px 18px fade(@nordic-red, 10%);
 
         .el-icon {
           font-size: 2.286rem /* 原值: 32px */;
@@ -673,17 +694,19 @@ const handleDownloadFile = async () => {
         align-items: center;
         gap: 12px;
         padding: 12px;
-        background-color: #f5f7fa;
-        border-radius: 8px;
+        background: linear-gradient(180deg, #fffdfa 0%, #f7f1eb 100%);
+        border-radius: 14px;
+        border: 1px solid fade(@nordic-border, 92%);
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: all @nordic-transition-fast ease;
 
         &:hover {
-          background-color: #e4e7ed;
+          background: linear-gradient(180deg, #fff8f2 0%, #f3e7db 100%);
+          border-color: fade(@nordic-accent, 24%);
         }
 
         .file-icon {
-          color: #409eff;
+          color: @nordic-accent-dark;
           flex-shrink: 0;
         }
 
@@ -694,32 +717,37 @@ const handleDownloadFile = async () => {
           .file-name {
             font-size: 1rem /* 原值: 14px */;
             font-weight: 500;
-            color: #303133;
+            color: @nordic-text;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
           }
 
           .file-size {
-            font-size: 0.857rem /* 原值: 12px */;
-            color: #909399;
+            font-size: @nordic-text-xs;
+            color: @nordic-text-muted;
             margin-top: 4px;
           }
+        }
+
+        :deep(.el-button) {
+          color: @nordic-accent-dark;
         }
       }
     }
 
     .message-reply-quote {
-      background-color: #f5f7fa;
-      padding: 8px;
-      border-radius: 4px;
+      background: linear-gradient(180deg, #faf5ef 0%, #f4ece4 100%);
+      padding: 10px;
+      border-radius: 12px;
       margin-bottom: 8px;
       display: flex;
       gap: 8px;
+      border: 1px solid fade(@nordic-border, 92%);
 
       .quote-bar {
         width: 3px;
-        background-color: #409eff;
+        background-color: @nordic-accent;
         border-radius: 2px;
       }
 
@@ -727,15 +755,15 @@ const handleDownloadFile = async () => {
         flex: 1;
 
         .quote-author {
-          font-size: 0.857rem /* 原值: 12px */;
+          font-size: @nordic-text-xs;
           font-weight: 500;
-          color: #409eff;
+          color: @nordic-accent-dark;
           margin-bottom: 4px;
         }
 
         .quote-text {
           font-size: 0.929rem /* 原值: 13px */;
-          color: #606266;
+          color: @nordic-text-secondary;
           overflow: hidden;
           text-overflow: ellipsis;
           display: -webkit-box;
@@ -755,7 +783,7 @@ const handleDownloadFile = async () => {
 
       .message-time {
         font-size: 0.75rem /* 原值: 11px */;
-        color: #999;
+        color: @nordic-text-muted;
         display: block;
         line-height: 1.4;
         word-break: break-word;
@@ -765,12 +793,19 @@ const handleDownloadFile = async () => {
 
       .msg-action-btn {
         opacity: 0;
-        transition: opacity 0.2s;
+        transition: all @nordic-transition-fast ease;
         font-size: 1.143rem /* 原值: 16px */;
         padding: 0;
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         flex-shrink: 0;
+        color: @nordic-text-muted;
+        border-radius: 50%;
+
+        &:hover {
+          color: @nordic-accent-dark;
+          background: fade(@nordic-accent-light, 35%);
+        }
       }
 
       .resend-btn {

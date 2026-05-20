@@ -1,0 +1,786 @@
+{
+  "runId": "recommend-seed-20260517_145249",
+  "baseUrl": "http://127.0.0.1:7777/api",
+  "userId": "3384650106421960",
+  "merchantId": "7638432224340229",
+  "startedAt": "2026-05-17T06:52:49.563Z",
+  "assumptions": [
+    "目标用户使用当前桌面端常见测试账号 17322222222",
+    "优先通过后端接口创建菜品和推荐行为",
+    "通过 recommendation_log、user_behavior、t_reject_recommendation 的时间窗口确认本次造数结果"
+  ],
+  "countsBefore": {
+    "userBehavior": 861,
+    "recommendationLog": 1864,
+    "rejectRecommendation": 2
+  },
+  "seedDishes": {
+    "created": [
+      {
+        "id": "seed_1779000769631_1",
+        "name": "南瓜小米粥",
+        "category": "早餐",
+        "price": 14,
+        "calorie": 160,
+        "description": "暖胃低负担，适合早餐时段推荐",
+        "image": "https://via.placeholder.com/400x300/F6A623/FFFFFF?text=南瓜小米粥",
+        "createMethod": "sql_fallback",
+        "apiError": {
+          "success": false,
+          "code": "400",
+          "message": "参数错误：数据格式不符合要求"
+        }
+      },
+      {
+        "id": "seed_1779000769660_2",
+        "name": "全麦鸡肉卷",
+        "category": "早餐",
+        "price": 18,
+        "calorie": 280,
+        "description": "高饱腹感早餐主食，适合通勤场景",
+        "image": "https://via.placeholder.com/400x300/8BC34A/FFFFFF?text=全麦鸡肉卷",
+        "createMethod": "sql_fallback",
+        "apiError": {
+          "success": false,
+          "code": "400",
+          "message": "参数错误：数据格式不符合要求"
+        }
+      },
+      {
+        "id": "seed_1779000769681_3",
+        "name": "鲜虾蔬菜蒸蛋",
+        "category": "早餐",
+        "price": 16,
+        "calorie": 220,
+        "description": "蛋白质友好，口味清爽",
+        "image": "https://via.placeholder.com/400x300/4FC3F7/FFFFFF?text=鲜虾蔬菜蒸蛋",
+        "createMethod": "sql_fallback",
+        "apiError": {
+          "success": false,
+          "code": "400",
+          "message": "参数错误：数据格式不符合要求"
+        }
+      },
+      {
+        "id": "seed_1779000769705_4",
+        "name": "蓝莓酸奶燕麦杯",
+        "category": "早餐",
+        "price": 20,
+        "calorie": 240,
+        "description": "轻食型早餐，适合控卡需求",
+        "image": "https://via.placeholder.com/400x300/7E57C2/FFFFFF?text=蓝莓酸奶燕麦杯",
+        "createMethod": "sql_fallback",
+        "apiError": {
+          "success": false,
+          "code": "400",
+          "message": "参数错误：数据格式不符合要求"
+        }
+      },
+      {
+        "id": "seed_1779000769730_5",
+        "name": "牛油果鸡蛋三明治",
+        "category": "早餐",
+        "price": 22,
+        "calorie": 320,
+        "description": "营养均衡，适合早午餐推荐",
+        "image": "https://via.placeholder.com/400x300/66BB6A/FFFFFF?text=牛油果鸡蛋三明治",
+        "createMethod": "sql_fallback",
+        "apiError": {
+          "success": false,
+          "code": "400",
+          "message": "参数错误：数据格式不符合要求"
+        }
+      }
+    ],
+    "reused": [],
+    "finalDishes": [
+      {
+        "id": "seed_1779000769631_1",
+        "name": "南瓜小米粥",
+        "price": 14,
+        "calorie": 160,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769660_2",
+        "name": "全麦鸡肉卷",
+        "price": 18,
+        "calorie": 280,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769681_3",
+        "name": "鲜虾蔬菜蒸蛋",
+        "price": 16,
+        "calorie": 220,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769705_4",
+        "name": "蓝莓酸奶燕麦杯",
+        "price": 20,
+        "calorie": 240,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769730_5",
+        "name": "牛油果鸡蛋三明治",
+        "price": 22,
+        "calorie": 320,
+        "category": "早餐",
+        "isOnline": 1
+      }
+    ]
+  },
+  "bootstrapBehaviors": [
+    {
+      "dishId": "1001",
+      "dishName": "皮蛋瘦肉粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769631_1",
+      "dishName": "南瓜小米粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769660_2",
+      "dishName": "全麦鸡肉卷",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769681_3",
+      "dishName": "鲜虾蔬菜蒸蛋",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    }
+  ],
+  "profileBoostFeedback": [
+    {
+      "dishId": "1001",
+      "dishName": "皮蛋瘦肉粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769631_1",
+      "dishName": "南瓜小米粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769660_2",
+      "dishName": "全麦鸡肉卷",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    }
+  ],
+  "profileAfterBoost": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "id": 1,
+      "userId": "3384650106421960",
+      "lastUpdated": "2026-05-17T14:52:50"
+    }
+  },
+  "recommendationResponse": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "total": 2,
+      "recommendations": [
+        {
+          "dishId": "1",
+          "dishName": "宫保鸡丁",
+          "dishImage": "https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=宫保鸡丁",
+          "category": "分类1",
+          "score": 8.25,
+          "rank": 1,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 450,
+          "price": 38,
+          "rating": 4.5
+        },
+        {
+          "dishId": "1001",
+          "dishName": "皮蛋瘦肉粥",
+          "dishImage": "https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=皮蛋瘦肉粥",
+          "category": "早餐",
+          "score": 8.25,
+          "rank": 2,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 180,
+          "price": 12,
+          "rating": 4.5
+        }
+      ],
+      "scene": "home",
+      "timestamp": 1779000769939
+    }
+  },
+  "recommendationBatches": [
+    {
+      "itemCount": 2,
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "recommendationId": "4185589a-df41-4d5a-bbf4-8cd84051074e"
+    },
+    {
+      "itemCount": 1,
+      "createdTime": "2026-05-17 14:46:00.000000",
+      "recommendationId": "93aea9aa-0f3c-4c62-8e94-1e76671d0297"
+    },
+    {
+      "itemCount": 2,
+      "createdTime": "2026-05-17 14:42:08.000000",
+      "recommendationId": "c26b68f4-a2ca-4184-8e20-6866e39f26a4"
+    },
+    {
+      "itemCount": 2,
+      "createdTime": "2026-05-17 14:42:07.000000",
+      "recommendationId": "e425f452-445d-4867-84db-be1d74c93961"
+    },
+    {
+      "itemCount": 2,
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "recommendationId": "3784c094-5493-417e-acf9-685a06695663"
+    }
+  ],
+  "latestRecommendationItems": [
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度4000%",
+            "type": "popularity",
+            "score": 40
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度4000%",
+            "type": "popularity",
+            "score": 40
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    }
+  ],
+  "followupFeedback": [
+    {
+      "dishId": "1",
+      "dishName": "1",
+      "recommendationId": "4185589a-df41-4d5a-bbf4-8cd84051074e",
+      "ordered": true,
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "1001",
+      "dishName": "皮蛋瘦肉粥",
+      "recommendationId": "4185589a-df41-4d5a-bbf4-8cd84051074e",
+      "ordered": false,
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    }
+  ],
+  "rejectAction": {
+    "dishId": "1001",
+    "dishName": "皮蛋瘦肉粥",
+    "response": {
+      "success": true,
+      "code": "200",
+      "message": "成功",
+      "data": {
+        "dishId": "1001",
+        "action": "reject",
+        "userId": "3384650106421960",
+        "timestamp": 1779000770503
+      }
+    }
+  },
+  "refreshResult": {
+    "success": false,
+    "code": "500",
+    "message": "刷新推荐失败：\n### Error updating database.  Cause: java.lang.IllegalStateException: Type handler was null on parameter mapping for property 'tags'. It was either not specified and/or could not be found for the javaType (java.util.List) : jdbcType (null) combination.\n### The error may exist in com/xx/jaseatschoicejava/mapper/DishFeatureMapper.java (best guess)\n### The error may involve com.xx.jaseatschoicejava.mapper.DishFeatureMapper.insert\n### The error occurred while executing an update\n### Cause: java.lang.IllegalStateException: Type handler was null on parameter mapping for property 'tags'. It was either not specified and/or could not be found for the javaType (java.util.List) : jdbcType (null) combination."
+  },
+  "countsAfter": {
+    "userBehavior": 876,
+    "recommendationLog": 1866,
+    "rejectRecommendation": 3
+  },
+  "newRecommendationLogs": [
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:34:24.000000",
+      "recommendationId": "c12cff55-a4ba-4249-8f54-ef1d310f7e65"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:34:24.000000",
+      "recommendationId": "c12cff55-a4ba-4249-8f54-ef1d310f7e65"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:20.000000",
+      "recommendationId": "4663b86c-ac7c-44ad-b9a5-f651d1af4ed2"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:20.000000",
+      "recommendationId": "4663b86c-ac7c-44ad-b9a5-f651d1af4ed2"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "recommendationId": "db65c7c0-14e4-441c-a294-5e6c93d6b67b"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "recommendationId": "db65c7c0-14e4-441c-a294-5e6c93d6b67b"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "recommendationId": "44be742a-1bd0-46f1-8a7b-b5dc922e090b"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "recommendationId": "44be742a-1bd0-46f1-8a7b-b5dc922e090b"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "recommendationId": "3784c094-5493-417e-acf9-685a06695663"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "recommendationId": "3784c094-5493-417e-acf9-685a06695663"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "recommendationId": "21545fd5-30e6-47d5-820d-99d1af6715a1"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "recommendationId": "21545fd5-30e6-47d5-820d-99d1af6715a1"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:42:07.000000",
+      "recommendationId": "e425f452-445d-4867-84db-be1d74c93961"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:42:07.000000",
+      "recommendationId": "e425f452-445d-4867-84db-be1d74c93961"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:42:08.000000",
+      "recommendationId": "c26b68f4-a2ca-4184-8e20-6866e39f26a4"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:42:08.000000",
+      "recommendationId": "c26b68f4-a2ca-4184-8e20-6866e39f26a4"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:46:00.000000",
+      "recommendationId": "93aea9aa-0f3c-4c62-8e94-1e76671d0297"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 1,
+      "isOrdered": 1,
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "recommendationId": "4185589a-df41-4d5a-bbf4-8cd84051074e"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 1,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "recommendationId": "4185589a-df41-4d5a-bbf4-8cd84051074e"
+    }
+  ],
+  "newUserBehaviors": [
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:34:24.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:20.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:42:07.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:42:08.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {},
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:46:00.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145249",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145249",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145249",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769681_3",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145249",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "早餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:51.000000",
+      "behaviorType": "reject"
+    }
+  ],
+  "newRejectRecords": [
+    {
+      "dishId": "1001",
+      "reason": "本次造数拒绝记录：recommend-seed-20260517_145249",
+      "rejectTime": "2026-05-17 14:52:50.000000"
+    }
+  ],
+  "finalProfile": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "id": 1,
+      "userId": "3384650106421960",
+      "lastUpdated": "2026-05-17T14:52:50"
+    }
+  },
+  "finishedAt": "2026-05-17T06:52:51.815Z"
+}

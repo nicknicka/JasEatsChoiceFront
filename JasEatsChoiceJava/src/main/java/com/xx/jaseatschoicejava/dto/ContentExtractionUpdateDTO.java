@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * 内容提取更新DTO
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Data

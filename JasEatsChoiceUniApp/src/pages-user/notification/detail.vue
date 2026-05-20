@@ -95,7 +95,7 @@
           </view>
         </view>
       </view>
-    </view>
+    </template>
   </view>
 </template>
 

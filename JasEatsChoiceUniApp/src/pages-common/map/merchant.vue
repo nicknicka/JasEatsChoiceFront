@@ -17,32 +17,26 @@
       <!-- 搜索框 -->
       <view class="search-box">
         <view class="search-input">
-          <text class="search-icon">🔍</text>
+          <text class="search-icon">搜</text>
           <input class="input" v-model="searchKeyword" placeholder="搜索附近商家" placeholder-style="color: #999999" @confirm="onSearch" />
-          <text class="clear-icon" v-if="searchKeyword" @click="clearSearch">✕</text>
+          <button class="clear-icon" v-if="searchKeyword" @click="clearSearch" aria-label="清空搜索">清空</button>
         </view>
       </view>
 
       <!-- 地图控制按钮 -->
       <view class="map-controls">
-        <view class="control-btn" @click="zoomIn">
-          <text class="icon">+</text>
-        </view>
-        <view class="control-btn" @click="zoomOut">
-          <text class="icon">-</text>
-        </view>
-        <view class="control-btn" @click="moveToCurrentLocation">
-          <text class="icon">📍</text>
-        </view>
+        <button class="control-btn" @click="zoomIn" aria-label="放大地图"><text class="icon">+</text></button>
+        <button class="control-btn" @click="zoomOut" aria-label="缩小地图"><text class="icon">-</text></button>
+        <button class="control-btn" @click="moveToCurrentLocation" aria-label="回到当前位置"><text class="icon">定位</text></button>
       </view>
 
       <!-- 商家类型筛选 -->
       <view class="category-filter">
         <scroll-view class="filter-scroll" scroll-x>
-          <view class="filter-item" v-for="(category, index) in categories" :key="index" :class="{ active: selectedCategory === index }" @click="selectCategory(index)">
+          <button class="filter-item" v-for="(category, index) in categories" :key="index" :class="{ active: selectedCategory === index }" @click="selectCategory(index)" :aria-label="`筛选${category.name}`">
             <text class="filter-icon">{{ category.icon }}</text>
             <text class="filter-name">{{ category.name }}</text>
-          </view>
+          </button>
         </scroll-view>
       </view>
     </view>
@@ -54,9 +48,9 @@
         <text class="list-count">共{{ merchantList.length }}家</text>
       </view>
       <scroll-view class="list-scroll" scroll-y>
-        <view class="merchant-item" v-for="(merchant, index) in merchantList" :key="index" @click="showMerchantDetail(merchant)">
+        <button class="merchant-item" v-for="(merchant, index) in merchantList" :key="index" @click="showMerchantDetail(merchant)" :aria-label="`查看${merchant.name}详情`">
           <view class="merchant-left">
-            <image class="merchant-image" :src="merchant.image" mode="aspectFill"></image>
+            <AppImage class="merchant-image" :src="merchant.image" mode="aspectFill" :aria-label="merchant.name"></AppImage>
             <view class="merchant-badge" v-if="merchant.badge">
               <text class="badge-text">{{ merchant.badge }}</text>
             </view>
@@ -87,7 +81,7 @@
               </view>
             </view>
           </view>
-        </view>
+        </button>
       </scroll-view>
     </view>
 
@@ -96,13 +90,13 @@
       <view class="merchant-popup">
         <view class="popup-header">
           <view class="header-left">
-            <image class="merchant-avatar" :src="selectedMerchant.image" mode="aspectFill"></image>
+            <AppImage class="merchant-avatar" :src="selectedMerchant.image" mode="aspectFill" :aria-label="selectedMerchant.name"></AppImage>
             <view class="merchant-basic">
               <text class="merchant-name">{{ selectedMerchant.name }}</text>
               <text class="merchant-category">{{ selectedMerchant.category }}</text>
             </view>
           </view>
-          <view class="close-btn" @click="closeMerchantPopup">✕</view>
+          <button class="close-btn" @click="closeMerchantPopup" aria-label="关闭商家详情">关闭</button>
         </view>
         <view class="popup-info">
           <view class="info-row">
@@ -119,16 +113,16 @@
           </view>
         </view>
         <view class="popup-address">
-          <text class="address-icon">📍</text>
+          <text class="address-icon">位置</text>
           <text class="address-text">{{ selectedMerchant.address }}</text>
         </view>
         <view class="popup-actions">
           <button class="btn btn-outline" @click="navigateToMerchant">
-            <text class="icon">🧭</text>
+            <text class="icon">导航</text>
             <text>导航</text>
           </button>
           <button class="btn btn-primary" @click="orderFromMerchant">
-            <text class="icon">🛒</text>
+            <text class="icon">下单</text>
             <text>去下单</text>
           </button>
         </view>
@@ -140,6 +134,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV
 
 // 地图中心点坐标
 const longitude = ref(113.264385)
@@ -255,7 +251,9 @@ const getCurrentLocation = () => {
 
 // 地图点击
 const onMapTap = (e) => {
-  console.log('Map tapped:', e.detail)
+  if (isDev) {
+    console.log('Map tapped:', e.detail)
+  }
 }
 
 // 标记点点击
@@ -353,6 +351,8 @@ const orderFromMerchant = () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/variables.scss';
+
 .merchant-map {
   height: 100vh;
   display: flex;
@@ -380,11 +380,11 @@ const orderFromMerchant = () => {
       display: flex;
       align-items: center;
       gap: 16rpx;
-      height: 72rpx;
-      background: #ffffff;
-      border-radius: 36rpx;
+      min-height: $touch-min-size;
+      background: $bg-color-white;
+      border-radius: $border-radius-round;
       padding: 0 24rpx;
-      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+      box-shadow: $box-shadow-md;
 
       .search-icon {
         font-size: 32rpx;
@@ -394,19 +394,20 @@ const orderFromMerchant = () => {
         flex: 1;
         height: 100%;
         font-size: 28rpx;
-        color: #333333;
+        color: $text-color-primary;
       }
 
       .clear-icon {
-        width: 36rpx;
-        height: 36rpx;
-        background: #f0f0f0;
-        border-radius: 50%;
+        min-width: $touch-min-size;
+        min-height: $touch-min-size;
+        background: $primary-100;
+        border-radius: $border-radius-round;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 24rpx;
-        color: #999999;
+        color: $primary-700;
+        border: none;
       }
     }
   }
@@ -420,16 +421,17 @@ const orderFromMerchant = () => {
     gap: 16rpx;
 
     .control-btn {
-      width: 72rpx;
-      height: 72rpx;
-      background: #ffffff;
+      width: $touch-min-size;
+      height: $touch-min-size;
+      background: $bg-color-white;
       border-radius: 50%;
-      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+      box-shadow: $box-shadow-md;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36rpx;
-      color: #333333;
+      font-size: 28rpx;
+      color: $text-color-primary;
+      border: none;
 
       &:active {
         opacity: 0.8;
@@ -452,14 +454,16 @@ const orderFromMerchant = () => {
         flex-direction: column;
         align-items: center;
         gap: 8rpx;
+        min-width: 128rpx;
+        min-height: $touch-min-size;
         padding: 12rpx 16rpx;
         margin-right: 16rpx;
-        background: rgba(255, 255, 255, 0.9);
+        background: $bg-color-white;
         border-radius: 12rpx;
-        backdrop-filter: blur(10rpx);
+        border: 1rpx solid $border-color-light;
 
         &.active {
-          background: #ff6b6b;
+          background: $primary-500;
 
           .filter-icon,
           .filter-name {
@@ -473,7 +477,7 @@ const orderFromMerchant = () => {
 
         .filter-name {
           font-size: 22rpx;
-          color: #333333;
+          color: $text-color-primary;
         }
       }
     }
@@ -482,7 +486,7 @@ const orderFromMerchant = () => {
 
 .merchant-list {
   flex: 1;
-  background: #f5f5f5;
+  background: $bg-color-base;
   display: flex;
   flex-direction: column;
 
@@ -491,17 +495,17 @@ const orderFromMerchant = () => {
     justify-content: space-between;
     align-items: center;
     padding: 24rpx 32rpx 16rpx;
-    background: #ffffff;
+    background: $bg-color-white;
 
     .list-title {
       font-size: 28rpx;
       font-weight: bold;
-      color: #333333;
+      color: $text-color-primary;
     }
 
     .list-count {
       font-size: 24rpx;
-      color: #999999;
+      color: $text-color-secondary;
     }
   }
 
@@ -512,10 +516,12 @@ const orderFromMerchant = () => {
     .merchant-item {
       display: flex;
       gap: 24rpx;
-      background: #ffffff;
+      background: $bg-color-white;
       border-radius: 16rpx;
       padding: 24rpx;
       margin-bottom: 16rpx;
+      border: none;
+      text-align: left;
 
       .merchant-left {
         position: relative;
@@ -532,7 +538,7 @@ const orderFromMerchant = () => {
           position: absolute;
           top: 0;
           left: 0;
-          background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+          background: linear-gradient(135deg, $primary-500 0%, $primary-700 100%);
           border-radius: 12rpx 0 12rpx 0;
           padding: 4rpx 12rpx;
 
@@ -571,7 +577,7 @@ const orderFromMerchant = () => {
 
             .rating {
               font-size: 26rpx;
-              color: #ff9800;
+              color: $warning-color;
               font-weight: 500;
             }
           }
@@ -621,7 +627,7 @@ const orderFromMerchant = () => {
 
             .delivery-text {
               font-size: 24rpx;
-              color: #ff6b6b;
+              color: $primary-600;
             }
           }
 
@@ -638,7 +644,7 @@ const orderFromMerchant = () => {
 }
 
 .merchant-popup {
-  background: #ffffff;
+  background: $bg-color-white;
   border-radius: 24rpx 24rpx 0 0;
   padding: 32rpx;
   padding-bottom: calc(32rpx + constant(safe-area-inset-bottom));
@@ -679,13 +685,15 @@ const orderFromMerchant = () => {
     }
 
     .close-btn {
-      width: 48rpx;
-      height: 48rpx;
+      min-width: $touch-min-size;
+      min-height: $touch-min-size;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36rpx;
-      color: #999999;
+      font-size: 24rpx;
+      color: $text-color-secondary;
+      border: none;
+      background: transparent;
     }
   }
 
@@ -758,14 +766,14 @@ const orderFromMerchant = () => {
       }
 
       &.btn-primary {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        background: linear-gradient(135deg, $primary-500 0%, $primary-700 100%);
         color: #ffffff;
       }
 
       &.btn-outline {
-        background: #ffffff;
-        color: #ff6b6b;
-        border: 2rpx solid #ff6b6b;
+        background: $bg-color-white;
+        color: $primary-600;
+        border: 2rpx solid $primary-500;
       }
 
       &:active {
@@ -773,5 +781,9 @@ const orderFromMerchant = () => {
       }
     }
   }
+}
+
+button::after {
+  border: none;
 }
 </style>

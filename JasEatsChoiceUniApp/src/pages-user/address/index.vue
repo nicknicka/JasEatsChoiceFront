@@ -196,7 +196,7 @@ const selectAddress = (address) => {
  */
 const addAddress = () => {
   uni.navigateTo({
-    url: '/pages/address/edit/index'
+    url: '/pages-user/address/edit/index'
   })
 }
 
@@ -207,7 +207,7 @@ const editAddress = (address) => {
   // 将地址信息转换为URL参数
   const params = encodeURIComponent(JSON.stringify(address))
   uni.navigateTo({
-    url: `/pages/address/edit/index?data=${params}`
+    url: `/pages-user/address/edit/index?data=${params}`
   })
 }
 

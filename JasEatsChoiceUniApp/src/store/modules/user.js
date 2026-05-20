@@ -327,7 +327,7 @@ export const useUserStore = defineStore('user', {
 
       // 跳转到登录页（注意：路径要与 pages.json 中配置的一致）
       uni.reLaunch({
-        url: '/src/pages/login/index'
+        url: '/pages/login/index'
       })
     },
 
@@ -341,7 +341,7 @@ export const useUserStore = defineStore('user', {
           icon: 'none'
         })
         uni.navigateTo({
-          url: '/src/pages/login/index'
+          url: '/pages/login/index'
         })
         return false
       }

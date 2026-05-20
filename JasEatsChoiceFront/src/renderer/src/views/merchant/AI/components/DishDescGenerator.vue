@@ -344,26 +344,29 @@ const useHistory = (item) => {
 // --- 风格选择 ---
 .style-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .style-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 18px 12px;
+  justify-content: center;
+  gap: 10px;
+  min-height: 128px;
+  padding: 16px 10px;
   border: 1.5px solid @merchant-border;
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   background: @merchant-surface;
+  box-sizing: border-box;
 
   .style-icon-wrap {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -373,10 +376,12 @@ const useHistory = (item) => {
   }
 
   .style-label {
-    font-size: 13px;
+    font-size: 12px;
+    text-align: center;
     color: @merchant-text-sec;
     font-weight: 500;
     transition: color 0.25s ease;
+    white-space: nowrap;
   }
 
   &:hover {

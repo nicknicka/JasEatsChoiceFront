@@ -8,6 +8,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { paymentApi } from '@/api/modules/payment.js'
 import { walletApi } from '@/api/modules/wallet.js'
 import { formatDateTime } from '@/utils/helper'
+import { toMerchantDetail, toOrderDetail } from '@/utils/router'
 
 export function usePayment() {
   // 订单信息
@@ -178,9 +179,7 @@ export function usePayment() {
         })
 
         setTimeout(() => {
-          uni.redirectTo({
-            url: `/pages/order/detail?id=${orderInfo.value.orderId}`
-          })
+          toOrderDetail(orderInfo.value.orderId)
         }, 1500)
       } else {
         throw new Error(res.message || '支付失败')
@@ -200,9 +199,7 @@ export function usePayment() {
    * 查看商家
    */
   const viewMerchant = () => {
-    uni.navigateTo({
-      url: `/pages/merchant/detail?id=${orderInfo.value.merchantId}`
-    })
+    toMerchantDetail(orderInfo.value.merchantId)
   }
 
   // 生命周期

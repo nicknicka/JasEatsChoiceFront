@@ -12,7 +12,7 @@ import java.util.List;
  *
  * 用于Agent工具类返回订单详细信息
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Data

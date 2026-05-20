@@ -81,6 +81,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store'
 import Empty from '@/components/common/Empty.vue'
 import { historyApi } from '@/api'
+import { HOME } from '@/constants/routes'
+import {
+  toDishDetail as goToDishDetailPage,
+  toMerchantDetail as goToMerchantDetailPage
+} from '@/utils/router'
 
 // 用户信息store
 const userStore = useUserStore()
@@ -194,18 +199,14 @@ const viewDishDetail = (item) => {
     }).catch(() => {})
   }
 
-  uni.navigateTo({
-    url: `/pages/dish/detail/index?id=${item.id}`
-  })
+  goToDishDetailPage(item.id)
 }
 
 /**
  * 跳转商家
  */
 const toMerchant = (merchantId) => {
-  uni.navigateTo({
-    url: `/pages/merchant/detail/index?id=${merchantId}`
-  })
+  goToMerchantDetailPage(merchantId)
 }
 
 /**
@@ -295,7 +296,7 @@ const clearHistory = () => {
  */
 const goToHome = () => {
   uni.switchTab({
-    url: '/pages/index/index'
+    url: HOME
   })
 }
 

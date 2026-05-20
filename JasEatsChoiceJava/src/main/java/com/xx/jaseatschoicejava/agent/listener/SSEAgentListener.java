@@ -27,7 +27,7 @@ import dev.langchain4j.agentic.scope.AgenticScope;
  *
  * 实时捕获SupervisorAgent的执行步骤，通过SSE推送到前端
  *
- * @author Claude
+
  * @since 2026-03-26
  */
 public class SSEAgentListener implements AgentListener {

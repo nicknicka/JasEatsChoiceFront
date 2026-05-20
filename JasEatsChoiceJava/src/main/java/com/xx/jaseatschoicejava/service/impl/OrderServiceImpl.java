@@ -52,6 +52,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createOrderWithDishes(Order order, List<OrderDish> orderDishes) {
+        if (order == null) {
+            throw new RuntimeException("订单信息不能为空");
+        }
+
         try {
             // 如果订单ID为空，自动生成
             if (order.getId() == null || order.getId().isEmpty()) {

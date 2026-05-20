@@ -34,7 +34,7 @@ import jakarta.annotation.Resource;
  * 仅保留菜品识别、食谱优化、健康检查等独立功能。
  * AI对话统一走 SupervisorSSEController（/agent/supervisor-sse/chat）。
  *
- * @author Claude
+
  * @since 2026-03-22
  * @updated 2026-04-03 清理废弃端点，保留活跃功能
  */

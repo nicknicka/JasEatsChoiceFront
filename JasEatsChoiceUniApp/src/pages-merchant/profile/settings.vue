@@ -301,8 +301,9 @@ const maskPhone = (phone) => {
  * 编辑手机号
  */
 const editPhone = () => {
-  uni.navigateTo({
-    url: '/profile/edit-phone'
+  uni.showToast({
+    title: '修改手机号功能开发中',
+    icon: 'none'
   })
 }
 
@@ -310,8 +311,9 @@ const editPhone = () => {
  * 修改登录密码
  */
 const editPassword = () => {
-  uni.navigateTo({
-    url: '/profile/edit-password?type=login'
+  uni.showToast({
+    title: '修改登录密码功能开发中',
+    icon: 'none'
   })
 }
 
@@ -320,12 +322,14 @@ const editPassword = () => {
  */
 const editPayPassword = () => {
   if (userInfo.value.hasPayPassword) {
-    uni.navigateTo({
-      url: '/profile/edit-password?type=pay'
+    uni.showToast({
+      title: '修改支付密码功能开发中',
+      icon: 'none'
     })
   } else {
-    uni.navigateTo({
-      url: '/profile/set-pay-password'
+    uni.showToast({
+      title: '设置支付密码功能开发中',
+      icon: 'none'
     })
   }
 }
@@ -454,7 +458,7 @@ const clearCache = () => {
  */
 const viewTutorials = () => {
   uni.navigateTo({
-    url: '/profile/tutorials'
+    url: '/pages-merchant/profile/tutorials'
   })
 }
 
@@ -466,9 +470,8 @@ const contactSupport = () => {
     itemList: ['在线客服', '电话客服'],
     success: (res) => {
       if (res.tapIndex === 0) {
-        // 打开在线客服
         uni.navigateTo({
-          url: '/chat/index?type=service'
+          url: '/pages-merchant/chat/index'
         })
       } else {
         // 拨打客服电话
@@ -484,8 +487,9 @@ const contactSupport = () => {
  * 关于我们
  */
 const viewAbout = () => {
-  uni.navigateTo({
-    url: '/profile/about'
+  uni.showToast({
+    title: '关于我们功能开发中',
+    icon: 'none'
   })
 }
 

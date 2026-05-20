@@ -31,7 +31,7 @@ import com.xx.jaseatschoicejava.config.ZhipuAIConfig;
  *
  * 本类保留视觉识别和特殊功能
  *
- * @author Claude
+
  * @since 2026-03-22
  * @updated 2026-04-08 实现真正的AI调用
  */

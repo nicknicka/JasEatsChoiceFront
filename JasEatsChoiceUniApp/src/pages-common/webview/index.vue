@@ -103,9 +103,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { useRouter } from 'uni-mini-router'
-
-const router = useRouter()
 
 // WebView相关
 const webviewUrl = ref('')
@@ -191,7 +188,6 @@ const handleError = (e) => {
 
 // 处理WebView消息
 const handleMessage = (e) => {
-  console.log('WebView message:', e.detail)
   const { data } = e.detail
 
   // 处理来自H5页面的消息

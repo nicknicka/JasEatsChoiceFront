@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 节日推荐菜品Mapper接口
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Mapper

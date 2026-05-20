@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 3. 支持热插拔（理论上）
  * 4. 代码更简洁、更易维护
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 @Slf4j

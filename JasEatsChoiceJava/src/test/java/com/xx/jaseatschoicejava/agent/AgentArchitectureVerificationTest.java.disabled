@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * 不依赖Spring上下文，仅验证Agent接口的注解配置
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @DisplayName("Agent架构验证测试")

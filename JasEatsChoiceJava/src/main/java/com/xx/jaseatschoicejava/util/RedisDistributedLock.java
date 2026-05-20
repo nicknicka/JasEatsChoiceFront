@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * 使用Redis的SETNX（SET if Not eXists）命令实现
  * key不存在时设置成功并返回true，否则返回false
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

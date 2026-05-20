@@ -64,21 +64,19 @@ public class CaptchaController {
             // 生成唯一key用于验证
             String checkCodeKey = UUID.randomUUID().toString().replace("-", "");
 
-            String effectiveCaptcha = fixedCodeEnabled ? fixedCode : captchaResult;
-
-            // 将验证码结果存入Redis，有效期5分钟
-            redisTemplate.opsForValue().set("captcha:" + checkCodeKey, effectiveCaptcha, 5, TimeUnit.MINUTES);
+            // Redis 始终保存图片对应的真实结果，保证前端展示、自动填充和图片内容一致
+            redisTemplate.opsForValue().set("captcha:" + checkCodeKey, captchaResult, 5, TimeUnit.MINUTES);
 
             // 构造返回结果
             Map<String, String> result = new HashMap<>();
             result.put("checkCode", captchaBase64);
             result.put("checkCodeKey", checkCodeKey);
-            // 返回验证码答案，仅用于开发环境或测试环境快速验证
-            result.put("captchaAnswer", effectiveCaptcha);
+            // 返回图片对应的真实答案，仅用于开发环境或测试环境快速验证
+            result.put("captchaAnswer", captchaResult);
             result.put("fixedCaptchaEnabled", String.valueOf(fixedCodeEnabled));
             if (fixedCodeEnabled) {
                 result.put("fixedCaptchaCode", fixedCode);
-                log.warn("验证码固定测试模式已启用，当前固定验证码: {}", fixedCode);
+                log.warn("验证码固定测试模式已启用，当前固定验证码: {}，图片真实结果: {}", fixedCode, captchaResult);
             }
 
             return ResponseResult.success(result);

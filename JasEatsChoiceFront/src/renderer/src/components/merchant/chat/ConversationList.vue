@@ -64,18 +64,45 @@ const selectConversation = (conversation) => {
 
 // 获取头像显示内容
 const getAvatarContent = (avatar) => {
-  if (avatar.match(/^https?:/) || avatar.match(/^data:image/)) {
-    return { type: 'image', content: avatar }
+  if (!avatar || typeof avatar !== 'string') {
+    return { type: 'emoji', content: '👤' }
   }
-  return { type: 'emoji', content: avatar }
+
+  const trimmedAvatar = avatar.trim()
+  const isImageAvatar =
+    /^https?:/i.test(trimmedAvatar) ||
+    /^data:image/i.test(trimmedAvatar) ||
+    /^\/?(api\/)?uploads\//i.test(trimmedAvatar) ||
+    /[\\/]/.test(trimmedAvatar) ||
+    /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(trimmedAvatar)
+
+  if (isImageAvatar) {
+    return { type: 'image', content: trimmedAvatar }
+  }
+
+  return { type: 'emoji', content: trimmedAvatar }
 }
 
 // 格式化时间显示
 const formatTime = (timeStr) => {
   if (!timeStr) return ''
 
+  if (typeof timeStr === 'string') {
+    const trimmedTime = timeStr.trim()
+
+    if (/^\d{1,2}:\d{2}$/.test(trimmedTime)) {
+      return trimmedTime
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedTime)) {
+      const [, month, day] = trimmedTime.split('-')
+      return `${Number(month)}/${Number(day)}`
+    }
+  }
+
   const now = new Date()
   const time = new Date(timeStr)
+  if (Number.isNaN(time.getTime())) return ''
   const diff = now - time
 
   // 小于1分钟 - 刚刚
@@ -150,7 +177,7 @@ const formatTime = (timeStr) => {
             class="avatar-image"
           />
           <div v-else class="emoji-avatar">
-            {{ conversation.avatar }}
+            {{ getAvatarContent(conversation.avatar).content }}
           </div>
 
           <!-- 未读消息徽章 -->
@@ -270,6 +297,8 @@ const formatTime = (timeStr) => {
           background: linear-gradient(135deg, @merchant-surface-alt 0%, @merchant-border 100%);
           border-radius: 50%;
           transition: transform 0.2s ease;
+          overflow: hidden;
+          white-space: nowrap;
         }
 
         .unread-badge {

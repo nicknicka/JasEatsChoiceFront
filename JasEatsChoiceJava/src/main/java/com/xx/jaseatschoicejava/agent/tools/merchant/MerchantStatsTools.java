@@ -15,7 +15,7 @@ import java.util.List;
  *
  * 为Agent提供商家统计分析功能
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

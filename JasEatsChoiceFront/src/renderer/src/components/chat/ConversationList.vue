@@ -17,7 +17,11 @@
           <div v-if="conversation.avatar && (conversation.avatar.match(/^https?:/) || conversation.avatar.match(/^data:image/))">
             <img :src="conversation.avatar" alt="" />
           </div>
-          <div v-else class="emoji-avatar">
+          <div
+            v-else
+            class="emoji-avatar"
+            :class="conversation.type === 'group' ? 'group-avatar' : 'single-avatar'"
+          >
             {{ conversation.type === 'group' ? '👥' : '💬' }}
           </div>
           <div v-if="conversation.unreadCount > 0" class="unread-count">
@@ -77,6 +81,8 @@ defineEmits(['select', 'contextmenu', 'toggle-pin', 'create-new'])
 </script>
 
 <style scoped lang="less">
+@import '../../assets/css/nordic-theme.less';
+
 .conversation-list {
   width: 100%;
   height: 100%;
@@ -93,130 +99,157 @@ defineEmits(['select', 'contextmenu', 'toggle-pin', 'create-new'])
     }
 
     &::-webkit-scrollbar-track {
-      background: #f1f1f1;
+      background: @nordic-divider;
       border-radius: 3px;
     }
 
     &::-webkit-scrollbar-thumb {
-      background: #c1c1c1;
+      background: darken(@nordic-border, 8%);
       border-radius: 3px;
 
       &:hover {
-        background: #a8a8a8;
+        background: darken(@nordic-border, 18%);
       }
     }
 
     .conversation-item {
       display: flex;
       align-items: center;
-      padding: 10px 12px;
+      padding: 12px 14px;
       cursor: pointer;
-      border-bottom: 1px solid #f0f2f5;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-bottom: 1px solid @nordic-divider;
+      transition: all @nordic-transition-base ease;
       position: relative;
       flex-shrink: 0;
 
       &:hover {
-        background-color: #f5f7fa;
-        transform: translateX(2px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        background:
+          linear-gradient(90deg, #fbf7f2 0%, rgba(255, 255, 255, 0.98) 88%);
+        box-shadow: inset 3px 0 0 fade(@nordic-accent, 35%);
       }
 
       &:active {
-        transform: translateX(1px) scale(0.99);
+        transform: scale(0.995);
       }
 
       &.active {
-        background: linear-gradient(90deg, #ecf5ff 0%, #f0f7ff 100%);
-        border-left: 3px solid #409eff;
-        box-shadow: 0 2px 12px rgba(64, 158, 255, 0.15);
+        background:
+          linear-gradient(90deg, #f7efe7 0%, rgba(255, 255, 255, 0.98) 90%);
+        border-left: 3px solid @nordic-accent;
+        box-shadow: inset 0 0 0 1px fade(@nordic-accent, 18%);
       }
 
       &.pinned-conversation {
-        background: linear-gradient(90deg, #fffbe6 0%, #fffcf5 100%);
-        border-left: 3px solid #ffd591;
+        background:
+          linear-gradient(90deg, #fbf6ea 0%, rgba(255, 255, 255, 0.97) 88%);
+        border-left: 3px solid @nordic-yellow;
 
         &:hover {
-          background: linear-gradient(90deg, #fff7e6 0%, #fffaf0 100%);
+          background:
+            linear-gradient(90deg, #f8f1df 0%, rgba(255, 255, 255, 0.98) 88%);
         }
       }
 
       .pin-btn {
         position: absolute;
-        top: 6px;
-        right: 6px;
-        font-size: 0.857rem /* 原值: 12px */;
+        top: 10px;
+        right: 10px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: fade(@nordic-surface, 92%);
+        border: 1px solid @nordic-border;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
         cursor: pointer;
         opacity: 0;
-        transition: all 0.2s;
-        padding: 3px;
+        color: @nordic-text-muted;
+        transition: all @nordic-transition-fast ease;
 
         &:hover {
           opacity: 1;
-          transform: scale(1.2);
+          color: @nordic-accent-dark;
+          border-color: fade(@nordic-accent, 35%);
+          background: #fff8f3;
+          transform: scale(1.05);
         }
       }
 
       &:hover .pin-btn {
-        opacity: 0.6;
+        opacity: 1;
       }
 
       .conversation-avatar {
-        margin-right: 10px;
+        margin-right: 12px;
         position: relative;
 
         img {
-          width: 36px;
-          height: 36px;
-          border-radius: 6px;
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
           object-fit: contain;
           aspect-ratio: 1 / 1;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+          background: #f7f2ec;
+          border: 1px solid fade(@nordic-border, 85%);
+          box-shadow: 0 8px 18px rgba(80, 58, 42, 0.08);
         }
 
         .emoji-avatar {
-          width: 36px;
-          height: 36px;
-          border-radius: 6px;
-          background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.429rem /* 原值: 20px */;
+          font-size: 18px;
           text-align: center;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+          border: 1px solid fade(@nordic-border, 80%);
+          box-shadow: 0 8px 18px rgba(80, 58, 42, 0.08);
+        }
+
+        .single-avatar {
+          background:
+            radial-gradient(circle at 30% 30%, #fffdfa 0%, #f5ece4 65%, #edd9ca 100%);
+        }
+
+        .group-avatar {
+          background:
+            radial-gradient(circle at 35% 30%, #f5fbf4 0%, #e6f0e7 58%, #cfe1d1 100%);
         }
 
         .unread-count {
-          background: linear-gradient(135deg, #f56c6c 0%, #e85a5a 100%);
+          background: @nordic-red;
           color: #fff;
-          border-radius: 8px;
-          padding: 1px 5px;
+          border-radius: 10px;
+          padding: 2px 6px;
           font-size: 10px;
           position: absolute;
-          top: -3px;
+          top: -2px;
           right: -3px;
           transform: translate(0, 0);
           z-index: 1;
           min-width: 16px;
           text-align: center;
           font-weight: 600;
-          box-shadow: 0 2px 3px rgba(245, 108, 108, 0.4);
-          animation: pulse 2s infinite;
+          border: 2px solid @nordic-surface;
+          box-shadow: 0 4px 12px fade(@nordic-red, 24%);
         }
 
         .group-tag {
-          background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
-          color: #fff;
+          background: fade(@nordic-green, 14%);
+          color: @nordic-green-dark;
           font-size: 8px;
-          padding: 1px 4px;
-          border-radius: 3px;
+          padding: 2px 5px;
+          border-radius: 999px;
           position: absolute;
-          bottom: -3px;
-          right: -3px;
+          bottom: -4px;
+          right: -4px;
           z-index: 2;
-          font-weight: 500;
-          box-shadow: 0 2px 3px rgba(64, 158, 255, 0.3);
+          font-weight: 600;
+          border: 1px solid fade(@nordic-green, 28%);
+          box-shadow: 0 4px 10px rgba(76, 122, 77, 0.12);
         }
       }
 
@@ -229,7 +262,7 @@ defineEmits(['select', 'contextmenu', 'toggle-pin', 'create-new'])
           justify-content: space-between;
           align-items: center;
           margin-bottom: 4px;
-          font-size: 0.929rem /* 原值: 13px */;
+          font-size: @nordic-text-sm;
 
           .name {
             font-weight: 600;
@@ -238,26 +271,26 @@ defineEmits(['select', 'contextmenu', 'toggle-pin', 'create-new'])
             text-overflow: ellipsis;
             flex: 1;
             margin-right: 6px;
-            color: #303133;
+            color: @nordic-text;
 
             .member-count {
               font-size: 10px;
-              color: #909399;
-              font-weight: 400;
+              color: @nordic-text-muted;
+              font-weight: 500;
             }
           }
 
           .time {
             font-size: 10px;
             white-space: nowrap;
-            color: #909399;
+            color: @nordic-text-muted;
             font-weight: 400;
           }
         }
 
         .last-message {
-          font-size: 0.75rem /* 原值: 11px */;
-          color: #606266;
+          font-size: @nordic-text-xs;
+          color: @nordic-text-secondary;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -278,21 +311,25 @@ defineEmits(['select', 'contextmenu', 'toggle-pin', 'create-new'])
     min-height: 400px;
     cursor: pointer;
     user-select: none;
-    transition: all 0.3s ease;
+    transition: all @nordic-transition-base ease;
+    background:
+      radial-gradient(circle at top, rgba(212, 132, 90, 0.08) 0%, transparent 42%);
 
     &:hover {
-      background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+      background:
+        radial-gradient(circle at top, rgba(212, 132, 90, 0.12) 0%, transparent 45%),
+        linear-gradient(180deg, #fdfaf6 0%, #f7f1ea 100%);
 
       .empty-icon {
-        transform: scale(1.1);
+        transform: translateY(-2px) scale(1.04);
       }
 
       .empty-title {
-        color: #3b82f6;
+        color: @nordic-accent-dark;
       }
 
       .empty-tip {
-        color: #60a5fa;
+        color: @nordic-text-secondary;
       }
     }
 
@@ -301,20 +338,27 @@ defineEmits(['select', 'contextmenu', 'toggle-pin', 'create-new'])
     }
 
     .empty-icon {
-      font-size: 80px;
-      margin-bottom: 24px;
-      opacity: 0.8;
-      animation: float 3s ease-in-out infinite;
+      width: 92px;
+      height: 92px;
+      margin-bottom: 22px;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 30% 30%, #fffefb 0%, #f2e6da 68%, #ead3bf 100%);
+      color: @nordic-accent-dark;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 14px 30px rgba(114, 82, 58, 0.08);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.3s ease;
+      font-size: 44px;
+      transition: transform @nordic-transition-base ease;
     }
 
     .empty-title {
-      font-size: 1.286rem /* 原值: 18px */;
-      font-weight: 500;
-      color: #1a1a1a;
+      font-size: @nordic-text-lg;
+      font-weight: 600;
+      color: @nordic-text;
       margin: 0 0 8px 0;
       display: flex;
       align-items: center;
@@ -323,8 +367,9 @@ defineEmits(['select', 'contextmenu', 'toggle-pin', 'create-new'])
     }
 
     .empty-tip {
-      font-size: 1rem /* 原值: 14px */;
-      color: #666;
+      max-width: 220px;
+      font-size: @nordic-text-base;
+      color: @nordic-text-secondary;
       margin: 0;
       line-height: 1.6;
       display: flex;
@@ -332,24 +377,6 @@ defineEmits(['select', 'contextmenu', 'toggle-pin', 'create-new'])
       justify-content: center;
       transition: color 0.3s ease;
     }
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
   }
 }
 </style>

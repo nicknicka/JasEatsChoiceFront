@@ -100,7 +100,7 @@ import HealthCard from './cards/HealthCard.vue'
  * - 支持卡片展示
  * - 图片懒加载
  *
- * @author Claude
+
  * @date 2026-03-31
  */
 

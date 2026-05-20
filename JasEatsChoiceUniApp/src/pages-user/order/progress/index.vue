@@ -214,13 +214,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { formatRelativeTime } from '@/utils/helper'
 import { useUserStore } from '@/store'
 import Loading from '@/components/common/Loading.vue'
 import Empty from '@/components/common/Empty.vue'
 import { orderApi } from '@/api'
+import { toCustomerService, toOrderDetail } from '@/utils/router'
 
 // 用户信息store
 const userStore = useUserStore()
@@ -449,7 +450,7 @@ const loadOrderProgress = async () => {
     const res = await orderApi.getDetail(orderId.value)
 
     // 处理订单数据
-    const orderData = res || res.data || {}
+    const orderData = res?.data || res || {}
 
     // 映射字段名
     order.value = {
@@ -661,18 +662,14 @@ const confirmReceipt = () => {
  * 联系客服
  */
 const contactService = () => {
-  uni.navigateTo({
-    url: '/pages/service/chat/index'
-  })
+  toCustomerService()
 }
 
 /**
  * 查看订单详情
  */
 const viewOrderDetail = () => {
-  uni.navigateTo({
-    url: `/pages/order/detail/index?id=${orderId.value}`
-  })
+  toOrderDetail(orderId.value)
 }
 
 // 页面加载
@@ -690,6 +687,13 @@ onMounted(() => {
       loadOrderProgress()
     }
   }, 30000) // 30秒刷新一次
+})
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
 })
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-  <view
+  <button
     class="custom-button"
     :class="[
       `button-${type}`,
@@ -7,6 +7,8 @@
       { 'is-disabled': disabled, 'is-plain': plain, 'is-round': round, 'is-circle': circle }
     ]"
     :style="customStyle"
+    :disabled="disabled || loading"
+    :aria-label="ariaLabel"
     @click="handleClick"
   >
     <!-- 加载图标 -->
@@ -19,7 +21,7 @@
     <text class="button-text" v-if="!circle">
       <slot></slot>
     </text>
-  </view>
+  </button>
 </template>
 
 <script setup>
@@ -62,7 +64,12 @@ const props = defineProps({
   // 图标
   icon: String,
   // 自定义样式
-  customStyle: [String, Object]
+  customStyle: [String, Object],
+  // 无障碍标签
+  ariaLabel: {
+    type: String,
+    default: ''
+  }
 })
 
 const emit = defineEmits(['click'])
@@ -85,6 +92,11 @@ const handleClick = () => {
   @include flex-center;
   border: none;
   transition: all 0.3s;
+  min-width: $touch-min-size;
+  min-height: $touch-min-size;
+  box-sizing: border-box;
+  background: transparent;
+  padding: 0;
 
   &.is-disabled {
     opacity: 0.6;
@@ -96,33 +108,33 @@ const handleClick = () => {
 
   /* 尺寸 */
   &.button-mini {
-    height: 56rpx;
+    min-height: $touch-min-size;
     padding: 0 $spacing-sm;
     font-size: $font-size-xs;
   }
 
   &.button-small {
-    height: 64rpx;
+    min-height: $touch-min-size;
     padding: 0 $spacing-md;
     font-size: $font-size-sm;
   }
 
   &.button-medium {
-    height: 72rpx;
+    min-height: $touch-min-size;
     padding: 0 $spacing-lg;
     font-size: $font-size-base;
   }
 
   &.button-large {
-    height: 88rpx;
+    min-height: $touch-min-size;
     padding: 0 $spacing-xl;
     font-size: $font-size-lg;
   }
 
   /* 圆形 */
   &.is-circle {
-    width: 72rpx;
-    height: 72rpx;
+    width: $touch-min-size;
+    height: $touch-min-size;
     padding: 0;
     border-radius: 50%;
   }
@@ -145,7 +157,7 @@ const handleClick = () => {
 
   /* 类型 - 主要 */
   &.button-primary {
-    background: linear-gradient(135deg, $primary-color, #FF8F61);
+    background: linear-gradient(135deg, $primary-500, $primary-700);
     color: #fff;
 
     &.is-plain {
@@ -224,5 +236,9 @@ const handleClick = () => {
 
 .button-text {
   font-weight: $font-weight-medium;
+}
+
+button::after {
+  border: none;
 }
 </style>

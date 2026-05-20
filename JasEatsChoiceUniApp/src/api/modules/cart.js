@@ -6,6 +6,16 @@
 import { get, post, put, del } from '@/utils/request'
 import { CART_API, buildUrl } from '../urlEnum'
 
+const shouldFallbackToLocalCart = (error) => {
+  if (!error) return false
+  if (error.statusCode === 404) return true
+
+  const code = String(error.code || error.response?.code || '')
+  const message = String(error.message || error.response?.message || '')
+
+  return code === '500' && message.includes('系统异常')
+}
+
 export const cartApi = {
   /**
    * 获取购物车列表
@@ -34,7 +44,25 @@ export const cartApi = {
    * @param {string} data.remark - 备注
    * @returns {Promise} 返回添加结果
    */
-  add: (data) => post(CART_API.ADD_ITEM, data),
+  add: (data) => post(CART_API.ADD_ITEM, data).catch((error) => {
+    // 当前后端未实现购物车接口时，开发联调先回落到本地购物车。
+    if (shouldFallbackToLocalCart(error)) {
+      console.warn('⚠️ 购物车接口不可用，已回落到本地购物车', {
+        url: CART_API.ADD_ITEM,
+        error
+      })
+      return {
+        success: true,
+        code: 200,
+        message: '已回落到本地购物车',
+        data: {
+          fallbackLocal: true
+        }
+      }
+    }
+
+    throw error
+  }),
 
   /**
    * 添加到购物车（别名）

@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  * 订单管理工具集
  * 使用LangChain4j的@Tool注解声明工具函数
  *
- * @author Claude
+
  * @since 2026-03-22
  */
 @Service

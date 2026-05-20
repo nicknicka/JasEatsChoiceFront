@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * 为Agent提供智能下单引导功能，包括商家推荐、菜品预选、下单卡片生成等
  * 使用 UniCardBuilder 构建统一卡片格式
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @Slf4j

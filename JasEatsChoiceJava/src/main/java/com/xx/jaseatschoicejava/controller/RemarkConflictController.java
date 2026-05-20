@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * 备注冲突检测控制器
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @RestController

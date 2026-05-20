@@ -19,7 +19,7 @@ import java.util.List;
  *
  * 为Agent提供用户信息的查询功能
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

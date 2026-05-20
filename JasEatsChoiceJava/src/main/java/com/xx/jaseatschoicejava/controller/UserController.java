@@ -21,6 +21,7 @@ import com.xx.jaseatschoicejava.util.FileUploadUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -116,6 +117,9 @@ public class UserController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private com.xx.jaseatschoicejava.util.JwtUtil jwtUtil;
 
     // 短信服务配置
     private static final Integer DEFAULT_SMS_EXPIRATION_MINUTES = 5;
@@ -237,6 +241,84 @@ public class UserController {
     }
 
     /**
+     * 微信登录（开发期兜底实现）
+     * 当前小程序端仅能拿到基础微信资料，先用昵称+头像做轻量匹配，
+     * 未命中时自动创建测试用户，保证主流程可验证。
+     */
+    @PostMapping("/wechat-login")
+    public ResponseResult<?> wechatLogin(@RequestBody Map<String, Object> wechatUserInfo) {
+        try {
+            String nickname = readString(wechatUserInfo.get("nickName"), "微信用户");
+            String avatarUrl = readString(wechatUserInfo.get("avatarUrl"), "");
+            String gender = mapWechatGender(wechatUserInfo.get("gender"));
+            String location = buildLocation(wechatUserInfo);
+
+            User existingUser = userService.lambdaQuery()
+                    .eq(User::getNickname, nickname)
+                    .eq(!avatarUrl.isEmpty(), User::getAvatar, avatarUrl)
+                    .last("limit 1")
+                    .one();
+
+            User user = existingUser;
+            if (user == null) {
+                String userId = String.valueOf(com.xx.jaseatschoicejava.util.IdGenerator.generateId());
+                user = new User();
+                user.setUserId(userId);
+                user.setPhone(buildWechatMockPhone(userId));
+                user.setPassword("");
+                user.setNickname(nickname);
+                user.setAvatar(avatarUrl);
+                user.setGender(gender);
+                user.setLocation(location);
+                user.setCreateTime(LocalDateTime.now());
+                user.setUpdateTime(LocalDateTime.now());
+
+                boolean saved = userService.save(user);
+                if (!saved) {
+                    return ResponseResult.fail("500", "微信登录用户创建失败");
+                }
+            } else {
+                boolean changed = false;
+
+                if (!avatarUrl.isEmpty() && !avatarUrl.equals(existingUser.getAvatar())) {
+                    existingUser.setAvatar(avatarUrl);
+                    changed = true;
+                }
+
+                if (!gender.isEmpty() && !gender.equals(existingUser.getGender())) {
+                    existingUser.setGender(gender);
+                    changed = true;
+                }
+
+                if (!location.isEmpty() && !location.equals(existingUser.getLocation())) {
+                    existingUser.setLocation(location);
+                    changed = true;
+                }
+
+                if (changed) {
+                    existingUser.setUpdateTime(LocalDateTime.now());
+                    userService.updateById(existingUser);
+                }
+
+                user = existingUser;
+            }
+
+            String token = jwtUtil.generateToken(user.getUserId(), user.getPhone());
+            UserDTO userDTO = UserDTO.fromUser(user);
+
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("token", token);
+            responseData.put("user", userDTO);
+            responseData.put("userInfo", userDTO);
+
+            return ResponseResult.success(responseData);
+        } catch (Exception e) {
+            log.error("微信登录失败", e);
+            return ResponseResult.fail("500", "微信登录失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 生成JWT Token
      */
     private String generateJWTToken(User user) {
@@ -299,7 +381,15 @@ public class UserController {
      * @return base64编码的头像字符串，或null如果转换失败
      */
     private String convertAvatarToBase64(String avatarUrl) {
-        if (avatarUrl == null) {
+        if (avatarUrl == null || avatarUrl.isBlank()) {
+            return null;
+        }
+
+        if (avatarUrl.startsWith("data:image")) {
+            return avatarUrl;
+        }
+
+        if (!avatarUrl.startsWith(fileUploadConfig.getUrlPrefix())) {
             return null;
         }
 
@@ -315,11 +405,45 @@ public class UserController {
                 byte[] imageBytes = Files.readAllBytes(avatarFile.toPath());
                 return "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to convert avatar to base64: {}", e.getMessage());
         }
 
         return null;
+    }
+
+    private String readString(Object value, String defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? defaultValue : text;
+    }
+
+    private String mapWechatGender(Object genderValue) {
+        String gender = String.valueOf(genderValue == null ? "" : genderValue).trim();
+        return switch (gender) {
+            case "1" -> "male";
+            case "2" -> "female";
+            case "male", "female", "other" -> gender;
+            default -> "";
+        };
+    }
+
+    private String buildLocation(Map<String, Object> wechatUserInfo) {
+        String province = readString(wechatUserInfo.get("province"), "");
+        String city = readString(wechatUserInfo.get("city"), "");
+        String country = readString(wechatUserInfo.get("country"), "");
+
+        return java.util.stream.Stream.of(province, city, country)
+                .filter(part -> !part.isEmpty())
+                .collect(Collectors.joining(" "));
+    }
+
+    private String buildWechatMockPhone(String userId) {
+        String suffix = userId.length() > 8 ? userId.substring(userId.length() - 8) : String.format("%08d", Long.parseLong(userId));
+        return "199" + suffix;
     }
 
     /**

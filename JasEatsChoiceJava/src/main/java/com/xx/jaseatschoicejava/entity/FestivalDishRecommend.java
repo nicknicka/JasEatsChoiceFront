@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 /**
  * 节日推荐菜品关联实体类
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Data

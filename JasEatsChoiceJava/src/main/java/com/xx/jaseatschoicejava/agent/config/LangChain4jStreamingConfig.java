@@ -21,7 +21,7 @@ import jakarta.annotation.Resource;
  * 仅配置 StreamingResponseAgent，用于 Supervisor 架构的流式输出阶段。
  * Supervisor 同步收集数据 → StreamingResponseAgent 流式输出结果。
  *
- * @author Claude
+
  * @since 2026-03-24
  * @updated 2026-04-03 清理废弃Agent，仅保留StreamingResponseAgent
  */

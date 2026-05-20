@@ -4,7 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../store/authStore'
 import api, { decodeJwt } from '../../utils/api.js'
-import { API_CONFIG, WS_CONFIG } from '../../config/index.js'
+import { WS_CONFIG } from '../../config/index.js'
 import CommonBackButton from '../../components/common/CommonBackButton.vue'
 import {
   Bell,
@@ -183,13 +183,25 @@ const closeWebSocket = () => {
 const loadMessages = async () => {
   loading.value = true
   try {
-    const response = await api.get(API_CONFIG.message.list, {
-      params: { userId: userId.value }
+    const response = await api.get('/v1/message/records', {
+      params: {
+        userId: userId.value,
+        pageNum: 1,
+        pageSize: 50
+      }
     })
 
-    if (response.data && response.data.success) {
+    const messageList = Array.isArray(response?.data?.records)
+      ? response.data.records
+      : Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+          ? response
+          : []
+
+    if (messageList.length > 0) {
       // 转换后端返回的数据格式
-      const formattedMessages = response.data.data.map((message) => ({
+      const formattedMessages = messageList.map((message) => ({
         id: message.id,
         title: message.content,
         content: message.content,
@@ -251,7 +263,7 @@ const searchMessages = computed(() => {
 const markAsRead = async (message) => {
   try {
     // ⭐ 调用后端 API 标记已读
-    await api.put(`${API_CONFIG.message.send}/${message.id}/read`)
+    await api.put(`/v1/message/records/${message.id}/read`)
 
     // 更新本地状态
     message.isRead = true
@@ -275,7 +287,7 @@ const markAllAsRead = async () => {
 
     // 批量标记已读
     const promises = unreadMessages.map((msg) =>
-      api.put(`${API_CONFIG.message.send}/${msg.id}/read`)
+      api.put(`/v1/message/records/${msg.id}/read`)
     )
 
     await Promise.all(promises)
@@ -303,7 +315,7 @@ const deleteMessage = async (message) => {
     })
 
     // ⭐ 调用后端 API 删除消息
-    await api.delete(`${API_CONFIG.message.send}/${message.id}`)
+    await api.delete(`/v1/message/records/${message.id}`)
 
     // 从本地列表中移除
     const index = messages.value.findIndex((m) => m.id === message.id)
@@ -341,7 +353,7 @@ const batchDeleteMessages = async () => {
 
     // 批量删除
     const promises = selectedMessages.value.map((msg) =>
-      api.delete(`${API_CONFIG.message.send}/${msg.id}`)
+      api.delete(`/v1/message/records/${msg.id}`)
     )
 
     await Promise.all(promises)
@@ -382,7 +394,7 @@ const batchMarkAsRead = async () => {
 
     // 批量标记已读
     const promises = unreadSelected.map((msg) =>
-      api.put(`${API_CONFIG.message.send}/${msg.id}/read`)
+      api.put(`/v1/message/records/${msg.id}/read`)
     )
 
     await Promise.all(promises)
@@ -508,11 +520,12 @@ const updateFilter = () => {
 // 页面加载时初始化
 onMounted(async () => {
   // 从后端API加载实际消息数据
-  // 从JWT令牌中获取用户ID
+  // 优先使用商家ID，降级时再使用JWT中的用户ID
   const authStore = useAuthStore()
-  const token = authStore.token
-
-  if (token) {
+  if (authStore.merchantId) {
+    userId.value = authStore.merchantId
+  } else if (authStore.token) {
+    const token = authStore.token
     const decodedToken = decodeJwt(token)
     if (decodedToken && decodedToken.userId) {
       userId.value = decodedToken.userId

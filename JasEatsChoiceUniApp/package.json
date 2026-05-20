@@ -21,6 +21,7 @@
     "@dcloudio/uni-automator": "^3.0.0-alpha-5000720260327001",
     "@dcloudio/uni-cli-shared": "^3.0.0-alpha-5000720260327001",
     "@dcloudio/uni-components": "^3.0.0-alpha-5000720260327001",
+    "@dcloudio/uni-mp-weixin": "^3.0.0-alpha-5000720260327001",
     "@dcloudio/uni-stacktracey": "^3.0.0-alpha-5000720260327001",
     "@dcloudio/vite-plugin-uni": "^3.0.0-alpha-5000720260327001",
     "@vitejs/plugin-vue": "^5.2.0",

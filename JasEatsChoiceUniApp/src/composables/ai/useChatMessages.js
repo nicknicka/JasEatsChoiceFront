@@ -8,7 +8,7 @@ import { debug, info, warn, error } from '@/utils/logger.js'
  * - 滚动控制
  * - 消息持久化
  *
- * @author Claude
+
  * @date 2026-03-31
  */
 
@@ -50,11 +50,7 @@ export function useChatMessages() {
 	 * @type {import('vue').ComputedRef<boolean>}
 	 */
 	const isShowWelcome = computed(() => {
-		return (
-			messages.value.length === 1 &&
-			messages.value[0].sender === 'ai' &&
-			!hasLoadedHistory.value
-		)
+		return messages.value.length === 0 && hasLoadedHistory.value
 	})
 
 	/**
@@ -200,21 +196,17 @@ export function useChatMessages() {
 				info('成功加载聊天历史', { count: messages.value.length }, 'useChatMessages')
 				return true
 			} else {
-				// 没有历史记录，添加欢迎消息
-				if (messages.value.length === 0) {
-					debug('没有历史记录，显示欢迎消息', null, 'useChatMessages')
-					addWelcomeMessage()
-				}
+				// 没有历史记录，保持空消息列表，由页面展示欢迎引导
+				debug('没有历史记录，显示欢迎引导', null, 'useChatMessages')
+				clearMessages()
 				hasLoadedHistory.value = true
 				return false
 			}
 		} catch (error) {
 			error('加载聊天记录失败', error, 'useChatMessages')
 
-			// 加载失败时，添加欢迎消息
-			if (messages.value.length === 0) {
-				addWelcomeMessage()
-			}
+			// 加载失败时保持空消息列表，由页面展示欢迎引导
+			clearMessages()
 			hasLoadedHistory.value = true
 			return false
 		}
@@ -302,7 +294,7 @@ export function useChatMessages() {
 	 */
 	const clearHistory = async (userId) => {
 		try {
-			debug('开始清空聊天记录', { userId }, 'useChatMessages'
+			debug('开始清空聊天记录', { userId }, 'useChatMessages')
 
 			const clearResponse = await aiApi.clearHistory(userId)
 
@@ -311,9 +303,6 @@ export function useChatMessages() {
 
 				// 清空前端显示
 				clearMessages()
-
-				// 添加欢迎消息
-				addWelcomeMessage()
 
 				// 清空本地存储
 				uni.removeStorageSync('chatHistory')

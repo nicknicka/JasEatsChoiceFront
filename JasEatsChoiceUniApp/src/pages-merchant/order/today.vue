@@ -455,7 +455,7 @@ const quickAccept = async (order) => {
           })
         }
       }
-                  status: normalizedStatus,
+    }
   })
 }
 
@@ -475,7 +475,7 @@ const quickComplete = async (order) => {
           uni.showToast({
             title: '已完成',
             icon: 'success'
-                  status: normalizedStatus,
+          })
 
           // 刷新订单列表
           loadOrders()

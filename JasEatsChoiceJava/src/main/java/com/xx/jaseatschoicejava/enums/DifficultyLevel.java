@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * 难度等级枚举
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Getter

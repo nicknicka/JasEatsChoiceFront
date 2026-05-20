@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * 定时任务执行日志
  *
- * @author Claude
+
  * @since 2025-02-12
  */
 @Data

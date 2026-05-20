@@ -11,7 +11,7 @@ import dev.langchain4j.service.V;
  * 所有卡片遵循统一的 {schema, header, elements[], actions[]} 结构，
  * 前端根据 schema 字段识别版本，根据 element.tag 动态选择渲染组件。
  *
- * @author Claude
+
  * @since 2026-03-26
  * @updated 2026-04-03 改造为 UniCard Schema 输出格式
  */

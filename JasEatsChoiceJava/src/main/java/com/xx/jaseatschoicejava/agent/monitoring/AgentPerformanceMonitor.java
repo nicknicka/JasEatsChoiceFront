@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Agent性能监控监听器
  * 记录每次Agent调用的耗时和性能指标
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 public class AgentPerformanceMonitor implements AiServiceListener<AiServiceEvent> {

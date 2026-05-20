@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
  *
  * 为Agent提供位置相关的推荐功能
  *
- * @author Claude
+
  * @since 2026-03-27
  */
 @Slf4j

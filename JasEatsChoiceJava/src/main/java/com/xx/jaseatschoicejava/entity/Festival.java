@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 /**
  * 节日实体类
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Data

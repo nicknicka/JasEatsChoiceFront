@@ -17,7 +17,7 @@ import java.util.Map;
  * 卡片类型切面
  * 拦截带有 @CardType 注解的工具方法，记录执行信息用于生成卡片数据
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Aspect

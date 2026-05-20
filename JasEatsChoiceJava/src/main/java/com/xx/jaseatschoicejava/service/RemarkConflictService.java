@@ -6,7 +6,7 @@ import com.xx.jaseatschoicejava.vo.RemarkConflictCheckVO;
 /**
  * 备注冲突检测服务接口
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 public interface RemarkConflictService {

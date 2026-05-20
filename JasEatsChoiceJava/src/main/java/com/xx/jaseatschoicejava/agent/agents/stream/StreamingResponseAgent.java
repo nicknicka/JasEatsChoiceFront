@@ -20,7 +20,7 @@ import dev.langchain4j.service.V;
  * - 使用 StreamingChatModel 实现逐字输出
  * - 使用 @MemoryId 实现用户级别的对话隔离
  *
- * @author Claude
+
  * @since 2026-04-03
  * @updated 2026-04-03 改造为 UniCard Schema 输出格式
  */

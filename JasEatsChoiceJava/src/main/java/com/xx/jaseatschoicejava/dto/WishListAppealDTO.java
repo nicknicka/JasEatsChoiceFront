@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * 想吃列表申诉DTO
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Data

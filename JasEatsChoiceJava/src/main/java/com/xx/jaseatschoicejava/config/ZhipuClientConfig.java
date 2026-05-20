@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
  * 智谱AI SDK客户端配置类
  * 负责初始化ZhipuAiClient实例
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 @Slf4j

@@ -13,7 +13,7 @@ import jakarta.annotation.PreDestroy;
  * Agent监控配置类
  * 配置各类监听器，实现Agent调用链追踪和性能监控
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @Configuration

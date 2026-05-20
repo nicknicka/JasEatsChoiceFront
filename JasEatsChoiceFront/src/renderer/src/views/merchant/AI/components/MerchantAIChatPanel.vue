@@ -5,27 +5,18 @@
       <div
         v-for="(msg, index) in messages"
         :key="msg.id"
-        :class="['message', msg.sender, { error: msg.isError }]"
+        :class="['message', msg.sender, { error: msg.isError, progress: msg.progress }]"
         :style="{ animationDelay: `${index * 0.03}s` }"
       >
         <div class="avatar" :class="msg.sender">
           <span class="avatar-emoji">{{ msg.avatar }}</span>
         </div>
         <div class="bubble">
-          <div class="text" v-html="formatMarkdown(msg.content)"></div>
-          <div class="time">{{ msg.time }}</div>
-        </div>
-      </div>
-
-      <!-- 加载状态 -->
-      <div v-if="isLoading" class="message ai loading">
-        <div class="avatar ai">
-          <span class="avatar-emoji">🤖</span>
-        </div>
-        <div class="bubble loading-bubble">
-          <div class="typing-indicator">
+          <div v-if="msg.isThinking" class="typing-indicator">
             <span></span><span></span><span></span>
           </div>
+          <div v-else class="text" v-html="formatMarkdown(msg.content)"></div>
+          <div class="time">{{ msg.time }}</div>
         </div>
       </div>
     </div>
@@ -64,7 +55,7 @@
         />
       </div>
       <div class="input-actions">
-        <button class="action-btn clear-btn" @click="clearChat" :disabled="isLoading">
+        <button class="action-btn clear-btn" @click="handleClearChat" :disabled="isLoading">
           <el-icon><Delete /></el-icon>
           <span>清空</span>
         </button>
@@ -111,6 +102,11 @@ const quickQuestions = ref(MERCHANT_QUICK_QUESTIONS)
 const handleQuickQuestion = (question) => {
   inputMessage.value = question
   sendMessage()
+}
+
+const handleClearChat = async () => {
+  await clearChat()
+  showQuickQuestions.value = true
 }
 
 /**
@@ -186,6 +182,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   padding: 20px;
   gap: 16px;
 }
@@ -193,6 +190,7 @@ onMounted(() => {
 // --- 消息列表 ---
 .messages-container {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 20px;
   background: linear-gradient(180deg, rgba(250, 248, 245, 0.4), rgba(240, 237, 232, 0.3));
@@ -253,6 +251,13 @@ onMounted(() => {
     .bubble {
       border-color: rgba(196, 91, 91, 0.2);
       background: linear-gradient(135deg, @merchant-error-light, rgba(246, 224, 224, 0.5));
+    }
+  }
+
+  &.progress {
+    .bubble {
+      border-color: rgba(74, 122, 77, 0.16);
+      background: linear-gradient(135deg, rgba(245, 250, 246, 0.95), rgba(236, 245, 237, 0.85));
     }
   }
 
@@ -364,13 +369,6 @@ onMounted(() => {
   }
 }
 
-// --- 加载状态 ---
-.loading-bubble {
-  background: @merchant-surface;
-  border: 1px solid @merchant-border;
-  border-top-left-radius: 6px;
-}
-
 .typing-indicator {
   display: flex;
   gap: 5px;
@@ -453,6 +451,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-shrink: 0;
 
   .input-wrapper {
     background: @merchant-surface;
@@ -489,6 +488,7 @@ onMounted(() => {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    flex-shrink: 0;
   }
 
   .action-btn {

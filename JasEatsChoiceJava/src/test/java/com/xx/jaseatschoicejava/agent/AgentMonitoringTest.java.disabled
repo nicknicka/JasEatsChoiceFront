@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * 验证调用链追踪和性能监控功能正常工作
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @SpringBootTest

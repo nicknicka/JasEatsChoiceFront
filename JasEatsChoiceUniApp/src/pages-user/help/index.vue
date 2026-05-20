@@ -376,9 +376,8 @@ const faqNotHelpful = () => {
     title: '我们会继续改进',
     icon: 'none'
   })
-  // 可以跳转到反馈页面
   uni.navigateTo({
-    url: '/pages/feedback/index'
+    url: '/pages-user/feedback/index'
   })
   closeFaqPopup()
 }
@@ -390,22 +389,22 @@ const handleQuickLink = (link) => {
   switch (link.action) {
     case 'feedback':
       uni.navigateTo({
-        url: '/pages/feedback/index'
+        url: '/pages-user/feedback/index'
       })
       break
     case 'agreement':
       uni.navigateTo({
-        url: '/pages/agreement/index?type=user'
+        url: '/pages-user/profile/about'
       })
       break
     case 'privacy':
       uni.navigateTo({
-        url: '/pages/agreement/index?type=privacy'
+        url: '/pages-user/profile/about'
       })
       break
     case 'about':
       uni.navigateTo({
-        url: '/pages/about/index'
+        url: '/pages-user/profile/about'
       })
       break
   }
@@ -424,8 +423,9 @@ const makePhoneCall = () => {
  * 打开聊天
  */
 const openChat = () => {
-  uni.navigateTo({
-    url: '/pages/service/chat/index'
+  uni.showToast({
+    title: '在线客服整理中，请先拨打热线',
+    icon: 'none'
   })
 }
 

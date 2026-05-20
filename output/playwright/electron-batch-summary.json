@@ -1,0 +1,365 @@
+[
+  {
+    "route": "#/login",
+    "file": "electron-user-login.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home",
+    "file": "electron-user-home.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/recommend",
+    "file": "electron-user-recommend.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/merchants",
+    "file": "electron-user-merchants.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/merchant-detail?viewMode=order",
+    "file": "electron-user-merchant-detail.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/order-confirmation",
+    "file": "electron-user-order-confirmation-page.png",
+    "success": false,
+    "error": "page.reload: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - waiting for navigation until \"domcontentloaded\"\u001b[22m\n"
+  },
+  {
+    "route": "#/user/home/today-recipe",
+    "file": "electron-user-today-recipe.png",
+    "success": false,
+    "error": "page.evaluate: Execution context was destroyed, most likely because of a navigation"
+  },
+  {
+    "route": "#/user/home/calorie",
+    "file": "electron-user-calorie.png",
+    "success": false,
+    "error": "page.evaluate: Execution context was destroyed, most likely because of a navigation"
+  },
+  {
+    "route": "#/user/home/my-recipe",
+    "file": "electron-user-my-recipe.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/diet-record",
+    "file": "electron-user-diet-record.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/orders",
+    "file": "electron-user-orders.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/order-detail/JD1768312307843",
+    "file": "electron-user-order-detail.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/evaluate-order/JD1768312307843",
+    "file": "electron-user-evaluate-order.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/consume-history",
+    "file": "electron-user-consume-history.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/message-center",
+    "file": "electron-user-message-center.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/system-notification",
+    "file": "electron-user-system-notification.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/chat",
+    "file": "electron-user-chat.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/contacts",
+    "file": "electron-user-contacts.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/ai",
+    "file": "electron-user-ai.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/settings",
+    "file": "electron-user-settings.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/profile",
+    "file": "electron-user-profile.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/wallet-management",
+    "file": "electron-user-wallet-management.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/wallet-transactions",
+    "file": "electron-user-wallet-transactions.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/payment-password-setup",
+    "file": "electron-user-payment-password-setup.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/wallet-security",
+    "file": "electron-user-wallet-security.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/address",
+    "file": "electron-user-address.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/contact",
+    "file": "electron-user-contact.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/dish-detail/1",
+    "file": "electron-user-dish-detail.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/my-collection",
+    "file": "electron-user-my-collection.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/tutorials",
+    "file": "electron-user-tutorials.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/tutorials/2022502534052163585",
+    "file": "electron-user-tutorial-detail.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/tutorials/publish",
+    "file": "electron-user-publish-tutorial.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/tutorials/my",
+    "file": "electron-user-my-tutorials.png",
+    "success": true
+  },
+  {
+    "route": "#/user/home/hot-topic",
+    "file": "electron-user-hot-topic.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home",
+    "file": "electron-merchant-home.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/orders",
+    "file": "electron-merchant-orders.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/today-orders",
+    "file": "electron-merchant-today-orders.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/menu",
+    "file": "electron-merchant-menu.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/messages",
+    "file": "electron-merchant-messages.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/menu-edit",
+    "file": "electron-merchant-menu-edit.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/dish-management",
+    "file": "electron-merchant-dish-management.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/dish-edit",
+    "file": "electron-merchant-dish-edit.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/chat",
+    "file": "electron-merchant-chat.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/statistics",
+    "file": "electron-merchant-statistics.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/order-detail/O1775982925211",
+    "file": "electron-merchant-order-detail.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/comments",
+    "file": "electron-merchant-comments.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/settings",
+    "file": "electron-merchant-settings.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/tutorials",
+    "file": "electron-merchant-tutorials.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/wish-list-audit",
+    "file": "electron-merchant-wish-list-audit.png",
+    "success": true
+  },
+  {
+    "route": "#/merchant/home/ai",
+    "file": "electron-merchant-ai.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/login",
+    "file": "electron-admin-login.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/dashboard",
+    "file": "electron-admin-dashboard.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/users",
+    "file": "electron-admin-users.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/merchants",
+    "file": "electron-admin-merchants.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/merchants/audit",
+    "file": "electron-admin-merchants-audit.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/orders",
+    "file": "electron-admin-orders.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/dishes",
+    "file": "electron-admin-dishes.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/dishes/audit",
+    "file": "electron-admin-dishes-audit.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/tutorials/manage",
+    "file": "electron-admin-tutorial-manage.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/tutorials/review",
+    "file": "electron-admin-tutorial-review.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/topics",
+    "file": "electron-admin-topics.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/announcements",
+    "file": "electron-admin-announcements.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/finance/withdrawals",
+    "file": "electron-admin-withdrawals.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/finance/recharges",
+    "file": "electron-admin-recharges.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/finance/refunds",
+    "file": "electron-admin-refunds.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/settings",
+    "file": "electron-admin-settings.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/settings/profile",
+    "file": "electron-admin-profile.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/settings/password",
+    "file": "electron-admin-password.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/settings/roles",
+    "file": "electron-admin-roles.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/settings/permissions",
+    "file": "electron-admin-permissions.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/settings/logs",
+    "file": "electron-admin-logs.png",
+    "success": true
+  },
+  {
+    "route": "#/admin/statistics",
+    "file": "electron-admin-statistics.png",
+    "success": true
+  }
+]

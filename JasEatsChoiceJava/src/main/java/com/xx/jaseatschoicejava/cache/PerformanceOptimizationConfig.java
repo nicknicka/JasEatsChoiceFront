@@ -24,7 +24,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * 3. 批量操作优化（Pipeline）
  * 4. 压缩优化（可选）
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

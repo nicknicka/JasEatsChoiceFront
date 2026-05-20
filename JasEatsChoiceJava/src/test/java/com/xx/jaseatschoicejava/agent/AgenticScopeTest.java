@@ -16,7 +16,7 @@ import com.xx.jaseatschoicejava.agent.agents.DishRecommendationAgent;
  *
  * 验证 L1 Agent 的输出能够正确传递给 L2 Agent
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @SpringBootTest

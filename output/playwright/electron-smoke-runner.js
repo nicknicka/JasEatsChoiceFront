@@ -12,7 +12,9 @@ const { _electron: electron } = require('playwright');
   };
   fs.mkdirSync(outputDir, { recursive: true });
   process.chdir(appDir);
-  const electronPath = require(path.join(appDir, 'node_modules', 'electron'));
+  const electronPath =
+    process.env.ELECTRON_EXECUTABLE_PATH ||
+    require(path.join(appDir, 'node_modules', 'electron'));
   const app = await electron.launch({ executablePath: electronPath, args: ['.'] });
   const page = await app.firstWindow();
   const consoleErrors = [];

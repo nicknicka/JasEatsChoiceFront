@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 /**
  * 想吃列表超时处理定时任务
  *
- * @author Claude
+
  * @since 2025-02-12
  */
 @Slf4j

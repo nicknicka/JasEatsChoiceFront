@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 调用链追踪服务
  * 记录和生成Agent调用的完整链路
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @Service

@@ -3,13 +3,27 @@
  * 根据环境自动加载对应配置
  */
 
-// 环境判断
-const ENV = process.env.NODE_ENV || 'development'
+const getMiniProgramEnvVersion = () => {
+  try {
+    if (typeof uni !== 'undefined' && typeof uni.getAccountInfoSync === 'function') {
+      return uni.getAccountInfoSync()?.miniProgram?.envVersion || ''
+    }
+  } catch (error) {
+    console.warn('读取小程序环境版本失败:', error)
+  }
+
+  return ''
+}
+
+const runtimeEnvVersion = getMiniProgramEnvVersion()
+const ENV = process.env.NODE_ENV === 'development' || runtimeEnvVersion === 'develop'
+  ? 'development'
+  : 'production'
 
 // 开发环境配置
 const development = {
-  baseURL: 'http://localhost:7777/api', // 改为 localhost
-  wsURL: 'ws://localhost:7777/api/ws',
+  baseURL: 'http://localhost:7777/api', // 后端 API 地址
+  wsURL: 'ws://localhost:11277/ws', // Netty WebSocket 服务地址（独立端口）
   uploadURL: 'http://localhost:7777/api/v1/upload',
   imageCDN: '',
   debug: true,

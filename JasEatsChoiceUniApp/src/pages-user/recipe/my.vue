@@ -280,7 +280,7 @@ const onLoadMore = () => {
  */
 const viewRecipeDetail = (recipe) => {
   uni.navigateTo({
-    url: `/pages/recipe/detail/index?id=${recipe.id}`
+    url: `/pages-user/recipe/detail/index?id=${recipe.id}`
   })
 }
 
@@ -288,9 +288,9 @@ const viewRecipeDetail = (recipe) => {
  * 编辑食谱
  */
 const editRecipe = (recipe) => {
-  const params = encodeURIComponent(JSON.stringify(recipe))
-  uni.navigateTo({
-    url: `/pages/recipe/edit/index?data=${params}`
+  uni.showToast({
+    title: `编辑食谱功能开发中：${recipe.name || '未命名食谱'}`,
+    icon: 'none'
   })
 }
 
@@ -353,8 +353,9 @@ const shareRecipe = (recipe) => {
  * 开始烹饪
  */
 const cookRecipe = (recipe) => {
-  uni.navigateTo({
-    url: `/pages/recipe/cook/index?id=${recipe.id}`
+  uni.showToast({
+    title: `烹饪模式开发中：${recipe.name || '当前食谱'}`,
+    icon: 'none'
   })
 }
 
@@ -362,8 +363,9 @@ const cookRecipe = (recipe) => {
  * 添加自定义食谱
  */
 const addRecipe = () => {
-  uni.navigateTo({
-    url: '/pages/recipe/edit/index'
+  uni.showToast({
+    title: '自定义食谱功能开发中',
+    icon: 'none'
   })
 }
 
@@ -372,7 +374,7 @@ const addRecipe = () => {
  */
 const goToToday = () => {
   uni.switchTab({
-    url: '/pages/recipe/today'
+    url: '/pages/recipe/index'
   })
 }
 

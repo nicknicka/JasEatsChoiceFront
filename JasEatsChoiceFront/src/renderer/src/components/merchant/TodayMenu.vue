@@ -90,6 +90,8 @@ const fetchTodayMenus = () => {
       if (response.code === '200' && response.data) {
         todayMenus.value = response.data.map((menu) => ({
           ...menu,
+          name: menu.name || menu.menuName || '',
+          menuName: menu.menuName || menu.name || '',
           // 后端直接返回 online/offline，不需要转换
           status: menu.status || 'offline',
           dishes: Array.isArray(menu.dishes) ? menu.dishes.length : menu.dishes || 0,
@@ -130,7 +132,7 @@ const filterMenus = (filterType, filterCategory = 'status') => {
   if (activeMenuTypeFilter.value !== '全部') {
     const targetType = activeMenuTypeFilter.value
     newFilteredMenus = newFilteredMenus.filter((menu) => {
-      const menuName = String(menu.name || '')
+      const menuName = String(menu.name || menu.menuName || '')
       return menuName.includes(targetType) || menuName.replace('菜单', '').includes(targetType)
     })
   }
@@ -283,7 +285,7 @@ onMounted(() => {
                 <span>{{ menuStatusMap[menu.status].text }}</span>
               </div>
             </div>
-            <div class="menu-name">{{ menu.name }}</div>
+            <div class="menu-name">{{ menu.name || menu.menuName || '未命名菜单' }}</div>
             <div class="menu-info">
               <span class="dishes-count"
                 ><el-icon :size="14"><Dish /></el-icon> {{ menu.dishes }} 菜品</span

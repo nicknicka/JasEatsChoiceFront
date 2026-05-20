@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * 食材冲突规则服务接口
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 public interface IngredientConflictRuleService extends IService<IngredientConflictRule> {

@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * 备注冲突检测服务实现类
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Slf4j

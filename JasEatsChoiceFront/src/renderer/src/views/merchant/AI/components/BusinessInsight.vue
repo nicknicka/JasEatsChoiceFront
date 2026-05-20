@@ -13,7 +13,7 @@
           {{ opt.label }}
         </button>
       </div>
-      <button class="refresh-btn" @click="refreshData" :class="{ spinning: isLoading }">
+      <button class="refresh-btn" @click="refreshData" :class="{ spinning: isLoading || isAiLoading }">
         <el-icon :size="16"><Refresh /></el-icon>
         <span>刷新数据</span>
       </button>
@@ -56,19 +56,55 @@
           </div>
           <span class="card-badge">{{ timeRangeLabel }}</span>
         </div>
-        <div class="trend-chart">
-          <div
-            v-for="(item, index) in salesTrend"
-            :key="index"
-            class="trend-column"
-          >
-            <div class="bar-value">¥{{ item.value }}</div>
-            <div
-              class="trend-bar"
-              :style="{ height: (item.value / maxSales * 100) + '%' }"
-            ></div>
-            <div class="bar-label">{{ item.label }}</div>
+        <div class="trend-chart-wrap">
+          <div class="trend-scale">
+            <span>{{ formattedTrendUpperBound }}</span>
+            <span>{{ formattedTrendMidValue }}</span>
+            <span>¥0</span>
           </div>
+          <div class="trend-chart">
+            <el-tooltip
+              v-for="item in trendDisplayList"
+              :key="`${item.label}-${item.index}`"
+              placement="top"
+              effect="light"
+              :show-after="120"
+            >
+              <template #content>
+                <div class="trend-tooltip-content">
+                  <div class="tooltip-title">{{ item.label }}</div>
+                  <div class="tooltip-row">
+                    <span>营业额</span>
+                    <strong>{{ item.formattedValue }}</strong>
+                  </div>
+                  <div class="tooltip-row">
+                    <span>柱高占比</span>
+                    <strong>{{ item.percentText }}</strong>
+                  </div>
+                  <div class="tooltip-row">
+                    <span>图表范围</span>
+                    <strong>{{ trendRangeText }}</strong>
+                  </div>
+                </div>
+              </template>
+              <div class="trend-column">
+                <div v-if="item.showValue" class="bar-value">{{ item.formattedValue }}</div>
+                <div class="bar-track">
+                  <div
+                    class="trend-bar"
+                    :class="{ 'has-value': item.value > 0 }"
+                    :style="{ height: item.height }"
+                  ></div>
+                </div>
+                <div class="bar-label" :class="{ muted: !item.showLabel }">
+                  {{ item.showLabel ? item.label : '' }}
+                </div>
+              </div>
+            </el-tooltip>
+          </div>
+        </div>
+        <div class="trend-scale-note">
+          当前按动态范围缩放：最低 ¥0，最高 {{ formattedTrendUpperBound }}
         </div>
       </div>
 
@@ -145,7 +181,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   Refresh,
   Money,
@@ -168,8 +204,10 @@ const props = defineProps({
   }
 })
 
-const timeRange = ref('week')
+const timeRange = ref('today')
 const isLoading = ref(false)
+const isAiLoading = ref(false)
+const latestRequestKey = ref(0)
 
 const timeOptions = [
   { value: 'today', label: '今日' },
@@ -237,6 +275,72 @@ const maxSales = computed(() => {
   return values.length > 0 ? Math.max(...values) : 1
 })
 
+const formatCurrency = (value) => {
+  const numericValue = Number(value || 0)
+  const formattedValue = Number.isInteger(numericValue)
+    ? numericValue.toLocaleString()
+    : numericValue.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+  return `¥${formattedValue}`
+}
+
+const calculateTrendUpperBound = (value) => {
+  const numericValue = Number(value || 0)
+  if (numericValue <= 0) {
+    return 0
+  }
+
+  const paddedValue = numericValue * 1.15
+  const magnitude = 10 ** Math.max(Math.floor(Math.log10(paddedValue)), 0)
+  const step = Math.max(magnitude / 2, 1)
+
+  return Math.ceil(paddedValue / step) * step
+}
+
+const trendScale = computed(() => {
+  const upperBound = calculateTrendUpperBound(maxSales.value)
+  return {
+    lowerBound: 0,
+    upperBound,
+    safeUpperBound: upperBound > 0 ? upperBound : 1,
+    midValue: upperBound > 0 ? upperBound / 2 : 0
+  }
+})
+
+const formattedTrendUpperBound = computed(() => formatCurrency(trendScale.value.upperBound))
+const formattedTrendMidValue = computed(() => formatCurrency(trendScale.value.midValue))
+const trendRangeText = computed(() => `¥0 ~ ${formattedTrendUpperBound.value}`)
+
+const trendDisplayList = computed(() => {
+  const total = salesTrend.value.length
+  const labelStep = total > 20 ? 4 : total > 10 ? 2 : 1
+
+  return salesTrend.value.map((item, index) => {
+    const value = Number(item.value || 0)
+    const ratio = value > 0 && trendScale.value.safeUpperBound > 0
+      ? value / trendScale.value.safeUpperBound
+      : 0
+    const height = ratio > 0
+      ? `${Math.max(ratio * 100, 6)}%`
+      : '0%'
+    const showLabel = total <= 10 || index === 0 || index === total - 1 || index % labelStep === 0
+    const showValue = total <= 7 && value > 0
+
+    return {
+      ...item,
+      index,
+      value,
+      height,
+      showLabel,
+      showValue,
+      formattedValue: formatCurrency(value),
+      percentText: `${(ratio * 100).toFixed(1)}%`
+    }
+  })
+})
+
 // 热销菜品
 const topDishes = ref([])
 
@@ -260,45 +364,126 @@ const getSuggestionIcon = (type) => {
   return icons[type] || CircleCheck
 }
 
-const loadInsights = async () => {
-  isLoading.value = true
-  try {
-    const url = buildUrl(MERCHANT_AI_API.INSIGHT_FULL, { merchantId: props.merchantId })
-    const response = await api.get(`${url}?timeRange=${timeRange.value}`)
+const normalizeMerchantId = (value) => {
+  const normalized = String(value || '').trim()
+  return normalized && normalized !== 'null' ? normalized : ''
+}
 
-    if (response.data) {
-      if (response.data.metrics) {
-        metrics.value = {
-          revenue: response.data.metrics.revenue || 0,
-          revenueChange: response.data.metrics.revenueChange || 0,
-          orders: response.data.metrics.orders || 0,
-          ordersChange: response.data.metrics.ordersChange || 0,
-          averagePrice: response.data.metrics.averagePrice || 0,
-          averageChange: response.data.metrics.averageChange || 0,
-          rating: response.data.metrics.rating || 0,
-          ratingChange: response.data.metrics.ratingChange || 0
-        }
-      }
-      salesTrend.value = response.data.salesTrend || []
-      topDishes.value = response.data.topDishes || []
-      aiSuggestions.value = response.data.aiSuggestions || []
-      ratingDistribution.value = response.data.ratingDistribution || []
+const resetInsights = () => {
+  metrics.value = {
+    revenue: 0,
+    revenueChange: 0,
+    orders: 0,
+    ordersChange: 0,
+    averagePrice: 0,
+    averageChange: 0,
+    rating: 0,
+    ratingChange: 0
+  }
+  salesTrend.value = []
+  topDishes.value = []
+  aiSuggestions.value = []
+  ratingDistribution.value = []
+}
+
+const loadBaseInsights = async (merchantId, requestKey) => {
+  isLoading.value = true
+
+  try {
+    const metricsUrl = buildUrl(MERCHANT_AI_API.INSIGHT_METRICS, { merchantId })
+    const trendUrl = buildUrl(MERCHANT_AI_API.INSIGHT_TREND, { merchantId })
+    const topDishesUrl = buildUrl(MERCHANT_AI_API.INSIGHT_TOP_DISHES, { merchantId })
+    const ratingUrl = buildUrl(MERCHANT_AI_API.INSIGHT_RATING, { merchantId })
+
+    const [metricsResponse, trendResponse, topDishesResponse, ratingResponse] = await Promise.all([
+      api.get(`${metricsUrl}?timeRange=${timeRange.value}`),
+      api.get(`${trendUrl}?timeRange=${timeRange.value}`),
+      api.get(`${topDishesUrl}?timeRange=${timeRange.value}`),
+      api.get(ratingUrl)
+    ])
+
+    if (requestKey !== latestRequestKey.value) {
+      return
     }
+
+    if (metricsResponse.data) {
+      metrics.value = {
+        revenue: metricsResponse.data.revenue || 0,
+        revenueChange: metricsResponse.data.revenueChange || 0,
+        orders: metricsResponse.data.orders || 0,
+        ordersChange: metricsResponse.data.ordersChange || 0,
+        averagePrice: metricsResponse.data.averagePrice || 0,
+        averageChange: metricsResponse.data.averageChange || 0,
+        rating: metricsResponse.data.rating || 0,
+        ratingChange: metricsResponse.data.ratingChange || 0
+      }
+    }
+
+    salesTrend.value = trendResponse.data || []
+    topDishes.value = topDishesResponse.data || []
+    ratingDistribution.value = ratingResponse.data || []
   } catch (error) {
     console.error('加载经营洞察失败:', error)
     ElMessage.error('加载数据失败')
   } finally {
-    isLoading.value = false
+    if (requestKey === latestRequestKey.value) {
+      isLoading.value = false
+    }
   }
+}
+
+const loadAiSuggestions = async (merchantId, requestKey) => {
+  isAiLoading.value = true
+
+  try {
+    const url = buildUrl(MERCHANT_AI_API.INSIGHT_AI_SUGGESTIONS, { merchantId })
+    const response = await api.post(url, {
+      timeRange: timeRange.value
+    })
+
+    if (requestKey !== latestRequestKey.value) {
+      return
+    }
+
+    aiSuggestions.value = response.data || []
+  } catch (error) {
+    console.error('加载AI经营建议失败:', error)
+    aiSuggestions.value = []
+  } finally {
+    if (requestKey === latestRequestKey.value) {
+      isAiLoading.value = false
+    }
+  }
+}
+
+const loadInsights = async () => {
+  const merchantId = normalizeMerchantId(props.merchantId)
+  latestRequestKey.value += 1
+  const requestKey = latestRequestKey.value
+
+  if (!merchantId) {
+    resetInsights()
+    isLoading.value = false
+    isAiLoading.value = false
+    return
+  }
+
+  aiSuggestions.value = []
+  loadAiSuggestions(merchantId, requestKey)
+  await loadBaseInsights(merchantId, requestKey)
 }
 
 const refreshData = () => {
   loadInsights()
 }
 
-onMounted(() => {
-  loadInsights()
-})
+watch(
+  () => props.merchantId,
+  () => {
+    loadInsights()
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped lang="less">
@@ -605,17 +790,31 @@ onMounted(() => {
 // --- 趋势图表 ---
 .trend-chart {
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   justify-content: space-between;
+  gap: 8px;
   height: 160px;
-  padding: 24px 0 0;
+  padding-top: 24px;
+  flex: 1;
+  border-bottom: 1px solid rgba(226, 222, 216, 0.65);
 
   .trend-column {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 10%;
+    justify-content: flex-end;
+    flex: 1 1 0;
+    height: 100%;
+    min-width: 0;
     gap: 6px;
+    cursor: pointer;
+  }
+
+  .bar-track {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
   }
 
   .bar-value {
@@ -629,9 +828,17 @@ onMounted(() => {
     width: 100%;
     background: linear-gradient(180deg, @merchant-primary, lighten(@merchant-primary, 15%));
     border-radius: 6px 6px 0 0;
-    min-height: 8px;
-    transition: height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: height 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
+
+    &.has-value {
+      min-height: 8px;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(88, 124, 92, 0.22);
+    }
 
     &::after {
       content: '';
@@ -649,6 +856,66 @@ onMounted(() => {
     font-size: 11px;
     color: @merchant-text-muted;
     text-align: center;
+    min-height: 16px;
+    white-space: nowrap;
+
+    &.muted {
+      opacity: 0.35;
+    }
+  }
+}
+
+.trend-chart-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.trend-scale {
+  width: 54px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 24px 0 18px;
+  color: @merchant-text-muted;
+  font-size: 11px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.trend-scale-note {
+  margin-top: 12px;
+  font-size: 12px;
+  color: @merchant-text-muted;
+}
+
+.trend-tooltip-content {
+  min-width: 150px;
+}
+
+.tooltip-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: @merchant-text;
+  margin-bottom: 8px;
+}
+
+.tooltip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: @merchant-text-sec;
+
+  & + .tooltip-row {
+    margin-top: 6px;
+  }
+
+  strong {
+    color: @merchant-text;
+    font-weight: 600;
   }
 }
 

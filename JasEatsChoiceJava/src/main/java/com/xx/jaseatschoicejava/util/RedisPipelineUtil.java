@@ -29,7 +29,7 @@ import java.util.function.Function;
  * - Pipeline操作：批量操作只需要一次网络往返
  * - 100次操作：单次1000ms，Pipeline约10-100ms
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

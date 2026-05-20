@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xx.jaseatschoicejava.entity.RechargeRecord;
 import com.xx.jaseatschoicejava.mapper.RechargeRecordMapper;
 import com.xx.jaseatschoicejava.service.RechargeRecordService;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * 充值记录服务实现
@@ -22,9 +22,9 @@ public class RechargeRecordServiceImpl extends ServiceImpl<RechargeRecordMapper,
         // 基础查询
         return baseMapper.selectPage(page,
             new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<RechargeRecord>()
-                .like(keyword != null, "recharge_no", keyword)
-                .eq(paymentMethod != null, "payment_method", paymentMethod)
-                .eq(status != null, "recharge_status", status)
+                .like(StringUtils.hasText(keyword), "recharge_no", keyword)
+                .eq(StringUtils.hasText(paymentMethod), "payment_method", paymentMethod)
+                .eq(StringUtils.hasText(status), "recharge_status", status)
                 .orderByDesc("create_time")
         );
     }

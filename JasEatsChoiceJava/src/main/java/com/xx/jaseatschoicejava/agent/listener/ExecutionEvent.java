@@ -5,7 +5,7 @@ package com.xx.jaseatschoicejava.agent.listener;
  *
  * 记录Agent执行过程中的各种事件信息
  *
- * @author Claude
+
  * @since 2026-03-26
  */
 public class ExecutionEvent {

@@ -12,7 +12,7 @@ import java.util.List;
  * 所有卡片遵循统一的 {header, elements[], actions[]} 结构，
  * 前端根据 schema 字段识别版本，根据 element.tag 动态选择渲染组件。
  *
- * @author Claude
+
  * @since 2026-04-03
  */
 @Data

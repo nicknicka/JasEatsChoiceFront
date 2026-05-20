@@ -290,8 +290,9 @@ const toggleBusinessStatus = (e) => {
  * 编辑营业时间
  */
 const editBusinessHours = () => {
-  uni.navigateTo({
-    url: '/profile/business-hours'
+  uni.showToast({
+    title: '营业时间设置功能开发中',
+    icon: 'none'
   })
 }
 

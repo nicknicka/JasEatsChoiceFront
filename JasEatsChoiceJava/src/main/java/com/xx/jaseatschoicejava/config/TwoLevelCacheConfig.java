@@ -38,7 +38,7 @@ import java.util.Map;
  * - 减少Redis网络IO
  * - 降低Redis负载
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

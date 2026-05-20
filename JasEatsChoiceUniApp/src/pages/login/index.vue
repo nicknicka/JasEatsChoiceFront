@@ -417,7 +417,7 @@ const handleWechatLogin = async (e) => {
 
     uni.showToast({ title: '登录成功', icon: 'success' })
     setTimeout(() => {
-      uni.switchTab({ url: '/src/pages/home/index/index' })
+      uni.switchTab({ url: '/pages/home/index/index' })
     }, 1500)
   } catch (error) {
     console.error('微信登录失败:', error)
@@ -454,7 +454,7 @@ const handlePhoneLogin = async () => {
 
     uni.showToast({ title: '登录成功', icon: 'success' })
     setTimeout(() => {
-      uni.switchTab({ url: '/src/pages/home/index/index' })
+      uni.switchTab({ url: '/pages/home/index/index' })
     }, 1500)
   } catch (error) {
     console.error('登录失败:', error)
@@ -501,7 +501,7 @@ const handlePasswordLogin = async () => {
 
     uni.showToast({ title: '登录成功', icon: 'success' })
     setTimeout(() => {
-      uni.switchTab({ url: '/src/pages/home/index/index' })
+      uni.switchTab({ url: '/pages/home/index/index' })
     }, 1500)
   } catch (error) {
     console.error('密码登录失败:', error)
@@ -633,11 +633,11 @@ const toPrivacy = () => {
  * 跳转
  */
 const toRegister = () => {
-  uni.navigateTo({ url: '/src/pages/register/index' })
+  uni.navigateTo({ url: '/pages/register/index' })
 }
 
 const toForgotPassword = () => {
-  uni.navigateTo({ url: '/src/pages/forgot-password/index' })
+  uni.navigateTo({ url: '/pages/forgot-password/index' })
 }
 </script>
 

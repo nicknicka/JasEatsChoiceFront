@@ -1,6 +1,11 @@
 package com.xx.jaseatschoicejava.controller;
 
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +26,16 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/v1/location")
 public class LocationController {
 
+    private static final List<String> PUBLIC_IP_PROVIDERS = List.of(
+            "https://api.ip.sb/ip",
+            "https://api64.ipify.org?format=text",
+            "https://checkip.amazonaws.com"
+    );
+
     private final LocationService locationService;
+    private final HttpClient publicIpHttpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(4))
+            .build();
 
     public LocationController(LocationService locationService) {
         this.locationService = locationService;
@@ -46,6 +60,10 @@ public class LocationController {
         }
 
         String effectiveIp = resolveClientIp(ip, request);
+        if (latitude == null && longitude == null && !hasText(effectiveIp)) {
+            effectiveIp = fetchPublicIpFromExternalServices();
+        }
+
         if (latitude == null && longitude == null && !hasText(effectiveIp)) {
             return ResponseResult.fail("LOCATION_PARAM_MISSING", "未传递ip或经纬度信息无法定位");
         }
@@ -171,7 +189,36 @@ public class LocationController {
         if (hasText(clientIp)) {
             return ResponseResult.success(Map.of("ip", clientIp));
         }
+
+        String externalIp = fetchPublicIpFromExternalServices();
+        if (hasText(externalIp)) {
+            return ResponseResult.success(Map.of("ip", externalIp));
+        }
+
         return ResponseResult.fail("IP_NOT_FOUND", "无法获取公网IP");
+    }
+
+    private String fetchPublicIpFromExternalServices() {
+        for (String provider : PUBLIC_IP_PROVIDERS) {
+            try {
+                HttpRequest request = HttpRequest.newBuilder(URI.create(provider))
+                        .timeout(Duration.ofSeconds(5))
+                        .GET()
+                        .build();
+                HttpResponse<String> response = publicIpHttpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                    String ip = response.body() != null ? response.body().trim() : "";
+                    if (isUsablePublicIp(ip)) {
+                        return ip;
+                    }
+                }
+            } catch (Exception ignored) {
+                // 尝试下一个公网IP服务
+            }
+        }
+
+        return null;
     }
 
     /**

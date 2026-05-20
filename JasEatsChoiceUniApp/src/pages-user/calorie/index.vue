@@ -363,7 +363,7 @@ const formatRecordTime = (time) => {
  */
 const recordDiet = () => {
   uni.navigateTo({
-    url: '/pages/calorie/record/index'
+    url: '/pages-user/calorie/record'
   })
 }
 
@@ -372,7 +372,7 @@ const recordDiet = () => {
  */
 const viewStatistics = () => {
   uni.navigateTo({
-    url: '/pages/calorie/statistics/index'
+    url: '/pages-user/calorie/statistics'
   })
 }
 
@@ -381,7 +381,7 @@ const viewStatistics = () => {
  */
 const viewAllRecords = () => {
   uni.navigateTo({
-    url: '/pages/calorie/history/index'
+    url: '/pages-user/calorie/record'
   })
 }
 

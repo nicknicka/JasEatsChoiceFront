@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 备注冲突检测请求DTO
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Data

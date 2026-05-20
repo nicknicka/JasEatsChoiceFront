@@ -1,8 +1,20 @@
 const PUBLIC_IP_STORAGE_KEYS = ['client_ip', 'public_ip'] as const
 const IS_DEV = (import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV === true
 
+const getApiModule = async () => {
+  const locationApi = (await import('../api/location.js')).default
+  return locationApi
+}
+
 // 支持CORS的公网IP服务（仅作为备用）
 const IP_CANDIDATE_APIS = [
+  {
+    url: 'https://api.ip.sb/ip',
+    parser: async (response: Response) => {
+      const text = await response.text()
+      return text.trim()
+    }
+  },
   {
     url: 'https://api.ipify.org?format=json',
     parser: async (response: Response) => {
@@ -15,6 +27,13 @@ const IP_CANDIDATE_APIS = [
     parser: async (response: Response) => {
       const data = await response.json()
       return typeof data?.ip === 'string' ? data.ip : ''
+    }
+  },
+  {
+    url: 'https://api64.ipify.org?format=text',
+    parser: async (response: Response) => {
+      const text = await response.text()
+      return text.trim()
     }
   }
 ] as const
@@ -53,9 +72,20 @@ export const resolveAndStorePublicIp = async (): Promise<string | null> => {
     console.info('[定位] 开始获取公网IP...')
   }
 
-  // 前端优先：先尝试支持 CORS 的公网 IP 服务
   const errors: string[] = []
+  const parsedIp = (rawIp: string) => {
+    return typeof rawIp === 'string' ? rawIp.trim() : ''
+  }
 
+  const storeIp = (ip: string, source: string) => {
+    PUBLIC_IP_STORAGE_KEYS.forEach((key) => localStorage.setItem(key, ip))
+    ;(window as Window & { __CLIENT_IP__?: string }).__CLIENT_IP__ = ip
+    if (IS_DEV) {
+      console.info(`[定位] 公网IP获取成功（${source}）：`, ip)
+    }
+  }
+
+  // 前端优先：本地后端可能走代理/VPN出口，前端直连更接近用户浏览器看到的公网IP
   for (const api of IP_CANDIDATE_APIS) {
     try {
       const response = await fetchWithTimeout(api.url)
@@ -64,17 +94,13 @@ export const resolveAndStorePublicIp = async (): Promise<string | null> => {
         continue
       }
 
-      const ip = (await api.parser(response)).trim()
+      const ip = parsedIp(await api.parser(response))
       if (!hasText(ip) || !isValidIp(ip)) {
         errors.push(`${api.url} 返回内容不是有效IP: ${ip || '<empty>'}`)
         continue
       }
 
-      PUBLIC_IP_STORAGE_KEYS.forEach((key) => localStorage.setItem(key, ip))
-      ;(window as Window & { __CLIENT_IP__?: string }).__CLIENT_IP__ = ip
-      if (IS_DEV) {
-        console.info('[定位] 公网IP获取成功（前端备用）:', ip)
-      }
+      storeIp(ip, '前端直连')
       return ip
     } catch (error) {
       const message = (error as Error).message
@@ -85,21 +111,16 @@ export const resolveAndStorePublicIp = async (): Promise<string | null> => {
     }
   }
 
-  // 前端直连失败后，再走后端代理兜底，降低部分网络环境下的失败率
+  // 后端兜底：只在前端直连全部失败时使用
   try {
-    const locationApi = (await import('../api/location.js')).default
+    const locationApi = await getApiModule()
     const response = await locationApi.getPublicIp()
-    // api拦截器已返回response.data，所以response就是{code, message, data}
     const data = response as { code?: string; data?: { ip?: string } } | undefined
 
     if (data && data.code === '200' && data.data?.ip) {
-      const ip = data.data.ip
+      const ip = parsedIp(data.data.ip)
       if (isValidIp(ip)) {
-        PUBLIC_IP_STORAGE_KEYS.forEach((key) => localStorage.setItem(key, ip))
-        ;(window as Window & { __CLIENT_IP__?: string }).__CLIENT_IP__ = ip
-        if (IS_DEV) {
-          console.info('[定位] 公网IP获取成功（后端代理兜底）:', ip)
-        }
+        storeIp(ip, '后端代理兜底')
         return ip
       }
     }

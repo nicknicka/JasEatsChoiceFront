@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 营养数据库服务接口
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 public interface NutritionService extends IService<Nutrition> {

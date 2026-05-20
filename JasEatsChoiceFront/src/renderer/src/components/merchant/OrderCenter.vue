@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '../../utils/api.js'
-import { API_CONFIG } from '../../config/index.js'
 import { useAuthStore } from '../../store/authStore'
 import { normalizeOrderStatusCode } from '../../utils/orderStatus'
 
@@ -113,7 +112,7 @@ const getStatusTagType = (status) => {
 }
 
 // 更新订单状态
-const updateOrderStatus = (order) => {
+const updateOrderStatus = async (order) => {
   // 定义订单状态流转逻辑（5状态系统：0-待支付、1-待接单、2-制作中、3-已完成、4-已取消）
   const statusFlow = {
     1: 2, // 待接单 -> 制作中
@@ -128,62 +127,57 @@ const updateOrderStatus = (order) => {
     return
   }
 
-  // 调用API更新订单状态
-  const updateData = {
-    orderId: order.id,
-    status: nextStatus
-  }
+  try {
+    const response = await api.put(`/v1/orders/${order.id}/status?status=${nextStatus}`)
 
-  api
-    .put(API_CONFIG.merchant.updateOrderStatus.replace('{orderId}', order.id), updateData)
-    .then((response) => {
-      if (response.data && response.data.success) {
-        // 更新本地订单状态
-        order.status = nextStatus
+    if (!response.success) {
+      ElMessage.error(response.message || '更新订单状态失败')
+      return
+    }
 
-        // ✅ 自动通知用户（后端实现自动推送）
-        const notifyData = {
-          orderId: order.id,
-          message: `您的订单 ${order.id} 状态已更新为 ${orderStatusMap[nextStatus]}`
-        }
+    order.status = nextStatus
 
-        api
-          .post(API_CONFIG.merchant.notifyUser.replace('{orderId}', order.id), notifyData)
-          .then(() => {
-            ElMessage.success(`订单 ${order.id} 状态已更新并通知用户`)
-          })
-          .catch((error) => {
-            console.error('自动通知用户失败:', error)
-            // 即使通知失败，状态更新成功也提示用户
-            ElMessage.success(`订单 ${order.id} 状态已更新为 ${orderStatusMap[nextStatus]}`)
-          })
+    const notifyData = {
+      orderId: order.id,
+      message: `您的订单 ${order.id} 状态已更新为 ${orderStatusMap[nextStatus]}`
+    }
+
+    try {
+      const notifyResponse = await api.post(`/v1/orders/${order.id}/notify`, notifyData)
+      if (notifyResponse.success) {
+        ElMessage.success(`订单 ${order.id} 状态已更新并通知用户`)
+        return
       }
-    })
-    .catch((error) => {
-      console.error('更新订单状态失败:', error)
-      ElMessage.error('更新订单状态失败')
-    })
+    } catch (error) {
+      console.error('自动通知用户失败:', error)
+    }
+
+    ElMessage.success(`订单 ${order.id} 状态已更新为 ${orderStatusMap[nextStatus]}`)
+  } catch (error) {
+    console.error('更新订单状态失败:', error)
+    ElMessage.error('更新订单状态失败')
+  }
 }
 
 // 手动通知用户（用于特殊情况）
-const notifyUser = (order) => {
-  // 调用API通知用户
+const notifyUser = async (order) => {
   const notifyData = {
     orderId: order.id,
     message: `您的订单 ${order.id} 当前状态：${orderStatusMap[order.status]}`
   }
 
-  api
-    .post(API_CONFIG.merchant.notifyUser.replace('{orderId}', order.id), notifyData)
-    .then((response) => {
-      if (response.data && response.data.success) {
-        ElMessage.success(`已手动通知用户订单 ${order.id} 的最新状态`)
-      }
-    })
-    .catch((error) => {
-      console.error('通知用户失败:', error)
-      ElMessage.error('通知用户失败')
-    })
+  try {
+    const response = await api.post(`/v1/orders/${order.id}/notify`, notifyData)
+    if (response.success) {
+      ElMessage.success(`已手动通知用户订单 ${order.id} 的最新状态`)
+      return
+    }
+
+    ElMessage.error(response.message || '通知用户失败')
+  } catch (error) {
+    console.error('通知用户失败:', error)
+    ElMessage.error('通知用户失败')
+  }
 }
 
 // 获取订单列表

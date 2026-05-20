@@ -251,16 +251,34 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/store'
-import { userApi, orderApi, chatApi } from '@/api'
+import { userApi, orderApi, chatApi, walletApi } from '@/api'
+import { createPageDebug } from '@/utils/page-debug'
+import {
+  MESSAGE,
+  USER_ADDRESS,
+  USER_CALORIE,
+  USER_COLLECTION,
+  USER_COUPON,
+  USER_FEEDBACK,
+  USER_HISTORY,
+  USER_ORDERS,
+  USER_PROFILE_ABOUT,
+  USER_PROFILE_EDIT,
+  USER_RECIPE_MY,
+  USER_SETTINGS,
+  USER_WALLET
+} from '@/constants/routes'
 
 // Pinia store
 const userStore = useUserStore()
+const pageDebug = createPageDebug('我的')
+const DEFAULT_AVATAR = '/static/images/default-avatar.png'
 
 // 用户信息
 const userInfo = ref({
   id: '',
   name: '佳食宜选用户',
-  avatar: 'https://via.placeholder.com/200x200/FF6B35/FFFFFF?text=用户',
+  avatar: DEFAULT_AVATAR,
   gender: 'female',
   tags: [],
   vipLevel: 0
@@ -302,6 +320,7 @@ const refreshing = ref(false)
  * 跳转登录页
  */
 const goToLogin = () => {
+  pageDebug.action('前往登录页')
   uni.navigateTo({
     url: '/pages/login/index'
   })
@@ -311,6 +330,7 @@ const goToLogin = () => {
  * 下拉刷新
  */
 const onRefresh = async () => {
+  pageDebug.action('下拉刷新个人中心')
   refreshing.value = true
   try {
     await Promise.all([
@@ -320,7 +340,9 @@ const onRefresh = async () => {
       loadUnreadCount(),
       loadWalletData()
     ])
+    pageDebug.requestSuccess('刷新个人中心数据')
   } catch (error) {
+    pageDebug.requestFail('刷新个人中心数据', error)
     console.error('刷新失败:', error)
   } finally {
     refreshing.value = false
@@ -334,19 +356,23 @@ const loadWalletData = async () => {
   try {
     const userId = userStore.userInfo?.userId || userStore.userInfo?.id
     if (!userId) {
+      pageDebug.anomaly('缺少用户ID，跳过钱包数据加载')
       console.warn('用户ID不存在，跳过加载钱包数据')
       return
     }
 
-    const res = await userApi.getWalletInfo(userId)
-    if (res) {
+    pageDebug.requestStart('加载钱包数据', { userId })
+    const res = await walletApi.getWallet(userId)
+    if (res && res.data) {
       wallet.value = {
-        balance: res.balance || '0.00',
-        points: res.points || 0,
-        redEnvelopes: res.redEnvelopes || res.red_envelopes || 0
+        balance: res.data.balance || '0.00',
+        points: res.data.points || 0,
+        redEnvelopes: res.data.redEnvelopes || res.data.redPackets || 0
       }
+      pageDebug.requestSuccess('加载钱包数据', wallet.value)
     }
   } catch (error) {
+    pageDebug.requestFail('加载钱包数据', error)
     console.error('加载钱包数据失败:', error)
     // 使用默认值
     wallet.value = {
@@ -361,8 +387,9 @@ const loadWalletData = async () => {
  * 编辑个人资料
  */
 const editProfile = () => {
+  pageDebug.action('编辑个人资料')
   uni.navigateTo({
-    url: '/pages/user-center/edit'
+    url: USER_PROFILE_EDIT
   })
 }
 
@@ -370,11 +397,13 @@ const editProfile = () => {
  * 退出登录
  */
 const handleLogout = () => {
+  pageDebug.action('尝试退出登录')
   uni.showModal({
     title: '提示',
     content: '确定要退出登录吗？',
     success: (res) => {
       if (res.confirm) {
+        pageDebug.requestSuccess('退出登录确认')
         // 清除用户信息
         userStore.logout()
         uni.removeStorageSync('token')
@@ -402,8 +431,13 @@ const handleLogout = () => {
  * 页面导航
  */
 const navigateTo = (page, params = {}) => {
+  pageDebug.action('个人中心页面跳转', {
+    page,
+    params
+  })
   // 登录态检查：未登录时，除了登录页外，都需要先登录
   if (!userStore.isLogin && page !== 'login') {
+    pageDebug.anomaly('页面跳转被登录校验拦截', { page })
     uni.showToast({
       title: '请先登录',
       icon: 'none'
@@ -417,25 +451,26 @@ const navigateTo = (page, params = {}) => {
   }
 
   const pageMap = {
-    'orders': '/pages/orders/index',
-    'favorites': '/pages/favorites/index',
-    'history': '/pages/history/index',
-    'coupons': '/pages/coupons/index',
-    'wallet': '/pages/wallet/index',
-    'address': '/pages/address/index',
-    'calorie': '/pages/calorie/index',
-    'recipe': '/pages/recipe/my',
-    'health-report': '/pages/health-report/index',
-    'message': '/pages/message/index',
-    'customer-service': '/pages/customer-service/index',
-    'feedback': '/pages/feedback/index',
-    'about': '/pages/about/index',
-    'settings': '/pages/settings/index'
+    'orders': USER_ORDERS,
+    'favorites': USER_COLLECTION,
+    'history': USER_HISTORY,
+    'coupons': USER_COUPON,
+    'wallet': USER_WALLET,
+    'address': USER_ADDRESS,
+    'calorie': USER_CALORIE,
+    'recipe': USER_RECIPE_MY,
+    'health-report': '',
+    'message': MESSAGE,
+    'customer-service': '',
+    'feedback': USER_FEEDBACK,
+    'about': USER_PROFILE_ABOUT,
+    'settings': USER_SETTINGS
   }
 
   const path = pageMap[page]
 
   if (!path) {
+    pageDebug.anomaly('目标页面未实现', { page })
     uni.showToast({
       title: '页面开发中...',
       icon: 'none'
@@ -470,6 +505,7 @@ const loadUserInfo = async () => {
   try {
     // 检查登录状态
     if (!userStore.isLogin) {
+      pageDebug.anomaly('未登录，无法加载用户信息')
       uni.showToast({
         title: '请先登录',
         icon: 'none'
@@ -482,12 +518,13 @@ const loadUserInfo = async () => {
       return
     }
 
+    pageDebug.requestStart('加载用户信息')
     // 从store获取用户信息
     if (userStore.userInfo) {
       userInfo.value = {
         id: userStore.userInfo.userId || userStore.userInfo.id || '',
         name: userStore.userInfo.nickname || userStore.userInfo.name || '佳食宜选用户',
-        avatar: userStore.userInfo.avatar || 'https://via.placeholder.com/200x200/FF6B35/FFFFFF?text=用户',
+        avatar: userStore.userInfo.avatar || DEFAULT_AVATAR,
         gender: userStore.userInfo.gender || 'female',
         tags: userStore.userInfo.tags || [],
         vipLevel: userStore.userInfo.vipLevel || userStore.userInfo.memberLevel || 0
@@ -500,7 +537,7 @@ const loadUserInfo = async () => {
       userInfo.value = {
         id: res.userId || res.id || '',
         name: res.nickname || res.name || '佳食宜选用户',
-        avatar: res.avatar || 'https://via.placeholder.com/200x200/FF6B35/FFFFFF?text=用户',
+        avatar: res.avatar || DEFAULT_AVATAR,
         gender: res.gender || 'female',
         tags: res.tags || [],
         vipLevel: res.vipLevel || res.memberLevel || 0
@@ -509,7 +546,12 @@ const loadUserInfo = async () => {
       // 更新store中的用户信息
       userStore.setUserInfo(res)
     }
+    pageDebug.requestSuccess('加载用户信息', {
+      userId: userInfo.value.id,
+      name: userInfo.value.name
+    })
   } catch (error) {
+    pageDebug.requestFail('加载用户信息', error)
     console.error('加载用户信息失败:', error)
 
     // 检查是否是404错误（用户不存在）
@@ -562,10 +604,12 @@ const loadStats = async () => {
     // 调用后端API获取用户统计数据
     const userId = userStore.userInfo?.userId || userStore.userInfo?.id
     if (!userId) {
+      pageDebug.anomaly('缺少用户ID，跳过统计数据加载')
       console.warn('用户ID不存在，跳过加载统计数据')
       return
     }
 
+    pageDebug.requestStart('加载统计数据', { userId })
     const res = await userApi.getUserStats(userId)
     if (res) {
       stats.value = {
@@ -574,8 +618,10 @@ const loadStats = async () => {
         history: res.totalHistory || res.history || 0,
         coupons: res.availableCoupons || res.coupons || 0
       }
+      pageDebug.requestSuccess('加载统计数据', stats.value)
     }
   } catch (error) {
+    pageDebug.requestFail('加载统计数据', error)
     console.error('加载统计数据失败:', error)
     // 使用默认值
     stats.value = {
@@ -595,10 +641,12 @@ const loadOrderCounts = async () => {
     // 调用后端API获取订单数量统计
     const userId = userStore.userInfo?.userId || userStore.userInfo?.id
     if (!userId) {
+      pageDebug.anomaly('缺少用户ID，跳过订单数量加载')
       console.warn('用户ID不存在，跳过加载订单数量')
       return
     }
 
+    pageDebug.requestStart('加载订单数量', { userId })
     const res = await orderApi.getCount({ userId })
     if (res) {
       orderCounts.value = {
@@ -607,8 +655,10 @@ const loadOrderCounts = async () => {
         delivering: res.delivering || 0,
         completed: res.completed || 0
       }
+      pageDebug.requestSuccess('加载订单数量', orderCounts.value)
     }
   } catch (error) {
+    pageDebug.requestFail('加载订单数量', error)
     console.error('加载订单数量失败:', error)
     // 使用默认值
     orderCounts.value = {
@@ -626,11 +676,16 @@ const loadOrderCounts = async () => {
 const loadUnreadCount = async () => {
   try {
     // 调用后端API获取未读消息数
+    pageDebug.requestStart('加载未读消息数')
     const res = await chatApi.getUnreadCount()
     if (res !== undefined && res !== null) {
       unreadCount.value = res.count || res.total || res || 0
+      pageDebug.requestSuccess('加载未读消息数', {
+        unreadCount: unreadCount.value
+      })
     }
   } catch (error) {
+    pageDebug.requestFail('加载未读消息数', error)
     console.error('加载未读消息数失败:', error)
     // 使用默认值
     unreadCount.value = 0
@@ -639,6 +694,9 @@ const loadUnreadCount = async () => {
 
 // 组件挂载
 onMounted(async () => {
+  pageDebug.lifecycle('页面挂载', {
+    isLogin: userStore.isLogin
+  })
   loading.value = true
   try {
     await Promise.all([
@@ -648,7 +706,9 @@ onMounted(async () => {
       loadUnreadCount(),
       loadWalletData()
     ])
+    pageDebug.requestSuccess('初始化个人中心数据')
   } catch (error) {
+    pageDebug.requestFail('初始化个人中心数据', error)
     console.error('初始化加载失败:', error)
   } finally {
     loading.value = false

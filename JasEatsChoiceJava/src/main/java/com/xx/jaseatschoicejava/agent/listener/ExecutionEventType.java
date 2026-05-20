@@ -5,7 +5,7 @@ package com.xx.jaseatschoicejava.agent.listener;
  *
  * 定义Agent执行过程中的各种事件类型
  *
- * @author Claude
+
  * @since 2026-03-26
  */
 public enum ExecutionEventType {

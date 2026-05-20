@@ -15,7 +15,7 @@ import java.util.Map;
  *
  * 提供简单的Web API访问缓存监控数据
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

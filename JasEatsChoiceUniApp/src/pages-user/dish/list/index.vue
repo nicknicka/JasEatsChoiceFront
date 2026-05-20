@@ -45,6 +45,7 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { dishApi } from '@/api/modules/dish'
+import { toDishDetail } from '@/utils/router'
 
 // 数据
 const categoryName = ref('')
@@ -108,9 +109,7 @@ const loadDishList = async () => {
 
 // 跳转到菜品详情
 const goToDetail = (dishId) => {
-  uni.navigateTo({
-    url: `/src/pages-user/dish/detail/index?id=${dishId}`
-  })
+  toDishDetail(dishId)
 }
 </script>
 

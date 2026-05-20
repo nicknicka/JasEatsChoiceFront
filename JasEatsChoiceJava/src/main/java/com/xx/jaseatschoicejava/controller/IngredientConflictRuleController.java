@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * 食材冲突规则控制器
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Slf4j

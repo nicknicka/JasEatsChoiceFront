@@ -162,6 +162,8 @@ const selectedAddressSource = ref('unknown')
 const searchFocused = ref(false)
 const searching = ref(false)
 const hasSearched = ref(false)
+const LOCATION_CACHE_DURATION = 24 * 60 * 60 * 1000
+const TRUSTED_LOCATION_SOURCES = ['gps', 'manual', 'search']
 
 const getClientIpForLocation = () => {
   try {
@@ -226,6 +228,7 @@ const initMap = async () => {
     map.value.on('click', (e) => {
       const { lng, lat } = e.lnglat
       console.log('地图点击位置:', lng, lat)
+      selectedAddressSource.value = 'manual'
       updateMarkerPosition(lng, lat)
       getAddressByLocation(lng, lat)
     })
@@ -416,21 +419,44 @@ const applyResolvedLocation = async (result, { source = 'unknown', silent = fals
     return false
   }
 
-  const { lng, lat, address, province, city, source: resolvedSource } = result
+  const { lng, lat, address, province, city, source: resolvedSource, accuracy, reason } = result
   const finalSource = resolvedSource || source || 'unknown'
 
   if (lng && lat) {
     selectedAddressSource.value = finalSource
     updateMarkerPosition(lng, lat)
+    if (map.value && (accuracy === 'city' || finalSource === 'ip' || finalSource === 'city-fallback')) {
+      map.value.setZoom(11)
+    }
     selectedAddress.value = address || province || city || '未知地址'
 
-    if (finalSource !== 'default') {
-      saveLastLocation(lng, lat, finalSource)
+    if (finalSource === 'default') {
+      if (!silent) {
+        ElMessage.warning({
+          message: '无法获取精确位置，已显示默认位置。请在地图上点击选择您的实际位置。',
+          duration: 5000,
+          showClose: true
+        })
+      }
+      return false
+    }
+
+    if (TRUSTED_LOCATION_SOURCES.includes(finalSource)) {
+      saveLastLocation(lng, lat, finalSource, {
+        address: selectedAddress.value,
+        accuracy: accuracy || finalSource
+      })
     }
 
     if (!silent) {
       const locationLabel = `${province || ''}${city || ''}`.trim() || selectedAddress.value
-      ElMessage.success(`定位成功：${locationLabel}`)
+      const message = accuracy === 'city' || finalSource === 'ip'
+        ? `已定位到大致区域：${locationLabel}，请在地图上确认具体位置`
+        : `定位成功：${locationLabel}`
+      if (reason && (accuracy === 'city' || finalSource === 'ip')) {
+        console.info('精确定位失败原因:', reason)
+      }
+      ElMessage.success(message)
     }
 
     return true
@@ -448,13 +474,16 @@ const applyResolvedLocation = async (result, { source = 'unknown', silent = fals
   return false
 }
 
-const runLocationFlow = async ({ silent = false } = {}) => {
+const runLocationFlow = async ({ silent = false, preferCacheFirst = true } = {}) => {
   const AMapGlobal = typeof AMap !== 'undefined' ? AMap : null
   const result = await resolveAmapLocation({
     getLastLocation,
     saveLastLocation,
     defaultPosition: props.defaultPosition,
-    clientIp: getClientIpForLocation(),
+    clientIp: null,
+    preferCacheFirst,
+    cacheSources: TRUSTED_LOCATION_SOURCES,
+    useHighAccuracy: false,
     AMap: AMapGlobal
   })
 
@@ -463,7 +492,7 @@ const runLocationFlow = async ({ silent = false } = {}) => {
     silent
   })
 
-  if (!applied && !silent) {
+  if (!applied && !silent && result?.source !== 'default') {
     ElMessage.warning({
       message: '无法自动定位，已显示默认位置。请在地图上点击选择您的实际位置。',
       duration: 5000,
@@ -474,14 +503,14 @@ const runLocationFlow = async ({ silent = false } = {}) => {
   return applied
 }
 
-// 获取当前位置（直接使用 IP 定位）
+// 获取当前位置（优先 GPS，失败后回退 IP）
 const handleGetCurrentLocation = async () => {
   locating.value = true
 
   console.log('开始获取当前位置...')
 
   try {
-    await runLocationFlow({ silent: false })
+    await runLocationFlow({ silent: false, preferCacheFirst: false })
   } catch (error) {
     console.error('手动定位失败:', error)
   } finally {
@@ -490,13 +519,19 @@ const handleGetCurrentLocation = async () => {
 }
 
 // 保存位置到本地存储
-const saveLastLocation = (lng, lat, source = 'unknown') => {
+const saveLastLocation = (lng, lat, source = 'unknown', extra = {}) => {
+  if (!TRUSTED_LOCATION_SOURCES.includes(source)) {
+    return
+  }
+
   try {
     const locationData = {
       lng,
       lat,
       timestamp: Date.now(),
-      source
+      source,
+      accuracy: extra.accuracy || source,
+      address: extra.address || ''
     }
     localStorage.setItem('user_last_location', JSON.stringify(locationData))
     console.log('位置已保存到本地存储')
@@ -512,13 +547,15 @@ const getLastLocation = () => {
     if (stored) {
       const locationData = JSON.parse(stored)
 
-      // 检查是否过期（7天内有效）
-      const sevenDays = 7 * 24 * 60 * 60 * 1000
-      if (Date.now() - locationData.timestamp < sevenDays) {
+      // 检查是否过期（24小时内有效）
+      if (Date.now() - locationData.timestamp < LOCATION_CACHE_DURATION) {
         return {
           lng: locationData.lng,
           lat: locationData.lat,
-          source: locationData.source || 'cache'
+          source: locationData.source || 'cache',
+          timestamp: locationData.timestamp,
+          accuracy: locationData.accuracy || locationData.source || 'cache',
+          address: locationData.address || ''
         }
       } else {
         // 过期则删除

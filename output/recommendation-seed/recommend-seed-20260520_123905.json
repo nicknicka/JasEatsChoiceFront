@@ -1,0 +1,2392 @@
+{
+  "runId": "recommend-seed-20260520_123905",
+  "baseUrl": "http://127.0.0.1:7777/api",
+  "userId": "3384650106421960",
+  "merchantId": "7638432224340229",
+  "startedAt": "2026-05-20T04:39:05.117Z",
+  "assumptions": [
+    "目标用户使用当前桌面端常见测试账号 17322222222",
+    "优先通过后端接口创建菜品和推荐行为",
+    "通过 recommendation_log、user_behavior、t_reject_recommendation 的时间窗口确认本次造数结果"
+  ],
+  "countsBefore": {
+    "userBehavior": 1001,
+    "recommendationLog": 2054,
+    "rejectRecommendation": 7
+  },
+  "seedDishes": {
+    "created": [],
+    "reused": [
+      {
+        "id": "seed_1779000769631_1",
+        "name": "南瓜小米粥",
+        "image": "https://dummyimage.com/400x300/f6a623/ffffff.png&text=Pumpkin+Millet",
+        "price": 14,
+        "calorie": 160,
+        "category": "早餐",
+        "imageUpdated": false
+      },
+      {
+        "id": "seed_1779000769660_2",
+        "name": "全麦鸡肉卷",
+        "image": "https://dummyimage.com/400x300/8bc34a/ffffff.png&text=Chicken+Wrap",
+        "price": 18,
+        "calorie": 280,
+        "category": "早餐",
+        "imageUpdated": false
+      },
+      {
+        "id": "seed_1779000769681_3",
+        "name": "鲜虾蔬菜蒸蛋",
+        "image": "https://dummyimage.com/400x300/4fc3f7/ffffff.png&text=Shrimp+Egg",
+        "price": 16,
+        "calorie": 220,
+        "category": "早餐",
+        "imageUpdated": false
+      },
+      {
+        "id": "seed_1779000769705_4",
+        "name": "蓝莓酸奶燕麦杯",
+        "image": "https://dummyimage.com/400x300/7e57c2/ffffff.png&text=Berry+Oats",
+        "price": 20,
+        "calorie": 240,
+        "category": "早餐",
+        "imageUpdated": false
+      },
+      {
+        "id": "seed_1779000769730_5",
+        "name": "牛油果鸡蛋三明治",
+        "image": "https://dummyimage.com/400x300/66bb6a/ffffff.png&text=Avocado+Sandwich",
+        "price": 22,
+        "calorie": 320,
+        "category": "早餐",
+        "imageUpdated": false
+      },
+      {
+        "id": "seed_1779002228990_1",
+        "name": "玉米鸡丝粥",
+        "image": "https://dummyimage.com/400x300/f4c542/ffffff.png&text=Corn+Chicken+Porridge",
+        "price": 15,
+        "calorie": 190,
+        "category": "早餐",
+        "imageUpdated": false
+      },
+      {
+        "id": "seed_1779002229006_2",
+        "name": "紫薯坚果酸奶碗",
+        "image": "https://dummyimage.com/400x300/b388eb/ffffff.png&text=Purple+Yogurt+Bowl",
+        "price": 21,
+        "calorie": 230,
+        "category": "早餐",
+        "imageUpdated": false
+      },
+      {
+        "id": "seed_1779002229022_3",
+        "name": "芝士番茄鸡蛋贝果",
+        "image": "https://dummyimage.com/400x300/ff8a65/ffffff.png&text=Cheese+Egg+Bagel",
+        "price": 24,
+        "calorie": 340,
+        "category": "早餐",
+        "imageUpdated": false
+      }
+    ],
+    "finalDishes": [
+      {
+        "id": "seed_1779000769631_1",
+        "name": "南瓜小米粥",
+        "price": 14,
+        "calorie": 160,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769660_2",
+        "name": "全麦鸡肉卷",
+        "price": 18,
+        "calorie": 280,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769681_3",
+        "name": "鲜虾蔬菜蒸蛋",
+        "price": 16,
+        "calorie": 220,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769705_4",
+        "name": "蓝莓酸奶燕麦杯",
+        "price": 20,
+        "calorie": 240,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769730_5",
+        "name": "牛油果鸡蛋三明治",
+        "price": 22,
+        "calorie": 320,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779002228990_1",
+        "name": "玉米鸡丝粥",
+        "price": 15,
+        "calorie": 190,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779002229006_2",
+        "name": "紫薯坚果酸奶碗",
+        "price": 21,
+        "calorie": 230,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779002229022_3",
+        "name": "芝士番茄鸡蛋贝果",
+        "price": 24,
+        "calorie": 340,
+        "category": "早餐",
+        "isOnline": 1
+      }
+    ]
+  },
+  "bootstrapBehaviors": [
+    {
+      "dishId": "1001",
+      "dishName": "皮蛋瘦肉粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769631_1",
+      "dishName": "南瓜小米粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769660_2",
+      "dishName": "全麦鸡肉卷",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769681_3",
+      "dishName": "鲜虾蔬菜蒸蛋",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    }
+  ],
+  "profileBoostFeedback": [
+    {
+      "dishId": "1001",
+      "dishName": "皮蛋瘦肉粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769631_1",
+      "dishName": "南瓜小米粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769660_2",
+      "dishName": "全麦鸡肉卷",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    }
+  ],
+  "profileAfterBoost": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "id": 1,
+      "userId": "3384650106421960",
+      "lastUpdated": "2026-05-20T12:39:05"
+    }
+  },
+  "recommendationResponse": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "total": 6,
+      "recommendations": [
+        {
+          "dishId": "seed_1779000769660_2",
+          "dishName": "全麦鸡肉卷",
+          "dishImage": "https://dummyimage.com/400x300/8bc34a/ffffff.png&text=Chicken+Wrap",
+          "category": "早餐",
+          "score": 8.25,
+          "rank": 1,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 280,
+          "price": 18,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779000769681_3",
+          "dishName": "鲜虾蔬菜蒸蛋",
+          "dishImage": "https://dummyimage.com/400x300/4fc3f7/ffffff.png&text=Shrimp+Egg",
+          "category": "早餐",
+          "score": 8.25,
+          "rank": 2,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 220,
+          "price": 16,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779002229006_2",
+          "dishName": "紫薯坚果酸奶碗",
+          "dishImage": "https://dummyimage.com/400x300/b388eb/ffffff.png&text=Purple+Yogurt+Bowl",
+          "category": "早餐",
+          "rank": 3,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 230,
+          "price": 21,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779002229022_3",
+          "dishName": "芝士番茄鸡蛋贝果",
+          "dishImage": "https://dummyimage.com/400x300/ff8a65/ffffff.png&text=Cheese+Egg+Bagel",
+          "category": "早餐",
+          "rank": 4,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 340,
+          "price": 24,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779002228990_1",
+          "dishName": "玉米鸡丝粥",
+          "dishImage": "https://dummyimage.com/400x300/f4c542/ffffff.png&text=Corn+Chicken+Porridge",
+          "category": "早餐",
+          "rank": 5,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 190,
+          "price": 15,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779000769705_4",
+          "dishName": "蓝莓酸奶燕麦杯",
+          "dishImage": "https://dummyimage.com/400x300/7e57c2/ffffff.png&text=Berry+Oats",
+          "category": "早餐",
+          "rank": 6,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 240,
+          "price": 20,
+          "rating": 4.7
+        }
+      ],
+      "scene": "home",
+      "timestamp": 1779251945359
+    }
+  },
+  "recommendationBatches": [
+    {
+      "itemCount": 6,
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519"
+    },
+    {
+      "itemCount": 6,
+      "createdTime": "2026-05-20 12:36:03.000000",
+      "recommendationId": "9783657e-cc44-4269-b473-e1129cedae6b"
+    },
+    {
+      "itemCount": 6,
+      "createdTime": "2026-05-20 12:36:00.000000",
+      "recommendationId": "fa05e8d8-1c0f-47b4-9649-960eaba3f167"
+    },
+    {
+      "itemCount": 6,
+      "createdTime": "2026-05-20 12:34:43.000000",
+      "recommendationId": "dc19a283-973c-408d-a292-d91d1064a7cc"
+    },
+    {
+      "itemCount": 6,
+      "createdTime": "2026-05-20 12:28:21.000000",
+      "recommendationId": "ada0e0d7-857c-43e7-8770-558f63d9637f"
+    }
+  ],
+  "latestRecommendationItems": [
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度4000%",
+            "type": "popularity",
+            "score": 40
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度4000%",
+            "type": "popularity",
+            "score": 40
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度4000%",
+            "type": "popularity",
+            "score": 40
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度4000%",
+            "type": "popularity",
+            "score": 40
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度4000%",
+            "type": "popularity",
+            "score": 40
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度4000%",
+            "type": "popularity",
+            "score": 40
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    }
+  ],
+  "followupFeedback": [
+    {
+      "dishId": "seed_1779000769660_2",
+      "dishName": "全麦鸡肉卷",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519",
+      "ordered": true,
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769681_3",
+      "dishName": "鲜虾蔬菜蒸蛋",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519",
+      "ordered": false,
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779002229006_2",
+      "dishName": "紫薯坚果酸奶碗",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519",
+      "ordered": false,
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    }
+  ],
+  "rejectAction": {
+    "dishId": "seed_1779000769705_4",
+    "dishName": "蓝莓酸奶燕麦杯",
+    "response": {
+      "success": true,
+      "code": "200",
+      "message": "成功",
+      "data": {
+        "dishId": "seed_1779000769705_4",
+        "action": "reject",
+        "userId": "3384650106421960",
+        "timestamp": 1779251945936
+      }
+    }
+  },
+  "refreshResult": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "total": 6,
+      "recommendations": [
+        {
+          "dishId": "seed_1779000769660_2",
+          "dishName": "全麦鸡肉卷",
+          "dishImage": "https://dummyimage.com/400x300/8bc34a/ffffff.png&text=Chicken+Wrap",
+          "category": "早餐",
+          "score": 8.25,
+          "rank": 1,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 280,
+          "price": 18,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779000769681_3",
+          "dishName": "鲜虾蔬菜蒸蛋",
+          "dishImage": "https://dummyimage.com/400x300/4fc3f7/ffffff.png&text=Shrimp+Egg",
+          "category": "早餐",
+          "score": 8.25,
+          "rank": 2,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 220,
+          "price": 16,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779002229006_2",
+          "dishName": "紫薯坚果酸奶碗",
+          "dishImage": "https://dummyimage.com/400x300/b388eb/ffffff.png&text=Purple+Yogurt+Bowl",
+          "category": "早餐",
+          "rank": 3,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 230,
+          "price": 21,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779002229022_3",
+          "dishName": "芝士番茄鸡蛋贝果",
+          "dishImage": "https://dummyimage.com/400x300/ff8a65/ffffff.png&text=Cheese+Egg+Bagel",
+          "category": "早餐",
+          "rank": 4,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 340,
+          "price": 24,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779002228990_1",
+          "dishName": "玉米鸡丝粥",
+          "dishImage": "https://dummyimage.com/400x300/f4c542/ffffff.png&text=Corn+Chicken+Porridge",
+          "category": "早餐",
+          "rank": 5,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 190,
+          "price": 15,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779000769705_4",
+          "dishName": "蓝莓酸奶燕麦杯",
+          "dishImage": "https://dummyimage.com/400x300/7e57c2/ffffff.png&text=Berry+Oats",
+          "category": "早餐",
+          "rank": 6,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度4000%",
+                "score": 40
+              }
+            ]
+          },
+          "calories": 240,
+          "price": 20,
+          "rating": 4.7
+        }
+      ],
+      "timestamp": 1779251945963
+    }
+  },
+  "countsAfter": {
+    "userBehavior": 1017,
+    "recommendationLog": 2066,
+    "rejectRecommendation": 8
+  },
+  "newRecommendationLogs": [
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 10:44:58.000000",
+      "recommendationId": "632b63c0-a1f3-4de4-aec3-318dd1714880"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 10:44:58.000000",
+      "recommendationId": "632b63c0-a1f3-4de4-aec3-318dd1714880"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 10:44:58.000000",
+      "recommendationId": "632b63c0-a1f3-4de4-aec3-318dd1714880"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 10:44:58.000000",
+      "recommendationId": "632b63c0-a1f3-4de4-aec3-318dd1714880"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 10:44:58.000000",
+      "recommendationId": "632b63c0-a1f3-4de4-aec3-318dd1714880"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 10:44:58.000000",
+      "recommendationId": "632b63c0-a1f3-4de4-aec3-318dd1714880"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:04:31.000000",
+      "recommendationId": "fe3a4ec7-cffb-40ce-b345-c517edf4fc12"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:04:31.000000",
+      "recommendationId": "fe3a4ec7-cffb-40ce-b345-c517edf4fc12"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:04:31.000000",
+      "recommendationId": "fe3a4ec7-cffb-40ce-b345-c517edf4fc12"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:04:31.000000",
+      "recommendationId": "fe3a4ec7-cffb-40ce-b345-c517edf4fc12"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:04:31.000000",
+      "recommendationId": "fe3a4ec7-cffb-40ce-b345-c517edf4fc12"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:04:31.000000",
+      "recommendationId": "fe3a4ec7-cffb-40ce-b345-c517edf4fc12"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:05:19.000000",
+      "recommendationId": "3bf4a050-2f5d-41c7-881e-272efc5c3b2c"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:05:19.000000",
+      "recommendationId": "3bf4a050-2f5d-41c7-881e-272efc5c3b2c"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:05:19.000000",
+      "recommendationId": "3bf4a050-2f5d-41c7-881e-272efc5c3b2c"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:05:19.000000",
+      "recommendationId": "3bf4a050-2f5d-41c7-881e-272efc5c3b2c"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:05:19.000000",
+      "recommendationId": "3bf4a050-2f5d-41c7-881e-272efc5c3b2c"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:05:19.000000",
+      "recommendationId": "3bf4a050-2f5d-41c7-881e-272efc5c3b2c"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:23:37.000000",
+      "recommendationId": "07177d58-de6f-4f04-b1c7-8e7383e343c5"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:23:37.000000",
+      "recommendationId": "07177d58-de6f-4f04-b1c7-8e7383e343c5"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:23:37.000000",
+      "recommendationId": "07177d58-de6f-4f04-b1c7-8e7383e343c5"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:23:37.000000",
+      "recommendationId": "07177d58-de6f-4f04-b1c7-8e7383e343c5"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:23:37.000000",
+      "recommendationId": "07177d58-de6f-4f04-b1c7-8e7383e343c5"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:23:37.000000",
+      "recommendationId": "07177d58-de6f-4f04-b1c7-8e7383e343c5"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:29:54.000000",
+      "recommendationId": "ec70e285-4896-4cc4-84ed-a09ba8defc6e"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:29:54.000000",
+      "recommendationId": "ec70e285-4896-4cc4-84ed-a09ba8defc6e"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:29:54.000000",
+      "recommendationId": "ec70e285-4896-4cc4-84ed-a09ba8defc6e"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:29:54.000000",
+      "recommendationId": "ec70e285-4896-4cc4-84ed-a09ba8defc6e"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:29:54.000000",
+      "recommendationId": "ec70e285-4896-4cc4-84ed-a09ba8defc6e"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:29:54.000000",
+      "recommendationId": "ec70e285-4896-4cc4-84ed-a09ba8defc6e"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "f7408387-d580-46e8-8533-4cdfc8c8fc0e"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "f7408387-d580-46e8-8533-4cdfc8c8fc0e"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "f7408387-d580-46e8-8533-4cdfc8c8fc0e"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "f7408387-d580-46e8-8533-4cdfc8c8fc0e"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "f7408387-d580-46e8-8533-4cdfc8c8fc0e"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "f7408387-d580-46e8-8533-4cdfc8c8fc0e"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "6a828bfd-fb76-40dd-a4c1-2bdf9edaee17"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "6a828bfd-fb76-40dd-a4c1-2bdf9edaee17"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "6a828bfd-fb76-40dd-a4c1-2bdf9edaee17"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "6a828bfd-fb76-40dd-a4c1-2bdf9edaee17"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "6a828bfd-fb76-40dd-a4c1-2bdf9edaee17"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "recommendationId": "6a828bfd-fb76-40dd-a4c1-2bdf9edaee17"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:36.000000",
+      "recommendationId": "606ac1a0-56a1-4d0a-b8a7-74df3b0bf5ef"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:36.000000",
+      "recommendationId": "606ac1a0-56a1-4d0a-b8a7-74df3b0bf5ef"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:36.000000",
+      "recommendationId": "606ac1a0-56a1-4d0a-b8a7-74df3b0bf5ef"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:36.000000",
+      "recommendationId": "606ac1a0-56a1-4d0a-b8a7-74df3b0bf5ef"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:36.000000",
+      "recommendationId": "606ac1a0-56a1-4d0a-b8a7-74df3b0bf5ef"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:32:36.000000",
+      "recommendationId": "606ac1a0-56a1-4d0a-b8a7-74df3b0bf5ef"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:35:28.000000",
+      "recommendationId": "04e15dc6-5d7a-4dfa-b2c1-1593d6a22fcd"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:35:28.000000",
+      "recommendationId": "04e15dc6-5d7a-4dfa-b2c1-1593d6a22fcd"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:35:28.000000",
+      "recommendationId": "04e15dc6-5d7a-4dfa-b2c1-1593d6a22fcd"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:35:28.000000",
+      "recommendationId": "04e15dc6-5d7a-4dfa-b2c1-1593d6a22fcd"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:35:28.000000",
+      "recommendationId": "04e15dc6-5d7a-4dfa-b2c1-1593d6a22fcd"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:35:28.000000",
+      "recommendationId": "04e15dc6-5d7a-4dfa-b2c1-1593d6a22fcd"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:11.000000",
+      "recommendationId": "5d78f5d9-4a3e-4de4-bae2-6980bd3ebe6a"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:11.000000",
+      "recommendationId": "5d78f5d9-4a3e-4de4-bae2-6980bd3ebe6a"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:11.000000",
+      "recommendationId": "5d78f5d9-4a3e-4de4-bae2-6980bd3ebe6a"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:11.000000",
+      "recommendationId": "5d78f5d9-4a3e-4de4-bae2-6980bd3ebe6a"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:11.000000",
+      "recommendationId": "5d78f5d9-4a3e-4de4-bae2-6980bd3ebe6a"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:11.000000",
+      "recommendationId": "5d78f5d9-4a3e-4de4-bae2-6980bd3ebe6a"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:30.000000",
+      "recommendationId": "5cbc1adb-63bc-4763-b24b-b84f331fe33c"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:30.000000",
+      "recommendationId": "5cbc1adb-63bc-4763-b24b-b84f331fe33c"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:30.000000",
+      "recommendationId": "5cbc1adb-63bc-4763-b24b-b84f331fe33c"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:30.000000",
+      "recommendationId": "5cbc1adb-63bc-4763-b24b-b84f331fe33c"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:30.000000",
+      "recommendationId": "5cbc1adb-63bc-4763-b24b-b84f331fe33c"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:36:30.000000",
+      "recommendationId": "5cbc1adb-63bc-4763-b24b-b84f331fe33c"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:43:52.000000",
+      "recommendationId": "956fa642-949c-44ae-ad70-bc180913d772"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:43:52.000000",
+      "recommendationId": "956fa642-949c-44ae-ad70-bc180913d772"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:43:52.000000",
+      "recommendationId": "956fa642-949c-44ae-ad70-bc180913d772"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:43:52.000000",
+      "recommendationId": "956fa642-949c-44ae-ad70-bc180913d772"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:43:52.000000",
+      "recommendationId": "956fa642-949c-44ae-ad70-bc180913d772"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:43:52.000000",
+      "recommendationId": "956fa642-949c-44ae-ad70-bc180913d772"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:45:59.000000",
+      "recommendationId": "e438c009-47f8-4e09-8d27-4d22912d6ce6"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:45:59.000000",
+      "recommendationId": "e438c009-47f8-4e09-8d27-4d22912d6ce6"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:45:59.000000",
+      "recommendationId": "e438c009-47f8-4e09-8d27-4d22912d6ce6"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:45:59.000000",
+      "recommendationId": "e438c009-47f8-4e09-8d27-4d22912d6ce6"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:45:59.000000",
+      "recommendationId": "e438c009-47f8-4e09-8d27-4d22912d6ce6"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 11:45:59.000000",
+      "recommendationId": "e438c009-47f8-4e09-8d27-4d22912d6ce6"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:06:23.000000",
+      "recommendationId": "ee11c109-f91a-4a0c-abad-11651d984ea6"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:06:23.000000",
+      "recommendationId": "ee11c109-f91a-4a0c-abad-11651d984ea6"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:06:23.000000",
+      "recommendationId": "ee11c109-f91a-4a0c-abad-11651d984ea6"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:06:23.000000",
+      "recommendationId": "ee11c109-f91a-4a0c-abad-11651d984ea6"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:06:23.000000",
+      "recommendationId": "ee11c109-f91a-4a0c-abad-11651d984ea6"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:06:23.000000",
+      "recommendationId": "ee11c109-f91a-4a0c-abad-11651d984ea6"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:28:21.000000",
+      "recommendationId": "ada0e0d7-857c-43e7-8770-558f63d9637f"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:28:21.000000",
+      "recommendationId": "ada0e0d7-857c-43e7-8770-558f63d9637f"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:28:21.000000",
+      "recommendationId": "ada0e0d7-857c-43e7-8770-558f63d9637f"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:28:21.000000",
+      "recommendationId": "ada0e0d7-857c-43e7-8770-558f63d9637f"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:28:21.000000",
+      "recommendationId": "ada0e0d7-857c-43e7-8770-558f63d9637f"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:28:21.000000",
+      "recommendationId": "ada0e0d7-857c-43e7-8770-558f63d9637f"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:34:43.000000",
+      "recommendationId": "dc19a283-973c-408d-a292-d91d1064a7cc"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:34:43.000000",
+      "recommendationId": "dc19a283-973c-408d-a292-d91d1064a7cc"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:34:43.000000",
+      "recommendationId": "dc19a283-973c-408d-a292-d91d1064a7cc"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:34:43.000000",
+      "recommendationId": "dc19a283-973c-408d-a292-d91d1064a7cc"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:34:43.000000",
+      "recommendationId": "dc19a283-973c-408d-a292-d91d1064a7cc"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:34:43.000000",
+      "recommendationId": "dc19a283-973c-408d-a292-d91d1064a7cc"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:00.000000",
+      "recommendationId": "fa05e8d8-1c0f-47b4-9649-960eaba3f167"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:00.000000",
+      "recommendationId": "fa05e8d8-1c0f-47b4-9649-960eaba3f167"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:00.000000",
+      "recommendationId": "fa05e8d8-1c0f-47b4-9649-960eaba3f167"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:00.000000",
+      "recommendationId": "fa05e8d8-1c0f-47b4-9649-960eaba3f167"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:00.000000",
+      "recommendationId": "fa05e8d8-1c0f-47b4-9649-960eaba3f167"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:00.000000",
+      "recommendationId": "fa05e8d8-1c0f-47b4-9649-960eaba3f167"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:03.000000",
+      "recommendationId": "9783657e-cc44-4269-b473-e1129cedae6b"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:03.000000",
+      "recommendationId": "9783657e-cc44-4269-b473-e1129cedae6b"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:03.000000",
+      "recommendationId": "9783657e-cc44-4269-b473-e1129cedae6b"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:03.000000",
+      "recommendationId": "9783657e-cc44-4269-b473-e1129cedae6b"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:03.000000",
+      "recommendationId": "9783657e-cc44-4269-b473-e1129cedae6b"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:36:03.000000",
+      "recommendationId": "9783657e-cc44-4269-b473-e1129cedae6b"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 1,
+      "isOrdered": 1,
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 1,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 1,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "recommendationId": "49e8a418-0d63-4c6d-ac97-3becc19b2519"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "recommendationId": "98166d05-b1f3-4d07-bce0-7fe2d93f3bea"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "recommendationId": "98166d05-b1f3-4d07-bce0-7fe2d93f3bea"
+    },
+    {
+      "rank": 3,
+      "score": null,
+      "dishId": "seed_1779002229006_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "recommendationId": "98166d05-b1f3-4d07-bce0-7fe2d93f3bea"
+    },
+    {
+      "rank": 4,
+      "score": null,
+      "dishId": "seed_1779002229022_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "recommendationId": "98166d05-b1f3-4d07-bce0-7fe2d93f3bea"
+    },
+    {
+      "rank": 5,
+      "score": null,
+      "dishId": "seed_1779002228990_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "recommendationId": "98166d05-b1f3-4d07-bce0-7fe2d93f3bea"
+    },
+    {
+      "rank": 6,
+      "score": null,
+      "dishId": "seed_1779000769705_4",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "recommendationId": "98166d05-b1f3-4d07-bce0-7fe2d93f3bea"
+    }
+  ],
+  "newUserBehaviors": [
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 10:44:58.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 10:44:58.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:04:31.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:04:31.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:05:19.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:05:19.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:23:37.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:23:37.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:29:55.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:29:55.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:32:22.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:32:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:32:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:35:28.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:35:28.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:36:11.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:36:11.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:36:30.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:36:30.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:43:52.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:43:52.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:45:59.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 11:45:59.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:06:23.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:06:23.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:28:21.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:28:21.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:34:43.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:34:43.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:36:00.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:36:00.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:36:03.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_午餐",
+      "context": {
+        "count": 6,
+        "dishIds": [
+          "seed_1779000769660_2",
+          "seed_1779000769681_3",
+          "seed_1779002229006_2",
+          "seed_1779002229022_3",
+          "seed_1779002228990_1",
+          "seed_1779000769705_4"
+        ],
+        "timePeriod": "午餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:36:03.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260520_123905",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260520_123905",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260520_123905",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769681_3",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260520_123905",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "早餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-20 12:39:05.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769681_3",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779002229006_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769705_4",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-20 12:39:06.000000",
+      "behaviorType": "reject"
+    }
+  ],
+  "newRejectRecords": [
+    {
+      "dishId": "seed_1779000769705_4",
+      "reason": "本次造数拒绝记录：recommend-seed-20260520_123905",
+      "rejectTime": "2026-05-20 12:39:06.000000"
+    }
+  ],
+  "finalProfile": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "id": 1,
+      "userId": "3384650106421960",
+      "lastUpdated": "2026-05-20T12:39:06"
+    }
+  },
+  "finishedAt": "2026-05-20T04:39:07.252Z"
+}

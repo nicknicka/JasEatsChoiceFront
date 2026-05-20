@@ -15,7 +15,7 @@ import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
  *
  * 用于支持ChatMemory的异步MySQL写入
  *
- * @author Claude
+
  * @since 2026-03-26
  */
 @Slf4j

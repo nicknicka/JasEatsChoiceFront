@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * 菜品步骤状态枚举
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Getter

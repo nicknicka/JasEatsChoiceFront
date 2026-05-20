@@ -17,7 +17,7 @@
       <view class="settings-section">
         <view class="section-title">账号设置</view>
 
-        <view class="setting-item" @click="navigateTo('personal-info')">
+        <view class="setting-item" @click="handlePageNavigation('personal-info')">
           <view class="item-icon-wrapper">
             <text class="item-icon">👤</text>
           </view>
@@ -29,26 +29,26 @@
           <text class="item-arrow">→</text>
         </view>
 
-        <view class="setting-item" @click="navigateTo('security')">
+        <view class="setting-item is-disabled">
           <view class="item-icon-wrapper">
             <text class="item-icon">🔒</text>
           </view>
           <view class="item-content">
             <text class="item-label">账号安全</text>
-            <text class="item-value">已保护</text>
+            <text class="item-value">即将上线</text>
           </view>
-          <text class="item-arrow">→</text>
+          <text class="item-arrow">敬请期待</text>
         </view>
 
-        <view class="setting-item" @click="navigateTo('binding')">
+        <view class="setting-item is-disabled">
           <view class="item-icon-wrapper">
             <text class="item-icon">🔗</text>
           </view>
           <view class="item-content">
             <text class="item-label">账号绑定</text>
-            <text class="item-value">已绑定微信</text>
+            <text class="item-value">即将上线</text>
           </view>
-          <text class="item-arrow">→</text>
+          <text class="item-arrow">敬请期待</text>
         </view>
       </view>
 
@@ -86,15 +86,15 @@
           />
         </view>
 
-        <view class="setting-item" @click="navigateTo('notification-time')">
+        <view class="setting-item is-disabled">
           <view class="item-icon-wrapper">
             <text class="item-icon">⏰</text>
           </view>
           <view class="item-content">
             <text class="item-label">免打扰时段</text>
-            <text class="item-value">22:00 - 08:00</text>
+            <text class="item-value">即将上线</text>
           </view>
-          <text class="item-arrow">→</text>
+          <text class="item-arrow">敬请期待</text>
         </view>
       </view>
 
@@ -132,15 +132,15 @@
           />
         </view>
 
-        <view class="setting-item" @click="navigateTo('blacklist')">
+        <view class="setting-item is-disabled">
           <view class="item-icon-wrapper">
             <text class="item-icon">🚫</text>
           </view>
           <view class="item-content">
             <text class="item-label">黑名单</text>
-            <text class="item-value" v-if="blacklistCount > 0">{{ blacklistCount }}人</text>
+            <text class="item-value">即将上线</text>
           </view>
-          <text class="item-arrow">→</text>
+          <text class="item-arrow">敬请期待</text>
         </view>
       </view>
 
@@ -158,20 +158,20 @@
           </view>
           <switch
             :checked="settings.darkMode"
-            @change="toggleSetting('darkMode')"
+            disabled
             color="#FF6B35"
           />
         </view>
 
-        <view class="setting-item" @click="navigateTo('language')">
+        <view class="setting-item is-disabled">
           <view class="item-icon-wrapper">
             <text class="item-icon">🌐</text>
           </view>
           <view class="item-content">
             <text class="item-label">语言</text>
-            <text class="item-value">简体中文</text>
+            <text class="item-value">简体中文（固定）</text>
           </view>
-          <text class="item-arrow">→</text>
+          <text class="item-arrow">暂不支持切换</text>
         </view>
 
         <view class="setting-item" @click="clearCache">
@@ -190,7 +190,7 @@
       <view class="settings-section">
         <view class="section-title">其他</view>
 
-        <view class="setting-item" @click="navigateTo('feedback')">
+        <view class="setting-item" @click="handlePageNavigation('feedback')">
           <view class="item-icon-wrapper">
             <text class="item-icon">✉️</text>
           </view>
@@ -200,7 +200,7 @@
           <text class="item-arrow">→</text>
         </view>
 
-        <view class="setting-item" @click="navigateTo('about')">
+        <view class="setting-item" @click="handlePageNavigation('about')">
           <view class="item-icon-wrapper">
             <text class="item-icon">ℹ️</text>
           </view>
@@ -272,13 +272,24 @@ const blacklistCount = ref(0)
 // 缓存大小
 const cacheSize = ref('23.5MB')
 
+const implementedPages = new Set(['personal-info', 'feedback', 'about'])
+
 /**
  * 编辑个人资料
  */
 const editProfile = () => {
   uni.navigateTo({
-    url: '/pages/user-center/edit'
+    url: '/pages-user/profile/user-center/edit/index'
   })
+}
+
+const isImplementedPage = (page) => implementedPages.has(page)
+
+const handlePageNavigation = (page) => {
+  if (!isImplementedPage(page)) {
+    return
+  }
+  navigateTo(page)
 }
 
 /**
@@ -286,14 +297,9 @@ const editProfile = () => {
  */
 const navigateTo = (page) => {
   const pageMap = {
-    'personal-info': '/pages/settings/personal-info',
-    'security': '/pages/settings/security',
-    'binding': '/pages/settings/binding',
-    'notification-time': '/pages/settings/notification-time',
-    'blacklist': '/pages/settings/blacklist',
-    'language': '/pages/settings/language',
-    'feedback': '/pages/feedback/index',
-    'about': '/pages/about/index'
+    'personal-info': '/pages-user/profile/user-center/edit/index',
+    'feedback': '/pages-user/feedback/index',
+    'about': '/pages-user/profile/about'
   }
 
   const path = pageMap[page]
@@ -666,6 +672,17 @@ onMounted(() => {
     padding-left: $spacing-md;
     padding-right: $spacing-md;
   }
+
+  &.is-disabled {
+    opacity: 0.7;
+  }
+
+  &.is-disabled:active {
+    background-color: transparent;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 .item-icon-wrapper {
@@ -715,6 +732,11 @@ onMounted(() => {
   color: $text-color-placeholder;
   margin-left: $spacing-sm;
   flex-shrink: 0;
+  text-align: right;
+}
+
+.setting-item.is-disabled .item-arrow {
+  font-size: $font-size-xs;
 }
 
 .item-action {

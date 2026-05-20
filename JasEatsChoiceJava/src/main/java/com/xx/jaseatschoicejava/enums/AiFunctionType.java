@@ -7,7 +7,7 @@ import lombok.Getter;
  * AI工具函数类型枚举
  * 用于Function Calling功能，替代硬编码的字符串
  *
- * @author Claude
+
  * @since 2026-03-13
  */
 @Getter

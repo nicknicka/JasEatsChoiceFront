@@ -17,8 +17,25 @@ export const processImageUrl = (url) => {
     return url || ''
   }
 
+  // 外部占位图在小程序里不稳定，统一交给页面层回退到本地默认图
+  if (url.includes('via.placeholder.com')) {
+    return ''
+  }
+
   // 如果已经是完整URL（http/https开头），直接返回
-  if (url.startsWith('http://') || url.startsWith('https://')) {
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('data:') ||
+    url.startsWith('blob:') ||
+    url.startsWith('wxfile://') ||
+    url.startsWith('file://')
+  ) {
+    return url
+  }
+
+  // 小程序本地静态资源不能拼接后端域名
+  if (url.startsWith('/static/')) {
     return url
   }
 

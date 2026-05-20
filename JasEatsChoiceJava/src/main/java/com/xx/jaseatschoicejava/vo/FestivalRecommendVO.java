@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * 节日推荐VO
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Data

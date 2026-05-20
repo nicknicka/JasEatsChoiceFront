@@ -1,6 +1,9 @@
 import { AMAP_CONFIG } from '../config'
 
 let amapLoadPromise = null
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+const HIGH_ACCURACY_TIMEOUT_MS = 8000
+const TRUSTED_CACHE_SOURCES = ['gps', 'manual', 'search']
 
 const getAmapGlobal = () => {
   if (typeof window === 'undefined') {
@@ -47,7 +50,7 @@ export const loadAMapSDK = () => {
     }
 
     const script = document.createElement('script')
-    script.src = `https://webapi.amap.com/maps?v=1.4.15&key=${AMAP_CONFIG.key}&plugin=AMap.Scale,AMap.ToolBar,AMap.Geocoder,AMap.PlaceSearch,AMap.Geolocation,AMap.CitySearch`
+    script.src = `https://webapi.amap.com/maps?v=1.4.15&key=${AMAP_CONFIG.key}&plugin=AMap.Scale,AMap.ToolBar,AMap.Geocoder,AMap.PlaceSearch,AMap.CitySearch`
     script.type = 'text/javascript'
 
     const timeout = setTimeout(() => {
@@ -121,7 +124,22 @@ const reverseGeocode = async ({ lng, lat, AMap }) => {
 
 const getIpLocationFromBackend = async (clientIp = null) => {
   const locationApi = (await import('../api/location.js')).default
-  return locationApi.ipLocation(clientIp)
+  let finalIp = clientIp
+
+  if (!finalIp) {
+    try {
+      const { resolveAndStorePublicIp } = await import('../utils/publicIp')
+      finalIp = await resolveAndStorePublicIp()
+    } catch (error) {
+      console.warn('自动获取公网IP失败:', error.message)
+    }
+  }
+
+  if (!finalIp) {
+    finalIp = getClientIpCandidate()
+  }
+
+  return locationApi.ipLocation(finalIp)
 }
 
 const getClientIpCandidate = () => {
@@ -223,6 +241,61 @@ const getCitySearchFallback = async ({ AMap }) => {
   return null
 }
 
+const toNumberOrNull = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
+
+  const num = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(num) ? num : null
+}
+
+const normalizeLocationPayload = (payload) => {
+  if (!payload || typeof payload !== 'object') {
+    return {
+      lng: null,
+      lat: null,
+      province: '',
+      city: '',
+      address: '',
+      accuracy: ''
+    }
+  }
+
+  return {
+    lng: toNumberOrNull(payload.lng ?? payload.longitude),
+    lat: toNumberOrNull(payload.lat ?? payload.latitude),
+    province: payload.province || '',
+    city: payload.city || '',
+    address: payload.address || payload.formattedAddress || '',
+    accuracy: payload.accuracy || ''
+  }
+}
+
+const shouldUseCachedLocation = (lastLocation, allowedSources = TRUSTED_CACHE_SOURCES) => {
+  if (!lastLocation) {
+    return false
+  }
+
+  const source = typeof lastLocation.source === 'string' ? lastLocation.source : ''
+  if (!allowedSources.includes(source)) {
+    return false
+  }
+
+  const lng = toNumberOrNull(lastLocation.lng)
+  const lat = toNumberOrNull(lastLocation.lat)
+  if (lng === null || lat === null) {
+    return false
+  }
+
+  const cacheTime = Number(lastLocation.timestamp)
+  if (!Number.isFinite(cacheTime)) {
+    return false
+  }
+
+  return Date.now() - cacheTime <= ONE_DAY_MS
+}
+
 export const resolveAmapAddress = async ({ lng, lat, AMap = getAmapGlobal() }) => {
   if (lng == null || lat == null) {
     return ''
@@ -237,85 +310,43 @@ export const resolveAmapLocation = async ({
   defaultPosition,
   clientIp = null,
   preferCacheFirst = true,
+  cacheSources = TRUSTED_CACHE_SOURCES,
+  useHighAccuracy = false,
   AMap = getAmapGlobal()
 } = {}) => {
+  let highAccuracyError = ''
+
   if (preferCacheFirst && typeof getLastLocation === 'function') {
     const lastLocation = getLastLocation()
-    if (lastLocation?.lng && lastLocation?.lat) {
-      const address = await reverseGeocode({ lng: lastLocation.lng, lat: lastLocation.lat, AMap })
-      return {
-        lng: lastLocation.lng,
-        lat: lastLocation.lat,
-        province: '',
-        city: '',
-        address,
-        source: lastLocation.source || 'cache',
-        hasLocation: true
-      }
-    }
-  }
-
-  try {
-    const effectiveIp = clientIp || getClientIpCandidate()
-    const response = await getIpLocationFromBackend(effectiveIp)
-
-    if (response && response.code === '200' && response.data) {
-      const { lng, lat, province, city, accuracy } = response.data
-
-      if (lng && lat) {
-        const address = await reverseGeocode({ lng, lat, AMap })
-        if (typeof saveLastLocation === 'function') {
-          saveLastLocation(lng, lat, 'ip')
-        }
-
+    if (shouldUseCachedLocation(lastLocation, cacheSources)) {
+      const lastLng = toNumberOrNull(lastLocation.lng)
+      const lastLat = toNumberOrNull(lastLocation.lat)
+      if (lastLng !== null && lastLat !== null) {
+        const address = await reverseGeocode({ lng: lastLocation.lng, lat: lastLocation.lat, AMap })
         return {
-          lng,
-          lat,
-          province: province || '',
-          city: city || '',
+          lng: lastLng,
+          lat: lastLat,
+          province: '',
+          city: '',
           address,
-          source: 'ip',
-          accuracy: accuracy || 'city',
+          source: lastLocation.source || 'cache',
+          accuracy: lastLocation.accuracy || lastLocation.source || 'cache',
+          reason: '',
           hasLocation: true
         }
       }
-
-      if (province || city) {
-        const fallbackAddress = city || province
-        const geocodeResult = await geocodeAddress({ address: fallbackAddress, AMap })
-
-        if (geocodeResult?.lng && geocodeResult?.lat) {
-          const address = await reverseGeocode({ lng: geocodeResult.lng, lat: geocodeResult.lat, AMap })
-          if (typeof saveLastLocation === 'function') {
-            saveLastLocation(geocodeResult.lng, geocodeResult.lat, 'ip')
-          }
-
-          return {
-            lng: geocodeResult.lng,
-            lat: geocodeResult.lat,
-            province: province || '',
-            city: city || '',
-            address,
-            source: 'ip',
-            accuracy: 'city',
-            hasLocation: true
-          }
-        }
-      }
     }
-  } catch (error) {
-    console.log('IP 定位失败，尝试其他方式:', error.message)
   }
 
-  if (AMap && AMap.Geolocation) {
+  if (useHighAccuracy && AMap && AMap.Geolocation) {
     try {
       const position = await new Promise((resolve, reject) => {
         const geolocation = new AMap.Geolocation({
           enableHighAccuracy: true,
-          timeout: 15000,
+          timeout: HIGH_ACCURACY_TIMEOUT_MS,
           zoomToAccuracy: true,
-          GeoLocationFirst: false,
-          noIpLocate: 0,
+          GeoLocationFirst: true,
+          noIpLocate: 1,
           noGeoLocation: 0,
           needAddress: false,
           extensions: 'base'
@@ -344,19 +375,66 @@ export const resolveAmapLocation = async ({
         address,
         source: 'gps',
         accuracy: 'gps',
+        reason: '',
         hasLocation: true
       }
     } catch (error) {
-      console.log('定位失败，继续其他方式:', error.message)
+      highAccuracyError = error.message || '系统精确定位不可用'
+      console.info('系统精确定位不可用，继续使用粗定位兜底:', highAccuracyError)
     }
+  }
+
+  try {
+    const effectiveIp = clientIp || getClientIpCandidate()
+    const response = await getIpLocationFromBackend(effectiveIp)
+
+    if (response && response.code === '200' && response.data) {
+      const ipLocation = normalizeLocationPayload(response.data)
+
+      if (ipLocation.lng !== null && ipLocation.lat !== null) {
+        const address = await reverseGeocode({ lng: ipLocation.lng, lat: ipLocation.lat, AMap })
+
+        return {
+          lng: ipLocation.lng,
+          lat: ipLocation.lat,
+          province: ipLocation.province || '',
+          city: ipLocation.city || '',
+          address: ipLocation.address || address || '',
+          source: 'ip',
+          accuracy: ipLocation.accuracy || 'city',
+          reason: highAccuracyError,
+          hasLocation: true
+        }
+      }
+
+      if (ipLocation.province || ipLocation.city) {
+        const fallbackAddress = ipLocation.city || ipLocation.province
+        const geocodeResult = await geocodeAddress({ address: fallbackAddress, AMap })
+
+        if (geocodeResult?.lng && geocodeResult?.lat) {
+          const address = await reverseGeocode({ lng: geocodeResult.lng, lat: geocodeResult.lat, AMap })
+
+          return {
+            lng: geocodeResult.lng,
+            lat: geocodeResult.lat,
+            province: ipLocation.province || '',
+            city: ipLocation.city || '',
+            address,
+            source: 'ip',
+            accuracy: 'city',
+            reason: highAccuracyError,
+            hasLocation: true
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.log('IP 定位失败，尝试其他方式:', error.message)
   }
 
   const cityFallback = await getCitySearchFallback({ AMap })
   if (cityFallback?.lng && cityFallback?.lat) {
     const address = await reverseGeocode({ lng: cityFallback.lng, lat: cityFallback.lat, AMap })
-    if (typeof saveLastLocation === 'function') {
-      saveLastLocation(cityFallback.lng, cityFallback.lat, cityFallback.source || 'city-fallback')
-    }
 
     return {
       lng: cityFallback.lng,
@@ -366,6 +444,7 @@ export const resolveAmapLocation = async ({
       address,
       source: cityFallback.source || 'city-fallback',
       accuracy: 'city',
+      reason: highAccuracyError,
       hasLocation: true
     }
   }
@@ -380,6 +459,7 @@ export const resolveAmapLocation = async ({
       address,
       source: 'default',
       accuracy: 'default',
+      reason: highAccuracyError,
       hasLocation: true
     }
   }

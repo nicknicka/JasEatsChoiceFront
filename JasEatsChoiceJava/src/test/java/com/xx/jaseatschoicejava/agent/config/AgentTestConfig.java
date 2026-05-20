@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  * Agent测试配置类
  * 为测试提供所有Agent和工具的Bean
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Configuration

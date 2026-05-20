@@ -27,6 +27,7 @@
             circle
             size="small"
             @click="toggleSearch"
+            class="header-icon-btn"
             :class="{ 'is-active': showSearch }"
           />
         </el-tooltip>
@@ -54,7 +55,7 @@
 
       <!-- 更多操作下拉菜单 -->
       <el-dropdown trigger="click" @command="handleCommand">
-        <el-button :icon="MoreFilled" circle size="small" />
+        <el-button :icon="MoreFilled" circle size="small" class="header-icon-btn" />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="search">
@@ -81,6 +82,7 @@
             circle
             size="small"
             type="primary"
+            class="header-icon-btn order-shortcut"
             v-if="!hasGroupOrder"
             @click="handleCreateGroupOrder"
           />
@@ -90,6 +92,7 @@
             :icon="InfoFilled"
             circle
             size="small"
+            class="header-icon-btn"
             @click="$emit('show-group-detail')"
           />
         </el-tooltip>
@@ -160,16 +163,19 @@ const handleCreateGroupOrder = () => {
 </script>
 
 <style scoped lang="less">
+@import '../../assets/css/nordic-theme.less';
+
 .chat-area-header {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-bottom: 1px solid #e8ecef;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
-  transition: all 0.3s ease;
+  padding: 14px 18px;
+  background:
+    linear-gradient(180deg, #fffdfb 0%, #fbf7f1 100%);
+  border-bottom: 1px solid @nordic-border;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.6);
+  transition: all @nordic-transition-base ease;
 
   .conversation-info {
     display: flex;
@@ -183,14 +189,16 @@ const handleCreateGroupOrder = () => {
     .conversation-avatar {
       width: 42px;
       height: 42px;
-      border-radius: 8px;
+      border-radius: 14px;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
-      transition: all 0.3s ease;
+      background:
+        radial-gradient(circle at 28% 28%, #f6fbf5 0%, #e5efe6 56%, #d4e2d6 100%);
+      border: 1px solid fade(@nordic-green, 20%);
+      box-shadow: 0 10px 18px rgba(76, 122, 77, 0.08);
+      transition: all @nordic-transition-base ease;
       flex-shrink: 0;
 
       img {
@@ -200,12 +208,12 @@ const handleCreateGroupOrder = () => {
       }
 
       span {
-        font-size: 1.286rem /* 原值: 18px */;
+        font-size: 18px;
       }
 
       &:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 14px 24px rgba(76, 122, 77, 0.12);
       }
     }
 
@@ -216,28 +224,28 @@ const handleCreateGroupOrder = () => {
       min-width: 0;
       flex: 1;
 
-      .name-row {
-        display: flex;
-        align-items: center;
-        gap: 6px;
+        .name-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
 
-        .name {
-          font-size: 1.071rem /* 原值: 15px */;
-          font-weight: 600;
-          color: #1a1a1a;
-          letter-spacing: 0.2px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          max-width: 200px;
-        }
+          .name {
+            font-size: @nordic-text-md;
+            font-weight: 700;
+            color: @nordic-text;
+            letter-spacing: @nordic-letter-tight;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+          }
 
-        .member-count {
-          font-size: 0.857rem /* 原值: 12px */;
-          color: #8b949e;
-          font-weight: 500;
-          flex-shrink: 0;
-        }
+          .member-count {
+            font-size: @nordic-text-sm;
+            color: @nordic-text-muted;
+            font-weight: 500;
+            flex-shrink: 0;
+          }
       }
 
     }
@@ -248,6 +256,40 @@ const handleCreateGroupOrder = () => {
     align-items: center;
     gap: 8px;
 
+    .header-icon-btn {
+      border: 1px solid @nordic-border;
+      background: rgba(255, 255, 255, 0.9);
+      color: @nordic-text-secondary;
+      box-shadow: 0 8px 16px rgba(105, 78, 57, 0.06);
+      transition: all @nordic-transition-fast ease;
+
+      &:hover {
+        color: @nordic-accent-dark;
+        border-color: fade(@nordic-accent, 35%);
+        background: #fff9f4;
+        box-shadow: 0 12px 20px fade(@nordic-accent, 14%);
+        transform: translateY(-1px);
+      }
+
+      &.is-active {
+        color: @nordic-accent-dark;
+        border-color: fade(@nordic-accent, 38%);
+        background: #f9ede4;
+      }
+    }
+
+    .order-shortcut {
+      background: linear-gradient(180deg, @nordic-accent 0%, @nordic-accent-dark 100%);
+      border-color: transparent;
+      color: @nordic-surface;
+
+      &:hover {
+        color: @nordic-surface;
+        border-color: transparent;
+        background: linear-gradient(180deg, lighten(@nordic-accent, 4%) 0%, @nordic-accent-dark 100%);
+      }
+    }
+
     .search-button-wrapper {
       position: relative;
       display: flex;
@@ -255,32 +297,15 @@ const handleCreateGroupOrder = () => {
     }
 
     .pinned-tag {
-      font-size: 0.857rem /* 原值: 12px */;
+      font-size: @nordic-text-sm;
       padding: 2px 8px;
       height: 22px;
       line-height: 18px;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-
-    :deep(.el-button) {
-      border: 1px solid #e8ecef;
-      background: #ffffff;
-      color: #5a6c7d;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-      &:hover {
-        border-color: #667eea;
-        color: #667eea;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(102, 126, 234, 0.15);
-      }
-
-      &.is-active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-color: #667eea;
-        color: #fff;
-      }
+      border-radius: 999px;
+      font-weight: 600;
+      border-color: fade(@nordic-yellow, 28%);
+      color: @nordic-yellow-dark;
+      background: @nordic-yellow-light;
     }
 
     .group-quick-actions {
@@ -288,7 +313,7 @@ const handleCreateGroupOrder = () => {
       gap: 8px;
       margin-left: 8px;
       padding-left: 8px;
-      border-left: 2px solid #e8ecef;
+      border-left: 1px solid @nordic-border;
     }
   }
 
@@ -307,15 +332,15 @@ const handleCreateGroupOrder = () => {
   .search-panel {
     :deep(.el-input) {
       .el-input__wrapper {
-        border-radius: 10px;
-        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
+        border-radius: 12px;
+        box-shadow: 0 12px 24px rgba(94, 70, 48, 0.08);
+        border: 1px solid @nordic-border;
+        transition: all @nordic-transition-fast ease;
 
         &:hover,
         &.is-focus {
-          border-color: #667eea;
-          box-shadow: 0 2px 10px rgba(102, 126, 234, 0.12);
+          border-color: fade(@nordic-accent, 35%);
+          box-shadow: 0 14px 28px fade(@nordic-accent, 14%);
         }
       }
     }

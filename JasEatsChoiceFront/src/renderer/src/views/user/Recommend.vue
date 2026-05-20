@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import CommonLocationPicker from '../../components/CommonLocationPicker.vue'
 import CommonWeatherWidget from '../../components/CommonWeatherWidget.vue'
 import { useRouter } from 'vue-router'
@@ -52,6 +52,7 @@ const handleLocationErrorFromPicker = (error) => {
 
 // 天气相关
 const weatherWidget = ref(null)
+const failedImageDishIds = ref(new Set())
 
 // UI状态
 const showFilters = ref(false)
@@ -134,6 +135,21 @@ const openNutritionDetail = (item) => {
   showNutritionDetail.value = item
 }
 
+const getDishKey = (item) => String(item?.dishId || item?.id || item?.name || '')
+
+const canShowDishImage = (item) => {
+  if (!item?.image) {
+    return false
+  }
+  return !failedImageDishIds.value.has(getDishKey(item))
+}
+
+const handleImageError = (item) => {
+  const nextFailedIds = new Set(failedImageDishIds.value)
+  nextFailedIds.add(getDishKey(item))
+  failedImageDishIds.value = nextFailedIds
+}
+
 // 格式化分数显示（直接使用后端返回的百分比值）
 const formatScore = (score) => {
   // 如果 score 已经是百分比格式（大于 1），直接使用
@@ -157,6 +173,10 @@ const getScoreLevel = (score) => {
 onMounted(async () => {
   await loadAllRecommendations()
   initFavorites()
+})
+
+watch(recommendations, () => {
+  failedImageDishIds.value = new Set()
 })
 </script>
 
@@ -288,7 +308,13 @@ onMounted(async () => {
         <!-- 卡片顶部：图片 + 信息 -->
         <div class="item-top">
           <div class="item-image">
-            <img v-if="item.image" :src="item.image" :alt="item.name" loading="lazy" />
+            <img
+              v-if="canShowDishImage(item)"
+              :src="item.image"
+              :alt="item.name"
+              loading="lazy"
+              @error="handleImageError(item)"
+            />
             <span v-else class="img-placeholder">{{ item.name?.charAt(0) || '?' }}</span>
           </div>
           <div class="item-info">

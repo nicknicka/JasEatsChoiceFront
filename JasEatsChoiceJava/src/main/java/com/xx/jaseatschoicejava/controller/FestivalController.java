@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * 节日推荐控制器
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @RestController

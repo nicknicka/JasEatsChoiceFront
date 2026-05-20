@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  * - ```JSON\n{...}\n```
  * - ```\n{...}\n```
  *
- * @author Claude
+
  * @since 2026-04-03
  */
 public class MarkdownStrippingChatModel implements ChatModel {

@@ -122,12 +122,29 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useCartStore } from '@/store'
+import { createPageDebug } from '@/utils/page-debug'
+import { HOME, USER_ORDER_CONFIRM } from '@/constants/routes'
 
 // Store
 const cartStore = useCartStore()
+const pageDebug = createPageDebug('购物车')
+const DEFAULT_MERCHANT_IMAGE = '/static/images/default-merchant.png'
+const DEFAULT_DISH_IMAGE = '/static/images/default-dish.png'
 
 // 购物车列表（按商家分组）
 const cartList = ref([])
+
+const normalizeImage = (src, fallback) => {
+  if (!src || typeof src !== 'string') {
+    return fallback
+  }
+
+  if (src.includes('via.placeholder.com')) {
+    return fallback
+  }
+
+  return src
+}
 
 // 计算属性
 const allSelected = computed(() => {
@@ -187,37 +204,50 @@ const totalPackingFee = computed(() => {
  * 加载购物车数据
  */
 const loadCartData = () => {
+  pageDebug.requestStart('加载购物车数据')
   // 从store获取购物车数据
   const carts = cartStore.carts
 
   // 转换为按商家分组的格式
-  const list = Object.keys(carts).map(merchantId => {
-    const merchantData = carts[merchantId]
+  const list = carts.map((merchantData) => {
     return {
-      merchantId,
+      merchantId: merchantData.merchantId,
       merchant: {
-        id: merchantId,
-        name: '老王家常菜', // TODO: 从商家信息获取
-        logo: 'https://via.placeholder.com/200x200/FF6B35/FFFFFF?text=老王'
+        id: merchantData.merchantId,
+        name: merchantData.merchantName || '商家',
+        logo: normalizeImage(merchantData.merchantLogo, DEFAULT_MERCHANT_IMAGE)
       },
       selected: false,
       editing: false,
       items: merchantData.items.map(item => ({
-        dish: item,
+        dish: {
+          id: item.dishId,
+          name: item.name,
+          price: item.price,
+          image: normalizeImage(item.image, DEFAULT_DISH_IMAGE)
+        },
         quantity: item.quantity,
-        spec: '',
+        spec: item.spec || '',
         selected: false
       }))
     }
   })
 
   cartList.value = list
+  pageDebug.requestSuccess('加载购物车数据', {
+    merchantCount: cartList.value.length,
+    selectedCount: selectedCount.value
+  })
 }
 
 /**
  * 商家选择
  */
 const handleMerchantSelect = (merchantId, e) => {
+  pageDebug.action('勾选商家', {
+    merchantId,
+    checked: e.detail.value.length > 0
+  })
   const checked = e.detail.value.length > 0
   const group = cartList.value.find(g => g.merchantId === merchantId)
 
@@ -233,6 +263,11 @@ const handleMerchantSelect = (merchantId, e) => {
  * 商品选择
  */
 const handleDishSelect = (merchantId, dishId, e) => {
+  pageDebug.action('勾选商品', {
+    merchantId,
+    dishId,
+    checked: e.detail.value.length > 0
+  })
   const checked = e.detail.value.length > 0
   const group = cartList.value.find(g => g.merchantId === merchantId)
 
@@ -251,6 +286,9 @@ const handleDishSelect = (merchantId, dishId, e) => {
  * 全选
  */
 const handleSelectAll = (e) => {
+  pageDebug.action('购物车全选', {
+    checked: e.detail.value.length > 0
+  })
   const checked = e.detail.value.length > 0
 
   cartList.value.forEach(group => {
@@ -270,9 +308,14 @@ const increaseQuantity = (merchantId, dishId) => {
     const item = group.items.find(i => i.dish.id === dishId)
     if (item) {
       item.quantity++
+      pageDebug.state('增加购物车商品数量', {
+        merchantId,
+        dishId,
+        quantity: item.quantity
+      })
 
       // 更新store
-      cartStore.updateQuantity(merchantId, dishId, item.quantity)
+      cartStore.updateQuantity(merchantId, dishId, item.spec || '', item.quantity)
     }
   }
 }
@@ -286,9 +329,14 @@ const decreaseQuantity = (merchantId, dishId) => {
     const item = group.items.find(i => i.dish.id === dishId)
     if (item && item.quantity > 1) {
       item.quantity--
+      pageDebug.state('减少购物车商品数量', {
+        merchantId,
+        dishId,
+        quantity: item.quantity
+      })
 
       // 更新store
-      cartStore.updateQuantity(merchantId, dishId, item.quantity)
+      cartStore.updateQuantity(merchantId, dishId, item.spec || '', item.quantity)
     }
   }
 }
@@ -297,6 +345,10 @@ const decreaseQuantity = (merchantId, dishId) => {
  * 删除商品
  */
 const deleteItem = (merchantId, dishId) => {
+  pageDebug.action('删除购物车商品', {
+    merchantId,
+    dishId
+  })
   uni.showModal({
     title: '提示',
     content: '确定要删除这个商品吗？',
@@ -306,6 +358,7 @@ const deleteItem = (merchantId, dishId) => {
         if (group) {
           const index = group.items.findIndex(i => i.dish.id === dishId)
           if (index > -1) {
+            const removedItem = group.items[index]
             group.items.splice(index, 1)
 
             // 如果该商家没有商品了，移除整个分组
@@ -315,7 +368,7 @@ const deleteItem = (merchantId, dishId) => {
             }
 
             // 更新store
-            cartStore.removeFromCart(merchantId, dishId)
+            cartStore.removeFromCart(merchantId, dishId, removedItem?.spec || '')
           }
         }
 
@@ -335,6 +388,10 @@ const editMerchant = (merchantId) => {
   const group = cartList.value.find(g => g.merchantId === merchantId)
   if (group) {
     group.editing = !group.editing
+    pageDebug.state('切换商家编辑态', {
+      merchantId,
+      editing: group.editing
+    })
   }
 }
 
@@ -342,8 +399,9 @@ const editMerchant = (merchantId) => {
  * 去购物
  */
 const goShopping = () => {
+  pageDebug.action('购物车去逛逛')
   uni.switchTab({
-    url: '/pages/index/index'
+    url: HOME
   })
 }
 
@@ -351,7 +409,12 @@ const goShopping = () => {
  * 提交订单
  */
 const submitOrder = () => {
+  pageDebug.action('提交购物车订单', {
+    selectedCount: selectedCount.value,
+    merchantCount: cartList.value.length
+  })
   if (selectedCount.value === 0) {
+    pageDebug.anomaly('购物车结算被未选商品拦截')
     uni.showToast({
       title: '请先选择商品',
       icon: 'none'
@@ -389,9 +452,14 @@ const submitOrder = () => {
 
     // 跳转到订单确认页
     uni.navigateTo({
-      url: '/order/confirm/index'
+      url: USER_ORDER_CONFIRM
+    })
+    pageDebug.requestSuccess('提交购物车订单-准备结算数据', {
+      itemCount: selectedItems.length,
+      totalPrice: totalPrice.value
     })
   } catch (error) {
+    pageDebug.requestFail('提交购物车订单-准备结算数据', error)
     console.error('准备订单数据失败:', error)
     uni.showToast({
       title: '订单数据准备失败',
@@ -402,6 +470,7 @@ const submitOrder = () => {
 
 // 组件挂载时加载数据
 onMounted(() => {
+  pageDebug.lifecycle('页面挂载')
   loadCartData()
 })
 </script>

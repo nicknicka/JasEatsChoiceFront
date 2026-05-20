@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 内容提取服务接口
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 public interface ContentExtractionService {

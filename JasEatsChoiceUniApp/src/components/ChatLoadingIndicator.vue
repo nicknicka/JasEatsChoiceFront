@@ -6,7 +6,7 @@
  * - 连接中、思考中、流式输出
  * - 流畅的动画效果
  *
- * @author Claude
+
  * @date 2026-03-31
  */
 
@@ -70,6 +70,7 @@ const props = defineProps({
 
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
+@import '@/styles/mixins.scss';
 
 .loading-indicator {
 	@include flex-center-column;

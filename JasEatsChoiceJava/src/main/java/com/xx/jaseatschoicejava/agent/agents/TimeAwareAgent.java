@@ -9,7 +9,7 @@ import dev.langchain4j.service.UserMessage;
  *
  * 专注于时间相关的服务和推荐
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 public interface TimeAwareAgent {

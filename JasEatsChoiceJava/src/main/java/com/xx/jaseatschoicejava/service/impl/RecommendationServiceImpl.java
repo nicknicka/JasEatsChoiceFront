@@ -62,7 +62,8 @@ public class RecommendationServiceImpl implements RecommendationService {
 
         String userId = request.getUserId();
         int limit = request.getLimit() != null ? request.getLimit() : 20;
-        Map<String, Object> context = request.getContext() != null ? request.getContext() : new HashMap<>();
+        Map<String, Object> context = request.getContext() != null ? new HashMap<>(request.getContext()) : new HashMap<>();
+        context.putIfAbsent("timePeriod", getCurrentTimePeriod());
 
         // 1. 获取用户画像
         UserProfile profile = userProfileService.getUserProfile(userId);
@@ -86,8 +87,11 @@ public class RecommendationServiceImpl implements RecommendationService {
         // 5. 多样性处理
         List<Dish> diversifiedDishes = ensureDiversity(rankedDishes, limit);
 
+        // 5.1 结果不足时按用户偏好和时段补齐，避免推荐列表过短
+        List<Dish> completedDishes = fillRemainingDishes(diversifiedDishes, profile, context, limit, frequentlyRejectedDishIds);
+
         // 6. 转换为DTO并生成推荐理由
-        List<RecommendationResultDTO> results = convertToDTO(diversifiedDishes, profile, context);
+        List<RecommendationResultDTO> results = convertToDTO(completedDishes, profile, context);
 
         // 7. 记录推荐日志
         saveRecommendationLog(userId, results);
@@ -293,6 +297,9 @@ public class RecommendationServiceImpl implements RecommendationService {
         // 基于偏好标签匹配，并过滤掉被拒绝的菜品
         List<Dish> matchedDishes = allDishes.stream()
                 .filter(dish -> {
+                    if (!Boolean.TRUE.equals(dish.getStatus())) {
+                        return false;
+                    }
                     // 过滤被拒绝的菜品
                     if (rejectedDishIds != null && rejectedDishIds.contains(String.valueOf(dish.getId()))) {
                         return false;
@@ -543,6 +550,84 @@ public class RecommendationServiceImpl implements RecommendationService {
         return result.stream()
                 .limit(limit)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 在主召回结果不足时补齐推荐，避免前端长期只展示极少数菜品
+     */
+    private List<Dish> fillRemainingDishes(List<Dish> dishes, UserProfile profile,
+                                           Map<String, Object> context, int limit,
+                                           List<String> rejectedDishIds) {
+        int targetCount = Math.min(limit, 6);
+        if (dishes.size() >= targetCount) {
+            return dishes.stream()
+                    .limit(limit)
+                    .collect(Collectors.toList());
+        }
+
+        Set<String> existingDishIds = dishes.stream()
+                .map(dish -> String.valueOf(dish.getId()))
+                .collect(Collectors.toSet());
+        String preferredCategory = getTopPreferenceCategory(profile);
+        String timePeriod = (String) context.get("timePeriod");
+
+        List<Dish> fallbackDishes = dishMapper.selectList(null).stream()
+                .filter(dish -> Boolean.TRUE.equals(dish.getStatus()))
+                .filter(dish -> !existingDishIds.contains(String.valueOf(dish.getId())))
+                .filter(dish -> rejectedDishIds == null || !rejectedDishIds.contains(String.valueOf(dish.getId())))
+                .sorted(
+                        Comparator.comparing((Dish dish) -> !matchesPreferredCategory(dish, preferredCategory))
+                                .thenComparing((Dish dish) -> !matchesTimePeriod(dish, timePeriod))
+                                .thenComparing(
+                                        (Dish dish) -> Optional.ofNullable(dish.getOrderCount()).orElse(0),
+                                        Comparator.reverseOrder()
+                                )
+                                .thenComparing(
+                                        (Dish dish) -> Optional.ofNullable(dish.getFavoriteCount()).orElse(0),
+                                        Comparator.reverseOrder()
+                                )
+                                .thenComparing(Dish::getCreateTime, Comparator.nullsLast(Comparator.reverseOrder()))
+                )
+                .collect(Collectors.toList());
+
+        List<Dish> result = new ArrayList<>(dishes);
+        for (Dish fallbackDish : fallbackDishes) {
+            if (result.size() >= targetCount) {
+                break;
+            }
+            result.add(fallbackDish);
+        }
+
+        return result.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    private String getTopPreferenceCategory(UserProfile profile) {
+        if (profile == null || profile.getPreferenceTags() == null || profile.getPreferenceTags().isEmpty()) {
+            return null;
+        }
+
+        return profile.getPreferenceTags().stream()
+                .filter(tag -> tag.getTag() != null && tag.getScore() != null)
+                .max(Comparator.comparing(UserProfile.PreferenceTag::getScore))
+                .map(UserProfile.PreferenceTag::getTag)
+                .orElse(null);
+    }
+
+    private boolean matchesPreferredCategory(Dish dish, String preferredCategory) {
+        return preferredCategory != null && preferredCategory.equals(dish.getCategory());
+    }
+
+    private boolean matchesTimePeriod(Dish dish, String timePeriod) {
+        if (timePeriod == null) {
+            return false;
+        }
+
+        DishFeature feature = dishFeatureService.getDishFeature(String.valueOf(dish.getId()));
+        return feature != null
+                && feature.getTimePeriodTags() != null
+                && feature.getTimePeriodTags().contains(timePeriod);
     }
 
     /**

@@ -192,6 +192,67 @@
         </button>
       </view>
     </uni-popup>
+
+    <uni-popup ref="withdrawPopup" type="bottom">
+      <view class="recharge-popup">
+        <view class="popup-header">
+          <text class="popup-title">余额提现</text>
+          <text class="popup-close" @click="closeWithdrawPopup">×</text>
+        </view>
+
+        <view class="recharge-amount">
+          <text class="amount-label">提现金额</text>
+          <view class="amount-input">
+            <text class="currency-symbol">¥</text>
+            <input
+              class="amount-field"
+              type="digit"
+              v-model="withdrawAmount"
+              placeholder="请输入提现金额"
+            />
+          </view>
+        </view>
+
+        <view class="quick-amounts">
+          <view
+            class="amount-item"
+            v-for="amount in quickAmounts"
+            :key="`withdraw-${amount}`"
+            @click="selectWithdrawAmount(amount)"
+          >
+            <text class="amount-text">{{ amount }}元</text>
+          </view>
+        </view>
+
+        <view class="payment-methods">
+          <text class="methods-title">提现方式</text>
+          <view class="method-list">
+            <view
+              class="method-item"
+              :class="{ active: withdrawMethod === 'wechat' }"
+              @click="selectWithdrawMethod('wechat')"
+            >
+              <text class="method-icon">💚</text>
+              <text class="method-name">微信零钱</text>
+              <view class="method-check" v-if="withdrawMethod === 'wechat'">✓</view>
+            </view>
+            <view
+              class="method-item"
+              :class="{ active: withdrawMethod === 'alipay' }"
+              @click="selectWithdrawMethod('alipay')"
+            >
+              <text class="method-icon">💙</text>
+              <text class="method-name">支付宝</text>
+              <view class="method-check" v-if="withdrawMethod === 'alipay'">✓</view>
+            </view>
+          </view>
+        </view>
+
+        <button class="confirm-btn" @click="confirmWithdraw" :disabled="!withdrawAmount">
+          确认提现
+        </button>
+      </view>
+    </uni-popup>
   </view>
 </template>
 
@@ -227,6 +288,98 @@ const activeTab = ref('all')
 const rechargeAmount = ref('')
 const quickAmounts = [10, 20, 50, 100, 200, 500]
 const paymentMethod = ref('wechat')
+const rechargePopup = ref(null)
+const withdrawPopup = ref(null)
+const withdrawAmount = ref('')
+const withdrawMethod = ref('wechat')
+
+const getCurrentUserId = () => {
+  return userStore.userInfo?.userId || userStore.userInfo?.id || uni.getStorageSync('userId') || ''
+}
+
+const formatAmount = (value) => {
+  const amount = Number(value || 0)
+  return Number.isFinite(amount) ? amount.toFixed(2) : '0.00'
+}
+
+const applyWalletAmount = (walletData) => {
+  const amount = Number(walletData?.balance || 0)
+  const [integer, decimal = '00'] = formatAmount(amount).split('.')
+  balance.value = integer
+  balanceDecimal.value = decimal
+}
+
+const resolveWalletTabType = (tabType) => {
+  if (tabType === 'income') {
+    return 'recharge'
+  }
+  if (tabType === 'expense') {
+    return 'consume'
+  }
+  return 'all'
+}
+
+const resolveTransactionType = (type) => {
+  if (type === 'recharge') {
+    return 'income'
+  }
+  return 'expense'
+}
+
+const resolveTransactionMeta = (type) => {
+  const map = {
+    recharge: { icon: '💰', name: '账户充值' },
+    consume: { icon: '🛒', name: '订单消费' },
+    withdraw: { icon: '🏦', name: '余额提现' },
+    refund: { icon: '↩️', name: '订单退款' },
+    other: { icon: '💳', name: '交易' }
+  }
+
+  return map[type] || map.other
+}
+
+const resolveTransactionStatusText = (status) => {
+  const map = {
+    success: '交易成功',
+    failed: '交易失败'
+  }
+  return map[status] || '交易成功'
+}
+
+const normalizeWalletTransaction = (record) => {
+  const meta = resolveTransactionMeta(record?.type)
+  const amount = Number(record?.amount || 0)
+  const isIncome = record?.type === 'recharge'
+
+  return {
+    id: record?.id || `${record?.type}-${Date.now()}-${Math.random()}`,
+    type: resolveTransactionType(record?.type || 'other'),
+    icon: meta.icon,
+    name: meta.name,
+    amount: Number.isFinite(amount) ? amount : 0,
+    status: record?.status,
+    statusText: resolveTransactionStatusText(record?.status),
+    time: formatTransactionTime(record?.createTime || record?.time),
+    isIncome
+  }
+}
+
+const formatTransactionTime = (value) => {
+  if (!value) {
+    return ''
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  const hour = date.getHours().toString().padStart(2, '0')
+  const minute = date.getMinutes().toString().padStart(2, '0')
+  return `${month}月${day}日 ${hour}:${minute}`
+}
 
 /**
  * 整数和小数部分
@@ -308,12 +461,11 @@ const loadWalletData = async () => {
   }
 
   try {
-    const userId = userStore.userInfo?.userId || userStore.userInfo?.id
+    const userId = getCurrentUserId()
     const res = await walletApi.getInfo({ userId })
-    const amount = parseFloat(res.balance || res.data?.balance || 0).toFixed(2)
-    const parts = amount.split('.')
-    balance.value = parts[0]
-    balanceDecimal.value = parts[1] || '00'
+    if (res.code === 200 || res.code === '200') {
+      applyWalletAmount(res.data || res)
+    }
   } catch (error) {
     console.error('加载钱包数据失败:', error)
   }
@@ -332,20 +484,22 @@ const loadTransactions = async (showLoading = true) => {
   }
 
   try {
-    const userId = userStore.userInfo?.userId || userStore.userInfo?.id
+    const userId = getCurrentUserId()
     const params = {
       userId,
       page: page.value,
       size: pageSize.value
     }
 
-    if (activeTab.value !== 'all') {
-      params.type = activeTab.value === 'income' ? 'recharge' : 'consume'
+    const apiType = resolveWalletTabType(activeTab.value)
+    if (apiType !== 'all') {
+      params.type = apiType
     }
 
     const res = await walletApi.getTransactions(params)
 
-    const list = res.list || res.data?.list || []
+    const rawList = res.list || res.data?.list || []
+    const list = rawList.map((item) => normalizeWalletTransaction(item))
     if (page.value === 1) {
       transactions.value = list
     } else {
@@ -398,25 +552,34 @@ const changeTab = (tab) => {
  * 充值
  */
 const recharge = () => {
+  if (!userStore.isLogin) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none'
+    })
+    return
+  }
+
   rechargeAmount.value = ''
   paymentMethod.value = 'wechat'
-  // 打开充值弹窗
-  uni.showModal({
-    title: '充值',
-    content: '充值功能开发中',
-    showCancel: false
-  })
+  rechargePopup.value?.open()
 }
 
 /**
  * 提现
  */
 const withdraw = () => {
-  uni.showModal({
-    title: '提现',
-    content: '提现功能开发中',
-    showCancel: false
-  })
+  if (!userStore.isLogin) {
+    uni.showToast({
+      title: '请先登录',
+      icon: 'none'
+    })
+    return
+  }
+
+  withdrawAmount.value = ''
+  withdrawMethod.value = 'wechat'
+  withdrawPopup.value?.open()
 }
 
 /**
@@ -461,19 +624,21 @@ const confirmRecharge = async () => {
 
     // U-004: 调用充值API
     const res = await walletApi.recharge({
+      userId: getCurrentUserId(),
       amount: amount,
       paymentMethod: paymentMethod.value
     })
 
     uni.hideLoading()
 
-    if (res.code === 200) {
+    if (res.code === 200 || res.code === '200') {
       // 如果需要支付，跳转到支付页面
       if (res.data && res.data.needPay) {
         // 调起支付
         await handlePayment(res.data)
       } else {
         // 充值成功
+        applyWalletAmount(res.data)
         uni.showToast({
           title: '充值成功',
           icon: 'success'
@@ -481,6 +646,7 @@ const confirmRecharge = async () => {
 
         // 重新加载钱包数据
         await loadWalletData()
+        await loadTransactions(false)
 
         // 关闭弹窗
         closeRechargePopup()
@@ -507,7 +673,7 @@ const handlePayment = async (paymentData) => {
     if (paymentMethod.value === 'wechat') {
       // 微信支付
       const payRes = await walletApi.wechatPay(paymentData)
-      if (payRes.code === 200 && payRes.data) {
+      if ((payRes.code === 200 || payRes.code === '200') && payRes.data) {
         // 调起微信支付
         uni.requestPayment({
           provider: 'wxpay',
@@ -531,9 +697,11 @@ const handlePayment = async (paymentData) => {
     } else if (paymentMethod.value === 'alipay') {
       // 支付宝支付
       const payRes = await walletApi.alipayPay(paymentData)
-      if (payRes.code === 200 && payRes.data) {
+      if ((payRes.code === 200 || payRes.code === '200') && payRes.data) {
         // H5支付跳转
-        window.location.href = payRes.data.payUrl
+        if (typeof window !== 'undefined') {
+          window.location.href = payRes.data.payUrl
+        }
       }
     }
   } catch (error) {
@@ -549,7 +717,95 @@ const handlePayment = async (paymentData) => {
  * 关闭充值弹窗
  */
 const closeRechargePopup = () => {
+  rechargePopup.value?.close()
   rechargeAmount.value = ''
+}
+
+/**
+ * 关闭提现弹窗
+ */
+const closeWithdrawPopup = () => {
+  withdrawPopup.value?.close()
+  withdrawAmount.value = ''
+}
+
+/**
+ * 选择提现金额
+ */
+const selectWithdrawAmount = (amount) => {
+  withdrawAmount.value = amount.toString()
+}
+
+/**
+ * 选择提现方式
+ */
+const selectWithdrawMethod = (method) => {
+  withdrawMethod.value = method
+}
+
+/**
+ * 确认提现
+ */
+const confirmWithdraw = async () => {
+  if (!withdrawAmount.value) {
+    uni.showToast({
+      title: '请输入提现金额',
+      icon: 'none'
+    })
+    return
+  }
+
+  const amount = parseFloat(withdrawAmount.value)
+  if (amount <= 0) {
+    uni.showToast({
+      title: '提现金额必须大于0',
+      icon: 'none'
+    })
+    return
+  }
+
+  const currentBalance = Number(`${balance.value}.${balanceDecimal.value}`)
+  if (amount > currentBalance) {
+    uni.showToast({
+      title: '余额不足',
+      icon: 'none'
+    })
+    return
+  }
+
+  try {
+    uni.showLoading({
+      title: '提交中...'
+    })
+
+    const res = await walletApi.withdraw({
+      userId: getCurrentUserId(),
+      amount,
+      withdrawMethod: withdrawMethod.value
+    })
+
+    uni.hideLoading()
+
+    if (res.code === 200 || res.code === '200') {
+      uni.showToast({
+        title: '提现申请已提交',
+        icon: 'success'
+      })
+
+      await loadWalletData()
+      await loadTransactions(false)
+      closeWithdrawPopup()
+    } else {
+      throw new Error(res.message || '提现失败')
+    }
+  } catch (error) {
+    console.error('提现失败:', error)
+    uni.hideLoading()
+    uni.showToast({
+      title: error.message || '提现失败，请重试',
+      icon: 'none'
+    })
+  }
 }
 
 /**
@@ -557,7 +813,7 @@ const closeRechargePopup = () => {
  */
 const viewAllTransactions = () => {
   uni.navigateTo({
-    url: '/pages/wallet/transactions/index'
+    url: '/pages-user/wallet/transactions'
   })
 }
 
@@ -565,8 +821,10 @@ const viewAllTransactions = () => {
  * 查看交易详情
  */
 const viewTransactionDetail = (item) => {
-  uni.navigateTo({
-    url: `/pages/wallet/detail/index?id=${item.id}`
+  uni.showModal({
+    title: '交易详情',
+    content: `${getTransactionTypeText(item.type)}\n金额：¥${formatAmount(item.amount)}\n时间：${formatTime(item.createTime)}`,
+    showCancel: false
   })
 }
 

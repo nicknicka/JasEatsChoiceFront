@@ -7,7 +7,7 @@
  * - 发送按钮
  * - 已上传图片预览
  *
- * @author Claude
+
  * @date 2026-03-31
  */
 
@@ -149,6 +149,7 @@ const handleSend = () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/mixins.scss';
 @import '@/styles/variables.scss';
 
 .chat-input-area {
@@ -156,6 +157,7 @@ const handleSend = () => {
 	flex-direction: column;
 	background-color: $bg-color-white;
 	padding: $spacing-md $spacing-lg;
+	padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
 	border-top: 1rpx solid $border-color-light;
 	box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.04);
 	flex-shrink: 0;
@@ -237,6 +239,7 @@ const handleSend = () => {
 .toolbar-row {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: $spacing-md;
 	padding: $spacing-sm $spacing-lg;
 	border-bottom: 1rpx solid $border-color-light;
@@ -262,10 +265,9 @@ const handleSend = () => {
 
 .action-row {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	margin-top: $spacing-md;
-	padding: $spacing-sm 0;
+	margin-left: auto;
+	padding: 0;
 }
 
 .streaming-status {
@@ -302,7 +304,6 @@ const handleSend = () => {
 
 .chat-input {
 	flex: 1;
-	max-width: 77%;
 	height: $input-height-current;
 	padding: 0 $spacing-md;
 	margin: $spacing-sm 0;
@@ -335,14 +336,19 @@ const handleSend = () => {
 	}
 
 	&.disabled {
-		opacity: 0.5;
 		background: $bg-color-base;
+		box-shadow: none;
+		color: $text-color-disabled;
 	}
 }
 
 .send-icon {
 	font-size: 28rpx;
 	font-weight: $font-weight-bold;
+}
+
+.send-btn.disabled .send-icon {
+	color: $text-color-disabled;
 }
 
 .stop-icon {

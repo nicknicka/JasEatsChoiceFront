@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * 用户自定义事件类型枚举
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Getter

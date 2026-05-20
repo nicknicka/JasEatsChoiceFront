@@ -244,10 +244,17 @@
 import { ref, computed, onMounted } from 'vue'
 import { useCartStore, useUserStore } from '@/store'
 import { merchantApi, dishApi, couponApi } from '@/api'
+import { createPageDebug } from '@/utils/page-debug'
+import {
+  toDishDetail as goToDishDetailPage,
+  toCart as goToCartPage,
+  toOrderConfirm
+} from '@/utils/router'
 
 // Store
 const cartStore = useCartStore()
 const userStore = useUserStore()
+const pageDebug = createPageDebug('商家详情')
 
 // 状态
 const merchantId = ref('')
@@ -318,6 +325,9 @@ const reviews = ref([])
  */
 const loadMerchantDetail = async () => {
   try {
+    pageDebug.requestStart('加载商家详情', {
+      merchantId: merchantId.value
+    })
     uni.showLoading({ title: '加载中...' })
 
     // 调用后端API获取商家详情
@@ -346,7 +356,12 @@ const loadMerchantDetail = async () => {
     await checkFavorite()
 
     uni.hideLoading()
+    pageDebug.requestSuccess('加载商家详情', {
+      merchantId: merchantDetail.value.id,
+      merchantName: merchantDetail.value.name
+    })
   } catch (error) {
+    pageDebug.requestFail('加载商家详情', error)
     console.error('加载商家详情失败:', error)
     uni.hideLoading()
     uni.showToast({
@@ -361,6 +376,9 @@ const loadMerchantDetail = async () => {
  */
 const loadCoupons = async () => {
   try {
+    pageDebug.requestStart('加载商家优惠券', {
+      merchantId: merchantId.value
+    })
     // 调用后端API获取商家优惠券
     const res = await merchantApi.getCoupons(merchantId.value)
 
@@ -372,8 +390,12 @@ const loadCoupons = async () => {
         condition: coupon.condition || coupon.minAmount ? `满${coupon.minAmount}可用` : '',
         received: coupon.received || false
       }))
+      pageDebug.requestSuccess('加载商家优惠券', {
+        count: coupons.value.length
+      })
     }
   } catch (error) {
+    pageDebug.requestFail('加载商家优惠券', error)
     console.error('加载优惠券失败:', error)
     // 优惠券加载失败不影响页面显示
     coupons.value = []
@@ -385,6 +407,9 @@ const loadCoupons = async () => {
  */
 const loadDishes = async () => {
   try {
+    pageDebug.requestStart('加载商家菜品', {
+      merchantId: merchantId.value
+    })
     // 调用后端API获取商家菜品列表
     const res = await dishApi.getMerchantDishes(merchantId.value, { available: true })
 
@@ -417,8 +442,13 @@ const loadDishes = async () => {
     dishes.value.vegetable = mappedDishes.filter(d => d.category === '素菜' || d.category === 'vegetable')
     dishes.value.soup = mappedDishes.filter(d => d.category === '汤类' || d.category === 'soup')
     dishes.value.staple = mappedDishes.filter(d => d.category === '主食' || d.category === 'staple')
+    pageDebug.requestSuccess('加载商家菜品', {
+      total: mappedDishes.length,
+      activeCategory: activeCategory.value
+    })
 
   } catch (error) {
+    pageDebug.requestFail('加载商家菜品', error)
     console.error('加载菜品失败:', error)
     // 菜品加载失败使用空数组
     dishes.value = {
@@ -438,6 +468,9 @@ const loadDishes = async () => {
  */
 const loadReviews = async () => {
   try {
+    pageDebug.requestStart('加载商家评价', {
+      merchantId: merchantId.value
+    })
     // 调用后端API获取商家评价
     const res = await merchantApi.getReviews(merchantId.value, { page: 1, size: 3 })
 
@@ -454,8 +487,12 @@ const loadReviews = async () => {
         content: review.content || review.comment || '',
         dishes: review.dishes || []
       }))
+      pageDebug.requestSuccess('加载商家评价', {
+        count: reviews.value.length
+      })
     }
   } catch (error) {
+    pageDebug.requestFail('加载商家评价', error)
     console.error('加载评价失败:', error)
     // 评价加载失败不影响页面显示
     reviews.value = []
@@ -466,6 +503,10 @@ const loadReviews = async () => {
  * 切换分类
  */
 const switchCategory = (categoryId) => {
+  pageDebug.action('切换商家菜品分类', {
+    from: activeCategory.value,
+    to: categoryId
+  })
   activeCategory.value = categoryId
 }
 
@@ -487,7 +528,12 @@ const checkFavorite = async () => {
 
     const res = await merchantApi.checkFavorite(userId, merchantId.value)
     isFavorite.value = res || false
+    pageDebug.requestSuccess('检查商家收藏状态', {
+      merchantId: merchantId.value,
+      isFavorite: isFavorite.value
+    })
   } catch (error) {
+    pageDebug.requestFail('检查商家收藏状态', error)
     console.error('检查收藏状态失败:', error)
     isFavorite.value = false
   }
@@ -498,7 +544,14 @@ const checkFavorite = async () => {
  */
 const toggleFavorite = async () => {
   try {
+    pageDebug.action('切换商家收藏', {
+      merchantId: merchantId.value,
+      current: isFavorite.value
+    })
     if (!userStore.isLogin) {
+      pageDebug.anomaly('商家收藏被登录校验拦截', {
+        merchantId: merchantId.value
+      })
       uni.showToast({
         title: '请先登录',
         icon: 'none'
@@ -537,7 +590,12 @@ const toggleFavorite = async () => {
     }
 
     uni.hideLoading()
+    pageDebug.requestSuccess('切换商家收藏', {
+      merchantId: merchantId.value,
+      isFavorite: isFavorite.value
+    })
   } catch (error) {
+    pageDebug.requestFail('切换商家收藏', error)
     console.error('收藏失败:', error)
     uni.hideLoading()
     uni.showToast({
@@ -554,6 +612,9 @@ const toggleFavorite = async () => {
  * 分享商家 - U-016: 实现分享功能
  */
 const shareMerchant = () => {
+  pageDebug.action('分享商家', {
+    merchantId: merchantId.value
+  })
   // 检查是否支持分享
   if (!uni.shareProvider) {
     // 如果不支持原生分享，使用截图分享或复制链接
@@ -589,10 +650,10 @@ const shareMerchant = () => {
     provider: 'weixin',
     scene: 'WXSceneSession',
     type: 0,
-    title: merchantInfo.value.name || '佳食宜选商家',
-    summary: merchantInfo.value.description || '欢迎光临',
+    title: merchantDetail.value.name || '佳食宜选商家',
+    summary: merchantDetail.value.notice || '欢迎光临',
     href: `https://yourdomain.com/merchant/${merchantId.value}`,
-    imageUrl: merchantInfo.value.logo || merchantInfo.value.avatar || '',
+    imageUrl: merchantDetail.value.logo || '',
     success: () => {
       uni.showToast({
         title: '分享成功',
@@ -616,7 +677,14 @@ const receiveCoupon = async (coupon) => {
   if (coupon.received) return
 
   try {
+    pageDebug.action('领取优惠券', {
+      couponId: coupon.id,
+      merchantId: merchantId.value
+    })
     if (!userStore.isLogin) {
+      pageDebug.anomaly('领取优惠券被登录校验拦截', {
+        couponId: coupon.id
+      })
       uni.showToast({
         title: '请先登录',
         icon: 'none'
@@ -637,11 +705,15 @@ const receiveCoupon = async (coupon) => {
     coupon.received = true
 
     uni.hideLoading()
+    pageDebug.requestSuccess('领取优惠券', {
+      couponId: coupon.id
+    })
     uni.showToast({
       title: '领取成功',
       icon: 'success'
     })
   } catch (error) {
+    pageDebug.requestFail('领取优惠券', error)
     console.error('领取优惠券失败:', error)
     uni.hideLoading()
     uni.showToast({
@@ -655,9 +727,11 @@ const receiveCoupon = async (coupon) => {
  * 跳转到菜品详情
  */
 const toDishDetail = (dishId) => {
-  uni.navigateTo({
-    url: `/pages/dish/detail/index?id=${dishId}`
+  pageDebug.action('进入菜品详情', {
+    dishId,
+    merchantId: merchantId.value
   })
+  goToDishDetailPage(dishId)
 }
 
 /**
@@ -665,9 +739,14 @@ const toDishDetail = (dishId) => {
  */
 const quickAdd = async (dish) => {
   try {
+    pageDebug.action('商家页快速加入购物车', {
+      dishId: dish.id,
+      dishName: dish.name
+    })
     // 使用store添加到购物车
     cartStore.addToCart({
       merchantId: merchantId.value,
+      merchantName: merchantDetail.value.name,
       dish: {
         id: dish.id,
         name: dish.name,
@@ -682,7 +761,12 @@ const quickAdd = async (dish) => {
       icon: 'success',
       duration: 1500
     })
+    pageDebug.requestSuccess('商家页快速加入购物车', {
+      dishId: dish.id,
+      cartCount: cartCount.value
+    })
   } catch (error) {
+    pageDebug.requestFail('商家页快速加入购物车', error)
     console.error('加入购物车失败:', error)
   }
 }
@@ -691,6 +775,9 @@ const quickAdd = async (dish) => {
  * 查看全部评价 - U-017: 跳转到评价列表页
  */
 const viewAllReviews = () => {
+  pageDebug.action('查看全部商家评价', {
+    merchantId: merchantId.value
+  })
   if (!merchantId.value) {
     uni.showToast({
       title: '商家信息不存在',
@@ -719,6 +806,10 @@ const viewAllReviews = () => {
  * 拨打商家电话
  */
 const callMerchant = () => {
+  pageDebug.action('拨打商家电话', {
+    merchantId: merchantId.value,
+    phone: merchantDetail.value.phone
+  })
   uni.makePhoneCall({
     phoneNumber: merchantDetail.value.phone
   })
@@ -728,27 +819,26 @@ const callMerchant = () => {
  * 跳转到购物车 - U-018: 跳转到购物车页
  */
 const toCart = () => {
-  // 跳转到购物车页面
-  uni.navigateTo({
-    url: '/src/pages-user/cart/index',
-    success: () => {
-      console.log('跳转到购物车成功')
-    },
-    fail: (err) => {
-      console.error('跳转购物车失败:', err)
-      uni.showToast({
-        title: '打开购物车失败',
-        icon: 'none'
-      })
-    }
+  pageDebug.action('进入购物车', {
+    merchantId: merchantId.value,
+    cartCount: cartCount.value
   })
+  goToCartPage()
 }
 
 /**
  * 去结算 - U-019: 跳转到订单确认页
  */
 const startOrder = () => {
+  pageDebug.action('去结算', {
+    merchantId: merchantId.value,
+    cartCount: cartCount.value,
+    cartTotal: cartTotal.value
+  })
   if (cartCount.value === 0) {
+    pageDebug.anomaly('去结算被空购物车拦截', {
+      merchantId: merchantId.value
+    })
     uni.showToast({
       title: '请先添加菜品',
       icon: 'none'
@@ -787,7 +877,11 @@ const startOrder = () => {
       dishId: item.dish.id,
       dish: item.dish,
       merchantId: item.merchantId,
-      merchant: merchantInfo.value,
+      merchant: {
+        id: merchantDetail.value.id,
+        name: merchantDetail.value.name,
+        logo: merchantDetail.value.logo
+      },
       quantity: item.quantity,
       spec: item.spec || '',
       price: item.dish.price
@@ -801,19 +895,7 @@ const startOrder = () => {
     })
 
     // 跳转到订单确认页面
-    uni.navigateTo({
-      url: '/order/confirm/index',
-      success: () => {
-        console.log('跳转到订单确认页成功')
-      },
-      fail: (err) => {
-        console.error('跳转订单确认页失败:', err)
-        uni.showToast({
-          title: '打开订单确认页失败',
-          icon: 'none'
-        })
-      }
-    })
+    toOrderConfirm({ source: 'merchant', merchantId: merchantId.value })
   } catch (error) {
     console.error('准备订单数据失败:', error)
     uni.showToast({
@@ -825,6 +907,7 @@ const startOrder = () => {
 
 // 组件挂载时加载数据
 onMounted(() => {
+  pageDebug.lifecycle('页面挂载')
   // 获取页面参数
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
@@ -832,6 +915,9 @@ onMounted(() => {
 
   if (options.id) {
     merchantId.value = options.id
+    pageDebug.state('读取商家页面参数', {
+      merchantId: merchantId.value
+    })
   }
 
   // 加载数据

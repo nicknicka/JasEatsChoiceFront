@@ -76,7 +76,11 @@
         />
 
         <!-- 消息列表 -->
-        <div ref="messagesContainerRef" class="messages-container fade-in-up delay-100">
+        <div
+          ref="messagesContainerRef"
+          class="messages-container fade-in-up delay-100"
+          :class="{ 'is-empty': chatMessages.length === 0 }"
+        >
           <!-- 加载更多提示 -->
           <div
             v-if="msgPageNum > 1 || totalMessages > msgPageSize"
@@ -102,11 +106,19 @@
             @command="handleMessageCommand"
             @resend="resendMessage"
           />
-        </div>
 
-        <!-- 空数据提示 -->
-        <div v-if="chatMessages.length === 0" class="empty-chat">
-          <el-empty description="暂无聊天记录"></el-empty>
+          <!-- 空数据提示 -->
+          <div v-if="chatMessages.length === 0" class="empty-chat">
+            <div class="chat-empty-card">
+              <div class="empty-bowl">
+                <span class="steam steam-1"></span>
+                <span class="steam steam-2"></span>
+                <span class="steam steam-3"></span>
+              </div>
+              <p class="empty-chat-title">这一桌还没开聊</p>
+              <p class="empty-chat-tip">发第一条消息，开始点单、拼单或闲聊</p>
+            </div>
+          </div>
         </div>
 
         <!-- 消息输入框区域 -->
@@ -133,9 +145,11 @@
 
       <!-- 空选择提示 -->
       <div v-else class="empty-select" @click="openActionPanelWithTab">
-        <div class="empty-icon">💬</div>
-        <p class="empty-title">请选择一个会话开始交流</p>
-        <p class="empty-tip">或点击此处创建新会话</p>
+        <div class="empty-icon">
+          <span class="plate-core">🍽</span>
+        </div>
+        <p class="empty-title">挑一个会话，开始这一餐的交流</p>
+        <p class="empty-tip">点这里新建聊天，和朋友或群聊继续沟通</p>
       </div>
     </div>
 
@@ -2963,6 +2977,12 @@ const fetchMerchantProducts = async (merchantId, silent = false) => {
         overflow-y: auto;
         padding: @nordic-space-md;
 
+        &.is-empty {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
         .load-more-tip {
           text-align: center;
           padding: 12px;
@@ -2976,10 +2996,103 @@ const fetchMerchantProducts = async (merchantId, silent = false) => {
       }
 
       .empty-chat {
-        flex: 1;
+        width: 100%;
+        min-height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
+
+        .chat-empty-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: @nordic-space-md;
+          padding: 48px 40px;
+          border: 1px solid fade(@nordic-border, 92%);
+          border-radius: 28px;
+          background:
+            radial-gradient(circle at top, rgba(212, 132, 90, 0.1) 0%, transparent 42%),
+            linear-gradient(180deg, #fffdfb 0%, #fbf7f2 100%);
+          box-shadow:
+            0 20px 36px rgba(105, 78, 57, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.84);
+        }
+
+        .empty-bowl {
+          position: relative;
+          width: 124px;
+          height: 92px;
+
+          &::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            width: 98px;
+            height: 46px;
+            transform: translateX(-50%);
+            border: 5px solid fade(@nordic-accent, 58%);
+            border-top: none;
+            border-bottom-left-radius: 52px 32px;
+            border-bottom-right-radius: 52px 32px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(248, 236, 226, 0.9) 100%);
+          }
+
+          &::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -8px;
+            width: 62px;
+            height: 10px;
+            transform: translateX(-50%);
+            border-radius: 999px;
+            background: fade(@nordic-accent-light, 72%);
+          }
+
+          .steam {
+            position: absolute;
+            bottom: 42px;
+            width: 16px;
+            height: 32px;
+            border-radius: 999px;
+            border: 3px solid fade(@nordic-yellow, 62%);
+            border-right: none;
+            border-bottom: none;
+            opacity: 0.75;
+            animation: steam-rise 2.4s ease-in-out infinite;
+          }
+
+          .steam-1 {
+            left: 34px;
+          }
+
+          .steam-2 {
+            left: 54px;
+            height: 38px;
+            animation-delay: 0.35s;
+          }
+
+          .steam-3 {
+            left: 76px;
+            animation-delay: 0.7s;
+          }
+        }
+
+        .empty-chat-title {
+          margin: 0;
+          font-size: @nordic-text-lg;
+          font-weight: 700;
+          color: @nordic-text;
+          letter-spacing: @nordic-letter-tight;
+        }
+
+        .empty-chat-tip {
+          margin: 0;
+          font-size: @nordic-text-base;
+          color: @nordic-text-secondary;
+        }
       }
     }
 
@@ -3015,14 +3128,24 @@ const fetchMerchantProducts = async (merchantId, silent = false) => {
       }
 
       .empty-icon {
-        font-size: 80px;
+        width: 112px;
+        height: 112px;
         margin-bottom: 24px;
-        opacity: 0.8;
-        animation: float 3s ease-in-out infinite;
+        border-radius: 36px;
+        background:
+          radial-gradient(circle at 32% 32%, #fffefb 0%, #f4eadf 62%, #edd9ca 100%);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.84),
+          0 18px 34px rgba(105, 78, 57, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
         transition: transform @nordic-transition-base ease;
+
+        .plate-core {
+          font-size: 46px;
+          line-height: 1;
+        }
       }
 
       .empty-title {
@@ -3045,15 +3168,6 @@ const fetchMerchantProducts = async (merchantId, silent = false) => {
         justify-content: center;
       }
 
-      @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0px);
-        }
-        50% {
-          transform: translateY(-10px);
-        }
-      }
     }
 
     // 消息输入框包裹容器
@@ -3086,6 +3200,18 @@ const fetchMerchantProducts = async (merchantId, silent = false) => {
         animation: pulse 2s ease-in-out infinite;
       }
     }
+  }
+}
+
+@keyframes steam-rise {
+  0%,
+  100% {
+    transform: translateY(0) scale(0.96);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-8px) scale(1);
+    opacity: 0.9;
   }
 }
 

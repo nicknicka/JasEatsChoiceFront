@@ -351,14 +351,16 @@ defineExpose({
 </script>
 
 <style scoped lang="less">
+@import '../../assets/css/nordic-theme.less';
+
 .message-input-container {
-  padding: 8px 12px;
-  background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
-  border-top: 1px solid #e8ecef;
+  padding: 10px 14px 14px;
+  background: linear-gradient(180deg, #fffdfb 0%, #f9f5ef 100%);
+  border-top: 1px solid @nordic-border;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 -10px 24px rgba(105, 78, 57, 0.05);
 
   .input-wrapper {
     display: flex;
@@ -382,23 +384,24 @@ defineExpose({
       .toolbar-divider {
         width: 1px;
         height: 16px;
-        background: #e8ecef;
+        background: @nordic-border;
         margin: 0 4px;
       }
 
       :deep(.el-button) {
-        border: 1px solid #e8ecef;
-        background: #ffffff;
-        color: #5a6c7d;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid fade(@nordic-border, 92%);
+        background: rgba(255, 255, 255, 0.9);
+        color: @nordic-text-secondary;
+        transition: all @nordic-transition-fast ease;
         font-weight: 500;
+        box-shadow: 0 6px 14px rgba(117, 82, 55, 0.05);
 
         &:hover {
-          border-color: #667eea;
-          color: #667eea;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
-          background: #ffffff;
+          border-color: fade(@nordic-accent, 34%);
+          color: @nordic-accent-dark;
+          transform: translateY(-1px);
+          box-shadow: 0 10px 18px fade(@nordic-accent, 12%);
+          background: #fff9f4;
         }
 
         &:active {
@@ -406,14 +409,15 @@ defineExpose({
         }
 
         &.is-active {
-          border-color: #667eea;
-          color: #667eea;
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15),
-                      0 2px 8px rgba(102, 126, 234, 0.2);
+          border-color: fade(@nordic-accent, 38%);
+          color: @nordic-accent-dark;
+          background: #f8ece2;
+          box-shadow:
+            0 0 0 3px fade(@nordic-accent-light, 38%),
+            0 8px 16px fade(@nordic-accent, 12%);
 
           &:hover {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            background: #f5e6da;
           }
         }
       }
@@ -424,39 +428,42 @@ defineExpose({
 
       &.focused {
         .message-textarea :deep(.el-textarea__inner) {
-          border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12),
-                      0 0 12px rgba(102, 126, 234, 0.08);
+          border-color: fade(@nordic-accent, 42%);
+          box-shadow:
+            0 0 0 3px fade(@nordic-accent-light, 42%),
+            0 10px 18px rgba(117, 82, 55, 0.07);
         }
       }
 
       .message-textarea {
         :deep(.el-textarea__inner) {
-          border-radius: 10px;
-          border: 2px solid #e8ecef;
+          border-radius: 16px;
+          border: 1px solid @nordic-border;
           background: #ffffff;
-          padding: 8px 12px;
+          padding: 12px 14px;
           padding-right: 80px; // 为字符计数留空间
-          font-size: 1rem /* 原值: 14px */;
+          font-size: @nordic-text-base;
           line-height: 1.6;
-          min-height: 32px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          min-height: 42px;
+          transition: all @nordic-transition-fast ease;
           resize: none;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
 
           &:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12),
-                        0 0 12px rgba(102, 126, 234, 0.08);
+            border-color: fade(@nordic-accent, 42%);
+            box-shadow:
+              0 0 0 3px fade(@nordic-accent-light, 42%),
+              0 10px 18px rgba(117, 82, 55, 0.07);
             background: #ffffff;
           }
 
           &:hover:not(:focus) {
-            border-color: #d0d7de;
+            border-color: darken(@nordic-border, 8%);
           }
 
           &::placeholder {
-            color: #adb5bd;
-            font-size: 0.929rem /* 原值: 13px */;
+            color: @nordic-text-muted;
+            font-size: @nordic-text-sm;
           }
         }
       }
@@ -465,21 +472,22 @@ defineExpose({
         position: absolute;
         right: 12px;
         bottom: 8px;
-        font-size: 0.857rem /* 原值: 12px */;
-        color: #adb5bd;
+        font-size: @nordic-text-xs;
+        color: @nordic-text-muted;
         background: #ffffff;
-        padding: 2px 6px;
-        border-radius: 4px;
-        transition: all 0.3s ease;
+        padding: 2px 8px;
+        border-radius: 999px;
+        transition: all @nordic-transition-fast ease;
         pointer-events: none;
+        border: 1px solid fade(@nordic-border, 85%);
 
         &.warning {
-          color: #f59e0b;
+          color: @nordic-yellow-dark;
           font-weight: 500;
         }
 
         &.danger {
-          color: #ef4444;
+          color: @nordic-red;
           font-weight: 600;
           animation: pulse 1s ease-in-out infinite;
         }
@@ -491,11 +499,11 @@ defineExpose({
       bottom: 100%;
       left: 0;
       right: 0;
-      background: #ffffff;
-      border: 1px solid #e8ecef;
-      border-radius: 8px;
+      background: #fffdfa;
+      border: 1px solid @nordic-border;
+      border-radius: 16px;
       padding: 10px;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 18px 32px rgba(105, 78, 57, 0.12);
       margin-bottom: 6px;
       max-height: 180px;
       overflow-y: auto;
@@ -506,11 +514,11 @@ defineExpose({
       }
 
       &::-webkit-scrollbar-thumb {
-        background: #dee2e6;
+        background: darken(@nordic-border, 10%);
         border-radius: 3px;
 
         &:hover {
-          background: #adb5bd;
+          background: darken(@nordic-border, 20%);
         }
       }
 
@@ -523,14 +531,14 @@ defineExpose({
           font-size: 1.429rem /* 原值: 20px */;
           text-align: center;
           padding: 6px 4px;
-          border-radius: 6px;
+          border-radius: 10px;
           cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all @nordic-transition-fast ease;
           user-select: none;
 
           &:hover {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            transform: scale(1.2);
+            background: #f8ede3;
+            transform: scale(1.1);
           }
 
           &:active {
@@ -545,18 +553,18 @@ defineExpose({
       justify-content: flex-end;
 
       .send-button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(180deg, @nordic-accent 0%, @nordic-accent-dark 100%);
         border: none;
-        padding: 6px 20px;
-        font-size: 1rem /* 原值: 14px */;
-        font-weight: 500;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 8px 22px;
+        font-size: @nordic-text-base;
+        font-weight: 600;
+        border-radius: 14px;
+        box-shadow: 0 14px 24px fade(@nordic-accent, 18%);
+        transition: all @nordic-transition-fast ease;
 
         &:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+          transform: translateY(-1px);
+          box-shadow: 0 18px 28px fade(@nordic-accent, 24%);
         }
 
         &:active:not(:disabled) {
@@ -566,29 +574,29 @@ defineExpose({
         &:disabled {
           background: #e9ecef;
           box-shadow: none;
-          color: #adb5bd;
+          color: @nordic-text-muted;
         }
 
         &.send-success {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+          background: linear-gradient(180deg, @nordic-green 0%, @nordic-green-dark 100%);
+          box-shadow: 0 12px 22px fade(@nordic-green, 20%);
         }
       }
 
       :deep(.el-button--primary) {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(180deg, @nordic-accent 0%, @nordic-accent-dark 100%);
         border: none;
-        padding: 6px 20px;
-        font-size: 1rem /* 原值: 14px */;
-        font-weight: 500;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 8px 22px;
+        font-size: @nordic-text-base;
+        font-weight: 600;
+        border-radius: 14px;
+        box-shadow: 0 14px 24px fade(@nordic-accent, 18%);
+        transition: all @nordic-transition-fast ease;
 
         &:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          transform: translateY(-1px);
+          box-shadow: 0 18px 28px fade(@nordic-accent, 24%);
+          background: linear-gradient(180deg, lighten(@nordic-accent, 3%) 0%, @nordic-accent-dark 100%);
         }
 
         &:active:not(:disabled) {

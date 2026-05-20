@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * 用户自定义事件实体类
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Data

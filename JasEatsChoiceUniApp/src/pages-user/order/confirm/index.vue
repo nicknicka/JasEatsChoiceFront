@@ -171,11 +171,17 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { useUserStore } from '@/store'
+import { useCartStore, useUserStore } from '@/store'
 import { orderApi, addressApi } from '@/api'
+import { createPageDebug } from '@/utils/page-debug'
+import { USER_ADDRESS, USER_ORDER_DETAIL } from '@/constants/routes'
 
 // Store
 const userStore = useUserStore()
+const cartStore = useCartStore()
+const pageDebug = createPageDebug('确认订单')
+const DEFAULT_MERCHANT_IMAGE = '/static/images/default-merchant.png'
+const DEFAULT_DISH_IMAGE = '/static/images/default-dish.png'
 
 // 状态
 const selectedAddress = ref(null)
@@ -184,6 +190,18 @@ const remark = ref('')
 const selectedCoupon = ref(null)
 const paymentMethod = ref('wechat')
 
+const normalizeImage = (src, fallback) => {
+  if (!src || typeof src !== 'string') {
+    return fallback
+  }
+
+  if (src.includes('via.placeholder.com')) {
+    return fallback
+  }
+
+  return src
+}
+
 // 订单商品（模拟数据）
 const orderItems = ref([
   {
@@ -191,7 +209,7 @@ const orderItems = ref([
     merchant: {
       id: '1',
       name: '老王家常菜',
-      logo: 'https://via.placeholder.com/200x200/FF6B35/FFFFFF?text=老王'
+      logo: DEFAULT_MERCHANT_IMAGE
     },
     items: [
       {
@@ -199,7 +217,7 @@ const orderItems = ref([
           id: '1',
           name: '宫保鸡丁',
           price: 28,
-          image: 'https://via.placeholder.com/300x300/FF6B35/FFFFFF?text=宫保鸡丁'
+          image: DEFAULT_DISH_IMAGE
         },
         quantity: 2,
         spec: ''
@@ -209,7 +227,7 @@ const orderItems = ref([
           id: '4',
           name: '麻婆豆腐',
           price: 18,
-          image: 'https://via.placeholder.com/300x300/faad14/FFFFFF?text=麻婆豆腐'
+          image: DEFAULT_DISH_IMAGE
         },
         quantity: 1,
         spec: '微辣'
@@ -297,13 +315,41 @@ const finalPrice = computed(() => {
   return Math.max(0, total).toFixed(2)
 })
 
+const hasUsableAddress = computed(() => {
+  const address = selectedAddress.value
+  if (!address) {
+    return false
+  }
+
+  return Boolean(address.id && address.name && address.phone && address.address)
+})
+
+const buildOrderPayload = (group, userId) => ({
+  order: {
+    userId,
+    merchantId: group.merchantId,
+    totalAmount: parseFloat(finalPrice.value),
+    addressId: selectedAddress.value.id,
+    address: selectedAddress.value.address,
+    remark: remark.value,
+    status: 0
+  },
+  dishes: group.items.map(item => ({
+    dishId: item.dish.id,
+    quantity: item.quantity,
+    price: parseFloat(item.dish.price),
+    customization: item.spec || ''
+  }))
+})
+
 /**
  * 选择地址 - U-011: 跳转到地址选择页
  */
 const selectAddress = () => {
+  pageDebug.action('选择收货地址')
   // 跳转到地址管理页面，使用 redirectTo 或 navigateTo
   uni.navigateTo({
-    url: '/address/index?mode=select',
+    url: `${USER_ADDRESS}?mode=select`,
     success: () => {
       console.log('跳转到地址页面成功')
     },
@@ -321,6 +367,7 @@ const selectAddress = () => {
  * 选择配送时间
  */
 const selectDeliveryTime = () => {
+  pageDebug.action('选择配送时间')
   uni.showActionSheet({
     itemList: [
       '尽快送达（预计30分钟）',
@@ -338,6 +385,9 @@ const selectDeliveryTime = () => {
         '18:30-19:00'
       ]
       deliveryTime.value = times[res.tapIndex]
+      pageDebug.state('更新配送时间', {
+        value: deliveryTime.value || '尽快送达'
+      })
     }
   })
 }
@@ -346,6 +396,9 @@ const selectDeliveryTime = () => {
  * 选择优惠券
  */
 const selectCoupon = () => {
+  pageDebug.action('选择优惠券', {
+    availableCount: availableCoupons.value.length
+  })
   if (availableCoupons.value.length === 0) {
     uni.showToast({
       title: '暂无可用优惠券',
@@ -364,6 +417,9 @@ const selectCoupon = () => {
       } else {
         selectedCoupon.value = availableCoupons.value[res.tapIndex - 1]
       }
+      pageDebug.state('更新优惠券选择', {
+        couponId: selectedCoupon.value?.id || null
+      })
     }
   })
 }
@@ -372,6 +428,9 @@ const selectCoupon = () => {
  * 添加快捷备注
  */
 const addQuickRemark = (tag) => {
+  pageDebug.action('添加快捷备注', {
+    tag
+  })
   if (remark.value) {
     remark.value += '，' + tag
   } else {
@@ -384,13 +443,23 @@ const addQuickRemark = (tag) => {
  */
 const selectPayment = (method) => {
   paymentMethod.value = method
+  pageDebug.state('切换支付方式', {
+    paymentMethod: method
+  })
 }
 
 /**
  * 提交订单
  */
 const submitOrder = async () => {
+  pageDebug.action('提交订单', {
+    orderMerchantCount: orderItems.value.length,
+    hasAddress: hasUsableAddress.value,
+    paymentMethod: paymentMethod.value,
+    finalPrice: finalPrice.value
+  })
   if (!userStore.isLogin) {
+    pageDebug.anomaly('提交订单被登录校验拦截')
     uni.showToast({
       title: '请先登录',
       icon: 'none'
@@ -403,7 +472,8 @@ const submitOrder = async () => {
     return
   }
 
-  if (!selectedAddress.value) {
+  if (!hasUsableAddress.value) {
+    pageDebug.anomaly('提交订单被缺少地址拦截')
     uni.showToast({
       title: '请选择收货地址',
       icon: 'none'
@@ -412,6 +482,7 @@ const submitOrder = async () => {
   }
 
   if (orderItems.value.length === 0) {
+    pageDebug.anomaly('提交订单被缺少商品拦截')
     uni.showToast({
       title: '请选择商品',
       icon: 'none'
@@ -425,6 +496,10 @@ const submitOrder = async () => {
     success: async (res) => {
       if (res.confirm) {
         try {
+          pageDebug.requestStart('创建订单', {
+            merchantCount: orderItems.value.length,
+            finalPrice: finalPrice.value
+          })
           uni.showLoading({ title: '提交订单中...' })
 
           const userId = userStore.userInfo?.userId || userStore.userInfo?.id
@@ -434,33 +509,18 @@ const submitOrder = async () => {
           // 如果有多个商家，需要创建多个订单
           if (orderItems.value.length === 1) {
             const group = orderItems.value[0]
-
-            const orderData = {
-              userId,
-              merchantId: group.merchantId,
-              addressId: selectedAddress.value.id,
-              deliveryTime: deliveryTime.value || 'immediate',
-              remark: remark.value,
-              paymentMethod: paymentMethod.value,
-              items: group.items.map(item => ({
-                dishId: item.dish.id,
-                dishName: item.dish.name,
-                price: parseFloat(item.dish.price),
-                quantity: item.quantity,
-                spec: item.spec
-              })),
-              couponId: selectedCoupon.value?.id,
-              deliveryFee: 5,
-              packingFee: group.packingFee
-            }
+            const orderData = buildOrderPayload(group, userId)
 
             // 调用后端API创建订单
             const result = await orderApi.create(orderData)
+            const orderId = result?.data || result?.orderId || result?.id
 
             uni.hideLoading()
+            pageDebug.requestSuccess('创建订单', {
+              orderId
+            })
 
             // 从购物车中移除已下单的商品
-            const cartStore = (await import('@/store')).useCartStore()
             group.items.forEach(item => {
               cartStore.removeItem(group.merchantId, item.dish.id)
             })
@@ -472,12 +532,14 @@ const submitOrder = async () => {
 
             setTimeout(() => {
               // 跳转到订单详情页
-              const orderId = result.orderId || result.id
               uni.redirectTo({
-                url: `/pages-user/order/detail/index?id=${orderId}`
+                url: `${USER_ORDER_DETAIL}?id=${orderId}`
               })
             }, 1500)
           } else {
+            pageDebug.anomaly('多商家订单暂不支持', {
+              merchantCount: orderItems.value.length
+            })
             // 多个商家的情况
             uni.hideLoading()
             uni.showToast({
@@ -486,6 +548,7 @@ const submitOrder = async () => {
             })
           }
         } catch (error) {
+          pageDebug.requestFail('创建订单', error)
           console.error('创建订单失败:', error)
           uni.hideLoading()
           uni.showToast({
@@ -500,6 +563,7 @@ const submitOrder = async () => {
 
 // 组件挂载时初始化
 onMounted(async () => {
+  pageDebug.lifecycle('页面挂载')
   // 从临时存储中读取购物车传递的数据
   try {
     const tempItems = uni.getStorageSync('temp_order_items')
@@ -512,23 +576,36 @@ onMounted(async () => {
         if (!grouped[item.merchantId]) {
           grouped[item.merchantId] = {
             merchantId: item.merchantId,
-            merchant: item.merchant,
+            merchant: {
+              ...item.merchant,
+              logo: normalizeImage(item.merchant?.logo, DEFAULT_MERCHANT_IMAGE)
+            },
             items: [],
             packingFee: 0
           }
         }
-        grouped[item.merchantId].items.push(item)
+        grouped[item.merchantId].items.push({
+          ...item,
+          dish: {
+            ...item.dish,
+            image: normalizeImage(item.dish?.image, DEFAULT_DISH_IMAGE)
+          }
+        })
         // 计算包装费（每份1元）
         grouped[item.merchantId].packingFee += item.quantity * 1
       })
 
       orderItems.value = Object.values(grouped)
+      pageDebug.requestSuccess('读取临时订单数据', {
+        merchantCount: orderItems.value.length
+      })
     }
 
     // 清除临时存储
     uni.removeStorageSync('temp_order_items')
     uni.removeStorageSync('temp_order_summary')
   } catch (error) {
+    pageDebug.requestFail('读取临时订单数据', error)
     console.error('读取订单数据失败:', error)
   }
 
@@ -538,14 +615,19 @@ onMounted(async () => {
 
 // 页面显示时检查是否有从地址页返回的选中地址
 onShow(() => {
+  pageDebug.lifecycle('页面显示')
   try {
     const selectedAddressTemp = uni.getStorageSync('selected_address_temp')
     if (selectedAddressTemp) {
       selectedAddress.value = JSON.parse(selectedAddressTemp)
+      pageDebug.state('读取回传地址', {
+        addressId: selectedAddress.value.id
+      })
       // 清除临时存储
       uni.removeStorageSync('selected_address_temp')
     }
   } catch (error) {
+    pageDebug.requestFail('读取回传地址', error)
     console.error('读取选中地址失败:', error)
   }
 })
@@ -556,22 +638,36 @@ onShow(() => {
 const loadDefaultAddress = async () => {
   try {
     if (!userStore.isLogin) {
+      pageDebug.anomaly('未登录，跳过默认地址加载')
       return
     }
 
     const userId = userStore.userInfo?.userId || userStore.userInfo?.id
+    pageDebug.requestStart('加载默认地址', { userId })
     const res = await addressApi.getDefault({ userId })
+    const addressData = res?.data || res || null
 
-    if (res) {
-      selectedAddress.value = {
-        id: res.addressId || res.id,
-        name: res.receiverName || res.name,
-        phone: res.receiverPhone || res.phone,
-        address: `${res.province || ''}${res.city || ''}${res.district || ''}${res.detailAddress || res.address || ''}`,
-        isDefault: res.isDefault || false
+    if (addressData) {
+      const normalizedAddress = {
+        id: addressData.addressId || addressData.id,
+        name: addressData.receiverName || addressData.name,
+        phone: addressData.receiverPhone || addressData.phone,
+        address: `${addressData.province || ''}${addressData.city || ''}${addressData.district || ''}${addressData.detail || addressData.detailAddress || addressData.address || ''}`,
+        isDefault: Number(addressData.isDefault) === 1
+      }
+
+      if (normalizedAddress.id && normalizedAddress.name && normalizedAddress.phone && normalizedAddress.address) {
+        selectedAddress.value = normalizedAddress
+        pageDebug.requestSuccess('加载默认地址', {
+          addressId: selectedAddress.value.id
+        })
+      } else {
+        selectedAddress.value = null
+        pageDebug.anomaly('默认地址数据不完整', normalizedAddress)
       }
     }
   } catch (error) {
+    pageDebug.requestFail('加载默认地址', error)
     console.error('加载默认地址失败:', error)
   }
 }

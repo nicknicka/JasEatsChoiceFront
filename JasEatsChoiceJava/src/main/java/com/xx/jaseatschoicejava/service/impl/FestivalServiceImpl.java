@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 /**
  * 节日推荐服务实现类
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Service

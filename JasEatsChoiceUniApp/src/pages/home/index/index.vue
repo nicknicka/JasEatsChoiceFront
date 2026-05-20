@@ -34,7 +34,7 @@
           indicator-active-color="#fff"
         >
           <swiper-item v-for="banner in banners" :key="banner.id" @click="handleBannerClick(banner)">
-            <image class="banner-image" :src="banner.image" mode="aspectFill" />
+            <image class="banner-image" :src="banner.image" mode="aspectFill" @error="handleBannerImageError(banner)" />
           </swiper-item>
         </swiper>
       </view>
@@ -43,11 +43,11 @@
       <view class="category-section">
         <view class="section-header">
           <text class="section-title">美食分类</text>
-          <text class="section-more" @click="toMoreCategories">更多 ›</text>
+          <button class="section-more" @click="toMoreCategories" aria-label="查看更多分类">更多 ›</button>
         </view>
         <scroll-view class="category-scroll" scroll-x show-scrollbar="false">
           <view class="category-list">
-            <view
+            <button
               class="category-item"
               v-for="category in categories"
               :key="category.id"
@@ -55,7 +55,7 @@
             >
               <view class="category-icon">{{ category.icon }}</view>
               <view class="category-name">{{ category.name }}</view>
-            </view>
+            </button>
           </view>
         </scroll-view>
       </view>
@@ -64,17 +64,17 @@
       <view class="merchant-section" v-if="recommendMerchants.length > 0">
         <view class="section-header">
           <text class="section-title">推荐商家</text>
-          <text class="section-more" @click="toMoreMerchants">更多 ›</text>
+          <button class="section-more" @click="toMoreMerchants" aria-label="查看更多商家">更多 ›</button>
         </view>
         <scroll-view class="merchant-scroll" scroll-x show-scrollbar="false">
           <view class="merchant-list">
-            <view
+            <button
               class="merchant-card"
               v-for="merchant in recommendMerchants"
               :key="merchant.id"
               @click="toMerchantDetail(merchant.id)"
             >
-              <image class="merchant-logo" :src="merchant.logo" mode="aspectFill" />
+              <image class="merchant-logo" :src="merchant.logo" mode="aspectFill" @error="handleMerchantImageError(merchant)" />
               <view class="merchant-info">
                 <view class="merchant-name">{{ merchant.name }}</view>
                 <view class="merchant-rating">
@@ -86,7 +86,7 @@
                   <text class="tag" v-for="tag in merchant.tags" :key="tag">{{ tag }}</text>
                 </view>
               </view>
-            </view>
+            </button>
           </view>
         </scroll-view>
       </view>
@@ -95,9 +95,9 @@
       <view class="dish-section">
         <view class="section-header">
           <text class="section-title">为你推荐</text>
-          <text class="section-refresh" @click="refreshRecommend">
+          <button class="section-refresh" @click="refreshRecommend" aria-label="刷新推荐菜品">
             <text class="refresh-icon">🔄</text> 换一换
-          </text>
+          </button>
         </view>
 
         <!-- 快速筛选 -->
@@ -124,7 +124,7 @@
             :key="dish.id"
             @click="handleDishClick(dish)"
           >
-            <image class="dish-image" :src="dish.image" mode="aspectFill" />
+            <image class="dish-image" :src="dish.image" mode="aspectFill" @error="handleDishImageError(dish)" />
 
             <!-- 标签 -->
             <view class="dish-tags" v-if="dish.tags && dish.tags.length">
@@ -155,9 +155,9 @@
             </view>
 
             <!-- 购物车按钮 -->
-            <view class="add-cart-btn" @click.stop="addToCart(dish)">
+            <button class="add-cart-btn" @click.stop="addToCart(dish)" :aria-label="`将${dish.name}加入购物车`">
               <text>+</text>
-            </view>
+            </button>
           </view>
         </view>
       </view>
@@ -191,19 +191,26 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { toSearch, toMerchantDetail, toDishDetail } from '@/utils/router'
+import { toSearch, toMerchantDetail, toDishDetail, toRecipeDetail } from '@/utils/router'
 import { useLocationStore, useUserStore } from '@/store'
 import { recommendationApi, merchantApi, bannerApi, categoryApi, dishApi } from '@/api'
 import { processImageUrl } from '@/utils/helper'
+import { createPageDebug } from '@/utils/page-debug'
 import { normalizeCategories } from '@/config/category-icons'
+import { USER_DISH_LIST, USER_HOME_MERCHANT_LIST } from '@/constants/routes'
 import WeatherLocation from '@/components/common/WeatherLocation.vue'
 
 // Store
 const locationStore = useLocationStore()
 const userStore = useUserStore()
+const pageDebug = createPageDebug('首页')
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV
 
 // 组件引用
 const weatherRef = ref(null)
+const DEFAULT_BANNER_IMAGE = '/static/images/default-banner.png'
+const DEFAULT_MERCHANT_IMAGE = '/static/images/default-merchant.png'
+const DEFAULT_DISH_IMAGE = '/static/images/default-dish.png'
 
 // 状态
 const refreshing = ref(false)
@@ -216,6 +223,8 @@ const pageSize = 10
 
 // 轮播图数据 - 从后端加载
 const banners = ref([])
+
+const resolveImage = (image, fallback) => processImageUrl(image) || fallback
 
 // 分类数据 - 从后端加载
 const categories = ref([])
@@ -249,6 +258,10 @@ const loadMoreStatus = computed(() => {
  * 下拉刷新
  */
 const onRefresh = async () => {
+  pageDebug.action('下拉刷新', {
+    page: currentPage.value,
+    currentFilter: currentFilter.value
+  })
   refreshing.value = true
   currentPage.value = 1
   noMore.value = false
@@ -270,7 +283,13 @@ const onRefresh = async () => {
       title: '刷新成功',
       icon: 'success'
     })
+    pageDebug.requestSuccess('首页刷新', {
+      banners: banners.value.length,
+      merchants: recommendMerchants.value.length,
+      dishes: recommendDishes.value.length
+    })
   } catch (error) {
+    pageDebug.requestFail('首页刷新', error)
     console.error('刷新失败:', error)
     uni.showToast({
       title: '刷新失败',
@@ -285,14 +304,24 @@ const onRefresh = async () => {
  * 上拉加载更多
  */
 const onLoadMore = async () => {
-  if (loadingMore.value || noMore.value) return
+  if (loadingMore.value || noMore.value) {
+    pageDebug.state('跳过加载更多', {
+      loadingMore: loadingMore.value,
+      noMore: noMore.value
+    })
+    return
+  }
 
   loadingMore.value = true
   currentPage.value++
+  pageDebug.action('加载更多推荐菜品', {
+    currentPage: currentPage.value
+  })
 
   try {
     await loadDishes(false)
   } catch (error) {
+    pageDebug.requestFail('加载更多推荐菜品', error)
     console.error('加载更多失败:', error)
     currentPage.value--
   } finally {
@@ -305,14 +334,19 @@ const onLoadMore = async () => {
  */
 const loadCategories = async () => {
   try {
+    pageDebug.requestStart('加载美食分类')
     // 调用后端API获取常用品类
     const res = await categoryApi.getCommon()
 
     if (res && res.data && Array.isArray(res.data)) {
       // 将分类名称转换为分类对象（包含图标和代码）
       categories.value = normalizeCategories(res.data)
+      pageDebug.requestSuccess('加载美食分类', {
+        count: categories.value.length
+      })
     }
   } catch (error) {
+    pageDebug.requestFail('加载美食分类', error)
     console.error('加载分类失败，使用默认数据:', error)
     // 使用本地默认数据作为fallback
     categories.value = normalizeCategories([
@@ -325,6 +359,9 @@ const loadCategories = async () => {
       '小吃快餐',
       '饮品甜点'
     ])
+    pageDebug.anomaly('美食分类回退到本地默认数据', {
+      count: categories.value.length
+    })
   }
 }
 
@@ -333,27 +370,32 @@ const loadCategories = async () => {
  */
 const loadBanners = async () => {
   try {
+    pageDebug.requestStart('加载首页轮播图')
     // U-022: 调用后端API获取轮播图
     const res = await bannerApi.getList({ position: 'home' })
 
     if (res && res.data && Array.isArray(res.data)) {
       banners.value = res.data.map(banner => ({
         id: banner.bannerId || banner.id,
-        image: processImageUrl(banner.imageUrl || banner.image),
+        image: resolveImage(banner.imageUrl || banner.image, DEFAULT_BANNER_IMAGE),
         title: banner.title || '',
         type: banner.type || 'link', // link, dish, merchant, activity
         targetType: banner.targetType || '', // 跳转目标类型
         targetId: banner.targetId || '', // 跳转目标ID
         link: banner.link || '' // 外部链接
       }))
+      pageDebug.requestSuccess('加载首页轮播图', {
+        count: banners.value.length
+      })
     }
   } catch (error) {
+    pageDebug.requestFail('加载首页轮播图', error)
     console.error('加载轮播图失败，使用默认数据:', error)
     // 使用本地默认数据作为fallback
     banners.value = [
       {
         id: 1,
-        image: '/static/banner1.jpg', // 使用本地图片
+        image: '/static/banner1.jpg',
         title: '今日推荐',
         type: 'link'
       },
@@ -370,6 +412,9 @@ const loadBanners = async () => {
         type: 'link'
       }
     ]
+    pageDebug.anomaly('首页轮播图回退到本地默认数据', {
+      count: banners.value.length
+    })
   }
 }
 
@@ -378,6 +423,9 @@ const loadBanners = async () => {
  */
 const loadMerchants = async () => {
   try {
+    pageDebug.requestStart('加载推荐商家', {
+      hasLocation: Boolean(locationStore.currentLocation)
+    })
     // 调用后端API获取附近商家
     const params = {
       limit: 10
@@ -397,13 +445,17 @@ const loadMerchants = async () => {
       recommendMerchants.value = res.map(merchant => ({
         id: merchant.merchantId || merchant.id,
         name: merchant.merchantName || merchant.name,
-        logo: merchant.avatar || merchant.logo || merchant.coverImage,
+        logo: resolveImage(merchant.avatar || merchant.logo || merchant.coverImage, DEFAULT_MERCHANT_IMAGE),
         rating: merchant.rating || merchant.score || 0,
         monthlySales: merchant.monthlySales || 0,
         tags: merchant.tags || []
       }))
+      pageDebug.requestSuccess('加载推荐商家', {
+        count: recommendMerchants.value.length
+      })
     }
   } catch (error) {
+    pageDebug.requestFail('加载推荐商家', error)
     console.error('加载商家失败:', error)
     // 不使用mock数据，直接显示空状态
     recommendMerchants.value = []
@@ -415,9 +467,14 @@ const loadMerchants = async () => {
  */
 const loadDishes = async (refresh = false) => {
   try {
+    pageDebug.requestStart('加载推荐菜品', {
+      refresh,
+      page: currentPage.value,
+      currentFilter: currentFilter.value
+    })
     // 获取用户ID
     const userId = userStore.isLogin
-      ? (userStore.userInfo?.userId || userStore.userInfo?.id)
+      ? (userStore.userInfo?.userId || userStore.userInfo?.id || userStore.userId || '1')
       : '1'
 
     // 获取当前时段
@@ -437,7 +494,9 @@ const loadDishes = async (refresh = false) => {
       timePeriod: getTimePeriod()
     })
 
-    console.log('推荐系统返回:', res)
+    if (isDev) {
+      console.log('推荐系统返回:', res)
+    }
 
     // 数据映射 - 兼容多种返回格式
     let dishes = []
@@ -460,7 +519,7 @@ const loadDishes = async (refresh = false) => {
       price: dish.price ? String(dish.price) : '0',
       originalPrice: dish.originalPrice ? String(dish.originalPrice) : '',
       sales: Number(dish.monthlySales || dish.sales || 0),
-      image: processImageUrl(dish.dishImage || dish.image || dish.coverImage || ''),
+      image: resolveImage(dish.dishImage || dish.image || dish.coverImage || '', DEFAULT_DISH_IMAGE),
       recommendReason: dish.reason && typeof dish.reason === 'object'
         ? String(dish.reason.mainReason || dish.reason.text || '')
         : String(dish.recommendReason || dish.reason || ''),
@@ -483,13 +542,24 @@ const loadDishes = async (refresh = false) => {
       noMore.value = true
     }
 
-    console.log(`✅ 推荐加载成功: ${mappedDishes.length}个菜品`)
+    pageDebug.requestSuccess('加载推荐菜品', {
+      refresh,
+      count: mappedDishes.length,
+      total: recommendDishes.value.length,
+      noMore: noMore.value
+    })
   } catch (error) {
-    console.error('❌ 加载推荐菜品失败:', error)
+    pageDebug.requestFail('加载推荐菜品', error)
+    console.error('加载推荐菜品失败:', error)
 
     // 降级方案：使用简单推荐接口
     try {
-      console.log('🔄 使用降级方案...')
+      pageDebug.anomaly('推荐系统主接口失败，尝试降级接口', {
+        page: currentPage.value
+      })
+      if (isDev) {
+        console.log('推荐系统主接口失败，切换到降级接口')
+      }
       // 直接使用已经导入的 dishApi
       const fallbackRes = await dishApi.getRecommend({
         userId: userStore.userId || userStore.userInfo?.userId || '1',
@@ -511,7 +581,7 @@ const loadDishes = async (refresh = false) => {
         description: String(dish.description || dish.desc || ''),
         price: dish.price ? String(dish.price) : '0',
         sales: Number(dish.monthlySales || dish.sales || 0),
-        image: processImageUrl(dish.dishImage || dish.image || dish.coverImage || ''),
+        image: resolveImage(dish.dishImage || dish.image || dish.coverImage || '', DEFAULT_DISH_IMAGE),
         recommendSource: '基础推荐',
         rating: Number(dish.rating || 4.5),
         tags: Array.isArray(dish.tags) ? dish.tags : []
@@ -523,9 +593,13 @@ const loadDishes = async (refresh = false) => {
         recommendDishes.value.push(...mappedDishes)
       }
 
-      console.log(`✅ 降级方案成功: ${mappedDishes.length}个菜品`)
+      pageDebug.requestSuccess('加载推荐菜品-降级接口', {
+        count: mappedDishes.length,
+        total: recommendDishes.value.length
+      })
     } catch (fallbackError) {
-      console.error('❌ 降级方案也失败:', fallbackError)
+      pageDebug.requestFail('加载推荐菜品-降级接口', fallbackError)
+      console.error('降级推荐接口失败:', fallbackError)
       if (refresh) {
         recommendDishes.value = []
       }
@@ -538,6 +612,9 @@ const loadDishes = async (refresh = false) => {
  */
 const refreshRecommend = async () => {
   try {
+    pageDebug.action('点击换一换', {
+      currentFilter: currentFilter.value
+    })
     refreshing.value = true
     currentPage.value = 1
     noMore.value = false
@@ -546,15 +623,18 @@ const refreshRecommend = async () => {
     if (userStore.isLogin) {
       const userId = userStore.userInfo?.userId || userStore.userInfo?.id || '1'
       await recommendationApi.refreshRecommendations(userId)
-      console.log('✅ 推荐刷新成功')
     }
 
     // 重新加载推荐
     await loadDishes(true)
 
     uni.showToast({ title: '刷新成功', icon: 'success' })
+    pageDebug.requestSuccess('刷新推荐菜品', {
+      count: recommendDishes.value.length
+    })
   } catch (error) {
-    console.error('❌ 刷新推荐失败:', error)
+    pageDebug.requestFail('刷新推荐菜品', error)
+    console.error('刷新推荐失败:', error)
     // 即使刷新失败，也重新加载
     await loadDishes(true)
   } finally {
@@ -566,8 +646,11 @@ const refreshRecommend = async () => {
  * 点击轮播图 - U-023: 根据banner类型跳转
  */
 const handleBannerClick = (banner) => {
-  console.log('点击banner:', banner)
-
+  pageDebug.action('点击轮播图', {
+    bannerId: banner?.id,
+    type: banner?.type,
+    targetId: banner?.targetId
+  })
   // U-023: 根据banner类型进行不同的跳转
   if (!banner) return
 
@@ -576,18 +659,14 @@ const handleBannerClick = (banner) => {
       case 'dish':
         // 跳转到菜品详情
         if (banner.targetId) {
-          uni.navigateTo({
-            url: `/src/pages-user/dish/detail/index?id=${banner.targetId}`
-          })
+          toDishDetail(banner.targetId)
         }
         break
 
       case 'merchant':
         // 跳转到商家详情
         if (banner.targetId) {
-          uni.navigateTo({
-            url: `/src/pages-user/merchant/detail/index?id=${banner.targetId}`
-          })
+          toMerchantDetail(banner.targetId)
         }
         break
 
@@ -610,15 +689,15 @@ const handleBannerClick = (banner) => {
       case 'recipe':
         // 跳转到食谱详情
         if (banner.targetId) {
-          uni.navigateTo({
-            url: `/src/pages-user/recipe/detail/index?id=${banner.targetId}`
-          })
+          toRecipeDetail(banner.targetId)
         }
         break
 
       default:
         // 默认不做任何操作或提示
-        console.log('未知的banner类型:', banner.type)
+        pageDebug.anomaly('未知轮播图类型', {
+          type: banner.type
+        })
     }
   } catch (error) {
     console.error('Banner跳转失败:', error)
@@ -629,18 +708,41 @@ const handleBannerClick = (banner) => {
   }
 }
 
+const handleBannerImageError = (banner) => {
+  banner.image = DEFAULT_BANNER_IMAGE
+  pageDebug.anomaly('轮播图图片加载失败', {
+    bannerId: banner?.id
+  })
+}
+
+const handleMerchantImageError = (merchant) => {
+  merchant.logo = DEFAULT_MERCHANT_IMAGE
+  pageDebug.anomaly('商家图片加载失败', {
+    merchantId: merchant?.id
+  })
+}
+
+const handleDishImageError = (dish) => {
+  dish.image = DEFAULT_DISH_IMAGE
+  pageDebug.anomaly('菜品图片加载失败', {
+    dishId: dish?.id
+  })
+}
+
 /**
  * 点击分类 - U-024: 跳转到分类列表页
  */
 const handleCategoryClick = (category) => {
   if (!category) return
+  pageDebug.action('点击分类', {
+    categoryId: category.id,
+    categoryName: category.name,
+    categoryCode: category.code
+  })
 
   // U-024: 跳转到分类菜品列表页
   uni.navigateTo({
-    url: `/src/pages-user/dish/list/index?category=${encodeURIComponent(category.code || category.name)}&name=${encodeURIComponent(category.name)}`,
-    success: () => {
-      console.log('跳转到分类列表成功:', category.name)
-    },
+    url: `${USER_DISH_LIST}?category=${encodeURIComponent(category.code || category.name)}&name=${encodeURIComponent(category.name)}`,
     fail: (err) => {
       console.error('跳转分类列表失败:', err)
       uni.showToast({
@@ -655,6 +757,7 @@ const handleCategoryClick = (category) => {
  * 查看更多分类 - U-025: 跳转到分类页面
  */
 const toMoreCategories = () => {
+  pageDebug.action('点击更多分类')
   // 全部分类页面暂未实现
   uni.showToast({
     title: '全部分类页面开发中',
@@ -666,8 +769,9 @@ const toMoreCategories = () => {
  * 查看更多商家
  */
 const toMoreMerchants = () => {
+  pageDebug.action('点击更多商家')
   uni.navigateTo({
-    url: '/src/pages-user/home/merchant-list'
+    url: USER_HOME_MERCHANT_LIST
   })
 }
 
@@ -676,6 +780,11 @@ const toMoreMerchants = () => {
  */
 const handleDishClick = async (dish) => {
   if (!dish) return
+  pageDebug.action('点击推荐菜品', {
+    dishId: dish.id,
+    dishName: dish.name,
+    recommendSource: dish.recommendSource
+  })
 
   try {
     // 异步记录点击反馈（不阻塞跳转）
@@ -688,8 +797,6 @@ const handleDishClick = async (dish) => {
         recommendationId: String(dish.id),
         isClicked: true,
         isOrdered: false
-      }).then(() => {
-        console.log('✓ 点击反馈已记录')
       }).catch(err => {
         console.warn('记录点击反馈失败:', err)
       })
@@ -707,6 +814,11 @@ const handleDishClick = async (dish) => {
  */
 const addToCart = (dish) => {
   if (!dish) return
+  pageDebug.action('首页加入购物车', {
+    dishId: dish.id,
+    dishName: dish.name,
+    price: dish.price
+  })
 
   // TODO: 实现添加到购物车逻辑
   uni.showToast({
@@ -714,7 +826,6 @@ const addToCart = (dish) => {
     icon: 'success'
   })
 
-  console.log('添加到购物车:', dish)
 }
 
 /**
@@ -723,6 +834,10 @@ const addToCart = (dish) => {
 const handleFilterChange = (filterKey) => {
   if (currentFilter.value === filterKey) return
 
+  pageDebug.action('切换推荐筛选', {
+    from: currentFilter.value,
+    to: filterKey
+  })
   currentFilter.value = filterKey
 
   // 显示加载提示
@@ -735,11 +850,14 @@ const handleFilterChange = (filterKey) => {
     uni.hideLoading()
   })
 
-  console.log('筛选条件:', filterKey)
 }
 
 // 组件挂载时加载数据
 onMounted(() => {
+  pageDebug.lifecycle('页面挂载', {
+    isLogin: userStore.isLogin,
+    hasLocation: Boolean(locationStore.currentLocation)
+  })
   loadCategories()
   loadBanners()
   loadMerchants()
@@ -848,6 +966,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 4rpx;
+  min-height: $touch-min-size;
+  padding: 0 $spacing-sm;
+  border: none;
+  background: transparent;
 
   .refresh-icon {
     margin-right: $spacing-xs;
@@ -872,6 +994,8 @@ onMounted(() => {
   padding: $spacing-sm;
   flex-shrink: 0;
   transition: all 0.3s ease;
+  border: none;
+  background: transparent;
 
   &:active {
     transform: scale(0.95);
@@ -883,10 +1007,10 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #FFE5D9 0%, #FFD4C4 100%);
+    background-color: $primary-100;
     border-radius: $border-radius-lg;
     font-size: 48rpx;
-    box-shadow: 0 4rpx 12rpx rgba(255, 107, 53, 0.1);
+    box-shadow: $box-shadow-sm;
   }
 
   .category-name {
@@ -919,12 +1043,14 @@ onMounted(() => {
   background-color: $bg-color-white;
   border-radius: $border-radius-base;
   overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  box-shadow: $box-shadow-sm;
   transition: all 0.3s ease;
+  border: none;
+  text-align: left;
 
   &:active {
     transform: translateY(-4rpx);
-    box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.12);
+    box-shadow: $box-shadow-md;
   }
 }
 
@@ -953,7 +1079,7 @@ onMounted(() => {
   margin-top: $spacing-xs;
 
   .star {
-    color: #f5a623;
+    color: $warning-color;
   }
 
   .sales {
@@ -969,8 +1095,8 @@ onMounted(() => {
 
   .tag {
     font-size: $font-size-xs;
-    color: #FF6B35;
-    background-color: rgba(255, 107, 53, 0.1);
+    color: $primary-700;
+    background-color: $primary-100;
     padding: 4rpx 8rpx;
     border-radius: 4rpx;
   }
@@ -1010,8 +1136,8 @@ onMounted(() => {
   flex-shrink: 0;
 
   &.active {
-    background: linear-gradient(135deg, #FF6B35 0%, #FF8C61 100%);
-    box-shadow: 0 4rpx 12rpx rgba(255, 107, 53, 0.3);
+    background: linear-gradient(135deg, $primary-500 0%, $primary-700 100%);
+    box-shadow: $box-shadow-md;
 
     .filter-text {
       color: #fff;
@@ -1039,12 +1165,12 @@ onMounted(() => {
   background-color: $bg-color-white;
   border-radius: $border-radius-base;
   overflow: visible;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: $box-shadow-md;
   transition: all 0.3s ease;
 
   &:active {
     transform: translateY(-4rpx);
-    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+    box-shadow: $box-shadow-base;
   }
 }
 
@@ -1069,15 +1195,15 @@ onMounted(() => {
     color: #fff;
 
     &.tag-discount {
-      background: linear-gradient(135deg, #FF6B35 0%, #FF8C61 100%);
+      background: linear-gradient(135deg, $primary-500 0%, $primary-700 100%);
     }
 
     &.tag-new {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background-color: $info-color;
     }
 
     &.tag-hot {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      background-color: $warning-color;
     }
   }
 }
@@ -1101,7 +1227,7 @@ onMounted(() => {
   align-items: center;
   gap: 6rpx;
   padding: 8rpx 12rpx;
-  background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+  background-color: $warning-50;
   border-radius: 8rpx;
   margin-bottom: $spacing-xs;
 
@@ -1111,7 +1237,7 @@ onMounted(() => {
 
   .reason-text {
     font-size: $font-size-xs;
-    color: #F57C00;
+    color: $warning-color;
     flex: 1;
     @include text-ellipsis;
   }
@@ -1161,12 +1287,15 @@ onMounted(() => {
 
 /* 购物车按钮 */
 .add-cart-btn {
+  min-width: $touch-min-size;
+  min-height: $touch-min-size;
+  border: none;
   position: absolute;
   bottom: 12rpx;
   right: 12rpx;
   width: 56rpx;
   height: 56rpx;
-  background: linear-gradient(135deg, #FF6B35 0%, #FF8C61 100%);
+  background: linear-gradient(135deg, $primary-500 0%, $primary-700 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1174,12 +1303,16 @@ onMounted(() => {
   color: #fff;
   font-size: 32rpx;
   font-weight: bold;
-  box-shadow: 0 4rpx 12rpx rgba(255, 107, 53, 0.4);
+  box-shadow: $box-shadow-md;
   z-index: 10;
 
   &:active {
     transform: scale(0.9);
   }
+}
+
+button::after {
+  border: none;
 }
 
 /* 加载更多 */
@@ -1226,12 +1359,12 @@ onMounted(() => {
     align-items: center;
     gap: $spacing-sm;
     padding: 20rpx 48rpx;
-    background: linear-gradient(135deg, #FF6B35 0%, #FF8C61 100%);
+    background: linear-gradient(135deg, $primary-500 0%, $primary-700 100%);
     color: #fff;
     border-radius: 40rpx;
     font-size: $font-size-base;
     border: none;
-    box-shadow: 0 4rpx 12rpx rgba(255, 107, 53, 0.3);
+    box-shadow: $box-shadow-md;
 
     &::after {
       border: none;

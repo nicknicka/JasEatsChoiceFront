@@ -46,10 +46,15 @@ public class OrderController {
     @PostMapping
     public ResponseResult<?> createOrder(@RequestBody OrderCreateDTO orderCreateDTO) {
         log.info("开始创建订单，订单信息：{}，菜品数量：{}",
-                orderCreateDTO.getOrder(),
-                orderCreateDTO.getDishes() != null ? orderCreateDTO.getDishes().size() : 0);
+                orderCreateDTO != null ? orderCreateDTO.getOrder() : null,
+                orderCreateDTO != null && orderCreateDTO.getDishes() != null ? orderCreateDTO.getDishes().size() : 0);
 
         try {
+            if (orderCreateDTO == null || orderCreateDTO.getOrder() == null) {
+                log.warn("创建订单缺少订单主体数据");
+                return ResponseResult.fail("400", "订单信息不能为空");
+            }
+
             // 使用事务方法同时创建订单和菜品
             boolean success = orderService.createOrderWithDishes(
                     orderCreateDTO.getOrder(),

@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 食物营养成分服务接口
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 public interface JFoodNutritionService extends IService<JFoodNutrition> {

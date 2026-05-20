@@ -11,7 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
  *
  * 测试监督代理的智能调度功能
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @SpringBootTest

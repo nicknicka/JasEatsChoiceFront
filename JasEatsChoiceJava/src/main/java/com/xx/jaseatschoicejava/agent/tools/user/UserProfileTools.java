@@ -17,7 +17,7 @@ import java.time.Period;
  *
  * 为Agent提供用户资料管理功能
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

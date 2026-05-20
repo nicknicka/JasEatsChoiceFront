@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * - 视频：平台API获取视频流 + GLM-4.6V-Flash 视频理解
  * - 图片：下载 + GLM-4.6V-Flash 图片识别
  *
- * @author Claude
+
  * @since 2025-01-31
  * @updated 2026-04-08 实现真实的内容抓取和AI识别
  */

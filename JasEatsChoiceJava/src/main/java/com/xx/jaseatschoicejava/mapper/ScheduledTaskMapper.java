@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 定时任务Mapper
  *
- * @author Claude
+
  * @since 2025-02-12
  */
 @Mapper

@@ -348,6 +348,7 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useDebounce } from '@/utils/performance'
 import { useUserStore } from '@/store'
 import { aiApi } from '@/api'
+import { navigate, paths, toDishDetail } from '@/utils/router'
 
 // 用户信息store
 const userStore = useUserStore()
@@ -587,12 +588,12 @@ const drawTrendChart = () => {
 
 // 查看更多推荐
 const viewMoreRecommend = () => {
-  uni.navigateTo({ url: '/index/index?filter=recommend' })
+  navigate(paths.USER.DISH_LIST, { filter: 'recommend' })
 }
 
 // 查看菜品
 const viewDish = (id) => {
-  uni.navigateTo({ url: `/pages-user/dish/detail?id=${id}` })
+  toDishDetail(id)
 }
 
 // 采纳建议
@@ -604,7 +605,7 @@ const applyImprovement = useDebounce((item) => {
       if (res.confirm) {
         uni.showToast({ title: '已采纳，正在为您推荐...', icon: 'success' })
         setTimeout(() => {
-          uni.navigateTo({ url: '/index/index?filter=' + item.type })
+          navigate(paths.USER.DISH_LIST, { filter: item.type })
         }, 1500)
       }
     }
@@ -700,7 +701,7 @@ const loadNutritionData = async () => {
 
 // 咨询AI
 const consultAI = () => {
-  uni.navigateTo({ url: '/ai/index' })
+  navigate(paths.MAIN.AI)
 }
 
 onMounted(() => {

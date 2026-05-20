@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  *
  * 为Agent提供订单创建和价格计算功能，使用 UniCardBuilder 构建统一卡片格式
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  * 3. 实现缓存雪崩防护（随机过期时间）
  * 4. 提供便捷的缓存操作方法
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

@@ -200,6 +200,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { dishApi, merchantApi, recipeApi } from '@/api'
+import {
+  toDishDetail as goToDishDetailPage,
+  toMerchantDetail as goToMerchantDetailPage,
+  toRecipeDetail as goToRecipeDetailPage
+} from '@/utils/router'
 
 // 状态
 const searchKeyword = ref('')
@@ -421,27 +426,21 @@ const searchHotItem = (keyword) => {
  * 跳转到商家详情
  */
 const toMerchantDetail = (merchantId) => {
-  uni.navigateTo({
-    url: `/pages/merchant/detail/index?id=${merchantId}`
-  })
+  goToMerchantDetailPage(merchantId)
 }
 
 /**
  * 跳转到菜品详情
  */
 const toDishDetail = (dishId) => {
-  uni.navigateTo({
-    url: `/pages/dish/detail/index?id=${dishId}`
-  })
+  goToDishDetailPage(dishId)
 }
 
 /**
  * 跳转到食谱详情
  */
 const toRecipeDetail = (recipeId) => {
-  uni.navigateTo({
-    url: `/pages-user/recipe/detail?id=${recipeId}`
-  })
+  goToRecipeDetailPage(recipeId)
 }
 
 /**

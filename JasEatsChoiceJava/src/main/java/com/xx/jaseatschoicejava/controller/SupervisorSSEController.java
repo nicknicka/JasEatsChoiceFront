@@ -44,7 +44,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * - Token事件: {"content":"推"} → 前端逐字追加
  * - 完成事件: {"done":true} → 前端触发 onComplete
  *
- * @author Claude
+
  * @since 2026-03-26
  * @updated 2026-04-03 V2: 同步 Supervisor + 流式 Response 架构
  */

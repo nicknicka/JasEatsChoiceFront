@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * 推荐反馈DTO
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Data

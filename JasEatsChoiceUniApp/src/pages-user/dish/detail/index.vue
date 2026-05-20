@@ -10,7 +10,7 @@
           indicator-active-color="#fff"
         >
           <swiper-item v-for="(image, index) in dishDetail.images" :key="index">
-            <image class="dish-image" :src="image" mode="aspectFill" @click="previewImage(index)" />
+            <AppImage class="dish-image" :src="image" mode="aspectFill" :aria-label="`${dishDetail.name}图片${index + 1}`" @click="previewImage(index)" />
           </swiper-item>
         </swiper>
       </view>
@@ -19,9 +19,9 @@
       <view class="info-section card">
         <view class="dish-header">
           <view class="dish-name">{{ dishDetail.name }}</view>
-          <view class="dish-favorite" @click="toggleFavorite">
-            <text class="favorite-icon">{{ isFavorite ? '❤️' : '🤍' }}</text>
-          </view>
+          <button class="dish-favorite" @click="toggleFavorite" :aria-label="isFavorite ? '取消收藏菜品' : '收藏菜品'">
+            <text class="favorite-icon">{{ isFavorite ? '已收藏' : '收藏' }}</text>
+          </button>
         </view>
 
         <view class="dish-description">{{ dishDetail.description }}</view>
@@ -61,7 +61,7 @@
         <scroll-view class="ingredients-scroll" scroll-x show-scrollbar="false">
           <view class="ingredients-list">
             <view class="ingredient-item" v-for="item in dishDetail.ingredients" :key="item.name">
-              <image class="ingredient-image" :src="item.image" mode="aspectFill" />
+              <AppImage class="ingredient-image" :src="item.image" mode="aspectFill" :aria-label="item.name" />
               <view class="ingredient-name">{{ item.name }}</view>
             </view>
           </view>
@@ -69,9 +69,9 @@
       </view>
 
       <!-- 商家信息 -->
-      <view class="merchant-section card" @click="toMerchant">
+      <button class="merchant-section card" @click="toMerchant" aria-label="查看商家详情">
         <view class="merchant-info">
-          <image class="merchant-logo" :src="dishDetail.merchant.logo" mode="aspectFill" />
+          <AppImage class="merchant-logo" :src="dishDetail.merchant.logo" mode="aspectFill" :aria-label="dishDetail.merchant.name" />
           <view class="merchant-detail">
             <view class="merchant-name">{{ dishDetail.merchant.name }}</view>
             <view class="merchant-rating">
@@ -82,7 +82,7 @@
           </view>
         </view>
         <view class="merchant-arrow">›</view>
-      </view>
+      </button>
 
       <!-- 评价列表 -->
       <view class="review-section card">
@@ -116,7 +116,7 @@
         <view class="review-list">
           <view class="review-item" v-for="review in reviews" :key="review.id">
             <view class="review-user">
-              <image class="user-avatar" :src="review.user.avatar" mode="aspectFill" />
+              <AppImage class="user-avatar" :src="review.user.avatar" mode="aspectFill" :aria-label="review.user.name" />
               <view class="user-info">
                 <view class="user-name">{{ review.user.name }}</view>
                 <view class="review-stars">
@@ -131,12 +131,13 @@
             <view class="review-content">{{ review.content }}</view>
 
             <view class="review-images" v-if="review.images && review.images.length > 0">
-              <image
+              <AppImage
                 class="review-image"
                 v-for="(image, index) in review.images"
                 :key="index"
                 :src="image"
                 mode="aspectFill"
+                :aria-label="`${review.user.name}的评价图片${index + 1}`"
                 @click="previewReviewImage(review.images, index)"
               />
             </view>
@@ -148,9 +149,9 @@
           </view>
         </view>
 
-        <view class="view-all-reviews" @click="viewAllReviews">
+        <button class="view-all-reviews" @click="viewAllReviews" aria-label="查看全部评价">
           查看全部评价 ›
-        </view>
+        </button>
       </view>
 
       <!-- 相关推荐 -->
@@ -163,7 +164,7 @@
             :key="dish.id"
             @click="toDishDetail(dish.id)"
           >
-            <image class="dish-image" :src="dish.image" mode="aspectFill" />
+            <AppImage class="dish-image" :src="dish.image" mode="aspectFill" :aria-label="dish.name" />
             <view class="dish-info">
               <view class="dish-name">{{ dish.name }}</view>
               <view class="dish-bottom">
@@ -182,28 +183,28 @@
     <!-- 底部操作栏 -->
     <view class="bottom-bar">
       <view class="bar-left">
-        <view class="bar-icon" @click="toCart">
-          <text class="icon">🛒</text>
+        <button class="bar-icon" @click="toCart" aria-label="查看购物车">
+          <text class="icon">购物车</text>
           <view class="badge" v-if="cartCount > 0">{{ cartCount }}</view>
-        </view>
-        <view class="bar-icon" @click="contactMerchant">
-          <text class="icon">💬</text>
-        </view>
+        </button>
+        <button class="bar-icon" @click="contactMerchant" aria-label="联系商家">
+          <text class="icon">联系</text>
+        </button>
       </view>
 
       <view class="bar-right">
         <view class="quantity-control">
-          <view class="quantity-btn" @click="decreaseQuantity">
+          <button class="quantity-btn" @click="decreaseQuantity" aria-label="减少数量">
             <text>-</text>
-          </view>
+          </button>
           <view class="quantity-value">{{ quantity }}</view>
-          <view class="quantity-btn" @click="increaseQuantity">
+          <button class="quantity-btn" @click="increaseQuantity" aria-label="增加数量">
             <text>+</text>
-          </view>
+          </button>
         </view>
-        <view class="add-cart-btn" @click="addToCart">
+        <button class="add-cart-btn" @click="addToCart" aria-label="加入购物车">
           加入购物车
-        </view>
+        </button>
       </view>
     </view>
   </view>
@@ -212,11 +213,17 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useCartStore, useUserStore } from '@/store'
-import { dishApi, favoriteApi, reviewApi } from '@/api'
+import { cartApi, dishApi, favoriteApi, reviewApi } from '@/api'
+import { createPageDebug } from '@/utils/page-debug'
+import {
+  toMerchantDetail,
+  toCart as goToCartPage
+} from '@/utils/router'
 
 // Store
 const cartStore = useCartStore()
 const userStore = useUserStore()
+const pageDebug = createPageDebug('菜品详情')
 
 // 状态
 const dishId = ref('')
@@ -299,32 +306,39 @@ const recommendDishes = ref([])
  */
 const loadDishDetail = async () => {
   try {
+    pageDebug.requestStart('加载菜品详情', {
+      dishId: dishId.value
+    })
     uni.showLoading({ title: '加载中...' })
 
     // 调用后端API获取菜品详情
     const res = await dishApi.getDetail(dishId.value)
+    const detail = res?.data || res || {}
+    const images = Array.isArray(detail.images) && detail.images.length > 0
+      ? detail.images
+      : [detail.image || detail.coverImage].filter(Boolean)
 
     // 数据映射
     dishDetail.value = {
-      id: res.dishId || res.id,
-      name: res.dishName || res.name,
-      description: res.description || res.desc || '',
-      images: res.images && res.images.length > 0 ? res.images : [res.image || res.coverImage],
-      tags: res.tags || [],
-      price: res.price ? String(res.price) : '0',
-      originalPrice: res.originalPrice ? String(res.originalPrice) : '',
-      sales: res.monthlySales || res.sales || 0,
-      nutrition: res.nutrition || {},
-      ingredients: res.ingredients || [],
+      id: detail.dishId || detail.id,
+      name: detail.dishName || detail.name,
+      description: detail.description || detail.desc || '',
+      images,
+      tags: detail.tags || [],
+      price: detail.price ? String(detail.price) : '0',
+      originalPrice: detail.originalPrice ? String(detail.originalPrice) : '',
+      sales: detail.monthlySales || detail.sales || 0,
+      nutrition: detail.nutrition || {},
+      ingredients: detail.ingredients || [],
       merchant: {
-        id: res.merchantId || res.merchant?.id,
-        name: res.merchantName || res.merchant?.name,
-        logo: res.merchant?.logo || res.merchant?.avatar || '',
-        rating: res.merchant?.rating || 0,
-        monthlySales: res.merchant?.monthlySales || 0
+        id: detail.merchantId || detail.merchant?.id,
+        name: detail.merchantName || detail.merchant?.name || '',
+        logo: detail.merchant?.logo || detail.merchant?.avatar || '',
+        rating: detail.merchant?.rating || 0,
+        monthlySales: detail.merchant?.monthlySales || 0
       },
-      reviewCount: res.reviewCount || 0,
-      reviewSummary: res.reviewSummary || null
+      reviewCount: detail.reviewCount || 0,
+      reviewSummary: detail.reviewSummary || null
     }
 
     // 保存商家ID
@@ -334,7 +348,13 @@ const loadDishDetail = async () => {
     await checkFavorite()
 
     uni.hideLoading()
+    pageDebug.requestSuccess('加载菜品详情', {
+      dishId: dishDetail.value.id,
+      merchantId: merchantId.value,
+      imageCount: dishDetail.value.images.length
+    })
   } catch (error) {
+    pageDebug.requestFail('加载菜品详情', error)
     console.error('加载菜品详情失败:', error)
     uni.hideLoading()
     uni.showToast({
@@ -349,6 +369,9 @@ const loadDishDetail = async () => {
  */
 const loadReviews = async () => {
   try {
+    pageDebug.requestStart('加载菜品评价', {
+      dishId: dishId.value
+    })
     const res = await reviewApi.getDishReviews(dishId.value, {
       page: 1,
       size: 3
@@ -372,8 +395,12 @@ const loadReviews = async () => {
     } else {
       reviews.value = []
     }
+    pageDebug.requestSuccess('加载菜品评价', {
+      count: reviews.value.length
+    })
   } catch (error) {
-    console.error('加载评价失败:', error)
+    pageDebug.requestFail('加载菜品评价', error)
+    console.error('加载菜品评价失败:', error)
     reviews.value = []
   }
 }
@@ -383,6 +410,9 @@ const loadReviews = async () => {
  */
 const loadRecommendDishes = async () => {
   try {
+    pageDebug.requestStart('加载相关推荐菜品', {
+      dishId: dishId.value
+    })
     // 调用后端API获取推荐菜品
     const params = {
       limit: 4
@@ -404,9 +434,13 @@ const loadRecommendDishes = async () => {
         sales: dish.monthlySales || dish.sales || 0,
         image: dish.image || dish.coverImage
       }))
+      pageDebug.requestSuccess('加载相关推荐菜品', {
+        count: recommendDishes.value.length
+      })
     }
   } catch (error) {
-    console.error('加载推荐失败:', error)
+    pageDebug.requestFail('加载相关推荐菜品', error)
+    console.error('加载相关推荐失败:', error)
     recommendDishes.value = []
   }
 }
@@ -415,6 +449,10 @@ const loadRecommendDishes = async () => {
  * 预览图片
  */
 const previewImage = (index) => {
+  pageDebug.action('预览菜品图片', {
+    index,
+    imageCount: dishDetail.value.images.length
+  })
   uni.previewImage({
     urls: dishDetail.value.images,
     current: index
@@ -425,6 +463,10 @@ const previewImage = (index) => {
  * 预览评价图片
  */
 const previewReviewImage = (images, index) => {
+  pageDebug.action('预览评价图片', {
+    index,
+    imageCount: images.length
+  })
   uni.previewImage({
     urls: images,
     current: index
@@ -444,8 +486,13 @@ const checkFavorite = async () => {
     const userId = userStore.userInfo?.userId || userStore.userInfo?.id
     const res = await favoriteApi.checkDish(dishId.value, { userId })
     isFavorite.value = res || false
+    pageDebug.requestSuccess('检查菜品收藏状态', {
+      dishId: dishId.value,
+      isFavorite: isFavorite.value
+    })
   } catch (error) {
-    console.error('检查收藏状态失败:', error)
+    pageDebug.requestFail('检查菜品收藏状态', error)
+    console.error('检查菜品收藏状态失败:', error)
     isFavorite.value = false
   }
 }
@@ -455,7 +502,14 @@ const checkFavorite = async () => {
  */
 const toggleFavorite = async () => {
   try {
+    pageDebug.action('切换菜品收藏', {
+      dishId: dishId.value,
+      current: isFavorite.value
+    })
     if (!userStore.isLogin) {
+      pageDebug.anomaly('菜品收藏被登录校验拦截', {
+        dishId: dishId.value
+      })
       uni.showToast({
         title: '请先登录',
         icon: 'none'
@@ -487,12 +541,17 @@ const toggleFavorite = async () => {
     }
 
     uni.hideLoading()
+    pageDebug.requestSuccess('切换菜品收藏', {
+      dishId: dishId.value,
+      isFavorite: isFavorite.value
+    })
     uni.showToast({
       title: isFavorite.value ? '已收藏' : '已取消收藏',
       icon: 'success'
     })
   } catch (error) {
-    console.error('收藏失败:', error)
+    pageDebug.requestFail('切换菜品收藏', error)
+    console.error('切换菜品收藏失败:', error)
     uni.hideLoading()
     uni.showToast({
       title: error.message || '操作失败',
@@ -505,15 +564,21 @@ const toggleFavorite = async () => {
  * 跳转到商家详情
  */
 const toMerchant = () => {
-  uni.navigateTo({
-    url: `/pages/merchant/detail/index?id=${dishDetail.value.merchant.id}`
+  pageDebug.action('进入商家详情', {
+    merchantId: dishDetail.value.merchant.id,
+    dishId: dishId.value
   })
+  toMerchantDetail(dishDetail.value.merchant.id)
 }
 
 /**
  * 跳转到菜品详情
  */
 const toDishDetail = (id) => {
+  pageDebug.action('切换到相关推荐菜品', {
+    fromDishId: dishId.value,
+    toDishId: id
+  })
   dishId.value = id
   loadDishDetail()
   loadReviews()
@@ -529,6 +594,10 @@ const toDishDetail = (id) => {
  * 查看全部评价 - U-012: 跳转到评价列表页
  */
 const viewAllReviews = () => {
+  pageDebug.action('查看全部菜品评价', {
+    dishId: dishId.value,
+    merchantId: merchantId.value
+  })
   if (!dishId.value) {
     uni.showToast({
       title: '菜品信息不存在',
@@ -540,9 +609,6 @@ const viewAllReviews = () => {
   // 跳转到菜品评价列表页面
   uni.navigateTo({
     url: `/pages-user/review/list/index?dishId=${dishId.value}&merchantId=${merchantId.value}`,
-    success: () => {
-      console.log('跳转到评价列表页成功')
-    },
     fail: (err) => {
       console.error('跳转评价列表页失败:', err)
       uni.showToast({
@@ -557,29 +623,11 @@ const viewAllReviews = () => {
  * 跳转到购物车 - U-013: 跳转到购物车页
  */
 const toCart = () => {
-  // 跳转到购物车页面
-  uni.switchTab({
-    url: '/cart/index',
-    success: () => {
-      console.log('跳转到购物车成功')
-    },
-    fail: () => {
-      // 如果switchTab失败（可能不是tabBar页面），使用navigateTo
-      uni.navigateTo({
-        url: '/cart/index',
-        success: () => {
-          console.log('跳转到购物车成功')
-        },
-        fail: (err) => {
-          console.error('跳转购物车失败:', err)
-          uni.showToast({
-            title: '打开购物车失败',
-            icon: 'none'
-          })
-        }
-      })
-    }
+  pageDebug.action('从菜品页进入购物车', {
+    dishId: dishId.value,
+    cartCount: cartCount.value
   })
+  goToCartPage()
 }
 
 /**
@@ -587,6 +635,10 @@ const toCart = () => {
  */
 const contactMerchant = async () => {
   try {
+    pageDebug.action('联系商家', {
+      dishId: dishId.value,
+      merchantId: merchantId.value
+    })
     if (!merchantId.value) {
       uni.showToast({
         title: '商家信息不存在',
@@ -610,9 +662,6 @@ const contactMerchant = async () => {
       // 跳转到聊天页面
       uni.navigateTo({
         url: `/pages-common/chat/chat-room?conversationId=${conversationId}&merchantId=${merchantId.value}`,
-        success: () => {
-          console.log('跳转到聊天页面成功')
-        },
         fail: () => {
           // 如果第一个路径失败，尝试其他可能的路径
           uni.navigateTo({
@@ -624,6 +673,7 @@ const contactMerchant = async () => {
       throw new Error(res.message || '创建会话失败')
     }
   } catch (error) {
+    pageDebug.requestFail('联系商家', error)
     console.error('跳转聊天页面失败:', error)
     uni.showToast({
       title: error.message || '打开聊天失败',
@@ -637,6 +687,9 @@ const contactMerchant = async () => {
  */
 const increaseQuantity = () => {
   quantity.value++
+  pageDebug.state('增加菜品数量', {
+    quantity: quantity.value
+  })
 }
 
 /**
@@ -645,6 +698,9 @@ const increaseQuantity = () => {
 const decreaseQuantity = () => {
   if (quantity.value > 1) {
     quantity.value--
+    pageDebug.state('减少菜品数量', {
+      quantity: quantity.value
+    })
   }
 }
 
@@ -653,9 +709,10 @@ const decreaseQuantity = () => {
  */
 const addToCart = async () => {
   try {
-    // U-015: 调用后端API添加到购物车
-    const { cartApi } = await import('@/api')
-
+    pageDebug.action('菜品详情加入购物车', {
+      dishId: dishId.value,
+      quantity: quantity.value
+    })
     // 调用后端购物车API
     await cartApi.add({
       dishId: dishId.value,
@@ -668,6 +725,7 @@ const addToCart = async () => {
     // 同时更新本地store以保持一致性
     cartStore.addToCart({
       merchantId: dishDetail.value.merchant.id,
+      merchantName: dishDetail.value.merchant.name,
       dish: {
         id: dishDetail.value.id,
         name: dishDetail.value.name,
@@ -685,7 +743,12 @@ const addToCart = async () => {
 
     // 重置数量
     quantity.value = 1
+    pageDebug.requestSuccess('菜品详情加入购物车', {
+      dishId: dishId.value,
+      cartCount: cartCount.value
+    })
   } catch (error) {
+    pageDebug.requestFail('菜品详情加入购物车', error)
     console.error('加入购物车失败:', error)
     uni.showToast({
       title: error.message || '添加失败',
@@ -696,6 +759,7 @@ const addToCart = async () => {
 
 // 组件挂载时加载数据
 onMounted(() => {
+  pageDebug.lifecycle('页面挂载')
   // 获取页面参数
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
@@ -703,6 +767,9 @@ onMounted(() => {
 
   if (options.id) {
     dishId.value = options.id
+    pageDebug.state('读取菜品页面参数', {
+      dishId: dishId.value
+    })
   }
 
   // 加载数据
@@ -764,8 +831,13 @@ onMounted(() => {
   }
 
   .dish-favorite {
+    border: none;
+    background: transparent;
+
     .favorite-icon {
-      font-size: 48rpx;
+      font-size: $font-size-sm;
+      color: $primary-color;
+      font-weight: $font-weight-medium;
     }
   }
 
@@ -785,7 +857,7 @@ onMounted(() => {
     .tag {
       font-size: $font-size-sm;
       color: $primary-color;
-      background-color: rgba(255, 107, 53, 0.1);
+      background-color: $primary-100;
       padding: 8rpx 16rpx;
       border-radius: 8rpx;
     }
@@ -906,6 +978,10 @@ onMounted(() => {
 .merchant-section {
   @include flex-between;
   align-items: center;
+  width: 100%;
+  border: none;
+  background-color: $bg-color-white;
+  text-align: left;
 }
 
 .merchant-info {
@@ -937,7 +1013,7 @@ onMounted(() => {
   font-size: $font-size-sm;
 
   .star {
-    color: #f5a623;
+    color: $warning-color;
   }
 
   .merchant-sales {
@@ -992,7 +1068,7 @@ onMounted(() => {
 
       .star {
         font-size: $font-size-base;
-        color: #f5a623;
+        color: $warning-color;
       }
     }
 
@@ -1051,7 +1127,7 @@ onMounted(() => {
     .review-stars {
       .star {
         font-size: $font-size-sm;
-        color: #f5a623;
+        color: $warning-color;
       }
     }
 
@@ -1100,6 +1176,9 @@ onMounted(() => {
     padding: $spacing-md;
     color: $primary-color;
     font-size: $font-size-base;
+    border: none;
+    background: transparent;
+    width: 100%;
   }
 }
 
@@ -1178,7 +1257,7 @@ onMounted(() => {
   @include flex-between;
   background-color: $bg-color-white;
   padding: $spacing-md;
-  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.1);
+  box-shadow: $box-shadow-md;
   z-index: $z-index-fixed;
 }
 
@@ -1191,9 +1270,14 @@ onMounted(() => {
   position: relative;
   @include flex-center-column;
   gap: 4rpx;
+  min-width: $touch-min-size;
+  min-height: $touch-min-size;
+  border: none;
+  background: transparent;
 
   .icon {
-    font-size: 48rpx;
+    font-size: $font-size-sm;
+    color: $text-color-primary;
   }
 
   .badge {
@@ -1226,13 +1310,14 @@ onMounted(() => {
   padding: $spacing-xs;
 
   .quantity-btn {
-    width: 56rpx;
-    height: 56rpx;
+    width: $touch-min-size;
+    height: $touch-min-size;
     @include flex-center;
     background-color: $bg-color-white;
     border-radius: $border-radius-sm;
     font-size: $font-size-lg;
     color: $text-color-primary;
+    border: none;
   }
 
   .quantity-value {
@@ -1246,12 +1331,17 @@ onMounted(() => {
 
 .add-cart-btn {
   flex: 1;
-  height: 72rpx;
+  min-height: $touch-min-size;
   @include flex-center;
   background-color: $primary-color;
   color: #fff;
   font-size: $font-size-base;
   font-weight: $font-weight-medium;
   border-radius: $border-radius-base;
+  border: none;
+}
+
+button::after {
+  border: none;
 }
 </style>

@@ -211,7 +211,7 @@ const getStatusTag = (status) => {
     PUBLISHED: { type: 'success', effect: 'dark', text: '已发布', icon: '✅' },
     REJECTED: { type: 'danger', effect: 'plain', text: '已拒绝', icon: '❌' }
   }
-  return map[status] || { type: '', text: status, icon: '' }
+  return map[status] || { type: 'info', text: status, icon: '' }
 }
 
 // 获取难度标签

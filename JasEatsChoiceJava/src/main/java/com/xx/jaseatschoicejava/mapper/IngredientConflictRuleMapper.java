@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 食材冲突规则Mapper接口
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Mapper

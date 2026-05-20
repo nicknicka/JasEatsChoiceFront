@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 /**
  * 想吃列表项创建DTO
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Data

@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.LongAdder;
  * 3. 统计各缓存区域的性能
  * 4. 提供监控指标查询
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

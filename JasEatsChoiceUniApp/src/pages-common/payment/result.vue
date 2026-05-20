@@ -51,6 +51,7 @@
 <script setup>
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import { HOME, USER_ORDER_DETAIL } from '@/constants/routes'
 
 // 支付状态
 const isSuccess = ref(true)
@@ -84,7 +85,7 @@ const startAutoRedirect = () => {
   autoRedirectTimer = setTimeout(() => {
     // 5秒后自动返回首页
     uni.reLaunch({
-      url: '/pages/index/index'
+      url: HOME
     })
   }, countdown * 1000)
 }
@@ -95,7 +96,7 @@ const viewOrder = () => {
     clearTimeout(autoRedirectTimer)
   }
   uni.redirectTo({
-    url: `/pages-user/order/detail?id=${orderNo.value}`
+    url: `${USER_ORDER_DETAIL}?id=${orderNo.value}`
   })
 }
 
@@ -105,7 +106,7 @@ const returnHome = () => {
     clearTimeout(autoRedirectTimer)
   }
   uni.reLaunch({
-    url: '/pages/index/index'
+    url: HOME
   })
 }
 

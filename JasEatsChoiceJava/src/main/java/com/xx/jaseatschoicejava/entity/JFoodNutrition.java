@@ -13,7 +13,7 @@ import lombok.AllArgsConstructor;
  * 食物营养成分实体（1346条食物数据）
  * 来源于food_nutrition.sql
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 @Data

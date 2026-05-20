@@ -204,9 +204,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { orderApi } from '@/api'
+import { createPageDebug } from '@/utils/page-debug'
+import { USER_REVIEW_SUBMIT } from '@/constants/routes'
 
 // 订单ID
 const orderId = ref('')
+const pageDebug = createPageDebug('订单详情')
 
 // 订单状态
 const orderStatus = ref({
@@ -362,6 +365,10 @@ const statusConfig = computed(() => {
  * 复制订单号
  */
 const copyOrderNo = () => {
+  pageDebug.action('复制订单号', {
+    orderId: orderId.value,
+    orderNo: orderInfo.value.orderNo
+  })
   uni.setClipboardData({
     data: orderInfo.value.orderNo,
     success: () => {
@@ -378,6 +385,9 @@ const copyOrderNo = () => {
  */
 const contactMerchant = async () => {
   try {
+    pageDebug.action('订单详情联系商家', {
+      orderId: orderId.value
+    })
     // 获取商家ID（从第一个订单商品组中获取）
     const merchantId = orderItems.value[0]?.merchantId
     if (!merchantId) {
@@ -411,6 +421,7 @@ const contactMerchant = async () => {
       throw new Error(res.message || '创建会话失败')
     }
   } catch (error) {
+    pageDebug.requestFail('订单详情联系商家', error)
     console.error('跳转聊天页面失败:', error)
     uni.showToast({
       title: error.message || '打开聊天失败',
@@ -423,6 +434,9 @@ const contactMerchant = async () => {
  * 拨打电话
  */
 const callMerchant = () => {
+  pageDebug.action('订单详情拨打电话', {
+    orderId: orderId.value
+  })
   uni.makePhoneCall({
     phoneNumber: '13800138000'
   })
@@ -432,6 +446,9 @@ const callMerchant = () => {
  * 取消订单
  */
 const cancelOrder = async () => {
+  pageDebug.action('订单详情取消订单', {
+    orderId: orderId.value
+  })
   uni.showModal({
     title: '取消订单',
     content: '确定要取消这个订单吗？',
@@ -441,6 +458,9 @@ const cancelOrder = async () => {
           uni.showLoading({ title: '处理中...' })
 
           await orderApi.cancel(orderId.value)
+          pageDebug.requestSuccess('订单详情取消订单', {
+            orderId: orderId.value
+          })
 
           uni.hideLoading()
           uni.showToast({
@@ -451,6 +471,7 @@ const cancelOrder = async () => {
           // 重新加载订单详情
           await loadOrderDetail()
         } catch (error) {
+          pageDebug.requestFail('订单详情取消订单', error)
           console.error('取消订单失败:', error)
           uni.hideLoading()
           uni.showToast({
@@ -467,6 +488,9 @@ const cancelOrder = async () => {
  * 确认收货
  */
 const confirmReceipt = async () => {
+  pageDebug.action('订单详情确认收货', {
+    orderId: orderId.value
+  })
   uni.showModal({
     title: '确认收货',
     content: '确认已收到商品吗？',
@@ -476,6 +500,9 @@ const confirmReceipt = async () => {
           uni.showLoading({ title: '处理中...' })
 
           await orderApi.confirm(orderId.value)
+          pageDebug.requestSuccess('订单详情确认收货', {
+            orderId: orderId.value
+          })
 
           uni.hideLoading()
           uni.showToast({
@@ -486,6 +513,7 @@ const confirmReceipt = async () => {
           // 重新加载订单详情
           await loadOrderDetail()
         } catch (error) {
+          pageDebug.requestFail('订单详情确认收货', error)
           console.error('确认收货失败:', error)
           uni.hideLoading()
           uni.showToast({
@@ -502,6 +530,9 @@ const confirmReceipt = async () => {
  * 评价订单 - U-008: 跳转到评价页
  */
 const reviewOrder = () => {
+  pageDebug.action('订单详情评价订单', {
+    orderId: orderId.value
+  })
   if (!orderId.value) {
     uni.showToast({
       title: '订单信息不存在',
@@ -512,7 +543,7 @@ const reviewOrder = () => {
 
   // 跳转到评价提交页面，携带订单ID
   uni.navigateTo({
-    url: `/pages-user/review/submit/index?orderId=${orderId.value}`,
+    url: `${USER_REVIEW_SUBMIT}?orderId=${orderId.value}`,
     success: () => {
       console.log('跳转到评价页面成功')
     },
@@ -530,6 +561,9 @@ const reviewOrder = () => {
  * 立即支付 - U-009: 调用支付API
  */
 const payOrder = async () => {
+  pageDebug.action('订单详情立即支付', {
+    orderId: orderId.value
+  })
   if (!orderId.value) {
     uni.showToast({
       title: '订单信息不存在',
@@ -588,6 +622,9 @@ const payOrder = async () => {
             signType: payParams.signType || 'MD5',
             paySign: payParams.paySign,
             success: async () => {
+              pageDebug.requestSuccess('订单详情支付', {
+                orderId: orderId.value
+              })
               // 支付成功
               uni.showToast({
                 title: '支付成功',
@@ -610,6 +647,7 @@ const payOrder = async () => {
               }, 1000)
             },
             fail: (err) => {
+              pageDebug.requestFail('订单详情支付', err)
               // 支付失败或取消
               console.error('支付失败:', err)
               if (err.errMsg.includes('cancel')) {
@@ -626,6 +664,7 @@ const payOrder = async () => {
             }
           })
         } catch (error) {
+          pageDebug.requestFail('订单详情支付', error)
           console.error('支付失败:', error)
           uni.hideLoading()
           uni.showToast({
@@ -644,6 +683,9 @@ const payOrder = async () => {
  */
 const orderAgain = async () => {
   try {
+    pageDebug.action('订单详情再来一单', {
+      orderId: orderId.value
+    })
     uni.showLoading({ title: '加入购物车...' })
 
     // 导入购物车API
@@ -696,10 +738,14 @@ const orderAgain = async () => {
     // 跳转到购物车页面
     setTimeout(() => {
       uni.navigateTo({
-        url: '/src/pages-user/cart/index'
+        url: '/pages-user/cart/index'
       })
     }, 1500)
+    pageDebug.requestSuccess('订单详情再来一单', {
+      orderId: orderId.value
+    })
   } catch (error) {
+    pageDebug.requestFail('订单详情再来一单', error)
     console.error('加入购物车失败:', error)
     uni.hideLoading()
     uni.showToast({
@@ -711,6 +757,7 @@ const orderAgain = async () => {
 
 // 组件挂载时加载数据
 onMounted(async () => {
+  pageDebug.lifecycle('页面挂载')
   // 获取页面参数
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
@@ -718,6 +765,9 @@ onMounted(async () => {
 
   if (options.id) {
     orderId.value = options.id
+    pageDebug.state('读取订单详情参数', {
+      orderId: orderId.value
+    })
     await loadOrderDetail()
   }
 })
@@ -727,6 +777,9 @@ onMounted(async () => {
  */
 const loadOrderDetail = async () => {
   try {
+    pageDebug.requestStart('加载订单详情', {
+      orderId: orderId.value
+    })
     uni.showLoading({ title: '加载中...' })
 
     const res = await orderApi.getDetail(orderId.value)
@@ -776,11 +829,11 @@ const loadOrderDetail = async () => {
     // 订单金额
     if (res.amount) {
       orderAmount.value = {
-        subtotal: parseFloat(res.amount.subtotal || res.amount.goodsAmount || 0),
+        dishPrice: parseFloat(res.amount.subtotal || res.amount.goodsAmount || 0).toFixed(2),
         deliveryFee: parseFloat(res.amount.deliveryFee || 0),
         packingFee: parseFloat(res.amount.packingFee || 0),
-        discount: parseFloat(res.amount.discount || res.amount.couponDiscount || 0),
-        total: parseFloat(res.amount.total || res.amount.finalAmount || 0)
+        couponDiscount: parseFloat(res.amount.discount || res.amount.couponDiscount || 0).toFixed(2),
+        totalPrice: parseFloat(res.amount.total || res.amount.finalAmount || 0).toFixed(2)
       }
     }
 
@@ -798,7 +851,13 @@ const loadOrderDetail = async () => {
     }
 
     uni.hideLoading()
+    pageDebug.requestSuccess('加载订单详情', {
+      orderId: orderId.value,
+      status: orderStatus.value.value,
+      itemGroupCount: orderItems.value.length
+    })
   } catch (error) {
+    pageDebug.requestFail('加载订单详情', error)
     console.error('加载订单详情失败:', error)
     uni.hideLoading()
     uni.showToast({

@@ -1,0 +1,71 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6] [cursor=pointer]: 🍽 佳食宜选
+    - generic [ref=e7]:
+      - img [ref=e9]
+      - textbox "搜索菜品、商家、教程..." [ref=e11]
+    - button "商家注册" [ref=e13] [cursor=pointer]:
+      - generic [ref=e14]:
+        - img [ref=e16]
+        - generic [ref=e18]: 商家注册
+  - generic [ref=e19]:
+    - complementary [ref=e20]:
+      - generic [ref=e23] [cursor=pointer]:
+        - img [ref=e24]
+        - generic [ref=e26]:
+          - img [ref=e27]
+          - paragraph [ref=e29]: 加载中...
+      - menubar [ref=e31]:
+        - menuitem "我的店铺" [ref=e32] [cursor=pointer]:
+          - img [ref=e34]
+          - text: 我的店铺
+        - menuitem "AI经营助手" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - text: AI经营助手
+        - menuitem "订单管理" [ref=e41]:
+          - generic [ref=e42] [cursor=pointer]:
+            - img [ref=e44]
+            - generic [ref=e46]: 订单管理
+            - img [ref=e48]
+        - menuitem "店铺管理" [ref=e50]:
+          - generic [ref=e51] [cursor=pointer]:
+            - img [ref=e53]
+            - generic [ref=e55]: 店铺管理
+            - img [ref=e57]
+        - menuitem "客户沟通" [ref=e59]:
+          - generic [ref=e60] [cursor=pointer]:
+            - img [ref=e62]
+            - generic [ref=e65]: 客户沟通
+            - img [ref=e67]
+        - menuitem "经营分析" [ref=e69]:
+          - generic [ref=e70] [cursor=pointer]:
+            - img [ref=e72]
+            - generic [ref=e74]: 经营分析
+            - img [ref=e76]
+      - menubar [ref=e79]:
+        - menuitem "设置" [ref=e80] [cursor=pointer]:
+          - img [ref=e82]
+          - text: 设置
+    - main [ref=e84]:
+      - generic [ref=e85]:
+        - generic [ref=e86]:
+          - generic [ref=e87]:
+            - generic [ref=e88]: AI
+            - generic [ref=e89]:
+              - heading "经营助手" [level=2] [ref=e90]
+              - paragraph [ref=e91]: 智能分析 · 高效运营
+          - generic [ref=e95]: 在线服务中
+        - navigation [ref=e96]:
+          - generic [ref=e97]:
+            - button "经营助手" [ref=e98] [cursor=pointer]:
+              - img [ref=e101]
+              - generic [ref=e103]: 经营助手
+            - button "经营洞察" [ref=e104] [cursor=pointer]:
+              - img [ref=e107]
+              - generic [ref=e109]: 经营洞察
+            - button "评价回复" [ref=e110] [cursor=pointer]:
+              - img [ref=e113]
+              - generic [ref=e115]: 评价回复
+            - button "菜品描述" [ref=e116] [cursor=pointer]:
+              - img [ref=e119]
+              - generic [ref=e121]: 菜品描述

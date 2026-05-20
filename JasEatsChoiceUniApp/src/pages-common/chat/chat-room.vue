@@ -705,8 +705,9 @@ const sendImageMessage = async (imagePath) => {
  * 选择菜品 - IM-006: 跳转到选择菜品页面
  */
 const chooseDish = () => {
-  uni.navigateTo({
-    url: '/chat/dish-selector?userId=' + userInfo.value.id
+  uni.showToast({
+    title: '选菜分享功能整理中',
+    icon: 'none'
   })
 }
 
@@ -714,8 +715,9 @@ const chooseDish = () => {
  * 选择订单 - IM-007: 跳转到选择订单页面
  */
 const chooseOrder = () => {
-  uni.navigateTo({
-    url: '/chat/order-selector?userId=' + userInfo.value.id
+  uni.showToast({
+    title: '订单分享功能整理中',
+    icon: 'none'
   })
 }
 

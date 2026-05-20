@@ -16,54 +16,68 @@ defineEmits(['open-action-panel'])
 </script>
 
 <style scoped lang="less">
+@import '../../assets/css/nordic-theme.less';
+
 .chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding: 0 0 16px 0;
-  border-bottom: 1px solid #e4e7ed;
+  margin-bottom: @nordic-space-md;
+  padding: 0 0 @nordic-space-md 0;
+  border-bottom: 1px solid @nordic-border;
 
   .page-title {
     margin: 0;
-    font-size: 1.429rem /* 原值: 20px */;
-    font-weight: 600;
-    color: #303133;
+    font-size: @nordic-text-xl;
+    font-weight: 700;
+    color: @nordic-text;
+    letter-spacing: @nordic-letter-tight;
   }
 
   .chat-actions {
     display: flex;
-    gap: 12px;
     align-items: center;
 
     .unified-action-btn {
+      min-width: 144px;
+      padding: 12px 26px;
+      border-radius: 16px;
+      border: 1px solid fade(@nordic-accent, 24%);
+      background:
+        linear-gradient(180deg, fade(@nordic-surface, 98%) 0%, #f8f3ed 100%);
+      color: @nordic-accent-dark;
+      font-size: @nordic-text-md;
       font-weight: 600;
-      padding: 12px 32px;
-      font-size: 1.143rem /* 原值: 16px */;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-      border: none;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow:
+        0 14px 28px fade(@nordic-accent, 16%),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      transition: all @nordic-transition-base ease;
 
       &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
-        background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+        border-color: fade(@nordic-accent, 42%);
+        color: @nordic-accent-dark;
+        background:
+          linear-gradient(180deg, #fff8f3 0%, #f4e5d8 100%);
+        box-shadow:
+          0 18px 34px fade(@nordic-accent, 20%),
+          inset 0 1px 0 rgba(255, 255, 255, 0.92);
+        transform: translateY(-1px);
       }
 
       &:active {
         transform: translateY(0);
-        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+        box-shadow:
+          0 8px 18px fade(@nordic-accent, 14%),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
       }
 
       .btn-icon {
-        font-size: 1.286rem /* 原值: 18px */;
-        margin-right: 6px;
+        margin-right: 8px;
+        font-size: 18px;
       }
 
       span {
-        letter-spacing: 0.5px;
+        letter-spacing: @nordic-letter-wide;
       }
     }
   }

@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 内容提取详情VO
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Data

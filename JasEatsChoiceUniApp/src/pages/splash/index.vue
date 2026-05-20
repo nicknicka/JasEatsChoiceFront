@@ -17,21 +17,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { toLogin, toUserHome, toMerchantHome } from '@/utils/router'
-import { useUserStore } from '@/store/modules/user'
+import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { toLogin } from '@/utils/router'
+import { createPageDebug } from '@/utils/page-debug'
 
 const progress = ref(0)
 const loadingText = ref('加载中...')
+let hasNavigated = false
+let hasInitialized = false
 
-const userStore = useUserStore()
+const pageDebug = createPageDebug('启动页')
 
-onMounted(() => {
+onLoad(() => {
+  if (hasInitialized) return
+  hasInitialized = true
+  pageDebug.lifecycle('onLoad')
   initApp()
 })
 
 const initApp = async () => {
   try {
+    pageDebug.lifecycle('initApp:start')
+
     // 模拟加载进度
     const interval = setInterval(() => {
       progress.value += 5
@@ -45,35 +53,48 @@ const initApp = async () => {
 
     // 检查登录状态
     const token = uni.getStorageSync('token')
+    const role = uni.getStorageSync('role')
+    pageDebug.state('本地登录态', {
+      hasToken: !!token,
+      role: role || 'user'
+    })
+
     if (!token) {
       loadingText.value = '请先登录'
-      setTimeout(() => {
-        toLogin()
-      }, 1000)
+      pageDebug.action('跳转登录页')
+      executeNavigate(() => toLogin())
       return
     }
 
-    // 获取用户信息
-    loadingText.value = '获取用户信息...'
-    await userStore.fetchUserInfo()
-
     // 根据角色跳转
     loadingText.value = '准备进入...'
-    setTimeout(() => {
-      const role = userStore.userInfo?.role
+    executeNavigate(() => {
+      pageDebug.action('跳转首页', {
+        role: role || 'user'
+      })
       if (role === 'merchant') {
-        toMerchantHome()
+        uni.reLaunch({
+          url: '/pages-merchant/home/index'
+        })
       } else {
-        toUserHome()
+        uni.switchTab({
+          url: '/pages/home/index/index'
+        })
       }
-    }, 1000)
+    })
   } catch (error) {
     console.error('启动失败:', error)
+    pageDebug.anomaly('启动失败', error)
     loadingText.value = '加载失败，请重试'
-    setTimeout(() => {
-      toLogin()
-    }, 2000)
+    executeNavigate(() => toLogin())
   }
+}
+
+const executeNavigate = (callback) => {
+  pageDebug.state('执行跳转')
+  if (hasNavigated) return
+  hasNavigated = true
+  callback()
 }
 </script>
 

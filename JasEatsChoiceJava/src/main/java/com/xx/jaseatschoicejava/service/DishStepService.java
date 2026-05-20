@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 菜品步骤服务接口
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 public interface DishStepService {

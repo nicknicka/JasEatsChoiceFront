@@ -19,7 +19,7 @@ import java.util.Map;
  * AI Function Calling 控制器
  * 提供AI助手对话接口，支持Function Calling功能和结构化查询
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 @Slf4j

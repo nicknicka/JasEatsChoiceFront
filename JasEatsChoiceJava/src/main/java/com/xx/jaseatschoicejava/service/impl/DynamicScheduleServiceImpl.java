@@ -25,7 +25,7 @@ import java.util.concurrent.ScheduledFuture;
  * 动态定时任务服务实现
  * 使用Spring TaskScheduler管理动态任务
  *
- * @author Claude
+
  * @since 2025-02-12
  */
 @Slf4j

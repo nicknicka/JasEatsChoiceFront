@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 /**
  * 简单的SupervisorAgent测试
  *
- * @author Claude
+
  * @since 2026-03-26
  */
 @SpringBootTest(classes = JasEatsChoiceJavaApplication.class)

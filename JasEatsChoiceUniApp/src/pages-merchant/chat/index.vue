@@ -521,8 +521,9 @@ const deleteConversation = (conversation) => {
  * 发起聊天
  */
 const startChat = () => {
-  uni.navigateTo({
-    url: '/chat/start'
+  uni.showToast({
+    title: '发起新会话功能开发中',
+    icon: 'none'
   })
 }
 

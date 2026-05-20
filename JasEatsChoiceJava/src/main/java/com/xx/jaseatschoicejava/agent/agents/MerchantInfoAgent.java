@@ -9,7 +9,7 @@ import dev.langchain4j.service.UserMessage;
  *
  * 专注于商家信息查询、搜索和对比
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 public interface MerchantInfoAgent {

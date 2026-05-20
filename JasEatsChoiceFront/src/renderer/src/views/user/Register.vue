@@ -236,14 +236,14 @@ const captchaBase64 = ref('')
 const checkCodeKey = ref('')
 
 const applyAutoCaptcha = (result) => {
-  if (result.fixedCaptchaEnabled === 'true' && result.fixedCaptchaCode) {
-    registerForm.captcha = result.fixedCaptchaCode.toUpperCase()
-    return
-  }
-
   const isDevMode = import.meta.env.MODE === 'development' || import.meta.env.DEV
   if (isDevMode && result.captchaAnswer) {
     registerForm.captcha = result.captchaAnswer.toUpperCase()
+    return
+  }
+
+  if (result.fixedCaptchaEnabled === 'true' && result.fixedCaptchaCode) {
+    registerForm.captcha = result.fixedCaptchaCode.toUpperCase()
     return
   }
 

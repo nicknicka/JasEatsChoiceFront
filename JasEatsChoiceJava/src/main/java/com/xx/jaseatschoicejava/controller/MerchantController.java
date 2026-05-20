@@ -734,13 +734,13 @@ public class MerchantController {
 
             // 计算昨日营业额（排除已取消的订单）
             BigDecimal yesterdaySales = yesterdayOrders.stream()
-                    .filter(order -> order.getStatus() != 6)
+                    .filter(order -> order.getStatus() != 4)
                     .map(Order::getTotalAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             // 计算昨日订单数（排除已取消的订单）
             long yesterdayOrdersCount = yesterdayOrders.stream()
-                    .filter(order -> order.getStatus() != 6)
+                    .filter(order -> order.getStatus() != 4)
                     .count();
 
             // 计算趋势百分比和方向

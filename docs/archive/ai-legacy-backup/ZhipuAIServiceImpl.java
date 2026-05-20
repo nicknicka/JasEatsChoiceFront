@@ -23,7 +23,7 @@ import java.util.*;
  * 智谱AI服务实现类（集成Function Calling）
  * 使用官方SDK并支持完整的Function Calling功能
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 @Slf4j

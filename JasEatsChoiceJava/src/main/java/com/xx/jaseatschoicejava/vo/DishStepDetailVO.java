@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 菜品步骤详情VO
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Data

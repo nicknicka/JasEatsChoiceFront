@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * 结构化查询服务
  * 处理前端的结构化查询请求，返回卡片格式的数据
  *
- * @author Claude
+
  * @since 2026-03-15
  */
 @Slf4j

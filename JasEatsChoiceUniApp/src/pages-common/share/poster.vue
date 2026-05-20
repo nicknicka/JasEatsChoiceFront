@@ -2,13 +2,13 @@
   <view class="share-poster">
     <!-- 顶部导航 -->
     <view class="nav-bar">
-      <view class="nav-back" @click="goBack">
+      <button class="nav-back" @click="goBack" aria-label="返回上一页">
         <text class="icon">‹</text>
-      </view>
+      </button>
       <view class="nav-title">生成海报</view>
-      <view class="nav-action" @click="savePoster">
+      <button class="nav-action" @click="savePoster" aria-label="保存海报">
         <text class="action-text">保存</text>
-      </view>
+      </button>
     </view>
 
     <!-- 海报预览 -->
@@ -23,54 +23,54 @@
         <text class="desc">选择你喜欢的海报样式</text>
       </view>
       <scroll-view class="style-list" scroll-x>
-        <view class="style-item" v-for="(style, index) in styles" :key="index" :class="{ active: currentStyle === index }" @click="selectStyle(index)">
+        <button class="style-item" v-for="(style, index) in styles" :key="index" :class="{ active: currentStyle === index }" @click="selectStyle(index)" :aria-label="`选择${style.name}样式`">
           <view class="style-preview" :style="{ background: style.background }">
-            <text class="style-icon">{{ style.icon }}</text>
+            <text class="style-icon">{{ style.label }}</text>
           </view>
           <text class="style-name">{{ style.name }}</text>
-        </view>
+        </button>
       </scroll-view>
     </view>
 
     <!-- 海报选项 -->
     <view class="poster-options">
-      <view class="option-item" @click="toggleOption('showQrCode')">
+      <button class="option-item" @click="toggleOption('showQrCode')" aria-label="切换二维码显示">
         <view class="option-left">
-          <text class="option-icon">📱</text>
+          <text class="option-icon">码</text>
           <text class="option-label">显示二维码</text>
         </view>
         <view class="option-right">
-          <switch :checked="posterOptions.showQrCode" @change="toggleOption('showQrCode')" color="#ff6b6b" />
+          <switch :checked="posterOptions.showQrCode" @change.stop="handleOptionChange('showQrCode', $event)" color="#ff6b6b" />
         </view>
-      </view>
-      <view class="option-item" @click="toggleOption('showPrice')">
+      </button>
+      <button class="option-item" @click="toggleOption('showPrice')" aria-label="切换价格显示">
         <view class="option-left">
-          <text class="option-icon">💰</text>
+          <text class="option-icon">价</text>
           <text class="option-label">显示价格</text>
         </view>
         <view class="option-right">
-          <switch :checked="posterOptions.showPrice" @change="toggleOption('showPrice')" color="#ff6b6b" />
+          <switch :checked="posterOptions.showPrice" @change.stop="handleOptionChange('showPrice', $event)" color="#ff6b6b" />
         </view>
-      </view>
-      <view class="option-item" @click="toggleOption('showDesc')">
+      </button>
+      <button class="option-item" @click="toggleOption('showDesc')" aria-label="切换描述显示">
         <view class="option-left">
-          <text class="option-icon">📝</text>
+          <text class="option-icon">介</text>
           <text class="option-label">显示描述</text>
         </view>
         <view class="option-right">
-          <switch :checked="posterOptions.showDesc" @change="toggleOption('showDesc')" color="#ff6b6b" />
+          <switch :checked="posterOptions.showDesc" @change.stop="handleOptionChange('showDesc', $event)" color="#ff6b6b" />
         </view>
-      </view>
+      </button>
     </view>
 
     <!-- 操作按钮 -->
     <view class="action-buttons">
       <button class="btn btn-primary" @click="savePoster">
-        <text class="icon">💾</text>
+        <text class="icon">保存</text>
         <text>保存海报</text>
       </button>
       <button class="btn btn-outline" @click="sharePoster">
-        <text class="icon">📤</text>
+        <text class="icon">分享</text>
         <text>分享海报</text>
       </button>
     </view>
@@ -79,6 +79,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+
+const palette = [
+  { name: '暖食红', label: '主', colors: ['#FF6B35', '#E55A2B'] },
+  { name: '杏仁橙', label: '橙', colors: ['#FF8B5D', '#FF6B35'] },
+  { name: '麦穗金', label: '金', colors: ['#F4B740', '#E0911A'] },
+  { name: '炭焙棕', label: '棕', colors: ['#6A4A3C', '#3E2B22'] }
+]
 
 // 海报尺寸
 const posterWidth = ref(375)
@@ -96,12 +103,10 @@ const posterOptions = ref({
 
 // 海报样式列表
 const styles = ref([
-  { name: '经典红', icon: '🔴', background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)' },
-  { name: '活力橙', icon: '🟠', background: 'linear-gradient(135deg, #ff9800 0%, #ff5722 100%)' },
-  { name: '清新绿', icon: '🟢', background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)' },
-  { name: '商务蓝', icon: '🔵', background: 'linear-gradient(135deg, #1677ff 0%, #0958d9 100%)' },
-  { name: '梦幻紫', icon: '🟣', background: 'linear-gradient(135deg, #722ed1 0%, #531dab 100%)' },
-  { name: '简约灰', icon: '⚪', background: 'linear-gradient(135deg, #595959 0%, #262626 100%)' }
+  ...palette.map((item) => ({
+    ...item,
+    background: `linear-gradient(135deg, ${item.colors[0]} 0%, ${item.colors[1]} 100%)`
+  }))
 ])
 
 // 海报数据
@@ -135,6 +140,11 @@ const toggleOption = (option) => {
   drawPoster()
 }
 
+const handleOptionChange = (option, event) => {
+  posterOptions.value[option] = Boolean(event?.detail?.value)
+  drawPoster()
+}
+
 // 绘制海报
 const drawPoster = () => {
   const ctx = uni.createCanvasContext('posterCanvas')
@@ -147,25 +157,8 @@ const drawPoster = () => {
 
   // 绘制背景
   const gradient = ctx.createLinearGradient(0, 0, width, height)
-  if (currentStyle.value === 0) {
-    gradient.addColorStop(0, '#ff6b6b')
-    gradient.addColorStop(1, '#ee5a6f')
-  } else if (currentStyle.value === 1) {
-    gradient.addColorStop(0, '#ff9800')
-    gradient.addColorStop(1, '#ff5722')
-  } else if (currentStyle.value === 2) {
-    gradient.addColorStop(0, '#52c41a')
-    gradient.addColorStop(1, '#73d13d')
-  } else if (currentStyle.value === 3) {
-    gradient.addColorStop(0, '#1677ff')
-    gradient.addColorStop(1, '#0958d9')
-  } else if (currentStyle.value === 4) {
-    gradient.addColorStop(0, '#722ed1')
-    gradient.addColorStop(1, '#531dab')
-  } else {
-    gradient.addColorStop(0, '#595959')
-    gradient.addColorStop(1, '#262626')
-  }
+  gradient.addColorStop(0, style.colors[0])
+  gradient.addColorStop(1, style.colors[1])
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
@@ -173,60 +166,60 @@ const drawPoster = () => {
   const cardMargin = 20
   const cardTop = 80
   const cardHeight = 320
-  ctx.fillStyle = '#ffffff'
+  ctx.fillStyle = '#fffaf6'
   ctx.setShadow(0, 4, 12, 'rgba(0, 0, 0, 0.1)')
   ctx.fillRect(cardMargin, cardTop, width - cardMargin * 2, cardHeight)
 
   // 绘制商品图片（占位矩形）
   ctx.setShadow(0, 0, 0, 'transparent')
-  ctx.fillStyle = '#f0f0f0'
+  ctx.fillStyle = '#f7ece4'
   ctx.fillRect(cardMargin + 10, cardTop + 10, width - cardMargin * 2 - 20, 180)
 
   // 绘制商品图片提示文字
-  ctx.fillStyle = '#999999'
+  ctx.fillStyle = '#8b786d'
   ctx.font = '14px sans-serif'
   ctx.textAlign = 'center'
   ctx.fillText('商品图片', width / 2, cardTop + 100)
 
   // 绘制标题
-  ctx.fillStyle = '#333333'
+  ctx.fillStyle = '#2f221c'
   ctx.font = 'bold 18px sans-serif'
   ctx.textAlign = 'left'
   ctx.fillText(posterData.value.title, cardMargin + 20, cardTop + 220)
 
   // 绘制描述（如果启用）
   if (posterOptions.value.showDesc) {
-    ctx.fillStyle = '#666666'
+    ctx.fillStyle = '#6e5a4d'
     ctx.font = '12px sans-serif'
     ctx.fillText(posterData.value.desc, cardMargin + 20, cardTop + 250)
   }
 
   // 绘制价格（如果启用）
   if (posterOptions.value.showPrice) {
-    ctx.fillStyle = '#ff6b6b'
+    ctx.fillStyle = style.colors[0]
     ctx.font = 'bold 24px sans-serif'
     ctx.fillText('¥' + posterData.value.price, cardMargin + 20, cardTop + 290)
   }
 
   // 绘制底部信息
   const bottomY = height - 80
-  ctx.fillStyle = '#ffffff'
+  ctx.fillStyle = '#fffaf6'
   ctx.font = 'bold 16px sans-serif'
   ctx.textAlign = 'center'
   ctx.fillText('佳食宜选', width / 2, bottomY)
 
-  ctx.fillStyle = '#ffffff'
+  ctx.fillStyle = '#fff3ea'
   ctx.font = '12px sans-serif'
   ctx.fillText('长按识别二维码，立即下单', width / 2, bottomY + 25)
 
   // 绘制二维码（如果启用）
-  if (posterOptions.showQrCode) {
+  if (posterOptions.value.showQrCode) {
     const qrSize = 80
     const qrX = (width - qrSize) / 2
     const qrY = bottomY - 120
-    ctx.fillStyle = '#ffffff'
+    ctx.fillStyle = '#fffaf6'
     ctx.fillRect(qrX, qrY, qrSize, qrSize)
-    ctx.fillStyle = '#333333'
+    ctx.fillStyle = '#2f221c'
     ctx.font = '10px sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText('二维码', qrX + qrSize / 2, qrY + qrSize / 2)
@@ -296,32 +289,36 @@ const sharePoster = () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/variables.scss';
+
 .share-poster {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: $bg-color-base;
   padding-bottom: constant(safe-area-inset-bottom);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
 .nav-bar {
   height: 88rpx;
-  background: #ffffff;
+  background: $bg-color-white;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid $border-color-light;
 
   .nav-back {
-    width: 60rpx;
-    height: 60rpx;
+    min-width: $touch-min-size;
+    min-height: $touch-min-size;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: none;
+    background: transparent;
 
     .icon {
       font-size: 48rpx;
-      color: #333333;
+      color: $text-color-primary;
     }
   }
 
@@ -334,14 +331,14 @@ const sharePoster = () => {
   .nav-action {
     .action-text {
       font-size: 28rpx;
-      color: #ff6b6b;
+      color: $primary-600;
     }
   }
 }
 
 .poster-container {
   margin: 24rpx 32rpx;
-  background: #ffffff;
+  background: $bg-color-white;
   border-radius: 16rpx;
   padding: 32rpx;
   display: flex;
@@ -350,13 +347,13 @@ const sharePoster = () => {
 
   .poster-canvas {
     border-radius: 12rpx;
-    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+    box-shadow: $box-shadow-md;
   }
 }
 
 .poster-styles {
   margin: 24rpx 32rpx;
-  background: #ffffff;
+  background: $bg-color-white;
   border-radius: 16rpx;
   padding: 32rpx;
 
@@ -366,14 +363,14 @@ const sharePoster = () => {
     .title {
       font-size: 28rpx;
       font-weight: bold;
-      color: #333333;
+      color: $text-color-primary;
       display: block;
       margin-bottom: 8rpx;
     }
 
     .desc {
       font-size: 24rpx;
-      color: #999999;
+      color: $text-color-secondary;
     }
   }
 
@@ -388,6 +385,8 @@ const sharePoster = () => {
       align-items: center;
       gap: 12rpx;
       width: 120rpx;
+      border: none;
+      background: transparent;
 
       .style-preview {
         width: 100rpx;
@@ -397,7 +396,7 @@ const sharePoster = () => {
         align-items: center;
         justify-content: center;
         border: 3rpx solid transparent;
-        transition: all 0.3s;
+        transition: transform 0.3s ease, border-color 0.3s ease;
 
         .style-icon {
           font-size: 48rpx;
@@ -406,12 +405,12 @@ const sharePoster = () => {
 
       .style-name {
         font-size: 24rpx;
-        color: #666666;
+        color: $text-color-regular;
         text-align: center;
       }
 
       &.active .style-preview {
-        border-color: #ff6b6b;
+        border-color: $primary-500;
         transform: scale(1.05);
       }
     }
@@ -420,7 +419,7 @@ const sharePoster = () => {
 
 .poster-options {
   margin: 24rpx 32rpx;
-  background: #ffffff;
+  background: $bg-color-white;
   border-radius: 16rpx;
   overflow: hidden;
 
@@ -430,6 +429,12 @@ const sharePoster = () => {
     align-items: center;
     padding: 24rpx 32rpx;
     border-bottom: 1rpx solid #f0f0f0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    background: $bg-color-white;
+    width: 100%;
+    text-align: left;
 
     &:last-child {
       border-bottom: none;
@@ -446,7 +451,7 @@ const sharePoster = () => {
 
       .option-label {
         font-size: 28rpx;
-        color: #333333;
+        color: $text-color-primary;
       }
     }
   }
@@ -474,19 +479,23 @@ const sharePoster = () => {
     }
 
     &.btn-primary {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+      background: linear-gradient(135deg, $primary-500 0%, $primary-700 100%);
       color: #ffffff;
     }
 
     &.btn-outline {
-      background: #ffffff;
-      color: #ff6b6b;
-      border: 2rpx solid #ff6b6b;
+      background: $bg-color-white;
+      color: $primary-600;
+      border: 2rpx solid $primary-500;
     }
 
     &:active {
       opacity: 0.8;
     }
   }
+}
+
+button::after {
+  border: none;
 }
 </style>

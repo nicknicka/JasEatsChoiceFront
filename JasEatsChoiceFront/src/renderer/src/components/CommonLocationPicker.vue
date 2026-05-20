@@ -29,6 +29,8 @@ const locationSource = ref('unknown')
 // 本地存储键名
 const LOCATION_STORAGE_KEY = 'user_last_location'
 const DEFAULT_LOCATION = { lng: 116.397428, lat: 39.90923 }
+const LOCATION_CACHE_DURATION = 24 * 60 * 60 * 1000
+const TRUSTED_LOCATION_SOURCES = ['gps', 'manual', 'search']
 
 const getClientIpForLocation = () => {
   try {
@@ -42,7 +44,7 @@ const getClientIpForLocation = () => {
 
 /**
  * 多级定位策略（自动定位）
- * 优先级：本地缓存 > IP定位 > GPS定位 > 默认位置
+ * 优先级：本地缓存（24小时）> GPS定位 > IP定位 > 默认位置
  */
 const getCurrentLocation = async () => {
   isLocating.value = true
@@ -58,7 +60,10 @@ const getCurrentLocation = async () => {
       getLastLocation,
       saveLastLocation,
       defaultPosition: DEFAULT_LOCATION,
-      clientIp: getClientIpForLocation(),
+      clientIp: null,
+      preferCacheFirst: true,
+      cacheSources: TRUSTED_LOCATION_SOURCES,
+      useHighAccuracy: false,
       AMap: typeof AMap !== 'undefined' ? AMap : null
     })
 
@@ -137,15 +142,20 @@ const selectCity = async (city) => {
 }
 
 /**
- * 保存位置到本地存储（7天有效期）
+ * 保存位置到本地存储（24小时有效期）
  */
 const saveLastLocation = (lng, lat, source = 'unknown') => {
+  if (!TRUSTED_LOCATION_SOURCES.includes(source)) {
+    return
+  }
+
   try {
     const locationData = {
       lng,
       lat,
       timestamp: Date.now(),
-      source
+      source,
+      accuracy: source
     }
     localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(locationData))
     console.log('位置已保存到本地存储')
@@ -163,13 +173,15 @@ const getLastLocation = () => {
     if (stored) {
       const locationData = JSON.parse(stored)
 
-      // 检查是否过期（7天内有效）
-      const sevenDays = 7 * 24 * 60 * 60 * 1000
-      if (Date.now() - locationData.timestamp < sevenDays) {
+      // 检查是否过期（24小时内有效）
+      if (Date.now() - locationData.timestamp < LOCATION_CACHE_DURATION) {
         return {
           lng: locationData.lng,
           lat: locationData.lat,
-          source: locationData.source || 'cache'
+          source: locationData.source || 'cache',
+          timestamp: locationData.timestamp,
+          accuracy: locationData.accuracy || locationData.source || 'cache',
+          address: locationData.address || ''
         }
       } else {
         // 过期则删除

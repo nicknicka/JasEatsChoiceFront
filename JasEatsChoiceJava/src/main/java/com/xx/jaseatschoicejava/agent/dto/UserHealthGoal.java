@@ -10,7 +10,7 @@ import java.time.LocalDate;
  *
  * 用于Agent工具类返回用户健康目标信息
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Data

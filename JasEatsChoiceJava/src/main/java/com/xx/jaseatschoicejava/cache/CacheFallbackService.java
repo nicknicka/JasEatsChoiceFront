@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * - 连续失败达到阈值：开启熔断，直接查数据库
  * - 半开模式：定期尝试恢复Redis连接
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

@@ -97,10 +97,10 @@ export const getChatSessions = async (userId) => {
   try {
     const response = await api.get(`/v1/chat/users/${userId}/chat-sessions`)
 
-    if (response.data && response.data.success) {
+    if (response?.success && Array.isArray(response.data)) {
       // ⭐ 适配后端新数据结构
       // 后端返回格式：{ id, type, name, avatar, lastMessage, time, unreadCount, pinned, memberCount, groupId, targetId }
-      const sessions = response.data.data.map((session) => {
+      const sessions = response.data.map((session) => {
         const isGroupChat = session.type === 'group'
 
         return {
@@ -147,9 +147,9 @@ export const getChatMessages = async (sessionId, userId) => {
   try {
     const response = await api.get(`/v1/chat/${sessionId}/messages`)
 
-    if (response.data && response.data.success) {
+    if (response?.success && Array.isArray(response.data?.records)) {
       // 转换数据格式
-      const messages = response.data.data.records.map((message) => ({
+      const messages = response.data.records.map((message) => ({
         id: message.id,
         sender: message.fromId === userId ? 'merchant' : message.fromId,
         content: message.content,
@@ -177,10 +177,10 @@ export const sendMessage = async (messageData) => {
   try {
     const response = await api.post('/api/v1/chat/messages', messageData)
 
-    if (response.data && response.data.success) {
+    if (response?.success) {
       return {
         success: true,
-        data: response.data.data
+        data: response.data
       }
     }
 
@@ -212,7 +212,7 @@ export const markMessagesAsRead = async (sessionId, userId) => {
     })
 
     return {
-      success: response.data?.success || false
+      success: response?.success || false
     }
   } catch (error) {
     console.error('标记已读失败:', error)

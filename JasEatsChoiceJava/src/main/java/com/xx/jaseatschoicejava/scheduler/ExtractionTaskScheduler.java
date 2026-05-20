@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * 内容提取任务调度器
  * 负责定期处理待提取的任务
  *
- * @author Claude
+
  * @since 2025-02-01
  */
 @Component

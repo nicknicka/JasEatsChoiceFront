@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * 内容源创建DTO
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Data

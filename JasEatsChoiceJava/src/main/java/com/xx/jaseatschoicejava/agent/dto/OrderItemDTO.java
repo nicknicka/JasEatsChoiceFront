@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 /**
  * 订单项DTO
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Data

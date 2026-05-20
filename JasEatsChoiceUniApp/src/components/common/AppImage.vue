@@ -4,6 +4,7 @@
     :mode="mode"
     :lazy-load="lazyLoad"
     :class="customClass"
+    :aria-label="ariaLabel"
     @error="handleError"
     @load="handleLoad"
   />
@@ -29,6 +30,10 @@ const props = defineProps({
   customClass: {
     type: String,
     default: ''
+  },
+  ariaLabel: {
+    type: String,
+    default: ''
   }
 })
 
@@ -39,7 +44,6 @@ const processedSrc = computed(() => processImageUrl(props.src))
 
 // 错误处理
 const handleError = (e) => {
-  console.error('图片加载失败:', props.src, e)
   emit('error', e)
 }
 

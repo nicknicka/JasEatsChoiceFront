@@ -6,7 +6,7 @@ import com.xx.jaseatschoicejava.dto.NutritionInfo;
  * 营养分析服务接口
  * 提供食物营养成分分析功能
  *
- * @author Claude
+
  * @since 2026-03-13
  */
 public interface NutritionAnalysisService {

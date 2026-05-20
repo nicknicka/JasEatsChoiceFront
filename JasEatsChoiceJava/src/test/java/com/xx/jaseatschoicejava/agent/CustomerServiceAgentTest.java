@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * 2. 饮食健康咨询
  * 3. 个性化服务引导
  *
- * @author Claude
+
  * @since 2026-03-26
  */
 @SpringBootTest(classes = JasEatsChoiceJavaApplication.class)

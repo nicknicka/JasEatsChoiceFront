@@ -4,6 +4,7 @@ import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.dto.ContentExtractionUpdateDTO;
 import com.xx.jaseatschoicejava.dto.ContentSourceCreateDTO;
 import com.xx.jaseatschoicejava.service.ContentExtractionService;
+import com.xx.jaseatschoicejava.util.UserIdentityUtil;
 import com.xx.jaseatschoicejava.vo.ContentExtractionDetailVO;
 import com.xx.jaseatschoicejava.vo.ContentSourceVO;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * 内容提取控制器
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @RestController
@@ -40,10 +41,7 @@ public class ContentExtractionController {
     public ResponseResult<String> addContentSource(
             @RequestBody ContentSourceCreateDTO dto,
             HttpServletRequest request) {
-        String userId = (String) request.getAttribute("userId");
-        if (userId == null) {
-            userId = "test_user";
-        }
+        String userId = resolveUserId(request);
 
         String sourceId = contentExtractionService.addContentSource(dto, userId);
         return ResponseResult.success(sourceId);
@@ -57,10 +55,7 @@ public class ContentExtractionController {
      */
     @GetMapping("/sources")
     public ResponseResult<List<ContentSourceVO>> getUserContentSources(HttpServletRequest request) {
-        String userId = (String) request.getAttribute("userId");
-        if (userId == null) {
-            userId = "test_user";
-        }
+        String userId = resolveUserId(request);
 
         List<ContentSourceVO> sources = contentExtractionService.getUserContentSources(userId);
         return ResponseResult.success(sources);
@@ -77,10 +72,7 @@ public class ContentExtractionController {
     public ResponseResult<ContentSourceVO> getContentSourceDetail(
             @PathVariable String sourceId,
             HttpServletRequest request) {
-        String userId = (String) request.getAttribute("userId");
-        if (userId == null) {
-            userId = "test_user";
-        }
+        String userId = resolveUserId(request);
 
         ContentSourceVO sourceVO = contentExtractionService.getContentSourceDetail(sourceId, userId);
         return ResponseResult.success(sourceVO);
@@ -97,10 +89,7 @@ public class ContentExtractionController {
     public ResponseResult<ContentExtractionDetailVO> getExtractionDetail(
             @PathVariable String extractionId,
             HttpServletRequest request) {
-        String userId = (String) request.getAttribute("userId");
-        if (userId == null) {
-            userId = "test_user";
-        }
+        String userId = resolveUserId(request);
 
         ContentExtractionDetailVO detailVO = contentExtractionService.getExtractionDetail(extractionId, userId);
         return ResponseResult.success(detailVO);
@@ -117,10 +106,7 @@ public class ContentExtractionController {
     public ResponseResult<Boolean> updateExtraction(
             @RequestBody ContentExtractionUpdateDTO dto,
             HttpServletRequest request) {
-        String userId = (String) request.getAttribute("userId");
-        if (userId == null) {
-            userId = "test_user";
-        }
+        String userId = resolveUserId(request);
 
         boolean success = contentExtractionService.updateExtraction(dto, userId);
         return ResponseResult.success(success);
@@ -137,10 +123,7 @@ public class ContentExtractionController {
     public ResponseResult<String> publishAsRecipe(
             @PathVariable String extractionId,
             HttpServletRequest request) {
-        String userId = (String) request.getAttribute("userId");
-        if (userId == null) {
-            userId = "test_user";
-        }
+        String userId = resolveUserId(request);
 
         String recipeId = contentExtractionService.publishAsRecipe(extractionId, userId);
         return ResponseResult.success(recipeId);
@@ -161,10 +144,7 @@ public class ContentExtractionController {
             @RequestParam Boolean verified,
             @RequestParam(required = false) Integer score,
             HttpServletRequest request) {
-        String userId = (String) request.getAttribute("userId");
-        if (userId == null) {
-            userId = "test_user";
-        }
+        String userId = resolveUserId(request);
 
         boolean success = contentExtractionService.verifyExtraction(extractionId, verified, score, userId);
         return ResponseResult.success(success);
@@ -181,10 +161,7 @@ public class ContentExtractionController {
     public ResponseResult<Boolean> reExtract(
             @PathVariable String sourceId,
             HttpServletRequest request) {
-        String userId = (String) request.getAttribute("userId");
-        if (userId == null) {
-            userId = "test_user";
-        }
+        String userId = resolveUserId(request);
 
         boolean success = contentExtractionService.reExtract(sourceId, userId);
         return ResponseResult.success(success);
@@ -201,12 +178,17 @@ public class ContentExtractionController {
     public ResponseResult<Boolean> deleteContentSource(
             @PathVariable String sourceId,
             HttpServletRequest request) {
-        String userId = (String) request.getAttribute("userId");
-        if (userId == null) {
-            userId = "test_user";
-        }
+        String userId = resolveUserId(request);
 
         boolean success = contentExtractionService.deleteContentSource(sourceId, userId);
         return ResponseResult.success(success);
+    }
+
+    private String resolveUserId(HttpServletRequest request) {
+        String userId = UserIdentityUtil.extractUserId(request);
+        if (userId == null || userId.isBlank()) {
+            return "test_user";
+        }
+        return userId;
     }
 }

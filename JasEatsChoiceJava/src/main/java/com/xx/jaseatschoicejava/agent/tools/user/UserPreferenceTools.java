@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * 为Agent提供用户偏好的查询和管理功能
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

@@ -20,7 +20,7 @@ import java.util.List;
  *
  * 为Agent提供饮食记录分析功能
  *
- * @author Claude
+
  * @since 2026-03-27
  */
 @Slf4j

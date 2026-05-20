@@ -15,7 +15,7 @@ import java.util.*;
 /**
  * 食材冲突规则服务实现
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Slf4j

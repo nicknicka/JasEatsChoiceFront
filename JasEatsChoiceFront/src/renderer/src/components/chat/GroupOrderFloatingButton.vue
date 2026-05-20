@@ -7,10 +7,6 @@
     @mousedown="startDrag"
     @selectstart="handleSelectStart"
   >
-    <!-- 波纹效果 -->
-    <div class="ripple-effect"></div>
-    <div class="ripple-effect ripple-effect-2"></div>
-
     <div class="order-btn-inner">
       <el-icon :size="26" class="cart-icon"><ShoppingCart /></el-icon>
       <span class="cart-count" v-if="itemCount > 0">
@@ -23,9 +19,6 @@
         <span class="tooltip-count">{{ itemCount }} 件商品</span>
       </div>
     </div>
-
-    <!-- 呼吸光环 -->
-    <div class="breathing-ring" v-if="itemCount > 0"></div>
   </div>
 </template>
 
@@ -33,7 +26,7 @@
 import { ref, onBeforeUnmount } from 'vue'
 import { ShoppingCart } from '@element-plus/icons-vue'
 
-const props = defineProps({
+defineProps({
   itemCount: {
     type: Number,
     default: 0
@@ -145,135 +138,58 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="less">
+@import '../../assets/css/nordic-theme.less';
+
 .floating-order-btn {
   position: fixed;
   bottom: 100px;
-  right: 50px;
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
+  right: 38px;
+  width: 72px;
+  height: 72px;
+  background:
+    linear-gradient(180deg, #fffaf4 0%, #f5e5d8 100%);
+  border-radius: 22px;
+  border: 1px solid fade(@nordic-accent, 26%);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: move;
   box-shadow:
-    0 4px 12px rgba(102, 126, 234, 0.4),
-    0 0 0 0 rgba(102, 126, 234, 0.4);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    0 18px 32px rgba(117, 82, 55, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  transition: all @nordic-transition-base ease;
   z-index: 1000;
   user-select: none;
   overflow: visible;
 
-  // 波纹动画
-  .ripple-effect {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    opacity: 0;
-    animation: ripple 2s ease-out infinite;
-  }
-
-  .ripple-effect-2 {
-    animation-delay: 1s;
-  }
-
-  @keyframes ripple {
-    0% {
-      width: 100%;
-      height: 100%;
-      opacity: 0.6;
-    }
-    100% {
-      width: 200%;
-      height: 200%;
-      opacity: 0;
-    }
-  }
-
-  // 呼吸光环
-  .breathing-ring {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    opacity: 0.3;
-    animation: breathing 2s ease-in-out infinite;
-    z-index: -1;
-  }
-
-  @keyframes breathing {
-    0%, 100% {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 0.3;
-    }
-    50% {
-      transform: translate(-50%, -50%) scale(1.3);
-      opacity: 0.1;
-    }
-  }
-
   &:hover {
-    transform: scale(1.15);
+    transform: translateY(-2px);
     box-shadow:
-      0 8px 24px rgba(102, 126, 234, 0.5),
-      0 0 0 8px rgba(102, 126, 234, 0.1);
-
-    .cart-icon {
-      animation: shake 0.5s ease-in-out;
-    }
+      0 22px 38px rgba(117, 82, 55, 0.18),
+      0 0 0 8px fade(@nordic-accent-light, 26%);
 
     .tooltip {
       opacity: 1;
       visibility: visible;
-      transform: translateX(-12px);
+      transform: translateY(-50%) translateX(-6px);
     }
   }
 
   &:active {
-    transform: scale(1.05);
+    transform: translateY(0);
   }
 
   &.has-items {
-    // 有商品时添加脉冲动画
-    animation: pulse 2s ease-in-out infinite;
+    border-color: fade(@nordic-accent, 34%);
   }
 
   &.is-dragging {
     cursor: grabbing;
     transform: scale(1.05);
     box-shadow:
-      0 12px 32px rgba(102, 126, 234, 0.6),
-      0 0 0 12px rgba(102, 126, 234, 0.2);
+      0 22px 38px rgba(117, 82, 55, 0.2),
+      0 0 0 12px fade(@nordic-accent-light, 22%);
     transition: none;
-  }
-
-  @keyframes pulse {
-    0%, 100% {
-      box-shadow:
-        0 4px 12px rgba(102, 126, 234, 0.4),
-        0 0 0 0 rgba(102, 126, 234, 0.4);
-    }
-    50% {
-      box-shadow:
-        0 4px 12px rgba(102, 126, 234, 0.4),
-        0 0 0 12px rgba(102, 126, 234, 0.2);
-    }
-  }
-
-  @keyframes shake {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(-10deg); }
-    75% { transform: rotate(10deg); }
   }
 
   .order-btn-inner {
@@ -284,60 +200,46 @@ onBeforeUnmount(() => {
     z-index: 1;
 
     .cart-icon {
-      color: white;
-      transition: all 0.3s;
+      color: @nordic-accent-dark;
+      transition: color @nordic-transition-fast ease;
     }
 
     .cart-count {
       position: absolute;
-      top: -22px;
-      right: -22px;
-      background: linear-gradient(135deg, #f56c6c 0%, #f78989 100%);
+      top: -16px;
+      right: -14px;
+      background: @nordic-red;
       color: #fff;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       padding: 0;
-      font-size: 0.75rem /* 原值: 11px */;
+      font-size: @nordic-text-xs;
       font-weight: 700;
-      line-height: 20px;
+      line-height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid #fff;
+      border: 2px solid @nordic-surface;
       box-shadow:
-        0 2px 8px rgba(245, 108, 108, 0.5),
-        0 0 0 2px rgba(245, 108, 108, 0.2);
-      animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        0 8px 16px fade(@nordic-red, 22%);
       z-index: 10;
     }
 
-    @keyframes bounce-in {
-      0% {
-        transform: scale(0);
-      }
-      50% {
-        transform: scale(1.2);
-      }
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    // 悬浮提示
     .tooltip {
       position: absolute;
       right: calc(100% + 12px);
       top: 50%;
-      transform: translateY(-50%) translateX(-8px);
-      background: white;
-      padding: 8px 12px;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(-50%) translateX(-10px);
+      background: @nordic-surface;
+      border: 1px solid @nordic-border;
+      padding: 10px 12px;
+      border-radius: 12px;
+      box-shadow: 0 14px 28px rgba(105, 78, 57, 0.14);
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all @nordic-transition-fast ease;
       pointer-events: none;
 
       &::after {
@@ -348,23 +250,23 @@ onBeforeUnmount(() => {
         transform: translateY(-50%);
         width: 0;
         height: 0;
-        border-left: 6px solid white;
+        border-left: 6px solid @nordic-surface;
         border-top: 6px solid transparent;
         border-bottom: 6px solid transparent;
       }
 
       .tooltip-text {
         display: block;
-        font-size: 0.929rem /* 原值: 13px */;
-        font-weight: 500;
-        color: #303133;
+        font-size: @nordic-text-sm;
+        font-weight: 600;
+        color: @nordic-text;
         margin-bottom: 2px;
       }
 
       .tooltip-count {
         display: block;
-        font-size: 0.857rem /* 原值: 12px */;
-        color: #909399;
+        font-size: @nordic-text-xs;
+        color: @nordic-text-muted;
       }
     }
   }

@@ -13,7 +13,7 @@ import java.util.function.Consumer;
  *
  * 本接口保留视觉识别和特殊功能
  *
- * @author Claude
+
  * @since 2026-03-22
  */
 public interface ZhipuAIService {

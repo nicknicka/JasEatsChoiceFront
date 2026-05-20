@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Agent调用链追踪监听器
  * 记录每次Agent调用的完整路径和参数
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 public class AgentCallTracer implements AiServiceListener<AiServiceEvent> {

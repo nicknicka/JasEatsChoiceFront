@@ -1,29 +1,30 @@
 <template>
 	<view class="chat-message-list">
-		<!-- 空状态 -->
 		<view v-if="isEmpty" class="empty-state">
 			<text class="empty-icon">💬</text>
 			<text class="empty-text">暂无消息，开始对话吧</text>
 		</view>
 
-		<!-- 消息列表（使用 uni-list 实现虚拟滚动） -->
-		<uni-list
+		<scroll-view
 			v-else
-			class="message-list"
+			class="message-scroll"
+			scroll-y
 			:scroll-into-view="scrollIntoView"
 			:scroll-with-animation="true"
 		>
-			<uni-list-item
-				v-for="(msg, index) in messages"
-				:key="msg.id"
-				class="message-item"
-				:id="'msg-' + index"
-			>
-				<ChatMessageItem :message="msg" />
-			</uni-list-item>
-		</uni-list>
+			<view class="message-list">
+				<view
+					v-for="(msg, index) in messages"
+					:key="msg.id"
+					class="message-item"
+					:id="'msg-' + index"
+				>
+					<ChatMessageItem :message="msg" />
+				</view>
+				<view class="message-list-bottom"></view>
+			</view>
+		</scroll-view>
 
-		<!-- 加载更多提示（可选） -->
 		<view v-if="showLoadingMore" class="loading-more">
 			<text class="loading-text">加载更多...</text>
 		</view>
@@ -42,7 +43,7 @@ import ChatMessageItem from './ChatMessageItem.vue'
  * - 支持大量消息时保持流畅
  * - 自动滚动到底部
  *
- * @author Claude
+
  * @date 2026-03-31
  */
 
@@ -72,18 +73,22 @@ const isEmpty = computed(() => {
 
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
+@import '@/styles/mixins.scss';
 
 .chat-message-list {
+	flex: 1;
+	min-height: 0;
 	width: 100%;
-	height: 100%;
 	display: flex;
 	flex-direction: column;
 }
 
 .empty-state {
 	@include flex-center-column;
+	flex: 1;
+	justify-content: center;
 	align-items: center;
-	padding: 120rpx $spacing-xl;
+	padding: 120rpx $spacing-xl calc(120rpx + env(safe-area-inset-bottom));
 	text-align: center;
 }
 
@@ -100,9 +105,16 @@ const isEmpty = computed(() => {
 	display: block;
 }
 
-.message-list {
+.message-scroll {
 	flex: 1;
+	min-height: 0;
 	width: 100%;
+}
+
+.message-list {
+	display: flex;
+	flex-direction: column;
+	padding: $spacing-lg $spacing-lg $spacing-md;
 }
 
 .message-item {
@@ -114,6 +126,11 @@ const isEmpty = computed(() => {
 	&::after {
 		display: none;
 	}
+}
+
+.message-list-bottom {
+	height: $spacing-lg;
+	flex-shrink: 0;
 }
 
 .loading-more {

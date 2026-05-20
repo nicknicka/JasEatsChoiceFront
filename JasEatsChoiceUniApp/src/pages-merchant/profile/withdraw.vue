@@ -256,7 +256,7 @@ const selectWithdrawMethod = (method) => {
  */
 const changeAccount = () => {
   uni.navigateTo({
-    url: '/profile/edit?scene=bank'
+    url: '/pages-merchant/profile/edit?scene=bank'
   })
 }
 
@@ -374,8 +374,9 @@ const submitWithdraw = async () => {
  * 查看全部记录
  */
 const viewAllHistory = () => {
-  uni.navigateTo({
-    url: '/profile/withdraw-history'
+  uni.showToast({
+    title: '提现记录功能开发中',
+    icon: 'none'
   })
 }
 

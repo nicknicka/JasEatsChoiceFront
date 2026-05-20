@@ -27,7 +27,7 @@ import jakarta.annotation.Resource;
  * 1. 同步阶段：SupervisorAgent 协调 L1 专家 Agent 收集数据
  * 2. 流式阶段：StreamingResponseAgent 格式化输出（同步收集完整结果）
  *
- * @author Claude
+
  * @since 2026-03-25
  * @updated 2026-04-03 V2: 同步 Supervisor + StreamingResponse 格式化
  */

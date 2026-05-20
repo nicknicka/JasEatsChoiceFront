@@ -4,6 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { API_CONFIG } from '../../config'
 import axios from 'axios'
 import { useAuthStore } from '../../store/authStore'
+import orderApi from '../../api/order'
 
 // 导入自定义组件
 import RecipeDetail from '../../components/RecipeDetail.vue'
@@ -15,6 +16,37 @@ import RecipeCard from '../../components/RecipeCard.vue'
 
 // 获取认证信息
 const authStore = useAuthStore()
+
+// 订单接口字段兼容：后端可能返回订单菜品为不同字段名
+const normalizeImportDish = (item) => {
+  if (!item || typeof item !== 'object') {
+    return null
+  }
+
+  const name = item.dishName || item.name || item.itemName || '未命名菜品'
+  const calorieValue = item.calorie ?? item.calories ?? item.kcal ?? 0
+  const quantity = item.quantity || 1
+  return {
+    name,
+    quantity,
+    nutrition: calorieValue ? `${calorieValue}kcal` : ''
+  }
+}
+
+// 安全地反序列化JSON字符串
+const safeParseArray = (value) => {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
 
 // 今日食谱数据
 const todayRecipes = ref([])
@@ -121,6 +153,7 @@ const loadTodayRecipes = () => {
 // 组件挂载时加载数据
 onMounted(() => {
   loadTodayRecipes()
+  loadImportOrders()
 })
 
 // 默认使用一列布局
@@ -138,28 +171,55 @@ const selectedDish = ref(null)
 // 导入商家菜品对话框
 const importMerchantDishVisible = ref(false)
 
-// 订单列表 使用mock数据
-const orders = ref([
-  {
-    id: 1,
-    orderNo: 'ORDER_001',
-    totalPrice: 89.5,
-    dishes: [
-      { name: '宫保鸡丁', nutrition: '250kcal/份' },
-      { name: '清炒西兰花', nutrition: '120kcal/份' },
-      { name: '米饭', nutrition: '110kcal/碗' }
-    ]
-  },
-  {
-    id: 2,
-    orderNo: 'ORDER_002',
-    totalPrice: 68.0,
-    dishes: [
-      { name: '番茄鸡蛋面', nutrition: '320kcal/份' },
-      { name: '凉拌黄瓜', nutrition: '80kcal/份' }
-    ]
+// 导入订单数据（用于从订单生成食谱）
+const orders = ref([])
+
+const loadImportOrders = async () => {
+  if (!authStore.userId) {
+    ElMessage.error('加载订单失败：用户未登录')
+    orders.value = []
+    return
   }
-])
+
+  try {
+    const response = await orderApi.getOrdersByUserId(authStore.userId)
+    const orderList = response?.data?.data
+    if (!Array.isArray(orderList)) {
+      orders.value = []
+      return
+    }
+
+    const normalizedOrders = await Promise.all(
+      orderList.map(async (order) => {
+        const totalPrice = Number(order.totalAmount ?? order.total ?? order.totalPrice ?? 0) || 0
+        let dishes = []
+
+        const dishSource = order.dishes ?? order.orderItems ?? order.items
+        if (dishSource !== undefined) {
+          dishes = safeParseArray(dishSource)
+        } else {
+          const orderDetail = await axios.get(`${API_CONFIG.baseURL}/v1/orders/${order.id}/dishes`)
+          dishes = safeParseArray(orderDetail?.data?.data)
+        }
+
+        const normalizedDishes = dishes.map(normalizeImportDish).filter(Boolean)
+
+        return {
+          ...order,
+          orderNo: order.orderNo || order.orderNumber || order.id,
+          totalPrice,
+          dishes: normalizedDishes
+        }
+      })
+    )
+
+    orders.value = normalizedOrders
+  } catch (error) {
+    console.error('加载订单失败:', error)
+    orders.value = []
+    ElMessage.error('加载订单失败')
+  }
+}
 
 // 导入订单对话框
 const importOrderVisible = ref(false)
@@ -298,8 +358,18 @@ const addDish = (recipe) => {
 
 // 确认从订单导入食谱
 const confirmImportOrder = () => {
-  if (selectedOrder.value) {
-    console.log('Selected order:', selectedOrder.value)
+  if (!selectedOrder.value) {
+    ElMessage.warning('请选择要导入的订单')
+    return
+  }
+
+  if (!selectedOrder.value.dishes || selectedOrder.value.dishes.length === 0) {
+    ElMessage.warning('该订单暂无可导入的菜品')
+    return
+  }
+
+  console.log('Selected order:', selectedOrder.value)
+  try {
     // 创建新食谱数据
     const newRecipeData = {
       name: `订单-${selectedOrder.value.orderNo}`,
@@ -347,6 +417,9 @@ const confirmImportOrder = () => {
         console.error('导入订单失败:', error)
         ElMessage.error('导入订单失败')
       })
+  } catch (error) {
+    console.error('构造订单导入食谱失败:', error)
+    ElMessage.error('订单数据异常，导入失败')
   }
 }
 

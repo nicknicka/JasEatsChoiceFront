@@ -149,12 +149,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/store'
 import { orderApi } from '@/api'
+import { createPageDebug } from '@/utils/page-debug'
+import {
+  HOME,
+  USER_DISH_DETAIL,
+  USER_MERCHANT_DETAIL,
+  USER_ORDER_CONFIRM,
+  USER_ORDER_DETAIL,
+  USER_REVIEW_SUBMIT
+} from '@/constants/routes'
 
 // Store
 const userStore = useUserStore()
+const pageDebug = createPageDebug('订单列表')
 
 // 筛选选项
 const filters = ref([
@@ -180,11 +190,65 @@ const hasMore = ref(true)
 // 分页参数
 const page = ref(1)
 const pageSize = ref(10)
+const DEFAULT_DISH_IMAGE = '/static/images/default-dish.png'
+
+const normalizeImage = (src) => {
+  if (!src || src.includes('via.placeholder.com')) {
+    return DEFAULT_DISH_IMAGE
+  }
+  return src
+}
+
+const normalizeOrderStatus = (status) => {
+  const normalized = String(status ?? '')
+  const statusMap = {
+    '0': { value: 'pending', text: '待支付' },
+    '1': { value: 'processing', text: '待接单' },
+    '2': { value: 'processing', text: '制作中' },
+    '3': { value: 'completed', text: '已完成' },
+    '4': { value: 'cancelled', text: '已取消' },
+    pending: { value: 'pending', text: '待支付' },
+    paid: { value: 'processing', text: '已支付' },
+    confirmed: { value: 'processing', text: '已确认' },
+    preparing: { value: 'processing', text: '准备中' },
+    ready: { value: 'processing', text: '待配送' },
+    delivering: { value: 'delivering', text: '配送中' },
+    completed: { value: 'completed', text: '已完成' },
+    cancelled: { value: 'cancelled', text: '已取消' },
+    refunded: { value: 'cancelled', text: '已退款' }
+  }
+
+  return statusMap[normalized] || {
+    value: normalized || 'processing',
+    text: normalized || '处理中'
+  }
+}
+
+const shouldKeepOrder = (statusValue) => {
+  if (selectedFilter.value === 'all') {
+    return true
+  }
+  return statusValue === selectedFilter.value
+}
+
+const mapOrderItems = (items) => items.map(item => ({
+  id: item.orderItemId || item.id,
+  dishId: item.dishId || item.dish?.id,
+  name: item.dishName || item.dish?.name || '未知菜品',
+  spec: item.spec || item.customization || '',
+  price: Number(item.price || item.dish?.price || 0).toFixed(2),
+  quantity: Number(item.quantity || 0),
+  image: normalizeImage(item.dish?.image || item.dish?.coverImage || item.image || '')
+}))
 
 /**
  * 切换筛选
  */
 const changeFilter = (value) => {
+  pageDebug.action('切换订单筛选', {
+    from: selectedFilter.value,
+    to: value
+  })
   selectedFilter.value = value
   page.value = 1
   orders.value = []
@@ -200,47 +264,68 @@ const loadOrders = async (showLoading = true) => {
   }
 
   try {
+    pageDebug.requestStart('加载订单列表', {
+      filter: selectedFilter.value,
+      page: page.value,
+      showLoading
+    })
     if (!userStore.isLogin) {
+      pageDebug.anomaly('订单列表加载被登录校验拦截')
       uni.showToast({
         title: '请先登录',
         icon: 'none'
       })
       loading.value = false
+      refreshing.value = false
       return
     }
 
     const userId = userStore.userInfo?.userId || userStore.userInfo?.id
 
-    // 调用后端API获取订单列表
-    const res = await orderApi.getList({
-      userId,
-      status: selectedFilter.value === 'all' ? '' : selectedFilter.value,
-      page: page.value,
-      size: pageSize.value
-    })
+    const res = await orderApi.getByUser(userId)
+    const rawOrders = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
 
-    // 数据映射
-    if (Array.isArray(res)) {
-      const mappedOrders = res.map(order => ({
-        id: order.orderId || order.id,
-        orderNo: order.orderNo || order.orderNumber,
-        merchantId: order.merchantId || order.merchant?.id,
-        merchantName: order.merchantName || order.merchant?.name,
-        status: order.status || order.orderStatus,
-        statusText: mapOrderStatusText(order.status || order.orderStatus),
-        items: (order.items || []).map(item => ({
-          id: item.orderItemId || item.id,
-          dishId: item.dishId || item.dish?.id,
-          name: item.dishName || item.dish?.name,
-          spec: item.spec || '',
-          price: parseFloat(item.price).toFixed(2),
-          quantity: item.quantity,
-          image: item.dish?.image || item.dish?.coverImage || ''
-        })),
-        totalQuantity: (order.items || []).reduce((sum, item) => sum + item.quantity, 0),
-        totalAmount: parseFloat(order.amount?.total || order.totalAmount || 0).toFixed(2),
-        createTime: order.createTime || order.createdAt
+    if (rawOrders.length > 0) {
+      const ordersWithDishes = await Promise.all(rawOrders.map(async (order) => {
+        const orderId = order.orderId || order.id
+        try {
+          const dishesRes = await orderApi.getDishes(orderId)
+          const dishes = Array.isArray(dishesRes?.data)
+            ? dishesRes.data
+            : Array.isArray(dishesRes) ? dishesRes : []
+          return { order, dishes }
+        } catch (error) {
+          pageDebug.requestFail('加载订单菜品', {
+            orderId,
+            message: error?.message || '未知错误'
+          })
+          return { order, dishes: [] }
+        }
       }))
+
+      const filteredOrders = ordersWithDishes.filter(({ order }) => {
+        const statusInfo = normalizeOrderStatus(order.status ?? order.orderStatus)
+        return shouldKeepOrder(statusInfo.value)
+      })
+      const start = (page.value - 1) * pageSize.value
+      const end = start + pageSize.value
+      const pageOrders = filteredOrders.slice(start, end)
+      const mappedOrders = pageOrders.map(({ order, dishes }) => {
+        const statusInfo = normalizeOrderStatus(order.status ?? order.orderStatus)
+        const items = mapOrderItems(dishes)
+        return {
+          id: order.orderId || order.id,
+          orderNo: order.orderNo || order.orderNumber || order.id,
+          merchantId: order.merchantId || order.merchant?.id || '',
+          merchantName: order.merchantName || order.merchant?.name || dishes[0]?.dish?.merchantName || '商家',
+          status: statusInfo.value,
+          statusText: order.statusText || statusInfo.text,
+          items,
+          totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
+          totalAmount: Number(order.amount?.total || order.totalAmount || 0).toFixed(2),
+          createTime: order.createTime || order.createdAt || ''
+        }
+      })
 
       if (page.value === 1) {
         orders.value = mappedOrders
@@ -248,18 +333,27 @@ const loadOrders = async (showLoading = true) => {
         orders.value.push(...mappedOrders)
       }
 
-      // 判断是否还有更多数据
-      hasMore.value = mappedOrders.length >= pageSize.value
+      hasMore.value = end < filteredOrders.length
+      pageDebug.requestSuccess('加载订单列表', {
+        count: mappedOrders.length,
+        total: orders.value.length,
+        hasMore: hasMore.value,
+        sourceCount: rawOrders.length
+      })
     } else {
       if (page.value === 1) {
         orders.value = []
       }
       hasMore.value = false
+      pageDebug.anomaly('订单列表返回格式异常或为空', {
+        page: page.value
+      })
     }
 
     loading.value = false
     refreshing.value = false
   } catch (error) {
+    pageDebug.requestFail('加载订单列表', error)
     console.error('加载订单列表失败:', error)
     loading.value = false
     refreshing.value = false
@@ -274,24 +368,14 @@ const loadOrders = async (showLoading = true) => {
  * 映射订单状态文本
  */
 const mapOrderStatusText = (status) => {
-  const statusMap = {
-    'pending': '待支付',
-    'paid': '已支付',
-    'confirmed': '已确认',
-    'preparing': '准备中',
-    'ready': '待配送',
-    'delivering': '配送中',
-    'completed': '已完成',
-    'cancelled': '已取消',
-    'refunded': '已退款'
-  }
-  return statusMap[status] || status
+  return normalizeOrderStatus(status).text
 }
 
 /**
  * 下拉刷新
  */
 const onRefresh = async () => {
+  pageDebug.action('下拉刷新订单列表')
   refreshing.value = true
   page.value = 1
   await loadOrders(false)
@@ -304,6 +388,10 @@ const onRefresh = async () => {
 const onLoadMore = () => {
   if (loading.value || !hasMore.value) return
   page.value++
+  pageDebug.action('订单列表加载更多', {
+    page: page.value,
+    filter: selectedFilter.value
+  })
   loadOrders()
 }
 
@@ -311,8 +399,11 @@ const onLoadMore = () => {
  * 查看订单详情
  */
 const viewOrderDetail = (order) => {
+  pageDebug.action('查看订单详情', {
+    orderId: order.id
+  })
   uni.navigateTo({
-    url: `/pages/order/detail/index?id=${order.id}`
+    url: `${USER_ORDER_DETAIL}?id=${order.id}`
   })
 }
 
@@ -320,6 +411,9 @@ const viewOrderDetail = (order) => {
  * 复制订单号
  */
 const copyOrderNo = (orderNo) => {
+  pageDebug.action('复制订单号', {
+    orderNo
+  })
   uni.setClipboardData({
     data: orderNo,
     success: () => {
@@ -335,8 +429,11 @@ const copyOrderNo = (orderNo) => {
  * 跳转商家
  */
 const toMerchant = (merchantId) => {
+  pageDebug.action('从订单列表进入商家', {
+    merchantId
+  })
   uni.navigateTo({
-    url: `/pages/merchant/detail/index?id=${merchantId}`
+    url: `${USER_MERCHANT_DETAIL}?id=${merchantId}`
   })
 }
 
@@ -344,8 +441,11 @@ const toMerchant = (merchantId) => {
  * 跳转菜品
  */
 const toDish = (dishId) => {
+  pageDebug.action('从订单列表进入菜品', {
+    dishId
+  })
   uni.navigateTo({
-    url: `/pages/dish/detail/index?id=${dishId}`
+    url: `${USER_DISH_DETAIL}?id=${dishId}`
   })
 }
 
@@ -353,6 +453,9 @@ const toDish = (dishId) => {
  * 取消订单
  */
 const cancelOrder = async (order) => {
+  pageDebug.action('取消订单', {
+    orderId: order.id
+  })
   uni.showModal({
     title: '取消订单',
     content: '确定要取消此订单吗？',
@@ -362,6 +465,9 @@ const cancelOrder = async (order) => {
         try {
           // 调用后端API取消订单
           await orderApi.cancel(order.id)
+          pageDebug.requestSuccess('取消订单', {
+            orderId: order.id
+          })
 
           // 从列表中移除或更新状态
           const index = orders.value.findIndex(item => item.id === order.id)
@@ -375,6 +481,7 @@ const cancelOrder = async (order) => {
             icon: 'success'
           })
         } catch (error) {
+          pageDebug.requestFail('取消订单', error)
           console.error('取消订单失败:', error)
           uni.showToast({
             title: '取消失败，请重试',
@@ -390,8 +497,11 @@ const cancelOrder = async (order) => {
  * 支付订单
  */
 const payOrder = (order) => {
+  pageDebug.action('去支付订单', {
+    orderId: order.id
+  })
   uni.navigateTo({
-    url: `/pages/order/confirm/index?orderId=${order.id}`
+    url: `${USER_ORDER_CONFIRM}?orderId=${order.id}`
   })
 }
 
@@ -399,6 +509,10 @@ const payOrder = (order) => {
  * 联系商家
  */
 const contactMerchant = (order) => {
+  pageDebug.action('联系商家', {
+    orderId: order.id,
+    merchantId: order.merchantId
+  })
   uni.showToast({
     title: '正在联系商家...',
     icon: 'none'
@@ -409,6 +523,9 @@ const contactMerchant = (order) => {
  * 查看配送
  */
 const viewLogistics = (order) => {
+  pageDebug.action('查看配送信息', {
+    orderId: order.id
+  })
   uni.showToast({
     title: '查看配送信息...',
     icon: 'none'
@@ -419,6 +536,9 @@ const viewLogistics = (order) => {
  * 确认收货
  */
 const confirmReceipt = async (order) => {
+  pageDebug.action('确认收货', {
+    orderId: order.id
+  })
   uni.showModal({
     title: '确认收货',
     content: '确认已收到餐品吗？',
@@ -429,6 +549,9 @@ const confirmReceipt = async (order) => {
           // 调用后端API确认收货
           await orderApi.confirm(order.id, {
             userId: userStore.userInfo?.userId || userStore.userInfo?.id
+          })
+          pageDebug.requestSuccess('确认收货', {
+            orderId: order.id
           })
 
           // 更新订单状态
@@ -443,6 +566,7 @@ const confirmReceipt = async (order) => {
             icon: 'success'
           })
         } catch (error) {
+          pageDebug.requestFail('确认收货', error)
           console.error('确认收货失败:', error)
           uni.showToast({
             title: '操作失败，请重试',
@@ -458,8 +582,11 @@ const confirmReceipt = async (order) => {
  * 评价订单
  */
 const reviewOrder = (order) => {
+  pageDebug.action('评价订单', {
+    orderId: order.id
+  })
   uni.navigateTo({
-    url: `/pages/review/submit/index?orderId=${order.id}&type=order&id=${order.id}`
+    url: `${USER_REVIEW_SUBMIT}?orderId=${order.id}&type=order&id=${order.id}`
   })
 }
 
@@ -467,6 +594,9 @@ const reviewOrder = (order) => {
  * 再来一单
  */
 const buyAgain = (order) => {
+  pageDebug.action('再来一单', {
+    orderId: order.id
+  })
   uni.showToast({
     title: '已加入购物车',
     icon: 'success'
@@ -477,13 +607,15 @@ const buyAgain = (order) => {
  * 返回首页
  */
 const goToHome = () => {
+  pageDebug.action('订单列表去首页')
   uni.switchTab({
-    url: '/pages/index/index'
+    url: HOME
   })
 }
 
 // 组件挂载
 onMounted(() => {
+  pageDebug.lifecycle('页面挂载')
   // 获取页面参数
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
@@ -491,6 +623,9 @@ onMounted(() => {
 
   if (options.status) {
     selectedFilter.value = options.status
+    pageDebug.state('读取订单列表参数', {
+      status: selectedFilter.value
+    })
   }
 
   // 加载订单列表

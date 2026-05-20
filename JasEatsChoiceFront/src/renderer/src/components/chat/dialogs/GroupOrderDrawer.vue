@@ -201,7 +201,7 @@
           >
             <div class="paid-order-header">
               <div class="paid-order-info">
-                <el-tag :type="paidOrder.status === 'completed' ? '' : 'warning'" size="small">
+                <el-tag :type="paidOrder.status === 'completed' ? 'success' : 'warning'" size="small">
                   {{ paidOrder.status === 'completed' ? '已完成' : '已支付' }}
                 </el-tag>
                 <span class="paid-order-time">{{ paidOrder.paymentTime || paidOrder.createTime }}</span>
@@ -477,7 +477,7 @@ const getOrderStatusType = (status) => {
     draft: 'info',
     active: 'success',
     paid: 'warning',
-    completed: '',
+    completed: 'success',
     cancelled: 'danger'
   }
   return typeMap[status] || 'info'

@@ -141,48 +141,22 @@ const fetchPendingList = async () => {
       stats.todayApproved = response.data?.todayApproved || 0
       stats.approvalRate = response.data?.approvalRate || 0
     } else {
-      // 如果API调用失败，使用模拟数据作为后备
-      console.warn('获取待审核商家失败，使用模拟数据:', response.message)
-      pendingList.value = [
-        {
-          merchantId: 100,
-          name: '测试餐厅A',
-          phone: '13800138000',
-          address: '北京市朝阳区测试路123号',
-          createTime: '2025-01-31 10:00:00'
-        },
-        {
-          merchantId: 101,
-          name: '美味小吃店',
-          phone: '13900139000',
-          address: '上海市浦东新区测试街456号',
-          createTime: '2025-01-31 09:30:00'
-        }
-      ]
-      pagination.total = 15
-      stats.pending = 15
+      console.warn('获取待审核商家失败，接口返回异常:', response)
+      pendingList.value = []
+      pagination.total = 0
+      stats.pending = 0
+      stats.todayApproved = 0
+      stats.approvalRate = 0
+      ElMessage.warning(response?.message || '获取待审核商家失败，请稍后重试')
     }
   } catch (error) {
     console.error('获取待审核列表失败:', error)
-    // 使用模拟数据作为后备
-    pendingList.value = [
-      {
-        merchantId: 100,
-        name: '测试餐厅A',
-        phone: '13800138000',
-        address: '北京市朝阳区测试路123号',
-        createTime: '2025-01-31 10:00:00'
-      },
-      {
-        merchantId: 101,
-        name: '美味小吃店',
-        phone: '13900139000',
-        address: '上海市浦东新区测试街456号',
-        createTime: '2025-01-31 09:30:00'
-      }
-    ]
-    pagination.total = 15
-    stats.pending = 15
+    pendingList.value = []
+    pagination.total = 0
+    stats.pending = 0
+    stats.todayApproved = 0
+    stats.approvalRate = 0
+    ElMessage.error('获取待审核列表失败，请稍后重试')
   } finally {
     loading.value = false
   }

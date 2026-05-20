@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * 营养分析服务实现类
  * 优先使用中国食物成分表数据，其次使用t_dish表数据
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 @Slf4j

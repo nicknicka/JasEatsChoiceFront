@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 想吃列表Mapper接口
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Mapper

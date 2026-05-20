@@ -159,14 +159,15 @@ onMounted(() => {
 
   .overview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: @nordic-space-md;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: @nordic-space-sm;
 
     .overview-item {
       display: flex;
       align-items: center;
-      gap: @nordic-space-md;
-      padding: @nordic-space-lg;
+      gap: @nordic-space-sm;
+      padding: @nordic-space-md;
+      min-width: 0;
       border-radius: @nordic-radius-lg;
       background: @merchant-surface;
       border: 1px solid @merchant-border;
@@ -198,9 +199,10 @@ onMounted(() => {
       }
 
       .item-icon {
-        font-size: 32px;
-        width: 56px;
-        height: 56px;
+        font-size: 28px;
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -216,16 +218,15 @@ onMounted(() => {
           color: @merchant-text-muted;
           margin-bottom: 4px;
           font-weight: 500;
-          text-transform: uppercase;
-          letter-spacing: @nordic-letter-wide;
         }
 
         .overview-value {
-          font-size: @nordic-text-xl;
+          font-size: 24px;
           font-weight: 700;
           color: @merchant-text;
           letter-spacing: @nordic-letter-tighter;
           margin-bottom: 4px;
+          line-height: 1.1;
         }
 
         .item-trend {

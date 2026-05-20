@@ -1,0 +1,1905 @@
+{
+  "runId": "recommend-seed-20260517_151708",
+  "baseUrl": "http://127.0.0.1:7777/api",
+  "userId": "3384650106421960",
+  "merchantId": "7638432224340229",
+  "startedAt": "2026-05-17T07:17:08.875Z",
+  "assumptions": [
+    "目标用户使用当前桌面端常见测试账号 17322222222",
+    "优先通过后端接口创建菜品和推荐行为",
+    "通过 recommendation_log、user_behavior、t_reject_recommendation 的时间窗口确认本次造数结果"
+  ],
+  "countsBefore": {
+    "userBehavior": 938,
+    "recommendationLog": 1898,
+    "rejectRecommendation": 6
+  },
+  "seedDishes": {
+    "created": [
+      {
+        "id": "seed_1779002228990_1",
+        "name": "玉米鸡丝粥",
+        "category": "早餐",
+        "price": 15,
+        "calorie": 190,
+        "description": "清淡暖胃，适合工作日早餐补充能量",
+        "image": "https://dummyimage.com/400x300/f4c542/ffffff.png&text=Corn+Chicken+Porridge",
+        "createMethod": "sql_fallback",
+        "apiError": {
+          "success": false,
+          "code": "400",
+          "message": "参数错误：数据格式不符合要求"
+        }
+      },
+      {
+        "id": "seed_1779002229006_2",
+        "name": "紫薯坚果酸奶碗",
+        "category": "早餐",
+        "price": 21,
+        "calorie": 230,
+        "description": "轻负担高饱腹，适合控卡和早午餐场景",
+        "image": "https://dummyimage.com/400x300/b388eb/ffffff.png&text=Purple+Yogurt+Bowl",
+        "createMethod": "sql_fallback",
+        "apiError": {
+          "success": false,
+          "code": "400",
+          "message": "参数错误：数据格式不符合要求"
+        }
+      },
+      {
+        "id": "seed_1779002229022_3",
+        "name": "芝士番茄鸡蛋贝果",
+        "category": "早餐",
+        "price": 24,
+        "calorie": 340,
+        "description": "高满足感早餐主食，适合早高峰补能",
+        "image": "https://dummyimage.com/400x300/ff8a65/ffffff.png&text=Cheese+Egg+Bagel",
+        "createMethod": "sql_fallback",
+        "apiError": {
+          "success": false,
+          "code": "400",
+          "message": "参数错误：数据格式不符合要求"
+        }
+      }
+    ],
+    "reused": [
+      {
+        "id": "seed_1779000769631_1",
+        "name": "南瓜小米粥",
+        "image": "https://via.placeholder.com/400x300/F6A623/FFFFFF?text=南瓜小米粥",
+        "price": 14,
+        "calorie": 160,
+        "category": "早餐",
+        "imageUpdated": true
+      },
+      {
+        "id": "seed_1779000769660_2",
+        "name": "全麦鸡肉卷",
+        "image": "https://via.placeholder.com/400x300/8BC34A/FFFFFF?text=全麦鸡肉卷",
+        "price": 18,
+        "calorie": 280,
+        "category": "早餐",
+        "imageUpdated": true
+      },
+      {
+        "id": "seed_1779000769681_3",
+        "name": "鲜虾蔬菜蒸蛋",
+        "image": "https://via.placeholder.com/400x300/4FC3F7/FFFFFF?text=鲜虾蔬菜蒸蛋",
+        "price": 16,
+        "calorie": 220,
+        "category": "早餐",
+        "imageUpdated": true
+      },
+      {
+        "id": "seed_1779000769705_4",
+        "name": "蓝莓酸奶燕麦杯",
+        "image": "https://via.placeholder.com/400x300/7E57C2/FFFFFF?text=蓝莓酸奶燕麦杯",
+        "price": 20,
+        "calorie": 240,
+        "category": "早餐",
+        "imageUpdated": true
+      },
+      {
+        "id": "seed_1779000769730_5",
+        "name": "牛油果鸡蛋三明治",
+        "image": "https://via.placeholder.com/400x300/66BB6A/FFFFFF?text=牛油果鸡蛋三明治",
+        "price": 22,
+        "calorie": 320,
+        "category": "早餐",
+        "imageUpdated": true
+      }
+    ],
+    "finalDishes": [
+      {
+        "id": "seed_1779000769631_1",
+        "name": "南瓜小米粥",
+        "price": 14,
+        "calorie": 160,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769660_2",
+        "name": "全麦鸡肉卷",
+        "price": 18,
+        "calorie": 280,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769681_3",
+        "name": "鲜虾蔬菜蒸蛋",
+        "price": 16,
+        "calorie": 220,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769705_4",
+        "name": "蓝莓酸奶燕麦杯",
+        "price": 20,
+        "calorie": 240,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779000769730_5",
+        "name": "牛油果鸡蛋三明治",
+        "price": 22,
+        "calorie": 320,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779002228990_1",
+        "name": "玉米鸡丝粥",
+        "price": 15,
+        "calorie": 190,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779002229006_2",
+        "name": "紫薯坚果酸奶碗",
+        "price": 21,
+        "calorie": 230,
+        "category": "早餐",
+        "isOnline": 1
+      },
+      {
+        "id": "seed_1779002229022_3",
+        "name": "芝士番茄鸡蛋贝果",
+        "price": 24,
+        "calorie": 340,
+        "category": "早餐",
+        "isOnline": 1
+      }
+    ]
+  },
+  "bootstrapBehaviors": [
+    {
+      "dishId": "1001",
+      "dishName": "皮蛋瘦肉粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769631_1",
+      "dishName": "南瓜小米粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769660_2",
+      "dishName": "全麦鸡肉卷",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769681_3",
+      "dishName": "鲜虾蔬菜蒸蛋",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "行为记录成功"
+      }
+    }
+  ],
+  "profileBoostFeedback": [
+    {
+      "dishId": "1001",
+      "dishName": "皮蛋瘦肉粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769631_1",
+      "dishName": "南瓜小米粥",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769660_2",
+      "dishName": "全麦鸡肉卷",
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    }
+  ],
+  "profileAfterBoost": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "id": 1,
+      "userId": "3384650106421960",
+      "lastUpdated": "2026-05-17T15:17:09"
+    }
+  },
+  "recommendationResponse": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "total": 2,
+      "recommendations": [
+        {
+          "dishId": "seed_1779000769660_2",
+          "dishName": "全麦鸡肉卷",
+          "dishImage": "https://dummyimage.com/400x300/8bc34a/ffffff.png&text=Chicken+Wrap",
+          "category": "早餐",
+          "score": 0.414,
+          "rank": 1,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度82%",
+                "score": 0.82
+              }
+            ]
+          },
+          "calories": 280,
+          "price": 18,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779000769631_1",
+          "dishName": "南瓜小米粥",
+          "dishImage": "https://dummyimage.com/400x300/f6a623/ffffff.png&text=Pumpkin+Millet",
+          "category": "早餐",
+          "score": 0.414,
+          "rank": 2,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度82%",
+                "score": 0.82
+              }
+            ]
+          },
+          "calories": 160,
+          "price": 14,
+          "rating": 4.7
+        }
+      ],
+      "scene": "home",
+      "timestamp": 1779002229196
+    }
+  },
+  "recommendationBatches": [
+    {
+      "itemCount": 2,
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "recommendationId": "13de7b63-0a00-4175-ace1-62365578836f"
+    },
+    {
+      "itemCount": 2,
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "recommendationId": "e50f5d5a-0b25-48c5-808e-7be5f4b54bd6"
+    },
+    {
+      "itemCount": 2,
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "recommendationId": "3466c453-56cd-4f6e-907c-7e84dcea62ba"
+    },
+    {
+      "itemCount": 2,
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "recommendationId": "d08a01fe-b723-49ba-addd-3ba739f18f31"
+    },
+    {
+      "itemCount": 2,
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "recommendationId": "ecc56cc3-6f95-4fc9-ad75-71e8eff26052"
+    }
+  ],
+  "latestRecommendationItems": [
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度82%",
+            "type": "popularity",
+            "score": 0.82
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "reason": {
+        "factors": [
+          {
+            "name": "热度82%",
+            "type": "popularity",
+            "score": 0.82
+          }
+        ],
+        "primary": "热门推荐"
+      }
+    }
+  ],
+  "followupFeedback": [
+    {
+      "dishId": "seed_1779000769660_2",
+      "dishName": "全麦鸡肉卷",
+      "recommendationId": "13de7b63-0a00-4175-ace1-62365578836f",
+      "ordered": true,
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    },
+    {
+      "dishId": "seed_1779000769631_1",
+      "dishName": "南瓜小米粥",
+      "recommendationId": "13de7b63-0a00-4175-ace1-62365578836f",
+      "ordered": false,
+      "response": {
+        "success": true,
+        "code": "200",
+        "message": "成功",
+        "data": "反馈记录成功"
+      }
+    }
+  ],
+  "rejectAction": {
+    "dishId": "seed_1779000769631_1",
+    "dishName": "南瓜小米粥",
+    "response": {
+      "success": true,
+      "code": "200",
+      "message": "成功",
+      "data": {
+        "dishId": "seed_1779000769631_1",
+        "action": "reject",
+        "userId": "3384650106421960",
+        "timestamp": 1779002229767
+      }
+    }
+  },
+  "refreshResult": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "total": 2,
+      "recommendations": [
+        {
+          "dishId": "seed_1779000769660_2",
+          "dishName": "全麦鸡肉卷",
+          "dishImage": "https://dummyimage.com/400x300/8bc34a/ffffff.png&text=Chicken+Wrap",
+          "category": "早餐",
+          "score": 0.414,
+          "rank": 1,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度82%",
+                "score": 0.82
+              }
+            ]
+          },
+          "calories": 280,
+          "price": 18,
+          "rating": 4.7
+        },
+        {
+          "dishId": "seed_1779000769681_3",
+          "dishName": "鲜虾蔬菜蒸蛋",
+          "dishImage": "https://dummyimage.com/400x300/4fc3f7/ffffff.png&text=Shrimp+Egg",
+          "category": "早餐",
+          "score": 0.414,
+          "rank": 2,
+          "reason": {
+            "primary": "热门推荐",
+            "factors": [
+              {
+                "type": "popularity",
+                "name": "热度82%",
+                "score": 0.82
+              }
+            ]
+          },
+          "calories": 220,
+          "price": 16,
+          "rating": 4.7
+        }
+      ],
+      "timestamp": 1779002229784
+    }
+  },
+  "countsAfter": {
+    "userBehavior": 953,
+    "recommendationLog": 1902,
+    "rejectRecommendation": 7
+  },
+  "newRecommendationLogs": [
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:34:24.000000",
+      "recommendationId": "c12cff55-a4ba-4249-8f54-ef1d310f7e65"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:34:24.000000",
+      "recommendationId": "c12cff55-a4ba-4249-8f54-ef1d310f7e65"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:20.000000",
+      "recommendationId": "4663b86c-ac7c-44ad-b9a5-f651d1af4ed2"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:20.000000",
+      "recommendationId": "4663b86c-ac7c-44ad-b9a5-f651d1af4ed2"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "recommendationId": "db65c7c0-14e4-441c-a294-5e6c93d6b67b"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "recommendationId": "db65c7c0-14e4-441c-a294-5e6c93d6b67b"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "recommendationId": "44be742a-1bd0-46f1-8a7b-b5dc922e090b"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "recommendationId": "44be742a-1bd0-46f1-8a7b-b5dc922e090b"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "recommendationId": "3784c094-5493-417e-acf9-685a06695663"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "recommendationId": "3784c094-5493-417e-acf9-685a06695663"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "recommendationId": "21545fd5-30e6-47d5-820d-99d1af6715a1"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "recommendationId": "21545fd5-30e6-47d5-820d-99d1af6715a1"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:42:07.000000",
+      "recommendationId": "e425f452-445d-4867-84db-be1d74c93961"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:42:07.000000",
+      "recommendationId": "e425f452-445d-4867-84db-be1d74c93961"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:42:08.000000",
+      "recommendationId": "c26b68f4-a2ca-4184-8e20-6866e39f26a4"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:42:08.000000",
+      "recommendationId": "c26b68f4-a2ca-4184-8e20-6866e39f26a4"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:46:00.000000",
+      "recommendationId": "93aea9aa-0f3c-4c62-8e94-1e76671d0297"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 1,
+      "isOrdered": 1,
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "recommendationId": "4185589a-df41-4d5a-bbf4-8cd84051074e"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1001",
+      "isClicked": 1,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "recommendationId": "4185589a-df41-4d5a-bbf4-8cd84051074e"
+    },
+    {
+      "rank": 1,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 1,
+      "isOrdered": 1,
+      "createdTime": "2026-05-17 14:55:28.000000",
+      "recommendationId": "b27dc8c6-2ef6-4cc8-8e49-ae37419a2fa1"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 1,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:55:28.000000",
+      "recommendationId": "b27dc8c6-2ef6-4cc8-8e49-ae37419a2fa1"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:55:28.000000",
+      "recommendationId": "aa34c447-7a43-4688-939e-444b1027660f"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:55:28.000000",
+      "recommendationId": "aa34c447-7a43-4688-939e-444b1027660f"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 1,
+      "isOrdered": 1,
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "recommendationId": "69adba91-55de-4ee8-bfba-e25240238cbf"
+    },
+    {
+      "rank": 2,
+      "score": 8.25,
+      "dishId": "1",
+      "isClicked": 1,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "recommendationId": "69adba91-55de-4ee8-bfba-e25240238cbf"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "recommendationId": "fb4903d0-b629-495a-ba2d-5fbf69fad09d"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "recommendationId": "fb4903d0-b629-495a-ba2d-5fbf69fad09d"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:57:20.000000",
+      "recommendationId": "f3e8df7e-95a1-407a-a316-26266a70208f"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 14:57:20.000000",
+      "recommendationId": "f3e8df7e-95a1-407a-a316-26266a70208f"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:08.000000",
+      "recommendationId": "55f72355-4d69-40ae-a951-204e76a04c48"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:08.000000",
+      "recommendationId": "55f72355-4d69-40ae-a951-204e76a04c48"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:08.000000",
+      "recommendationId": "ae870de8-2c7a-4c6d-abeb-32fbbca52bd8"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:08.000000",
+      "recommendationId": "ae870de8-2c7a-4c6d-abeb-32fbbca52bd8"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:12.000000",
+      "recommendationId": "c9f9f83d-92c6-4cd0-889d-42dd59db6f0f"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:12.000000",
+      "recommendationId": "c9f9f83d-92c6-4cd0-889d-42dd59db6f0f"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:12.000000",
+      "recommendationId": "f6cae8a7-5f2b-4e3a-821a-7fdc71eb98c8"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:12.000000",
+      "recommendationId": "f6cae8a7-5f2b-4e3a-821a-7fdc71eb98c8"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:14.000000",
+      "recommendationId": "f89a0c24-cefe-4e21-85ff-cbbfe6d7c397"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:14.000000",
+      "recommendationId": "f89a0c24-cefe-4e21-85ff-cbbfe6d7c397"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:14.000000",
+      "recommendationId": "fee3c33c-f3cf-43c0-a027-2a45fd2bacd1"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:05:14.000000",
+      "recommendationId": "fee3c33c-f3cf-43c0-a027-2a45fd2bacd1"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:11:08.000000",
+      "recommendationId": "55f6d260-b1e3-4bb8-8607-2f5397d4e127"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:11:08.000000",
+      "recommendationId": "55f6d260-b1e3-4bb8-8607-2f5397d4e127"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "recommendationId": "ecc56cc3-6f95-4fc9-ad75-71e8eff26052"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "recommendationId": "ecc56cc3-6f95-4fc9-ad75-71e8eff26052"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "recommendationId": "d08a01fe-b723-49ba-addd-3ba739f18f31"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "recommendationId": "d08a01fe-b723-49ba-addd-3ba739f18f31"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "recommendationId": "e50f5d5a-0b25-48c5-808e-7be5f4b54bd6"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "recommendationId": "e50f5d5a-0b25-48c5-808e-7be5f4b54bd6"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "recommendationId": "3466c453-56cd-4f6e-907c-7e84dcea62ba"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "recommendationId": "3466c453-56cd-4f6e-907c-7e84dcea62ba"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 1,
+      "isOrdered": 1,
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "recommendationId": "13de7b63-0a00-4175-ace1-62365578836f"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769631_1",
+      "isClicked": 1,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "recommendationId": "13de7b63-0a00-4175-ace1-62365578836f"
+    },
+    {
+      "rank": 1,
+      "score": 0.414,
+      "dishId": "seed_1779000769660_2",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:17:10.000000",
+      "recommendationId": "1363e00a-d553-4151-84af-014a62749afe"
+    },
+    {
+      "rank": 2,
+      "score": 0.414,
+      "dishId": "seed_1779000769681_3",
+      "isClicked": 0,
+      "isOrdered": 0,
+      "createdTime": "2026-05-17 15:17:10.000000",
+      "recommendationId": "1363e00a-d553-4151-84af-014a62749afe"
+    }
+  ],
+  "newUserBehaviors": [
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:34:24.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:20.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:25.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:37:27.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:42:07.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:42:08.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {},
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:46:00.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145249",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145249",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145249",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769681_3",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145249",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "早餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:50.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:52:51.000000",
+      "behaviorType": "reject"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:54:00.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:54:00.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:54:00.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:54:00.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:54:00.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:54:00.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1001",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145527",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145527",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145527",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769681_3",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145527",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:27.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "早餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:55:28.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:28.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:28.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:28.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:55:28.000000",
+      "behaviorType": "reject"
+    },
+    {
+      "itemId": "1001",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145635",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145635",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145635",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769681_3",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_145635",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "早餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:56:36.000000",
+      "behaviorType": "reject"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:57:20.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:57:20.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:57:20.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:57:20.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 14:57:20.000000",
+      "behaviorType": "reject"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:08.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:08.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:08.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:08.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:12.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:12.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:12.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:12.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:14.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:14.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:14.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:05:14.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "早餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:11:08.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:14:36.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "recommendation_list_下午茶",
+      "context": {
+        "count": 1,
+        "dishIds": [
+          "seed_1779000769660_2"
+        ],
+        "timePeriod": "下午茶"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:14:38.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_151708",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_151708",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_151708",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769681_3",
+      "context": {
+        "phase": "bootstrap_view",
+        "runId": "recommend-seed-20260517_151708",
+        "source": "codex_seed",
+        "category": "早餐"
+      },
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "1001",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "recommendation_list_home",
+      "context": {
+        "timePeriod": "早餐"
+      },
+      "itemType": "recommendation",
+      "createdTime": "2026-05-17 15:17:09.000000",
+      "behaviorType": "view"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:10.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769660_2",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:10.000000",
+      "behaviorType": "order"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:10.000000",
+      "behaviorType": "click"
+    },
+    {
+      "itemId": "seed_1779000769631_1",
+      "context": null,
+      "itemType": "dish",
+      "createdTime": "2026-05-17 15:17:10.000000",
+      "behaviorType": "reject"
+    }
+  ],
+  "newRejectRecords": [
+    {
+      "dishId": "1001",
+      "reason": "本次造数拒绝记录：recommend-seed-20260517_145249",
+      "rejectTime": "2026-05-17 14:52:50.000000"
+    },
+    {
+      "dishId": "seed_1779000769631_1",
+      "reason": "本次造数拒绝记录：recommend-seed-20260517_145527",
+      "rejectTime": "2026-05-17 14:55:28.000000"
+    },
+    {
+      "dishId": "1",
+      "reason": "本次造数拒绝记录：recommend-seed-20260517_145635",
+      "rejectTime": "2026-05-17 14:56:36.000000"
+    },
+    {
+      "dishId": "1",
+      "reason": "本次造数二次拒绝：提升早餐推荐权重",
+      "rejectTime": "2026-05-17 14:57:20.000000"
+    },
+    {
+      "dishId": "seed_1779000769631_1",
+      "reason": "本次造数拒绝记录：recommend-seed-20260517_151708",
+      "rejectTime": "2026-05-17 15:17:10.000000"
+    }
+  ],
+  "finalProfile": {
+    "success": true,
+    "code": "200",
+    "message": "成功",
+    "data": {
+      "id": 1,
+      "userId": "3384650106421960",
+      "lastUpdated": "2026-05-17T15:17:10"
+    }
+  },
+  "finishedAt": "2026-05-17T07:17:11.252Z"
+}

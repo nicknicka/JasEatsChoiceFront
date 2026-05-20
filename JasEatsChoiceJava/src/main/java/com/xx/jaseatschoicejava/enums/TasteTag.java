@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * 标准化口味标签枚举
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Getter

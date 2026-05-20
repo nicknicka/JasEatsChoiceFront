@@ -112,6 +112,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 import { notificationApi, chatApi } from '@/api'
+import { navigate, paths, toOrderDetail } from '@/utils/router'
 
 // 用户store
 const userStore = useUserStore()
@@ -348,6 +349,28 @@ const onLoadMore = () => {
  * 查看消息详情
  */
 const viewMessage = async (msg) => {
+  const openMessageTarget = () => {
+    if (msg.type === 'chat') {
+      navigate(paths.COMMON.CHAT_ROOM, {
+        merchantId: msg.merchantId || '',
+        userName: msg.title || '',
+        userAvatar: msg.avatar || ''
+      })
+      return
+    }
+
+    if (msg.type === 'order') {
+      toOrderDetail(msg.orderId)
+      return
+    }
+
+    uni.showModal({
+      title: msg.title || '消息详情',
+      content: msg.content || '暂无详情内容',
+      showCancel: false
+    })
+  }
+
   try {
     // 标记为已读
     if (msg.unread) {
@@ -359,38 +382,10 @@ const viewMessage = async (msg) => {
     }
 
     // 跳转到详情页
-    if (msg.type === 'chat') {
-      // 跳转到聊天页面
-      uni.navigateTo({
-        url: `/pages-common/chat/index?merchantId=${msg.merchantId}`
-      })
-    } else if (msg.type === 'order') {
-      // 跳转到订单详情
-      uni.navigateTo({
-        url: `/pages-user/order/detail/index?id=${msg.orderId}`
-      })
-    } else {
-      // 跳转到消息详情页
-      uni.navigateTo({
-        url: `/pages-user/message/detail/index?id=${msg.id}`
-      })
-    }
+    openMessageTarget()
   } catch (error) {
     console.error('查看消息失败:', error)
-    // 即使API调用失败，也继续跳转
-    if (msg.type === 'chat') {
-      uni.navigateTo({
-        url: `/pages-common/chat/index?merchantId=${msg.merchantId}`
-      })
-    } else if (msg.type === 'order') {
-      uni.navigateTo({
-        url: `/pages-user/order/detail/index?id=${msg.orderId}`
-      })
-    } else {
-      uni.navigateTo({
-        url: `/pages-user/message/detail/index?id=${msg.id}`
-      })
-    }
+    openMessageTarget()
   }
 }
 

@@ -14,7 +14,7 @@ import jakarta.annotation.PostConstruct;
  * 使用LangChain4j默认的内存ChatMemory
  * 所有持久化由前端统一负责
  *
- * @author Claude
+
  * @since 2026-03-26
  */
 @Slf4j

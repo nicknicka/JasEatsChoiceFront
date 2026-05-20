@@ -16,7 +16,7 @@ import jakarta.annotation.Resource;
  *
  * 为Agent提供用户健康目标的设置和查询功能
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

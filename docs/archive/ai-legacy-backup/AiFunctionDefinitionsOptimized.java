@@ -10,7 +10,7 @@ import java.util.*;
  * AI工具函数定义（优化版）
  * 从配置文件读取数据，避免硬编码
  *
- * @author Claude
+
  * @since 2026-03-13
  */
 @Slf4j

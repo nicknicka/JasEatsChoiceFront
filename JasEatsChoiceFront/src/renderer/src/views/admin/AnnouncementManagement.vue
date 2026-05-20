@@ -559,7 +559,7 @@ const typeLabel = (type) => {
 }
 
 const typeTagType = (type) => {
-  const map = { system: '', activity: 'warning', urgent: 'danger', update: 'success' }
+  const map = { system: 'info', activity: 'warning', urgent: 'danger', update: 'success' }
   return map[type] || 'info'
 }
 

@@ -215,14 +215,14 @@ const userStore = useUserStore()
 const captchaSpinning = ref(false)
 
 const applyAutoCaptcha = (result) => {
-  if (result.fixedCaptchaEnabled === 'true' && result.fixedCaptchaCode) {
-    loginForm.captcha = result.fixedCaptchaCode.toUpperCase()
-    return true
-  }
-
   const isDevMode = import.meta.env.MODE === 'development' || import.meta.env.DEV
   if (isDevMode && result.captchaAnswer) {
     loginForm.captcha = result.captchaAnswer.toUpperCase()
+    return true
+  }
+
+  if (result.fixedCaptchaEnabled === 'true' && result.fixedCaptchaCode) {
+    loginForm.captcha = result.fixedCaptchaCode.toUpperCase()
     return true
   }
 

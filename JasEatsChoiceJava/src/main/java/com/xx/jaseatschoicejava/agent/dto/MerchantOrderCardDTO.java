@@ -10,7 +10,7 @@ import java.util.List;
  *
  * 用于AI推荐商家时返回结构化的卡片数据，前端可以根据此数据展示商家卡片和菜品选择弹窗
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 @Data

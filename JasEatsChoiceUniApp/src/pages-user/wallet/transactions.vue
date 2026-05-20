@@ -178,8 +178,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store'
 import { goBack, toCustomerService } from '@/utils/router'
+import { walletApi } from '@/api'
 
 const userStore = useUserStore()
+const getCurrentUserId = () => {
+  return userStore.userInfo?.userId || userStore.userInfo?.id || uni.getStorageSync('userId') || ''
+}
 
 // 交易类型筛选
 const transactionTypes = ref([
@@ -232,12 +236,69 @@ const getStatusText = (status) => {
   return statusMap[status] || '未知状态'
 }
 
+const normalizeTransactionType = (type) => {
+  const validTypes = ['recharge', 'consume', 'withdraw', 'refund']
+  if (!type || type === 'all') {
+    return 'all'
+  }
+  return validTypes.includes(type) ? type : 'other'
+}
+
+const getTypeTitle = (type) => {
+  const titles = {
+    recharge: '账户充值',
+    consume: '订单消费',
+    withdraw: '余额提现',
+    refund: '订单退款',
+    other: '其他交易'
+  }
+  return titles[type] || '交易'
+}
+
+const normalizeTransactionItem = (record) => {
+  const type = normalizeTransactionType(record?.type)
+  const amount = Number(record?.amount || 0)
+  const amountNumber = Number.isFinite(amount) ? amount : 0
+  const normalizedType = type === 'other' ? record?.type || 'other' : type
+  const createTime = record?.createTime || record?.time
+  const direction = normalizedType === 'recharge' ? 'income' : 'expense'
+  const parsedTime = createTime ? new Date(createTime).getTime() : NaN
+
+  return {
+    id: record?.id || `${normalizedType}-${Date.now()}-${Math.random()}`,
+    type: normalizedType,
+    title: getTypeTitle(normalizedType),
+    amount: amountNumber,
+    direction,
+    status: record?.status === 'failed' ? 'failed' : 'success',
+    rawTime: Number.isFinite(parsedTime) ? parsedTime : Date.now(),
+    time: formatTime(createTime),
+    fullTime: formatFullTime(createTime),
+    orderNo: record?.orderNo || record?.id || '',
+    description: record?.description || ''
+  }
+}
+
+const resolveApiType = (uiType) => {
+  if (uiType === 'income') {
+    return 'recharge'
+  }
+  if (uiType === 'expense') {
+    return 'consume'
+  }
+  return uiType
+}
+
 // 按日期分组交易
 const groupedTransactions = computed(() => {
   const groups = {}
 
   transactions.value.forEach(item => {
-    const date = new Date(item.time)
+    const date = new Date(item.rawTime)
+    if (Number.isNaN(date.getTime())) {
+      return
+    }
+
     const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 
     if (!groups[dateKey]) {
@@ -285,7 +346,7 @@ const changeFilter = (value) => {
 
 // 加载交易列表
 const loadTransactions = async (showLoading = true) => {
-  if (!userStore.checkLogin()) {
+  if (!userStore.isLogin) {
     return
   }
 
@@ -294,19 +355,29 @@ const loadTransactions = async (showLoading = true) => {
   }
 
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    // 模拟数据
-    const mockData = generateMockTransactions()
-
-    if (page.value === 1) {
-      transactions.value = mockData
-    } else {
-      transactions.value.push(...mockData)
+    const userId = getCurrentUserId()
+    const params = {
+      userId,
+      page: page.value,
+      size: pageSize.value
     }
 
-    hasMore.value = mockData.length >= pageSize.value
+    const apiType = resolveApiType(selectedType.value)
+    if (apiType !== 'all') {
+      params.type = apiType
+    }
+
+    const res = await walletApi.getTransactions(params)
+    const rawList = res.list || res.data?.list || []
+    const list = rawList.map((item) => normalizeTransactionItem(item))
+
+    if (page.value === 1) {
+      transactions.value = list
+    } else {
+      transactions.value.push(...list)
+    }
+
+    hasMore.value = list.length >= pageSize.value
   } catch (error) {
     console.error('加载交易记录失败:', error)
     uni.showToast({
@@ -318,69 +389,17 @@ const loadTransactions = async (showLoading = true) => {
   }
 }
 
-// 生成模拟交易数据
-const generateMockTransactions = () => {
-  const types = ['recharge', 'consume', 'withdraw', 'refund', 'reward']
-  const statuses = ['success', 'pending', 'failed']
-  const directions = ['income', 'expense']
-
-  const mockList = []
-  const count = Math.floor(Math.random() * 10) + 5
-
-  for (let i = 0; i < count; i++) {
-    const type = types[Math.floor(Math.random() * types.length)]
-    const status = statuses[Math.floor(Math.random() * statuses.length)]
-    const direction = type === 'recharge' || type === 'refund' || type === 'reward' ? 'income' : 'expense'
-
-    const time = new Date()
-    time.setMinutes(time.getMinutes() - Math.floor(Math.random() * 10000))
-
-    mockList.push({
-      id: `TX${Date.now()}${i}`,
-      type,
-      title: getTypeTitle(type),
-      amount: (Math.random() * 1000 + 10).toFixed(2),
-      direction,
-      status,
-      time: formatTime(time),
-      fullTime: formatFullTime(time),
-      orderNo: `TX${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      description: getDescription(type),
-      balanceAfter: (Math.random() * 5000 + 100).toFixed(2)
-    })
-  }
-
-  return mockList.sort((a, b) => new Date(b.time) - new Date(a.time))
-}
-
-// 获取类型标题
-const getTypeTitle = (type) => {
-  const titles = {
-    recharge: '账户充值',
-    consume: '订单消费',
-    withdraw: '余额提现',
-    refund: '订单退款',
-    reward: '活动奖励'
-  }
-  return titles[type] || '其他交易'
-}
-
-// 获取描述
-const getDescription = (type) => {
-  const descriptions = {
-    recharge: '微信支付充值',
-    consume: '购买商品消费',
-    withdraw: '提现到银行卡',
-    refund: '订单取消退款',
-    reward: '签到奖励'
-  }
-  return descriptions[type] || ''
-}
-
 // 格式化时间
 const formatTime = (date) => {
+  if (!date) {
+    return ''
+  }
+
   const now = new Date()
   const target = new Date(date)
+  if (Number.isNaN(target.getTime())) {
+    return ''
+  }
   const diff = now - target
 
   if (diff < 60000) return '刚刚'
@@ -397,7 +416,14 @@ const formatTime = (date) => {
 
 // 格式化完整时间
 const formatFullTime = (date) => {
+  if (!date) {
+    return ''
+  }
+
   const target = new Date(date)
+  if (Number.isNaN(target.getTime())) {
+    return ''
+  }
   const year = target.getFullYear()
   const month = (target.getMonth() + 1).toString().padStart(2, '0')
   const day = target.getDate().toString().padStart(2, '0')

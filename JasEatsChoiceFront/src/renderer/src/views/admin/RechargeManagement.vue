@@ -35,16 +35,16 @@
         </el-form-item>
         <el-form-item label="充值方式">
           <el-select v-model="searchForm.paymentMethod" placeholder="全部" clearable style="width: 140px">
-            <el-option label="微信支付" value="WECHAT" />
-            <el-option label="支付宝" value="ALIPAY" />
-            <el-option label="银行卡" value="BANK_CARD" />
+            <el-option label="微信支付" value="wechat" />
+            <el-option label="支付宝" value="alipay" />
+            <el-option label="银行卡" value="bank" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="全部" clearable style="width: 140px">
-            <el-option label="成功" value="SUCCESS" />
-            <el-option label="处理中" value="PROCESSING" />
-            <el-option label="失败" value="FAILED" />
+            <el-option label="待支付" value="pending" />
+            <el-option label="成功" value="success" />
+            <el-option label="失败" value="failed" />
           </el-select>
         </el-form-item>
         <el-form-item label="日期范围">
@@ -68,7 +68,11 @@
     <!-- 充值记录列表 -->
     <el-card class="table-card" shadow="never">
       <el-table :data="rechargeList" v-loading="loading" stripe>
-        <el-table-column prop="rechargeId" label="记录ID" width="120" />
+        <el-table-column label="记录ID" width="160">
+          <template #default="{ row }">
+            {{ getRechargeRecordId(row) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="username" label="用户名" width="150" />
         <el-table-column prop="amount" label="充值金额" width="120">
           <template #default="{ row }">
@@ -118,7 +122,7 @@
       :close-on-click-modal="false"
     >
       <el-descriptions v-if="currentRecord" :column="2" border>
-        <el-descriptions-item label="记录ID">{{ currentRecord.rechargeId }}</el-descriptions-item>
+        <el-descriptions-item label="记录ID">{{ getRechargeRecordId(currentRecord) }}</el-descriptions-item>
         <el-descriptions-item label="用户名">{{ currentRecord.username }}</el-descriptions-item>
         <el-descriptions-item label="充值金额">
           <span style="color: #67c23a; font-weight: bold; font-size: 1.286rem /* 原值: 18px */">¥{{ currentRecord.amount }}</span>
@@ -215,34 +219,43 @@ const fetchRechargeList = async () => {
   }
 }
 
+const normalizeRechargeMethod = (method) => String(method || '').trim().toLowerCase()
+const normalizeRechargeStatus = (status) => String(status || '').trim().toLowerCase()
+
+const getRechargeRecordId = (record) => record?.rechargeId || record?.id || '-'
+
 // 获取支付方式文本
 const getPaymentMethodText = (method) => {
   const texts = {
-    'WECHAT': '微信支付',
-    'ALIPAY': '支付宝',
-    'BANK_CARD': '银行卡'
+    wechat: '微信支付',
+    alipay: '支付宝',
+    bank: '银行卡',
+    bank_card: '银行卡'
   }
-  return texts[method] || method || '-'
+  const normalized = normalizeRechargeMethod(method)
+  return texts[normalized] || method || '-'
 }
 
 // 获取状态类型
 const getStatusType = (status) => {
   const types = {
-    'SUCCESS': 'success',
-    'PROCESSING': 'warning',
-    'FAILED': 'danger'
+    success: 'success',
+    pending: 'warning',
+    processing: 'warning',
+    failed: 'danger'
   }
-  return types[status] || 'info'
+  return types[normalizeRechargeStatus(status)] || 'info'
 }
 
 // 获取状态文本
 const getStatusText = (status) => {
   const texts = {
-    'SUCCESS': '成功',
-    'PROCESSING': '处理中',
-    'FAILED': '失败'
+    success: '成功',
+    pending: '待支付',
+    processing: '处理中',
+    failed: '失败'
   }
-  return texts[status] || '未知'
+  return texts[normalizeRechargeStatus(status)] || '未知'
 }
 
 // 搜索
@@ -264,9 +277,10 @@ const handleReset = () => {
 // 查看详情
 const handleView = async (row) => {
   try {
-    const response = await getRechargeDetail(row.rechargeId)
+    const rechargeId = getRechargeRecordId(row)
+    const response = await getRechargeDetail(rechargeId)
     if (response) {
-      currentRecord.value = response
+      currentRecord.value = response.data || response
       detailDialogVisible.value = true
     }
   } catch (error) {

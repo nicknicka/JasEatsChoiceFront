@@ -104,9 +104,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 import { recipeApi } from '@/api/modules/recipe'
+import { createPageDebug } from '@/utils/page-debug'
+import { USER_HOME_MERCHANT_LIST, USER_RECIPE_DETAIL } from '@/constants/routes'
 
 // 用户store
 const userStore = useUserStore()
+const pageDebug = createPageDebug('食谱')
 
 // 日期信息
 const todayDate = ref('')
@@ -163,6 +166,9 @@ const meals = ref([])
  */
 const loadTodayRecommend = async () => {
   try {
+    pageDebug.requestStart('加载今日推荐食谱', {
+      userId: userStore.userInfo?.userId || userStore.userInfo?.id || null
+    })
     uni.showLoading({ title: '加载中...' })
 
     // 调用API获取今日食谱
@@ -238,15 +244,21 @@ const loadTodayRecommend = async () => {
       mealList.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type))
 
       meals.value = mealList
+      pageDebug.requestSuccess('加载今日推荐食谱', {
+        meals: meals.value.length,
+        totalCalorie: totalCalorie.value
+      })
     } else {
       // 如果没有今日食谱，使用默认空数据
       meals.value = []
+      pageDebug.anomaly('今日推荐食谱为空')
       uni.showToast({
         title: '暂无今日食谱',
         icon: 'none'
       })
     }
   } catch (error) {
+    pageDebug.requestFail('加载今日推荐食谱', error)
     console.error('加载今日食谱失败:', error)
     uni.hideLoading()
     uni.showToast({
@@ -312,8 +324,13 @@ const tips = ref([
  * 查看食谱详情
  */
 const viewRecipeDetail = (meal) => {
+  pageDebug.action('查看食谱详情', {
+    mealType: meal.type,
+    recipeId: meal.recipeId,
+    recipeName: meal.recipeName
+  })
   uni.navigateTo({
-    url: `/pages/recipe/detail/index?id=${meal.type}`
+    url: `${USER_RECIPE_DETAIL}?id=${meal.recipeId || meal.type}`
   })
 }
 
@@ -322,6 +339,10 @@ const viewRecipeDetail = (meal) => {
  */
 const replaceRecipe = async (meal) => {
   try {
+    pageDebug.action('更换单餐食谱', {
+      mealType: meal.type,
+      recipeName: meal.recipeName
+    })
     uni.showLoading({
       title: '推荐中...'
     })
@@ -367,6 +388,11 @@ const replaceRecipe = async (meal) => {
 
         // 更新总卡路里
         totalCalorie.value = meals.value.reduce((sum, m) => sum + m.calorie, 0)
+        pageDebug.requestSuccess('更换单餐食谱', {
+          mealType: meal.type,
+          recipeId: meals.value[mealIndex].recipeId,
+          totalCalorie: totalCalorie.value
+        })
       }
 
       uni.showToast({
@@ -374,12 +400,16 @@ const replaceRecipe = async (meal) => {
         icon: 'success'
       })
     } else {
+      pageDebug.anomaly('更换单餐食谱无更多推荐', {
+        mealType: meal.type
+      })
       uni.showToast({
         title: '暂无更多推荐',
         icon: 'none'
       })
     }
   } catch (error) {
+    pageDebug.requestFail('更换单餐食谱', error)
     console.error('推荐食谱失败:', error)
     uni.hideLoading()
     uni.showToast({
@@ -393,8 +423,16 @@ const replaceRecipe = async (meal) => {
  * 一键订餐
  */
 const orderRecipe = (meal) => {
+  pageDebug.action('一键订餐', {
+    mealType: meal.type,
+    recipeName: meal.recipeName,
+    calorie: meal.calorie
+  })
   // 检查登录状态
   if (!userStore.checkLogin()) {
+    pageDebug.anomaly('一键订餐被登录校验拦截', {
+      mealType: meal.type
+    })
     return
   }
 
@@ -425,7 +463,7 @@ const orderRecipe = (meal) => {
         setTimeout(() => {
           // 跳转到商家列表页面，传递餐次类型和卡路里信息
           uni.navigateTo({
-            url: `/pages/merchant/list?mealType=${meal.type}&calorie=${meal.calorie}`
+            url: `${USER_HOME_MERCHANT_LIST}?mealType=${meal.type}&calorie=${meal.calorie}`
           })
         }, 1000)
       }
@@ -435,6 +473,7 @@ const orderRecipe = (meal) => {
 
 // 组件挂载
 onMounted(() => {
+  pageDebug.lifecycle('页面挂载')
   const date = new Date()
   const year = date.getFullYear()
   const month = (date.getMonth() + 1).toString().padStart(2, '0')

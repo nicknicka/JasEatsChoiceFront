@@ -7,6 +7,10 @@
 import { ref, computed } from 'vue'
 import { useCartStore, useUserStore } from '@/store'
 import { dishApi, favoriteApi, reviewApi } from '@/api'
+import {
+  toCart as goToCartPage,
+  toMerchantDetail as goToMerchantDetailPage
+} from '@/utils/router'
 
 export function useDishDetail() {
   const cartStore = useCartStore()
@@ -331,9 +335,7 @@ export function useDishDetail() {
    * 跳转到商家详情
    */
   const toMerchant = () => {
-    uni.navigateTo({
-      url: `/pages/merchant/detail/index?id=${dishDetail.value.merchant.id}`
-    })
+    goToMerchantDetailPage(dishDetail.value.merchant.id)
   }
 
   /**
@@ -365,9 +367,7 @@ export function useDishDetail() {
    * 跳转到购物车
    */
   const toCart = () => {
-    uni.navigateTo({
-      url: '/src/pages-user/cart/index'
-    })
+    goToCartPage()
   }
 
   /**

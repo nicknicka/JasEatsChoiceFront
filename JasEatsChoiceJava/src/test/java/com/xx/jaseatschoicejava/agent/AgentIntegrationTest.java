@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * - L2领域Agent: 4个
  * - L3监督代理: 1个（SupervisorAgent）
  *
- * @author Claude
+
  * @since 2026-03-24
  * @updated 2026-03-26 - 简化架构，删除3个编排智能体
  */

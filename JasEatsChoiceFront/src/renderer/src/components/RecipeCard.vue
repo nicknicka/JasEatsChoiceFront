@@ -135,6 +135,7 @@ const getDefaultMealIcon = (type) => {
 
 // 内部方法：获取标签类型（默认实现）
 const getDefaultTagType = (type) => {
+  const allowedTagTypes = ['primary', 'success', 'info', 'warning', 'danger']
   const typeMap = {
     breakfast: 'warning',
     早餐: 'warning',
@@ -142,27 +143,28 @@ const getDefaultTagType = (type) => {
     午餐: 'success',
     dinner: 'primary',
     晚餐: 'primary',
-    afternoon_tea: 'purple',
-    tea: 'purple',
-    night_snack: 'blue',
-    snack: 'blue',
-    morning_snack: 'orange',
-    brunch: 'orange',
-    supper: 'cyan',
-    midnight_snack: 'cyan',
-    health_snack: 'green',
-    fitness_meal: 'green',
-    dessert: 'pink',
-    sweet: 'pink',
-    soup: 'teal',
-    porridge: 'teal',
+    afternoon_tea: 'info',
+    tea: 'info',
+    night_snack: 'primary',
+    snack: 'primary',
+    morning_snack: 'warning',
+    brunch: 'warning',
+    supper: 'primary',
+    midnight_snack: 'info',
+    health_snack: 'success',
+    fitness_meal: 'success',
+    dessert: 'warning',
+    sweet: 'warning',
+    soup: 'info',
+    porridge: 'info',
     salad: 'success',
     vegetable: 'success',
-    meat: 'brown',
-    protein: 'brown',
-    加餐: 'purple'
+    meat: 'danger',
+    protein: 'danger',
+    加餐: 'info'
   }
-  return typeMap[type] || 'info'
+  const tagType = typeMap[type]
+  return allowedTagTypes.includes(tagType) ? tagType : 'info'
 }
 
 // 暴露给模板的方法（使用父组件提供的函数或默认实现）

@@ -20,35 +20,22 @@
 		<view class="tabs-content">
 			<!-- AI聊天 -->
 			<view v-if="activeTab === 'chat'" class="tab-pane chat-pane">
-				<!-- 空状态引导 -->
 				<ChatWelcomeGuide
-					v-if="isEmpty && !hasLoadedHistory"
+					v-if="showWelcomeGuide"
 					@start="handleStartChat"
 					@showQuestions="showQuestionsDrawer = true"
 				/>
 
-				<!-- 聊天容器 -->
 				<view v-else class="chat-container">
-					<!-- 消息列表 -->
 					<ChatMessageList
 						:messages="displayMessages"
 						:scrollIntoView="scrollIntoView"
 					/>
 
-					<!-- 加载状态 -->
 					<view v-if="isLoading" class="loading-status">
 						<ChatLoadingIndicator :state="loadingState" />
 					</view>
 
-					<!-- 快捷提问抽屉 -->
-					<QuickQuestionsDrawer
-						:visible="showQuestionsDrawer"
-						:questions="quickQuestions"
-						@select="handleQuickQuestionSelect"
-						@update:visible="showQuestionsDrawer = $event"
-					/>
-
-					<!-- 输入区域 -->
 					<ChatInputArea
 						:inputText="inputText"
 						:isStreaming="isStreaming"
@@ -58,13 +45,21 @@
 						@update:inputText="inputText = $event"
 						@send="sendMessage"
 						@stop="stopStreamingHandler"
-						@toggleEmoji="showEmojiPicker = !showEmojiPicker"
+						@toggleEmoji="toggleEmoji"
+						@selectEmoji="selectEmoji"
 						@chooseImage="handleChooseImage"
 						@removeImage="removeUploadedImage"
 						@toggleQuickQuestions="showQuestionsDrawer = true"
 						@clearHistory="confirmClearHistory"
 					/>
 				</view>
+
+				<QuickQuestionsDrawer
+					:visible="showQuestionsDrawer"
+					:questions="quickQuestions"
+					@select="handleQuickQuestionSelect"
+					@update:visible="showQuestionsDrawer = $event"
+				/>
 			</view>
 
 			<!-- 菜品识别 -->
@@ -91,6 +86,7 @@ import { useChatMessages } from '@/composables/ai'
 import { useChatInput } from '@/composables/ai'
 import { useChatStreaming } from '@/composables/ai'
 import { useErrorHandler } from '@/composables'
+import { createPageDebug } from '@/utils/page-debug'
 
 // 组件导入
 import ChatMessageList from './components/ChatMessageList.vue'
@@ -104,6 +100,7 @@ import ContentExtraction from './components/ContentExtraction.vue'
 
 // 用户信息store
 const userStore = useUserStore()
+const pageDebug = createPageDebug('AI助手')
 
 // 错误处理
 const { handleError, confirm } = useErrorHandler()
@@ -162,12 +159,42 @@ const {
 const displayMessages = computed(() => messages.value)
 
 const loadingState = computed(() => streamingState.value.toLowerCase())
+const WELCOME_MESSAGE = '您好！我是AI饮食助手，有什么可以帮您的吗？'
+const hasUserContext = computed(() => {
+	return Boolean(uni.getStorageSync('userId') || userStore.userInfo?.userId)
+})
+
+const showWelcomeGuide = computed(() => {
+	if (isLoading.value) {
+		return false
+	}
+
+	if (hasUserContext.value && !hasLoadedHistory.value && messages.value.length === 0) {
+		return false
+	}
+
+	if (messages.value.length === 0) {
+		return true
+	}
+
+	return (
+		messages.value.length === 1 &&
+		messages.value[0].sender === 'ai' &&
+		messages.value[0].content === WELCOME_MESSAGE
+	)
+})
 
 const showQuestionsDrawer = ref(false)
 
 // ==================== 方法 ====================
 const switchTab = (tabKey) => {
+	pageDebug.action('切换AI标签页', {
+		from: activeTab.value,
+		to: tabKey
+	})
 	activeTab.value = tabKey
+	showQuestionsDrawer.value = false
+	showEmojiPicker.value = false
 	if (tabKey === 'chat') {
 		setTimeout(() => {
 			scrollToBottom()
@@ -182,6 +209,10 @@ const scrollToBottom = async () => {
 const sendMessage = async () => {
 	const { text } = getInputData()
 	if (!text) return
+	pageDebug.action('发送AI消息', {
+		textLength: text.length,
+		hasImage: uploadedImages.value.length > 0
+	})
 
 	addMessage({
 		sender: 'user',
@@ -195,6 +226,7 @@ const sendMessage = async () => {
 	if (quickQuestionsExpanded.value) {
 		quickQuestionsExpanded.value = false
 	}
+	showQuestionsDrawer.value = false
 
 	resetInput()
 	await scrollToBottom()
@@ -227,8 +259,13 @@ const sendMessage = async () => {
 				cardData
 			})
 			await saveMessageToBackend('ai', cleanContent, messageType, cardData)
+			pageDebug.requestSuccess('AI回复完成', {
+				messageType,
+				contentLength: cleanContent.length
+			})
 		},
 		(error) => {
+			pageDebug.requestFail('AI回复失败', error)
 			handleError(error, 'sendMessage')
 			if (!messages.value[aiMessageIndex].content) {
 				updateMessage(aiMessageIndex, {
@@ -240,6 +277,7 @@ const sendMessage = async () => {
 }
 
 const stopStreamingHandler = () => {
+	pageDebug.action('停止AI回复')
 	stopStreaming()
 	uni.showToast({
 		title: '已停止AI回复',
@@ -249,41 +287,60 @@ const stopStreamingHandler = () => {
 
 const handleChooseImage = async () => {
 	try {
+		pageDebug.action('选择聊天图片')
 		await chooseImage(3)
+		pageDebug.requestSuccess('选择聊天图片', {
+			count: uploadedImages.value.length
+		})
 	} catch (error) {
+		pageDebug.requestFail('选择聊天图片', error)
 		handleError(error, 'chooseImage')
 	}
 }
 
 const removeUploadedImage = (index) => {
-	// 由 ChatInputArea 组件处理
+	pageDebug.action('移除聊天图片', {
+		index
+	})
+	removeImage(index)
 }
 
 const handleQuickQuestionSelect = (question) => {
+	pageDebug.action('选择快捷提问', {
+		question
+	})
 	inputText.value = question
 	sendMessage()
 }
 
 const handleStartChat = (question = '') => {
+	pageDebug.action('开始AI聊天', {
+		hasPresetQuestion: Boolean(question)
+	})
 	if (question) {
 		inputText.value = question
+		sendMessage()
+		return
 	}
 	showQuestionsDrawer.value = true
 }
 
 const confirmClearHistory = async () => {
+	pageDebug.action('尝试清空聊天记录')
 	const confirmed = await confirm('确定要清空所有聊天记录吗？')
 	if (confirmed) {
 		try {
 			const userId = uni.getStorageSync('userId') || userStore.userInfo?.userId
 			const success = await clearHistory(userId)
 			if (success) {
+				pageDebug.requestSuccess('清空聊天记录')
 				uni.showToast({
 					title: '已清空聊天记录',
 					icon: 'success'
 				})
 			}
 		} catch (error) {
+			pageDebug.requestFail('清空聊天记录', error)
 			handleError(error, 'clearHistory')
 		}
 	}
@@ -291,9 +348,21 @@ const confirmClearHistory = async () => {
 
 // ==================== 生命周期 ====================
 onMounted(async () => {
+	pageDebug.lifecycle('页面挂载', {
+		hasUserContext: hasUserContext.value,
+		activeTab: activeTab.value
+	})
 	const userId = uni.getStorageSync('userId') || userStore.userInfo?.userId
 	if (userId) {
+		pageDebug.requestStart('加载聊天历史', {
+			userId
+		})
 		await loadHistory(userId)
+		pageDebug.requestSuccess('加载聊天历史', {
+			messageCount: messages.value.length
+		})
+	} else {
+		pageDebug.anomaly('缺少用户信息，跳过加载聊天历史')
 	}
 })
 </script>

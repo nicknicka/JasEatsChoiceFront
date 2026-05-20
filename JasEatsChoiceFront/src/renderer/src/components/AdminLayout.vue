@@ -316,7 +316,6 @@ const fetchAdminInfo = async () => {
     const response = await getCurrentAdmin()
     console.log('[AdminLayout] 获取管理员信息', response)
     if (response && response.success && response.admin) {
-      // 确保字符串正确编码（处理可能的乱码问题）
       const newAdminInfo = {
         adminId: response.admin.adminId,
         username: String(response.admin.username || '管理员'),
@@ -358,23 +357,17 @@ const getDisplayName = () => {
   }
 }
 
-// 获取角色名称（修复乱码问题）
+// 获取角色名称
 const getRoleName = () => {
   try {
     const roleCode = adminInfo.value?.roleCode
     const roleName = adminInfo.value?.roleName
 
-    // 如果有roleCode映射，直接使用映射值（最可靠的方式）
     if (roleCode && ROLE_NAME_MAP && ROLE_NAME_MAP[roleCode]) {
       return ROLE_NAME_MAP[roleCode]
     }
 
-    // 检测乱码：包含常见的编码错误字符或异常长的字符串
-    if (!roleName || roleName.length > 50 || /[\u0080-\uFFFF][\u0000-\u007F]/.test(roleName)) {
-      return ROLE_NAME_MAP?.[roleCode] || ROLE_NAME_MAP?.['SUPER_ADMIN'] || '超级管理员'
-    }
-
-    return roleName || '超级管理员'
+    return String(roleName || '').trim() || '超级管理员'
   } catch (error) {
     console.error('[AdminLayout] 获取角色名称失败:', error)
     return '超级管理员'

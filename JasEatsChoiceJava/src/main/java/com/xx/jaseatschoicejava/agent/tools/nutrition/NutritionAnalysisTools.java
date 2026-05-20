@@ -21,7 +21,7 @@ import java.util.Map;
  *
  * 为Agent提供营养分析功能
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

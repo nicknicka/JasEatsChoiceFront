@@ -1,0 +1,45 @@
+- generic [ref=e4]:
+  - generic [ref=e6]:
+    - button "关闭" [ref=e7]:
+      - img [ref=e8]
+    - button "最小化" [ref=e11]:
+      - img [ref=e12]
+  - generic [ref=e14]:
+    - img [ref=e16]
+    - heading "佳食宜选" [level=1] [ref=e20]
+    - paragraph [ref=e21]: 美食由你选择
+  - generic [ref=e22]:
+    - generic [ref=e23]:
+      - combobox [ref=e26]:
+        - generic [ref=e28]:
+          - img [ref=e30]
+          - textbox "手机号" [ref=e32]
+      - generic [ref=e36]:
+        - img [ref=e38]
+        - textbox "密码" [ref=e41]
+      - generic [ref=e44]:
+        - generic [ref=e46]:
+          - img [ref=e48]
+          - textbox "验证码" [ref=e52]: "39"
+        - img "验证码" [ref=e53] [cursor=pointer]
+        - button "刷新验证码" [ref=e54] [cursor=pointer]:
+          - img [ref=e55]
+      - generic [ref=e58]:
+        - generic [ref=e59] [cursor=pointer]:
+          - generic [ref=e60]:
+            - checkbox "记住密码"
+          - generic [ref=e62]: 记住密码
+        - generic [ref=e63] [cursor=pointer]: 忘记密码？
+      - generic [ref=e65] [cursor=pointer]:
+        - generic [ref=e66]:
+          - checkbox "我已阅读并同意 《用户协议》 和 《隐私政策》"
+        - generic [ref=e69]: 我已阅读并同意 《用户协议》 和 《隐私政策》
+      - button "登 录" [ref=e70] [cursor=pointer]
+    - generic [ref=e71]:
+      - generic [ref=e73]: 其他方式
+      - generic [ref=e74]:
+        - button "微信登录" [ref=e75] [cursor=pointer]:
+          - img [ref=e76]
+        - button "QQ登录" [ref=e79] [cursor=pointer]:
+          - img [ref=e80]
+    - generic [ref=e88]: 没有账号？立即注册

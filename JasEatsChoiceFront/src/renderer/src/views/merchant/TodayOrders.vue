@@ -151,8 +151,9 @@ const today = computed(() => {
 
 // 订单概览统计
 const orderOverview = computed(() => {
-  const total = filteredOrders.value.length
-  const totalAmount = filteredOrders.value.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
+  const activeOrders = filteredOrders.value.filter((order) => order.status !== 4)
+  const total = activeOrders.length
+  const totalAmount = activeOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
   // 使用数字状态码统计：1-待接单、2-制作中、3-已完成、4-已取消
   const pendingCount = filteredOrders.value.filter((order) => order.status === 1).length
   const preparingCount = filteredOrders.value.filter((order) => order.status === 2).length

@@ -39,6 +39,25 @@ export const useCartStore = defineStore('cart', {
     currentCart: (state) => {
       if (!state.currentMerchantId) return null
       return state.carts.find(cart => cart.merchantId === state.currentMerchantId)
+    },
+
+    // 兼容旧页面使用的平铺商品列表
+    items: (state) => {
+      return state.carts.flatMap((cart) =>
+        cart.items.map((item) => ({
+          merchantId: cart.merchantId,
+          merchantName: cart.merchantName || '',
+          dish: {
+            id: item.dishId,
+            name: item.name,
+            price: item.price,
+            image: item.image || ''
+          },
+          quantity: item.quantity,
+          spec: item.spec || '',
+          remark: item.remark || ''
+        }))
+      )
     }
   },
 
@@ -85,7 +104,36 @@ export const useCartStore = defineStore('cart', {
      * @param {string} item.remark - 备注
      */
     addToCart(item) {
-      const { merchantId, dishId, spec = '' } = item
+      const normalizedItem = item.dish ? {
+        merchantId: item.merchantId,
+        merchantName: item.merchantName || item.merchant?.name || '',
+        dishId: item.dish.id || item.dishId,
+        name: item.dish.name || item.name,
+        price: item.dish.price || item.price || 0,
+        image: item.dish.image || item.image || '',
+        spec: item.spec || '',
+        quantity: item.quantity || 1,
+        ingredients: item.ingredients || [],
+        remark: item.remark || ''
+      } : item
+
+      const {
+        merchantId,
+        merchantName = '',
+        dishId,
+        name,
+        price,
+        image = '',
+        spec = '',
+        quantity = 1,
+        ingredients = [],
+        remark = ''
+      } = normalizedItem
+
+      if (!merchantId || !dishId) {
+        console.warn('购物车添加失败，缺少必要参数', normalizedItem)
+        return
+      }
 
       // 查找对应商家的购物车
       let cart = this.carts.find(c => c.merchantId === merchantId)
@@ -94,10 +142,12 @@ export const useCartStore = defineStore('cart', {
         // 创建新的购物车
         cart = {
           merchantId,
-          merchantName: item.merchantName || '',
+          merchantName,
           items: []
         }
         this.carts.push(cart)
+      } else if (merchantName && !cart.merchantName) {
+        cart.merchantName = merchantName
       }
 
       // 查找是否已存在相同菜品和规格
@@ -107,17 +157,21 @@ export const useCartStore = defineStore('cart', {
 
       if (existingItem) {
         // 更新数量
-        existingItem.quantity += item.quantity
+        existingItem.quantity += quantity
+        if (image && !existingItem.image) {
+          existingItem.image = image
+        }
       } else {
         // 添加新菜品
         cart.items.push({
           dishId,
-          name: item.name,
-          price: item.price,
-          spec: item.spec,
-          quantity: item.quantity,
-          ingredients: item.ingredients || [],
-          remark: item.remark || ''
+          name,
+          price,
+          image,
+          spec,
+          quantity,
+          ingredients,
+          remark
         })
       }
 
@@ -132,12 +186,17 @@ export const useCartStore = defineStore('cart', {
      * @param {number} quantity - 数量
      */
     updateQuantity(merchantId, dishId, spec, quantity) {
+      if (typeof quantity === 'undefined') {
+        quantity = spec
+        spec = ''
+      }
+
       const cart = this.carts.find(c => c.merchantId === merchantId)
       if (!cart) return
 
       const item = cart.items.find(
-        i => i.dishId === dishId && i.spec === spec
-      )
+        i => i.dishId === dishId && (spec ? i.spec === spec : true)
+      ) || cart.items.find(i => i.dishId === dishId)
 
       if (item) {
         if (quantity <= 0) {
@@ -157,6 +216,32 @@ export const useCartStore = defineStore('cart', {
 
         this.saveCarts()
       }
+    },
+
+    removeFromCart(merchantId, dishId, spec = '') {
+      const cart = this.carts.find(c => c.merchantId === merchantId)
+      if (!cart) return
+
+      const index = cart.items.findIndex(
+        item => item.dishId === dishId && (spec ? item.spec === spec : true)
+      )
+
+      if (index > -1) {
+        cart.items.splice(index, 1)
+      }
+
+      if (cart.items.length === 0) {
+        const cartIndex = this.carts.findIndex(c => c.merchantId === merchantId)
+        if (cartIndex > -1) {
+          this.carts.splice(cartIndex, 1)
+        }
+      }
+
+      this.saveCarts()
+    },
+
+    removeItem(merchantId, dishId, spec = '') {
+      this.removeFromCart(merchantId, dishId, spec)
     },
 
     /**

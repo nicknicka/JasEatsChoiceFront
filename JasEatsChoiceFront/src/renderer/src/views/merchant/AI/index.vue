@@ -69,10 +69,37 @@ import { ref, computed, watch, nextTick, onMounted, onActivated, defineAsyncComp
 import { ChatRound, TrendCharts, Comment, Dish } from '@element-plus/icons-vue'
 import MerchantAIChatPanel from './components/MerchantAIChatPanel.vue'
 import { useUserStore } from '@/store/userStore'
+import { useAuthStore } from '@/store/authStore'
 
 // 获取当前商家ID
 const userStore = useUserStore()
-const merchantId = computed(() => userStore.userInfo?.merchantId || '')
+const authStore = useAuthStore()
+
+const normalizeMerchantId = (value) => {
+  const normalized = String(value || '').trim()
+  return normalized && normalized !== 'null' ? normalized : ''
+}
+
+const merchantId = computed(() => {
+  const authMerchantId = normalizeMerchantId(authStore.merchantId)
+  if (authMerchantId) {
+    return authMerchantId
+  }
+
+  const userMerchantId = normalizeMerchantId(userStore.userInfo?.merchantId)
+  if (userMerchantId) {
+    authStore.setMerchantId(userMerchantId)
+    return userMerchantId
+  }
+
+  const localMerchantId = normalizeMerchantId(localStorage.getItem('auth_merchantId'))
+  if (localMerchantId) {
+    authStore.setMerchantId(localMerchantId)
+    return localMerchantId
+  }
+
+  return ''
+})
 
 // 异步加载非核心组件
 const BusinessInsight = defineAsyncComponent({

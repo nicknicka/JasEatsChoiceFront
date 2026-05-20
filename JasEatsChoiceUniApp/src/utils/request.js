@@ -23,6 +23,11 @@ const isWhitelisted = (url) => {
   return AUTH_WHITELIST.some((path) => url.includes(path))
 }
 
+const getStoredUserId = () => {
+  const userInfo = uni.getStorageSync('userInfo') || {}
+  return userInfo.userId || userInfo.id || ''
+}
+
 /**
  * 统一请求方法
  * @param {Object} options - 请求配置
@@ -82,7 +87,7 @@ export const request = (options) => {
         'Content-Type': 'application/json',
         ...(needAuth && token ? { 'Authorization': `Bearer ${token}` } : {}),
         // 添加用户ID请求头用于行为追踪
-        ...(needAuth && token ? { 'X-User-Id': uni.getStorageSync('userInfo')?.id || '' } : {})
+        ...(needAuth && token ? { 'X-User-Id': getStoredUserId() } : {})
       },
       success: (res) => {
         // 响应日志

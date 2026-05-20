@@ -439,7 +439,7 @@ const confirmPayment = () => {
         showCancel: false,
         success: () => {
           uni.navigateTo({
-            url: '/pages/profile/recharge'
+            url: '/pages-user/wallet/index'
           })
         }
       })

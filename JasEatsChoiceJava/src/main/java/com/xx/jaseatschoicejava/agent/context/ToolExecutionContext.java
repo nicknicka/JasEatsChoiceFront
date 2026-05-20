@@ -12,7 +12,7 @@ import java.util.Stack;
  * 工具执行上下文管理器
  * 使用 ThreadLocal 存储工具执行信息，用于在流式输出中生成卡片数据
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 public class ToolExecutionContext {

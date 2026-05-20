@@ -7,7 +7,7 @@
  * - 焦点管理
  * - 屏幕阅读器支持
  *
- * @author Claude
+
  * @date 2026-03-31
  */
 
@@ -45,6 +45,23 @@ export function getTouchAreaStyle(size = 96) {
 		height: \`\${finalSize}rpx\`,
 		minWidth: \`\${finalSize}rpx\`,
 		minHeight: \`\${finalSize}rpx\`
+	}
+}
+
+export const TOUCH_TARGET_MIN_SIZE = 96
+
+export function createAccessibleButtonProps(label, options = {}) {
+	const {
+		role = 'button',
+		description = '',
+		disabled = false
+	} = options
+
+	return {
+		role,
+		'aria-label': label,
+		'aria-description': description || undefined,
+		'aria-disabled': disabled ? 'true' : 'false'
 	}
 }
 

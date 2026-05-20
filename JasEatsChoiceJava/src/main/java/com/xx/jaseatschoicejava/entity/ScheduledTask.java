@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * 定时任务实体
  *
- * @author Claude
+
  * @since 2025-02-12
  */
 @Data

@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter;
  *
  * 为Agent提供时间相关功能
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

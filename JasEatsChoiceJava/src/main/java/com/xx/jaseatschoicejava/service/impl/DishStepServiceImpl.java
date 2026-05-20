@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 /**
  * 菜品步骤服务实现类
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Slf4j

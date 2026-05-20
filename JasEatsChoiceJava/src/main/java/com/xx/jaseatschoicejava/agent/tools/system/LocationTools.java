@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  *
  * 注意：不使用 @Component/@Service 注解，通过 @Bean 方法手动创建，避免Spring AOP代理导致LangChain4j无法扫描@Tool注解
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Slf4j

@@ -334,8 +334,9 @@ const shareCoupon = (coupon) => {
  * 去领券中心
  */
 const goToCoupons = () => {
-  uni.navigateTo({
-    url: '/pages/coupon/center/index'
+  uni.showToast({
+    title: '领券中心开发中',
+    icon: 'none'
   })
 }
 

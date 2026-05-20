@@ -3,6 +3,7 @@ package com.xx.jaseatschoicejava.entity;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -21,7 +22,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("t_dish")
+@TableName(value = "t_dish", autoResultMap = true)
 @ApiModel(description = "菜品实体")
 public class Dish {
 
@@ -113,7 +114,7 @@ public class Dish {
     @ApiModelProperty(value = "收藏次数")
     private Integer favoriteCount; // 收藏次数
 
-    @TableField("tags")
+    @TableField(value = "tags", typeHandler = JacksonTypeHandler.class)
     @ApiModelProperty(value = "标签列表（JSON格式）")
     private JsonNode tags; // 标签列表（JSON格式）
 

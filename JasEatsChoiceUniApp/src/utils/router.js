@@ -7,101 +7,101 @@
  * 主包页面路径
  */
 const MAIN_PAGES = {
-  LOGIN: '/src/pages/login/index',
-  REGISTER: '/src/pages/register/index',
-  HOME: '/src/pages/home/index/index',
-  RECIPE: '/src/pages/recipe/index',
-  AI: '/src/pages/ai/index',
-  PROFILE: '/src/pages/profile/user-center/index',
-  CUSTOMER_SERVICE: '/src/pages/customer-service/index'
+  LOGIN: '/pages/login/index',
+  REGISTER: '/pages/register/index',
+  HOME: '/pages/home/index/index',
+  RECIPE: '/pages/recipe/index',
+  AI: '/pages/ai/index',
+  PROFILE: '/pages/profile/user-center/index',
+  CUSTOMER_SERVICE: '/pages-user/help/index'
 }
 
 /**
  * 用户端页面路径（分包）
  */
 const USER_PAGES = {
-  HOME: '/src/pages-user/home/index',
-  RECIPE_TODAY: '/src/pages-user/recipe/today',
-  AI: '/src/pages-user/ai/index',
-  AI_ADVANCED: '/src/pages-user/ai/advanced',
-  AI_CONTENT_EXTRACT: '/src/pages-user/ai/content-extract',
-  PROFILE: '/src/pages-user/profile/user-center/index',
-  SEARCH: '/src/pages-user/search/index',
-  MERCHANT_DETAIL: '/src/pages-user/merchant/detail/index',
-  DISH_DETAIL: '/src/pages-user/dish/detail/index',
-  DISH_LIST: '/src/pages-user/dish/list/index',
-  DISH_CUSTOMIZE: '/src/pages-user/dish/customize',
-  CART: '/src/pages-user/cart/index',
-  ORDER_CONFIRM: '/src/pages-user/order/confirm/index',
-  ORDER_DETAIL: '/src/pages-user/order/detail/index',
-  ORDER_PROGRESS: '/src/pages-user/order/progress/index',
-  ORDER_LIST: '/src/pages-user/orders/index',
-  REVIEW_LIST: '/src/pages-user/review/list/index',
-  REVIEW_SUBMIT: '/src/pages-user/review/submit/index',
-  RECIPE_MY: '/src/pages-user/recipe/my',
-  RECIPE_DETAIL: '/src/pages-user/recipe/detail/index',
-  PROFILE_EDIT: '/src/pages-user/profile/user-center/edit/index',
-  ADDRESS_LIST: '/src/pages-user/address/index',
-  ADDRESS_EDIT: '/src/pages-user/address/edit/index',
-  COLLECTION: '/src/pages-user/collection/index',
-  HISTORY: '/src/pages-user/history/index',
-  COUPON: '/src/pages-user/coupon/index',
-  WALLET: '/src/pages-user/wallet/index',
-  WALLET_TRANSACTIONS: '/src/pages-user/wallet/transactions',
-  MESSAGE: '/src/pages-user/message/index',
-  HELP: '/src/pages-user/help/index',
-  FEEDBACK: '/src/pages-user/feedback/index',
-  CALORIE: '/src/pages-user/calorie/index',
-  CALORIE_RECORD: '/src/pages-user/calorie/record',
-  CALORIE_STATISTICS: '/src/pages-user/calorie/statistics',
-  MERCHANT_LIST: '/src/pages-user/home/merchant-list',
-  INTEGRAL: '/src/pages-user/profile/integral',
-  ABOUT: '/src/pages-user/profile/about',
-  DEMO_PERFORMANCE: '/src/pages-user/demo/performance',
-  SETTINGS: '/src/pages-user/settings/index'
+  HOME: '/pages/home/index/index',
+  RECIPE_TODAY: '/pages/recipe/index',
+  AI: '/pages/ai/index',
+  AI_ADVANCED: '/pages-user/ai/advanced',
+  AI_CONTENT_EXTRACT: '/pages-user/ai/content-extract',
+  PROFILE: '/pages/profile/user-center/index',
+  SEARCH: '/pages-user/search/index',
+  MERCHANT_DETAIL: '/pages-user/merchant/detail/index',
+  DISH_DETAIL: '/pages-user/dish/detail/index',
+  DISH_LIST: '/pages-user/dish/list/index',
+  DISH_CUSTOMIZE: '/pages-user/dish/customize',
+  CART: '/pages-user/cart/index',
+  ORDER_CONFIRM: '/pages-user/order/confirm/index',
+  ORDER_DETAIL: '/pages-user/order/detail/index',
+  ORDER_PROGRESS: '/pages-user/order/progress/index',
+  ORDER_LIST: '/pages-user/orders/index',
+  REVIEW_LIST: '/pages-user/review/list/index',
+  REVIEW_SUBMIT: '/pages-user/review/submit/index',
+  RECIPE_MY: '/pages-user/recipe/my',
+  RECIPE_DETAIL: '/pages-user/recipe/detail/index',
+  PROFILE_EDIT: '/pages-user/profile/user-center/edit/index',
+  ADDRESS_LIST: '/pages-user/address/index',
+  ADDRESS_EDIT: '/pages-user/address/edit/index',
+  COLLECTION: '/pages-user/collection/index',
+  HISTORY: '/pages-user/history/index',
+  COUPON: '/pages-user/coupon/index',
+  WALLET: '/pages-user/wallet/index',
+  WALLET_TRANSACTIONS: '/pages-user/wallet/transactions',
+  MESSAGE: '/pages-user/message/index',
+  HELP: '/pages-user/help/index',
+  FEEDBACK: '/pages-user/feedback/index',
+  CALORIE: '/pages-user/calorie/index',
+  CALORIE_RECORD: '/pages-user/calorie/record',
+  CALORIE_STATISTICS: '/pages-user/calorie/statistics',
+  MERCHANT_LIST: '/pages-user/home/merchant-list',
+  INTEGRAL: '/pages-user/profile/integral',
+  ABOUT: '/pages-user/profile/about',
+  DEMO_PERFORMANCE: '/pages-user/demo/performance',
+  SETTINGS: '/pages-user/settings/index'
 }
 
 /**
  * 商家端页面路径
  */
 const MERCHANT_PAGES = {
-  HOME: '/src/pages-merchant/home/index',
-  STATISTICS: '/src/pages-merchant/home/statistics',
-  ANALYTICS: '/src/pages-merchant/home/analytics',
-  ORDER: '/src/pages-merchant/order/index',
-  ORDER_DETAIL: '/src/pages-merchant/order/detail',
-  ORDER_PROCESS: '/src/pages-merchant/order/process',
-  ORDER_TODAY: '/src/pages-merchant/order/today',
-  DISH: '/src/pages-merchant/dish/index',
-  DISH_ADD: '/src/pages-merchant/dish/add',
-  DISH_EDIT: '/src/pages-merchant/dish/edit',
-  DISH_STEP_CONFIG: '/src/pages-merchant/dish/step-config',
-  MENU: '/src/pages-merchant/menu/index',
-  MENU_EDIT: '/src/pages-merchant/menu/edit',
-  COMMENT: '/src/pages-merchant/comment/index',
-  COMMENT_DETAIL: '/src/pages-merchant/comment/detail',
-  COMMENT_REPLY: '/src/pages-merchant/comment/reply',
-  WISHLIST: '/src/pages-merchant/wishlist/index',
-  WISHLIST_AUDIT: '/src/pages-merchant/wishlist/audit',
-  CHAT: '/src/pages-merchant/chat/index',
-  CHAT_DETAIL: '/src/pages-merchant/chat/detail',
-  PROFILE: '/src/pages-merchant/profile/index',
-  PROFILE_EDIT: '/src/pages-merchant/profile/edit',
-  SHOP: '/src/pages-merchant/profile/shop',
-  FINANCE: '/src/pages-merchant/profile/finance',
-  WITHDRAW: '/src/pages-merchant/profile/withdraw',
-  SETTINGS: '/src/pages-merchant/profile/settings',
-  TUTORIALS: '/src/pages-merchant/profile/tutorials'
+  HOME: '/pages-merchant/home/index',
+  STATISTICS: '/pages-merchant/home/statistics',
+  ANALYTICS: '/pages-merchant/home/analytics',
+  ORDER: '/pages-merchant/order/index',
+  ORDER_DETAIL: '/pages-merchant/order/detail',
+  ORDER_PROCESS: '/pages-merchant/order/process',
+  ORDER_TODAY: '/pages-merchant/order/today',
+  DISH: '/pages-merchant/dish/index',
+  DISH_ADD: '/pages-merchant/dish/add',
+  DISH_EDIT: '/pages-merchant/dish/edit',
+  DISH_STEP_CONFIG: '/pages-merchant/dish/step-config',
+  MENU: '/pages-merchant/menu/index',
+  MENU_EDIT: '/pages-merchant/menu/edit',
+  COMMENT: '/pages-merchant/comment/index',
+  COMMENT_DETAIL: '/pages-merchant/comment/detail',
+  COMMENT_REPLY: '/pages-merchant/comment/reply',
+  WISHLIST: '/pages-merchant/wishlist/index',
+  WISHLIST_AUDIT: '/pages-merchant/wishlist/audit',
+  CHAT: '/pages-merchant/chat/index',
+  CHAT_DETAIL: '/pages-merchant/chat/detail',
+  PROFILE: '/pages-merchant/profile/index',
+  PROFILE_EDIT: '/pages-merchant/profile/edit',
+  SHOP: '/pages-merchant/profile/shop',
+  FINANCE: '/pages-merchant/profile/finance',
+  WITHDRAW: '/pages-merchant/profile/withdraw',
+  SETTINGS: '/pages-merchant/profile/settings',
+  TUTORIALS: '/pages-merchant/profile/tutorials'
 }
 
 /**
  * 公共页面路径
  */
 const COMMON_PAGES = {
-  CONVERSATION_LIST: '/src/pages-common/chat/conversation-list',
-  CHAT_ROOM: '/src/pages-common/chat/chat-room',
-  PAYMENT: '/src/pages-common/payment/index',
-  PAYMENT_RESULT: '/src/pages-common/payment/result'
+  CONVERSATION_LIST: '/pages-common/chat/conversation-list',
+  CHAT_ROOM: '/pages-common/chat/chat-room',
+  PAYMENT: '/pages-common/payment/index',
+  PAYMENT_RESULT: '/pages-common/payment/result'
 }
 
 // 导出路径常量
@@ -120,17 +120,17 @@ export const toLogin = () => {
 
 export const toUserHome = () => {
   console.log('🔄 [路由] 切换到用户首页')
-  uni.switchTab({ url: '/src/pages/home/index/index' })
+  uni.switchTab({ url: '/pages/home/index/index' })
 }
 
 export const toMerchantHome = () => {
   console.log('🔄 [路由] 切换到商家首页')
-  uni.switchTab({ url: '/src/pages-merchant/home/index' })
+  uni.switchTab({ url: '/pages-merchant/home/index' })
 }
 
 export const toProfile = () => {
   console.log('🔄 [路由] 切换到用户中心')
-  uni.switchTab({ url: '/src/pages/profile/user-center/index' })
+  uni.switchTab({ url: '/pages/profile/user-center/index' })
 }
 
 export const toDishDetail = (dishId) => {
@@ -225,7 +225,7 @@ export const backOrHome = () => {
     uni.navigateBack()
   } else {
     console.log('🔄 [路由] 返回首页')
-    uni.switchTab({ url: '/src/pages/home/index/index' })
+    uni.switchTab({ url: '/pages/home/index/index' })
   }
 }
 

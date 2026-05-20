@@ -150,8 +150,9 @@ const filteredOrders = computed(() => {
 
 // 订单概览统计
 const orderOverview = computed(() => {
-  const total = filteredOrders.value.length
-  const totalAmount = filteredOrders.value.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
+  const activeOrders = filteredOrders.value.filter((order) => order.status !== 4)
+  const total = activeOrders.length
+  const totalAmount = activeOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
   const pendingCount = filteredOrders.value.filter((order) => order.status === 1).length
   const preparingCount = filteredOrders.value.filter((order) => order.status === 2).length
   const completedCount = filteredOrders.value.filter((order) => order.status === 3).length

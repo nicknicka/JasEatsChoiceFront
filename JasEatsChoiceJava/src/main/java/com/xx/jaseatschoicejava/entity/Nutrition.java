@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * 营养数据库实体（中国食物成分表）
  * 基于《中国食物成分表 标准版（第6版）》
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 @Data

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onActivated, computed } from 'vue'
 import axios from 'axios'
 import { API_CONFIG } from '../../config/index.js'
 import { ElMessage } from 'element-plus'
@@ -50,122 +50,151 @@ const recommendedGoals = ref({
 // 自定义营养目标（用户设置）
 const customGoals = ref({})
 
-// 从API获取数据
-onMounted(() => {
-  // 获取用户信息 - 从Pinia store获取
+const getCurrentUserId = () => {
   const authStore = useAuthStore()
   const userStore = useUserStore()
 
-  let userId = null
-
-  console.log('Auth Store:', authStore)
-  console.log('User Store:', userStore)
-  // 从authStore获取userId，如果authStore中没有则从userStore的userInfo中获取
   if (authStore.userId) {
-    userId = authStore.userId
-  } else if (userStore.userInfo?.userId) {
-    userId = userStore.userInfo.userId
-  } else {
-    // 用户未登录或没有保存用户信息
+    return authStore.userId
+  }
+
+  if (userStore.userInfo?.userId) {
+    return userStore.userInfo.userId
+  }
+
+  return null
+}
+
+const updateRemainingCalories = () => {
+  calorieData.value.today.remaining = calorieData.value.today.target - calorieData.value.today.consumed
+}
+
+const resetTodayNutrition = () => {
+  calorieData.value.today.consumed = 0
+  calorieData.value.nutrition[0].value = 0
+  calorieData.value.nutrition[1].value = 0
+  calorieData.value.nutrition[2].value = 0
+  updateRemainingCalories()
+}
+
+const loadUserPreferences = async (userId) => {
+  const response = await axios.get(
+    `${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`
+  )
+
+  if (response.data && response.data.code === '200') {
+    if (response.data.data.calorieTarget) {
+      calorieData.value.today.target = response.data.data.calorieTarget
+    }
+
+    if (response.data.data.nutritionGoals) {
+      customGoals.value = response.data.data.nutritionGoals
+    }
+  }
+
+  updateRemainingCalories()
+}
+
+const loadTodayDietRecords = async (userId) => {
+  const currentDate = new Date().toISOString().split('T')[0]
+  const response = await axios.get(
+    `${API_CONFIG.baseURL}${API_CONFIG.diet.date.replace('{userId}', userId)}${currentDate}`
+  )
+
+  if (
+    response.data &&
+    response.data.code === '200' &&
+    response.data.data &&
+    Array.isArray(response.data.data)
+  ) {
+    const records = response.data.data
+
+    let totalCalories = 0
+    let totalProtein = 0
+    let totalCarbs = 0
+    let totalFat = 0
+
+    records.forEach((record) => {
+      totalCalories += Number(record?.calorie) || 0
+      totalProtein += Number(record?.protein) || 0
+      totalCarbs += Number(record?.carbohydrate) || 0
+      totalFat += Number(record?.fat) || 0
+    })
+
+    calorieData.value.today.consumed = Math.round(totalCalories)
+    calorieData.value.nutrition[0].value = Math.round(totalProtein * 100) / 100
+    calorieData.value.nutrition[1].value = Math.round(totalCarbs * 100) / 100
+    calorieData.value.nutrition[2].value = Math.round(totalFat * 100) / 100
+    updateRemainingCalories()
+    return
+  }
+
+  resetTodayNutrition()
+}
+
+const loadWeeklyCalories = async (userId) => {
+  const response = await axios.get(`${API_CONFIG.baseURL}${API_CONFIG.diet.week.replace('{userId}', userId)}`)
+
+  if (
+    response.data &&
+    response.data.code === '200' &&
+    response.data.data &&
+    Array.isArray(response.data.data)
+  ) {
+    calorieData.value.weekly = response.data.data.map((item) => ({
+      day: item.day || '',
+      consumed: Number(item.consumed) || 0
+    }))
+    return
+  }
+
+  console.warn('本周卡路里统计数据格式不正确，将使用默认值')
+}
+
+const loadCalorieData = async () => {
+  const userId = getCurrentUserId()
+  if (!userId) {
     ElMessage.error('未找到用户信息，请先登录')
     return
   }
 
-  // 获取用户偏好设置（包含卡路里目标和营养目标）
-  axios
-    .get(`${API_CONFIG.baseURL}${API_CONFIG.user.preferences.replace('{userId}', userId)}`)
-    .then((response) => {
-      console.log('用户偏好:', response.data)
-      if (response.data && response.data.code === '200') {
-        // 设置卡路里目标
-        if (response.data.data.calorieTarget) {
-          calorieData.value.today.target = response.data.data.calorieTarget
-        }
+  try {
+    await loadUserPreferences(userId)
+  } catch (error) {
+    console.error('加载用户偏好失败:', error)
+  }
 
-        // 设置自定义营养目标
-        if (response.data.data.nutritionGoals) {
-          customGoals.value = response.data.data.nutritionGoals
-        }
-      }
-    })
-    .catch((error) => {
-      console.error('加载用户偏好失败:', error)
-    })
+  try {
+    await loadTodayDietRecords(userId)
+  } catch (error) {
+    console.error('加载今日饮食记录失败:', error)
+    resetTodayNutrition()
+  }
 
-  // 获取今日饮食记录并计算营养摄入
-  // 获取当前日期字符串，格式为YYYY-MM-DD
-  const currentDate = new Date().toISOString().split('T')[0]
+  try {
+    await loadWeeklyCalories(userId)
+  } catch (error) {
+    console.error('加载本周卡路里记录失败:', error)
+    ElMessage.error('加载本周卡路里记录失败，请稍后重试')
+  }
+}
 
-  // 根据用户ID和日期获取饮食记录
-  axios
-    .get(`${API_CONFIG.baseURL}${API_CONFIG.diet.date.replace('{userId}', userId)}${currentDate}`)
-    .then((response) => {
-      console.log('今日饮食记录:', response.data)
-      if (
-        response.data &&
-        response.data.code === '200' &&
-        response.data.data &&
-        Array.isArray(response.data.data)
-      ) {
-        const records = response.data.data
-
-        // 计算今日总营养摄入
-        let totalCalories = 0
-        let totalProtein = 0
-        let totalCarbs = 0
-        let totalFat = 0
-
-        // 遍历饮食记录计算营养总和
-        records.forEach((record) => {
-          totalCalories += record?.calorie || 0
-          totalProtein += record?.protein || 0
-          totalCarbs += record?.carbohydrate || 0
-          totalFat += record?.fat || 0
-        })
-
-        // 更新今日卡路里数据
-        calorieData.value.today.consumed = totalCalories
-        calorieData.value.today.remaining = calorieData.value.today.target - totalCalories
-
-        // 更新营养数据
-        calorieData.value.nutrition[0].value = totalProtein // 蛋白质
-        calorieData.value.nutrition[1].value = totalCarbs // 碳水化合物
-        calorieData.value.nutrition[2].value = totalFat // 脂肪
-      }
-    })
-    .catch((error) => {
-      console.error('加载今日饮食记录失败:', error)
-    })
-
-  // 直接从后端获取本周卡路里统计
-  axios
-    .get(`${API_CONFIG.baseURL}${API_CONFIG.diet.week.replace('{userId}', userId)}`)
-    .then((response) => {
-      console.log('本周卡路里统计:', response.data)
-      if (
-        response.data &&
-        response.data.code === '200' &&
-        response.data.data &&
-        Array.isArray(response.data.data)
-      ) {
-        // 确保每个项目都有day和consumed属性，与模板结构一致
-        const processedWeekly = response.data.data.map((item) => ({
-          day: item.day || '',
-          consumed: item.consumed || 0
-        }))
-
-        // 使用处理后的每周数据
-        calorieData.value.weekly = processedWeekly
-      } else {
-        // 如果数据格式不正确，保留默认模拟数据
-        console.warn('本周卡路里统计数据格式不正确，将使用默认模拟数据')
-      }
-    })
-    .catch((error) => {
-      console.error('加载本周卡路里记录失败:', error)
-      ElMessage.error('加载本周卡路里记录失败，请稍后重试')
-    })
+// 从API获取数据
+onMounted(() => {
+  loadCalorieData()
 })
+
+onActivated(() => {
+  loadCalorieData()
+})
+
+const nutritionKeyMap = {
+  蛋白质: 'protein',
+  碳水化合物: 'carbs',
+  脂肪: 'fat'
+}
+
+const getNutritionThemeKey = (name) => nutritionKeyMap[name] || 'protein'
 
 // 获取营养百分比
 const getNutritionPercentage = (value, name) => {
@@ -309,6 +338,14 @@ const todayDayIndex = computed(() => {
   const day = new Date().getDay()
   return day === 0 ? 6 : day - 1 // 转为周一=0
 })
+
+const getNutritionBarStyle = (item) => {
+  const percentage = getNutritionPercentage(item.value, item.name)
+  return {
+    width: Math.max(0, Math.min(percentage, 100)) + '%',
+    background: getNutritionColor(item.name, percentage)
+  }
+}
 </script>
 
 <template>
@@ -366,7 +403,7 @@ const todayDayIndex = computed(() => {
       >
         <div class="nutri-header">
           <span class="nutri-name">{{ item.name }}</span>
-          <span class="nutri-badge" :style="{ background: nordicNutritionBg[item.name], color: nordicNutritionColors[item.name] }">
+          <span class="nutri-badge" :style="{ background: nordicNutritionBg[getNutritionThemeKey(item.name)], color: nordicNutritionColors[getNutritionThemeKey(item.name)] }">
             {{ Math.round(getNutritionPercentage(item.value, item.name)) }}%
           </span>
         </div>
@@ -378,10 +415,7 @@ const todayDayIndex = computed(() => {
         <div class="nutri-bar-track">
           <div
             class="nutri-bar-fill"
-            :style="{
-              width: Math.min(getNutritionPercentage(item.value, item.name), 100) + '%',
-              background: nordicNutritionColors[item.name]
-            }"
+            :style="getNutritionBarStyle(item)"
           ></div>
         </div>
       </div>

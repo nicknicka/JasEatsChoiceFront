@@ -12,7 +12,7 @@ import com.xx.jaseatschoicejava.entity.ContentSource;
 /**
  * 内容源Mapper接口
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Mapper

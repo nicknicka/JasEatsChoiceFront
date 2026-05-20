@@ -24,7 +24,7 @@ import java.util.List;
  * 2. 异步写入 MySQL 持久化
  * 3. Redis 未命中时从 MySQL 加载历史
  *
- * @author Claude
+
  * @since 2026-03-26
  */
 @Slf4j

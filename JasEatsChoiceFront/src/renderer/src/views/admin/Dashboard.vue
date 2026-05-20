@@ -102,39 +102,8 @@ const fetchRecentTutorials = async () => {
     }
   } catch (error) {
     console.error('获取最近教程失败:', error)
-    // 使用模拟数据
-    recentTutorials.value = [
-      {
-        id: 7,
-        title: '青木瓜沙拉制作教程',
-        type: 'video',
-        source_type: 'ADMIN',
-        status: 'PUBLISHED',
-        view_count: 12500,
-        rating: 4.8,
-        create_time: '2025-01-29'
-      },
-      {
-        id: 8,
-        title: '夏日低卡饮食指南',
-        type: 'article',
-        source_type: 'ADMIN',
-        status: 'PUBLISHED',
-        view_count: 8200,
-        rating: 4.9,
-        create_time: '2025-01-28'
-      },
-      {
-        id: 10,
-        title: '秘制红烧肉做法',
-        type: 'video',
-        source_type: 'MERCHANT',
-        status: 'PENDING',
-        view_count: 0,
-        rating: 0,
-        create_time: '2025-01-27'
-      }
-    ]
+    ElMessage.error('获取最近教程失败，请稍后重试')
+    recentTutorials.value = []
   } finally {
     loading.value = false
   }

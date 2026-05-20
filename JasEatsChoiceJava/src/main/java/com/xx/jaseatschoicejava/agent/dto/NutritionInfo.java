@@ -10,7 +10,7 @@ import java.math.BigDecimal;
  *
  * 用于Agent工具类返回食物营养信息
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 @Data

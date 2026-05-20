@@ -481,12 +481,7 @@ const confirmRecharge = async () => {
   try {
     const rechargeNo = 'RCH' + new Date().getTime() + Math.floor(Math.random() * 1000)
 
-    // 这里应该调用第三方支付接口
-    // 目前模拟充值成功
-    ElMessage.info(`正在跳转到${rechargeForm.value.paymentMethod === 'wechat' ? '微信' : '支付宝'}支付...`)
-
-    // 模拟支付成功（实际应该等待第三方支付回调）
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    ElMessage.info(`提交${rechargeForm.value.paymentMethod === 'wechat' ? '微信' : '支付宝'}充值请求...`)
 
     const response = await walletApi.recharge(userId, rechargeForm.value.amount, rechargeNo)
 

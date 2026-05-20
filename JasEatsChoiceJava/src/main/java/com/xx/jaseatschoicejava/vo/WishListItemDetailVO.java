@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 /**
  * 想吃列表项详情VO
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @Data

@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 用户自定义事件VO
  *
- * @author Claude
+
  * @since 2025-01-31
  */
 @Data

@@ -296,7 +296,7 @@ const getDetailTagType = (type) => {
     consume: 'warning',
     withdraw: 'info'
   }
-  return types[type] || ''
+  return types[type] || 'info'
 }
 
 // 获取钱包余额

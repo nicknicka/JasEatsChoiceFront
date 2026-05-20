@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * 3. 测试RedisCacheUtil工具类
  * 4. 测试缓存穿透、雪崩、击穿防护
  *
- * @author Claude Code
+ Code
  * @since 2026-03-24
  */
 @Slf4j

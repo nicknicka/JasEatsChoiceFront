@@ -18,14 +18,15 @@ public interface RefundRecordMapper extends BaseMapper<RefundRecord> {
      * 分页查询退款记录列表（包含用户信息）
      */
     @Select("<script>" +
-            "SELECT r.*, u.username, u.nickname " +
+            "SELECT r.*, u.phone AS username, u.nickname " +
             "FROM t_refund_record r " +
             "LEFT JOIN t_user u ON r.user_id = u.user_id " +
             "WHERE 1=1 " +
             "<if test='keyword != null and keyword != \"\"'>" +
             "AND (r.order_no LIKE CONCAT('%', #{keyword}, '%') " +
             "OR r.refund_no LIKE CONCAT('%', #{keyword}, '%') " +
-            "OR u.username LIKE CONCAT('%', #{keyword}, '%')) " +
+            "OR u.nickname LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR u.phone LIKE CONCAT('%', #{keyword}, '%')) " +
             "</if>" +
             "<if test='status != null and status != \"\"'>" +
             "AND r.status = #{status} " +

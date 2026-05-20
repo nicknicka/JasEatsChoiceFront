@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * 为Agent提供时段相关的推荐功能，优先查询真实菜品数据，无数据时降级到静态模板
  *
- * @author Claude
+
  * @since 2026-03-27
  */
 @Slf4j

@@ -56,7 +56,7 @@ import jakarta.annotation.Resource;
  * 仅构建 L1 专家 Agent 和所需的 ChatModel Bean。
  * L2 SupervisorAgent 由 SupervisorAgentFactory 动态创建。
  *
- * @author Claude
+
  * @since 2026-03-25
  * @updated 2026-04-03 清理废弃Agent和旧版工具
  */

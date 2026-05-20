@@ -36,7 +36,7 @@ import dev.langchain4j.model.chat.ChatModel;
  * - 实现智能任务规划和Agent路由
  * - 提升性能，减少调用层次
  *
- * @author Claude
+
  * @since 2026-03-27
  * @updated 2026-04-02 架构统一为L2→L1
  */

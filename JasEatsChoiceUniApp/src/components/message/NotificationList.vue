@@ -110,6 +110,7 @@
 import { ref, computed } from 'vue'
 // import { notificationApi } from '@/api'
 import { formatRelativeTime } from '../../../utils/helper'
+import { toOrderDetail } from '@/utils/router'
 import MessageCard from './MessageCard.vue'
 import SkeletonScreen from './SkeletonScreen.vue'
 // import { MessageUtils } from '@/utils/messageUtils'
@@ -509,19 +510,26 @@ const goToDetail = (notification) => {
 
   // 根据类型跳转
   if (notification.type === 'order') {
-    // 跳转到订单详情
-    uni.navigateTo({
-      url: `/src/pages-user/order/detail/index?id=${notification.extra?.orderId || ''}`
-    })
+    const orderId = notification.extra?.orderId
+
+    if (!orderId) {
+      uni.showToast({
+        title: '订单信息缺失',
+        icon: 'none'
+      })
+      return
+    }
+
+    toOrderDetail(orderId)
   } else if (notification.type === 'activity') {
-    // 跳转到活动页面
-    uni.navigateTo({
-      url: `/src/pages-user/activity/index?id=${notification.extra?.activityId || ''}`
+    uni.showToast({
+      title: '活动详情页待完善',
+      icon: 'none'
     })
   } else {
-    // 跳转到通知详情页
-    uni.navigateTo({
-      url: `/src/pages-user/notification/detail/index?id=${notification.id}`
+    uni.showToast({
+      title: '通知详情页待完善',
+      icon: 'none'
     })
   }
 }

@@ -81,6 +81,7 @@ public class LocationServiceImpl implements LocationService {
                     if (regeocode != null) {
                         String formattedAddress = (String) regeocode.get("formatted_address");
                         location.put("address", formattedAddress);
+                        location.put("formattedAddress", formattedAddress);
 
                         Map<String, Object> addressComponent = asMap(regeocode.get("addressComponent"));
                         if (addressComponent != null) {
@@ -94,8 +95,8 @@ public class LocationServiceImpl implements LocationService {
                         }
                     }
 
-                    location.put("longitude", longitude.toString());
-                    location.put("latitude", latitude.toString());
+                    putCoordinateFields(location, longitude.toString(), latitude.toString());
+                    location.put("accuracy", "gps");
                     return location;
                 }
             } catch (RestClientException | java.io.IOException e) {
@@ -180,21 +181,22 @@ public class LocationServiceImpl implements LocationService {
                 String resolvedAddress = hasText(address) ? address : province + city + district;
                 locationResult.put("address", resolvedAddress);
 
-                Map<String, Object> geocodedLocation = geocodeLocationFromTencentIp(province, city, district);
-                if (!geocodedLocation.isEmpty()) {
-                    locationResult.putAll(geocodedLocation);
-                    return locationResult;
-                }
-
                 String pointLongitude = extractTextField(resultLocation != null ? resultLocation.get("lng") : null);
                 String pointLatitude = extractTextField(resultLocation != null ? resultLocation.get("lat") : null);
-                locationResult.put("longitude", hasText(pointLongitude) ? pointLongitude : null);
-                locationResult.put("latitude", hasText(pointLatitude) ? pointLatitude : null);
+                locationResult.put("accuracy", "city");
+                putCoordinateFields(locationResult, hasText(pointLongitude) ? pointLongitude : null, hasText(pointLatitude) ? pointLatitude : null);
 
                 boolean hasRegionData = hasText(province) || hasText(city) || hasText(district);
                 boolean hasCoordinateData = hasText(pointLongitude) && hasText(pointLatitude);
 
                 if (hasRegionData || hasCoordinateData) {
+                    return locationResult;
+                }
+
+                Map<String, Object> geocodedLocation = geocodeLocationFromTencentIp(province, city, district);
+                if (!geocodedLocation.isEmpty()) {
+                    locationResult.putAll(geocodedLocation);
+                    locationResult.put("accuracy", "city");
                     return locationResult;
                 }
 
@@ -229,10 +231,11 @@ public class LocationServiceImpl implements LocationService {
                 AmapLocationData data = geocodeResult.data();
                 if (data.lng() != null && data.lat() != null) {
                     Map<String, Object> location = new HashMap<>();
-                    location.put("longitude", data.lng().toString());
-                    location.put("latitude", data.lat().toString());
+                    putCoordinateFields(location, data.lng().toString(), data.lat().toString());
+                    location.put("accuracy", "city");
                     if (hasText(data.formattedAddress())) {
                         location.put("address", data.formattedAddress());
+                        location.put("formattedAddress", data.formattedAddress());
                     }
                     return location;
                 }
@@ -254,6 +257,18 @@ public class LocationServiceImpl implements LocationService {
 
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
+    }
+
+    private void putCoordinateFields(Map<String, Object> location, String longitude, String latitude) {
+        if (hasText(longitude)) {
+            location.put("longitude", longitude);
+            location.put("lng", longitude);
+        }
+
+        if (hasText(latitude)) {
+            location.put("latitude", latitude);
+            location.put("lat", latitude);
+        }
     }
 
     private String extractTextField(Object field) {

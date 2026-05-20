@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 食物营养成分Mapper
  *
- * @author Claude
+
  * @since 2026-03-14
  */
 @Mapper

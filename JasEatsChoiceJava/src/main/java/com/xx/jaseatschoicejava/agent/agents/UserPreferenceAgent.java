@@ -9,7 +9,7 @@ import dev.langchain4j.service.UserMessage;
  *
  * 专注于用户饮食偏好的分析、记录和管理
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 public interface UserPreferenceAgent {

@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * 想吃列表控制器
  *
- * @author Claude
+
  * @since 2025-01-30
  */
 @RestController

@@ -12,7 +12,7 @@ import java.util.Map;
  * 营养信息数据传输对象
  * 用于返回食物的营养成分分析结果
  *
- * @author Claude
+
  * @since 2026-03-13
  */
 @Data

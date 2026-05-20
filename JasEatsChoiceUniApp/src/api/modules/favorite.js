@@ -5,6 +5,17 @@
  */
 import { get, post, put, del } from '@/utils/request'
 
+const normalizeUserId = (userId) => {
+  if (userId && typeof userId === 'object') {
+    return userId.userId || userId.id || ''
+  }
+  return userId || ''
+}
+
+const buildUserIdParams = (userId) => ({
+  userId: normalizeUserId(userId)
+})
+
 export const favoriteApi = {
   /**
    * 获取收藏列表
@@ -43,7 +54,10 @@ export const favoriteApi = {
    * @param {string} dishId - 菜品ID
    * @param {string} userId - 用户ID
    */
-  checkDish: (dishId, userId) => get(`/v1/favorites/dishes/${dishId}/check`, { userId }),
+  checkDish: (dishId, userId) => get(
+    `/v1/favorites/dishes/${dishId}/check`,
+    buildUserIdParams(userId)
+  ).then((res) => res?.data ?? res ?? false),
 
   /**
    * 收藏菜品
@@ -60,7 +74,10 @@ export const favoriteApi = {
    * @param {string} dishId - 菜品ID
    * @param {string} userId - 用户ID
    */
-  removeDish: (dishId, userId) => del(`/v1/favorites/dishes/${dishId}`, { userId }),
+  removeDish: (dishId, userId) => del(
+    `/v1/favorites/dishes/${dishId}`,
+    buildUserIdParams(userId)
+  ),
 
   /**
    * 检查食谱是否收藏
@@ -68,7 +85,10 @@ export const favoriteApi = {
    * @param {string} recipeId - 食谱ID
    * @param {string} userId - 用户ID
    */
-  checkRecipe: (recipeId, userId) => get(`/v1/favorites/recipes/${recipeId}/check`, { userId }),
+  checkRecipe: (recipeId, userId) => get(
+    `/v1/favorites/recipes/${recipeId}/check`,
+    buildUserIdParams(userId)
+  ).then((res) => res?.data ?? res ?? false),
 
   /**
    * 收藏食谱
@@ -85,7 +105,10 @@ export const favoriteApi = {
    * @param {string} recipeId - 食谱ID
    * @param {string} userId - 用户ID
    */
-  removeRecipe: (recipeId, userId) => del(`/v1/favorites/recipes/${recipeId}`, { userId }),
+  removeRecipe: (recipeId, userId) => del(
+    `/v1/favorites/recipes/${recipeId}`,
+    buildUserIdParams(userId)
+  ),
 
   /**
    * 检查商家是否收藏
@@ -93,7 +116,10 @@ export const favoriteApi = {
    * @param {string} merchantId - 商家ID
    * @param {string} userId - 用户ID
    */
-  checkMerchant: (merchantId, userId) => get(`/v1/favorites/merchants/${merchantId}/check`, { userId }),
+  checkMerchant: (merchantId, userId) => get(
+    `/v1/favorites/merchants/${merchantId}/check`,
+    buildUserIdParams(userId)
+  ).then((res) => res?.data ?? res ?? false),
 
   /**
    * 收藏商家
@@ -110,7 +136,10 @@ export const favoriteApi = {
    * @param {string} merchantId - 商家ID
    * @param {string} userId - 用户ID
    */
-  removeMerchant: (merchantId, userId) => del(`/v1/favorites/merchants/${merchantId}`, { userId }),
+  removeMerchant: (merchantId, userId) => del(
+    `/v1/favorites/merchants/${merchantId}`,
+    buildUserIdParams(userId)
+  ),
 
   /**
    * 切换收藏状态（统一接口）

@@ -12,7 +12,7 @@ import java.time.Duration;
  *
  * 用于缓存UserPreferenceAgent的分析结果，避免重复调用LLM
  *
- * @author Claude
+
  * @since 2026-03-27
  */
 @Slf4j

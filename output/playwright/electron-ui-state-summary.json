@@ -1,0 +1,50 @@
+[
+  {
+    "file": "electron-user-group-order-drawer-state.png",
+    "success": true
+  },
+  {
+    "file": "electron-user-merchant-select-dialog.png",
+    "success": true
+  },
+  {
+    "file": "electron-user-product-select-dialog.png",
+    "success": true
+  },
+  {
+    "file": "electron-user-product-customize-dialog.png",
+    "success": true
+  },
+  {
+    "file": "electron-user-payment-confirm-dialog.png",
+    "success": false,
+    "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '提交订单' }).first() to be visible\u001b[22m\n"
+  },
+  {
+    "file": "electron-user-consume-history-detail-dialog.png",
+    "success": true
+  },
+  {
+    "file": "electron-merchant-comment-reply-dialog.png",
+    "success": true
+  },
+  {
+    "group": "admin-dish-dialogs",
+    "success": false,
+    "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '详情' }).first() to be visible\u001b[22m\n"
+  },
+  {
+    "file": "electron-admin-recharge-detail-dialog.png",
+    "success": false,
+    "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '详情' }).first() to be visible\u001b[22m\n"
+  },
+  {
+    "group": "admin-announcement-dialogs",
+    "success": false,
+    "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '查看' }).first() to be visible\u001b[22m\n"
+  },
+  {
+    "file": "electron-admin-permission-edit-dialog.png",
+    "success": true
+  }
+]

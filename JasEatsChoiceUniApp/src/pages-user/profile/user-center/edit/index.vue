@@ -448,8 +448,9 @@ const onGoalChange = (e) => {
  * 绑定手机号
  */
 const bindPhone = () => {
-  uni.navigateTo({
-    url: '/pages/user-center/bind-phone/index'
+  uni.showToast({
+    title: '绑定手机号功能开发中',
+    icon: 'none'
   })
 }
 

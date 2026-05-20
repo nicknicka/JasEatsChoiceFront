@@ -9,7 +9,7 @@ import dev.langchain4j.service.UserMessage;
  *
  * 专注于订单创建、查询和管理辅助
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 public interface OrderHelperAgent {

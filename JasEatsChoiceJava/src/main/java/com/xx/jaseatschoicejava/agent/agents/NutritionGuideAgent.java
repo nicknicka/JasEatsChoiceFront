@@ -9,7 +9,7 @@ import dev.langchain4j.service.UserMessage;
  *
  * 专注于营养分析、热量计算和健康饮食指导
  *
- * @author Claude
+
  * @since 2026-03-24
  */
 public interface NutritionGuideAgent {

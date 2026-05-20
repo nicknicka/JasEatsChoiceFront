@@ -80,73 +80,15 @@ const fetchTutorials = async () => {
   loading.value = true
   try {
     const response = await api.get(API_CONFIG.tutorial.list)
-    if (response.data) {
+    if (Array.isArray(response)) {
+      tutorials.value = response
+    } else if (Array.isArray(response?.data)) {
       tutorials.value = response.data
     }
   } catch (error) {
     console.error('加载教程列表失败:', error)
-    ElMessage.warning('加载失败，显示模拟数据')
-    // 使用模拟数据
-    tutorials.value = [
-      {
-        id: 1,
-        title: '青木瓜沙拉制作教程',
-        type: 'video',
-        source_type: 'ADMIN',
-        status: 'PUBLISHED',
-        difficulty: 'BEGINNER',
-        duration: '5:30',
-        view_count: 12500,
-        rating: 4.8,
-        is_official: true
-      },
-      {
-        id: 2,
-        title: '夏日低卡饮食指南',
-        type: 'article',
-        source_type: 'ADMIN',
-        status: 'PUBLISHED',
-        difficulty: 'BEGINNER',
-        duration: '8分钟',
-        view_count: 8200,
-        rating: 4.9,
-        is_official: true
-      },
-      {
-        id: 3,
-        title: '秘制红烧肉做法',
-        type: 'video',
-        source_type: 'MERCHANT',
-        status: 'PUBLISHED',
-        difficulty: 'INTERMEDIATE',
-        duration: '12:30',
-        view_count: 3500,
-        rating: 4.6
-      },
-      {
-        id: 4,
-        title: '我的家常菜做法',
-        type: 'article',
-        source_type: 'USER',
-        status: 'PUBLISHED',
-        difficulty: 'BEGINNER',
-        duration: '20分钟',
-        view_count: 356,
-        rating: 4.5
-      },
-      {
-        id: 5,
-        title: '番茄鸡蛋面的10种做法',
-        type: 'article',
-        source_type: 'AI_GENERATED',
-        status: 'PUBLISHED',
-        difficulty: 'INTERMEDIATE',
-        review_status: 'APPROVED',
-        duration: '15分钟',
-        view_count: 5800,
-        rating: 4.7
-      }
-    ]
+    tutorials.value = []
+    ElMessage.error('加载教程列表失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -180,7 +122,7 @@ const getSourceTag = (tutorial) => {
       text: `AI生成${tutorial.review_status === 'APPROVED' ? ' ✓ 人工审核' : ''}`
     }
   }
-  return sourceMap[tutorial.source_type] || { type: '', text: tutorial.source_type }
+  return sourceMap[tutorial.source_type] || { type: 'info', text: tutorial.source_type }
 }
 
 // 获取难度名称

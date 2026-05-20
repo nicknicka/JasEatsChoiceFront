@@ -17,7 +17,7 @@ import java.util.Map;
  *
  * 注意：此Controller暂时禁用，等待监控系统配置完善后启用
  *
- * @author Claude
+
  * @since 2026-03-25
  */
 // @RestController  // 暂时禁用
