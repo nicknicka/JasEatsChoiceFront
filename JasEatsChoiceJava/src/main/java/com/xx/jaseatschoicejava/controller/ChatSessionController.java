@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.ChatSession;
+import com.xx.jaseatschoicejava.entity.User;
 import com.xx.jaseatschoicejava.service.ChatMsgService;
 import com.xx.jaseatschoicejava.service.ChatSessionService;
+import com.xx.jaseatschoicejava.service.UserService;
 import com.xx.jaseatschoicejava.util.ChatSessionIdGenerator;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -34,6 +37,9 @@ public class ChatSessionController {
     @Autowired
     private ChatMsgService chatMsgService;
 
+    @Autowired
+    private UserService userService;
+
     /**
      * 获取用户的所有会话列表
      */
@@ -48,14 +54,36 @@ public class ChatSessionController {
         log.info("获取用户会话列表: userId={}", userId);
         List<ChatSession> sessions = chatSessionService.list(queryWrapper);
         log.info("获取用户会话列表: {}", sessions);
+
+        Set<String> targetUserIds = sessions.stream()
+                .filter(session -> "single".equals(session.getSessionType()))
+                .map(ChatSession::getTargetId)
+                .filter(targetId -> targetId != null && !targetId.isEmpty())
+                .collect(Collectors.toSet());
+
+        Map<String, User> targetUserMap = targetUserIds.isEmpty()
+                ? new HashMap<>()
+                : userService.listByIds(targetUserIds).stream()
+                    .collect(Collectors.toMap(User::getUserId, user -> user, (existing, replacement) -> existing));
+
         // 转换为前端需要的格式
         List<Map<String, Object>> result = sessions.stream()
                 .map(session -> {
+                    User targetUser = "single".equals(session.getSessionType())
+                            ? targetUserMap.get(session.getTargetId())
+                            : null;
+                    String sessionName = targetUser != null && targetUser.getNickname() != null && !targetUser.getNickname().trim().isEmpty()
+                            ? targetUser.getNickname()
+                            : session.getSessionName();
+                    String avatar = targetUser != null && targetUser.getAvatar() != null && !targetUser.getAvatar().trim().isEmpty()
+                            ? targetUser.getAvatar()
+                            : session.getAvatar();
+
                     Map<String, Object> sessionMap = new HashMap<>();
                     sessionMap.put("id", session.getSessionId());
                     sessionMap.put("type", session.getSessionType());
-                    sessionMap.put("name", session.getSessionName());
-                    sessionMap.put("avatar", session.getAvatar() != null ? session.getAvatar() : (session.getSessionType().equals("group") ? "👥" : "💬"));
+                    sessionMap.put("name", sessionName);
+                    sessionMap.put("avatar", avatar != null ? avatar : (session.getSessionType().equals("group") ? "👥" : "💬"));
                     sessionMap.put("lastMessage", session.getLastMessage() != null ? session.getLastMessage() : "暂无消息");
                     sessionMap.put("time", session.getLastMessageTime() != null ?
                             session.getLastMessageTime().toString().substring(11, 16) : "");

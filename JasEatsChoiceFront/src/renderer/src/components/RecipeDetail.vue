@@ -883,6 +883,73 @@ const updateCustomNutrition = (field, value) => {
 .recipe-details.lunch .section-title { border-left-color: @meal-sage; }
 .recipe-details.dinner .section-title { border-left-color: @meal-slate; }
 .recipe-details.snack .section-title { border-left-color: @nordic-accent; }
+/* 限制详情弹窗内容在卡片内部滚动，避免撑破卡片高度 */
+:deep(.recipe-detail-dialog) {
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+:deep(.recipe-detail-dialog .el-dialog__body) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.recipe-content-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nutrition-section,
+.dishes-section,
+.details-section {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nutrition-card-container,
+.dish-list-container,
+.details-content {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.nutrition-card-container {
+  max-height: clamp(130px, 20vh, 190px);
+}
+
+.dish-list-container {
+  max-height: clamp(150px, 24vh, 260px);
+}
+
+.details-content {
+  max-height: clamp(110px, 18vh, 200px);
+}
+
+.nutrition-label,
+.nutrition-value,
+.dish-name-text,
+.details-text {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.nutrition-card-container::-webkit-scrollbar,
+.dish-list-container::-webkit-scrollbar,
+.details-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nutrition-card-container::-webkit-scrollbar-thumb,
+.dish-list-container::-webkit-scrollbar-thumb,
+.details-content::-webkit-scrollbar-thumb {
+  background: @nordic-border;
+  border-radius: 999px;
+}
 </style>
 
 <style lang="less" scoped>

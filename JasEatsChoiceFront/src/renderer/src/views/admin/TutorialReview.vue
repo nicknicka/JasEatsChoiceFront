@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Check, Close, View, Star, Document, VideoCamera } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { Check, View, Document, VideoCamera } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import api from '../../utils/api.js'
 import { API_CONFIG } from '../../config/index.js'
 import { marked } from 'marked'
@@ -25,6 +25,56 @@ const pendingTutorials = ref([])
 const loading = ref(false)
 const currentTutorial = ref(null)
 const showReviewDialog = ref(false)
+
+const getApiOrigin = () => {
+  try {
+    return new URL(API_CONFIG.baseURL).origin
+  } catch (error) {
+    return 'http://localhost:7777'
+  }
+}
+
+const resolveTutorialImage = (url) => {
+  const rawUrl = String(url || '').trim()
+  if (!rawUrl) {
+    return ''
+  }
+
+  if (/^(data:|blob:|file:|https?:\/\/)/i.test(rawUrl)) {
+    return rawUrl
+  }
+
+  if (rawUrl.startsWith('//')) {
+    return `${window.location.protocol}${rawUrl}`
+  }
+
+  const apiOrigin = getApiOrigin()
+  if (rawUrl.startsWith('/api/')) {
+    return `${apiOrigin}${rawUrl}`
+  }
+  if (rawUrl.startsWith('/uploads/')) {
+    return `${apiOrigin}/api${rawUrl}`
+  }
+  if (rawUrl.startsWith('uploads/')) {
+    return `${apiOrigin}/api/${rawUrl}`
+  }
+  if (rawUrl.startsWith('/')) {
+    return `${apiOrigin}${rawUrl}`
+  }
+
+  return `${apiOrigin}/api/uploads/${rawUrl}`
+}
+
+const normalizeTutorial = (tutorial = {}) => ({
+  ...tutorial,
+  sourceType: tutorial.sourceType || tutorial.source_type || '',
+  reviewStatus: tutorial.reviewStatus || tutorial.review_status || '',
+  coverImage: resolveTutorialImage(tutorial.coverImage || tutorial.cover_image || ''),
+  linkedDishId: tutorial.linkedDishId || tutorial.linked_dish_id || '',
+  aiModelVersion: tutorial.aiModelVersion || tutorial.ai_model_version || '',
+  viewCount: tutorial.viewCount ?? tutorial.view_count ?? tutorial.views ?? 0,
+  isOfficial: tutorial.isOfficial ?? tutorial.is_official ?? tutorial.official ?? false
+})
 
 // 审核表单
 const reviewForm = ref({
@@ -58,16 +108,16 @@ const fetchPendingTutorials = async () => {
     // 1. response 本身是分页对象 {records: [], total: 10}
     // 2. response.data 是分页对象
     if (response && response.records) {
-      pendingTutorials.value = response.records
+      pendingTutorials.value = response.records.map(normalizeTutorial)
       pagination.value.total = response.total || 0
     } else if (response && response.data && response.data.records) {
-      pendingTutorials.value = response.data.records
+      pendingTutorials.value = response.data.records.map(normalizeTutorial)
       pagination.value.total = response.data.total || 0
     } else if (Array.isArray(response)) {
-      pendingTutorials.value = response
+      pendingTutorials.value = response.map(normalizeTutorial)
       pagination.value.total = response.length
     } else if (response && response.data && Array.isArray(response.data)) {
-      pendingTutorials.value = response.data
+      pendingTutorials.value = response.data.map(normalizeTutorial)
       pagination.value.total = response.data.length || 0
     }
   } catch (error) {
@@ -80,7 +130,7 @@ const fetchPendingTutorials = async () => {
 
 // 查看详情
 const viewDetail = (tutorial) => {
-  currentTutorial.value = tutorial
+  currentTutorial.value = normalizeTutorial(tutorial)
   showReviewDialog.value = true
   reviewForm.value = {
     decision: 'approve',
@@ -170,17 +220,6 @@ const getSourceTypeTag = (type) => {
   return map[type] || { type: 'info', text: type || '未知' }
 }
 
-// 获取审核状态标签
-const getReviewStatusTag = (status) => {
-  const map = {
-    NOT_SUBMITTED: { type: 'info', text: '未提交' },
-    PENDING: { type: 'warning', text: '待审核' },
-    APPROVED: { type: 'success', text: '已通过' },
-    REJECTED: { type: 'danger', text: '已拒绝' }
-  }
-  return map[status] || { type: 'info', text: status || '未知' }
-}
-
 // 获取难度名称
 const getDifficultyName = (difficulty) => {
   const map = {
@@ -225,8 +264,8 @@ onMounted(() => {
 
         <el-table-column label="来源" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="getSourceTypeTag(row.source_type).type" size="small">
-              {{ getSourceTypeTag(row.source_type).text }}
+            <el-tag :type="getSourceTypeTag(row.sourceType).type" size="small">
+              {{ getSourceTypeTag(row.sourceType).text }}
             </el-tag>
           </template>
         </el-table-column>
@@ -254,11 +293,11 @@ onMounted(() => {
 
         <el-table-column label="关联信息" width="130" show-overflow-tooltip>
           <template #default="{ row }">
-            <span v-if="row.linked_dish_id" class="info-text">
-              菜品#{{ row.linked_dish_id }}
+            <span v-if="row.linkedDishId" class="info-text">
+              菜品#{{ row.linkedDishId }}
             </span>
-            <span v-else-if="row.ai_model_version" class="ai-info">
-              {{ row.ai_model_version }}
+            <span v-else-if="row.aiModelVersion" class="ai-info">
+              {{ row.aiModelVersion }}
             </span>
           </template>
         </el-table-column>
@@ -299,7 +338,7 @@ onMounted(() => {
       <div v-if="currentTutorial" class="tutorial-preview">
         <!-- 封面图 -->
         <div class="cover-section">
-          <img :src="currentTutorial.coverImage" :alt="currentTutorial.title" />
+          <img v-if="currentTutorial.coverImage" :src="currentTutorial.coverImage" :alt="currentTutorial.title" />
           <div class="type-badge">
             <el-icon v-if="currentTutorial.type === 'video'"><VideoCamera /></el-icon>
             <el-icon v-else><Document /></el-icon>
@@ -311,8 +350,8 @@ onMounted(() => {
         <div class="meta-section">
           <div class="meta-item">
             <span class="label">来源:</span>
-            <el-tag :type="getSourceTypeTag(currentTutorial.source_type).type" size="small">
-              {{ getSourceTypeTag(currentTutorial.source_type).text }}
+            <el-tag :type="getSourceTypeTag(currentTutorial.sourceType).type" size="small">
+              {{ getSourceTypeTag(currentTutorial.sourceType).text }}
             </el-tag>
           </div>
           <div class="meta-item">
@@ -336,13 +375,13 @@ onMounted(() => {
         </div>
 
         <!-- 关联信息 -->
-        <div class="related-section" v-if="currentTutorial.linked_dish_id || currentTutorial.ai_model_version">
+        <div class="related-section" v-if="currentTutorial.linkedDishId || currentTutorial.aiModelVersion">
           <h4>关联信息</h4>
-          <p v-if="currentTutorial.linked_dish_id">
-            关联菜品ID: {{ currentTutorial.linked_dish_id }}
+          <p v-if="currentTutorial.linkedDishId">
+            关联菜品ID: {{ currentTutorial.linkedDishId }}
           </p>
-          <p v-if="currentTutorial.ai_model_version">
-            AI模型版本: {{ currentTutorial.ai_model_version }}
+          <p v-if="currentTutorial.aiModelVersion">
+            AI模型版本: {{ currentTutorial.aiModelVersion }}
           </p>
         </div>
 

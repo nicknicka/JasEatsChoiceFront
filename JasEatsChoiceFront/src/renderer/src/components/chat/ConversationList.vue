@@ -14,8 +14,8 @@
         @contextmenu.prevent="$emit('contextmenu', conversation, $event)"
       >
         <div class="conversation-avatar">
-          <div v-if="conversation.avatar && (conversation.avatar.match(/^https?:/) || conversation.avatar.match(/^data:image/))">
-            <img :src="conversation.avatar" alt="" />
+          <div v-if="getImageAvatar(conversation.avatar)">
+            <img :src="getImageAvatar(conversation.avatar)" alt="" />
           </div>
           <div
             v-else
@@ -78,6 +78,34 @@ defineProps({
 })
 
 defineEmits(['select', 'contextmenu', 'toggle-pin', 'create-new'])
+
+const normalizeImageAvatar = (avatar) => {
+  if (!avatar) return ''
+
+  const normalizedAvatar = String(avatar).replace(/\\/g, '/').trim()
+  if (/^https?:/.test(normalizedAvatar) || /^data:image/.test(normalizedAvatar)) {
+    return normalizedAvatar
+  }
+
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7777/api'
+  const serverOrigin = apiBase.replace(/\/api\/?$/, '')
+
+  if (normalizedAvatar.startsWith('/')) {
+    return `${serverOrigin}${normalizedAvatar}`
+  }
+
+  if (normalizedAvatar.startsWith('api/uploads/')) {
+    return `${serverOrigin}/${normalizedAvatar}`
+  }
+
+  if (normalizedAvatar.startsWith('uploads/')) {
+    return `${serverOrigin}/api/${normalizedAvatar}`
+  }
+
+  return ''
+}
+
+const getImageAvatar = (avatar) => normalizeImageAvatar(avatar)
 </script>
 
 <style scoped lang="less">

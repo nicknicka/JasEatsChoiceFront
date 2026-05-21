@@ -27,6 +27,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 聊天消息控制器
@@ -168,8 +170,8 @@ public class ChatController {
         System.out.println("  - page: " + page);
         System.out.println("  - size: " + size);
 
-        // 判断是单聊还是群聊
-        boolean isGroupChat = sessionId.startsWith("S"); // S开头的是群聊sessionId
+        // 判断是单聊还是群聊：不能用 sessionId 前缀判断，单聊和群聊都会生成 S 开头的会话ID
+        boolean isGroupChat = isGroupChatSession(sessionId, userId);
         System.out.println("  - 会话类型: " + (isGroupChat ? "群聊" : "单聊"));
 
         Page<ChatMsg> chatMsgPage = new Page<>(page, size);
@@ -231,6 +233,7 @@ public class ChatController {
 
         // 将消息按时间正序排列(旧的在前,方便前端显示)
         java.util.Collections.reverse(result.getRecords());
+        fillSenderNames(result.getRecords());
 
         // ========== 日志：查询结果 ==========
         System.out.println("✅ [Chat] 查询完成");
@@ -248,6 +251,72 @@ public class ChatController {
 
         System.out.println("📤 [Chat] 返回数据给前端");
         return ResponseResult.success(responseData);
+    }
+
+    private boolean isGroupChatSession(String sessionId, String userId) {
+        if (sessionId == null || sessionId.isEmpty()) {
+            return false;
+        }
+
+        if (userId != null && !userId.isEmpty()) {
+            ChatSession session = chatSessionService.getOne(
+                new LambdaQueryWrapper<ChatSession>()
+                    .eq(ChatSession::getUserId, userId)
+                    .eq(ChatSession::getSessionId, sessionId)
+                    .last("LIMIT 1")
+            );
+            if (session != null && session.getSessionType() != null) {
+                return "group".equals(session.getSessionType());
+            }
+        }
+
+        ChatMsg sampleMsg = chatMsgService.getOne(
+            new LambdaQueryWrapper<ChatMsg>()
+                .eq(ChatMsg::getSessionId, sessionId)
+                .last("LIMIT 1")
+        );
+        return sampleMsg != null && "group".equals(sampleMsg.getSessionType());
+    }
+
+    /**
+     * 补齐历史消息中的发送者昵称，保持历史消息与 WebSocket 实时消息展示一致。
+     */
+    private void fillSenderNames(List<ChatMsg> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return;
+        }
+
+        Set<String> senderIds = messages.stream()
+            .map(ChatMsg::getFromId)
+            .filter(id -> id != null && !id.isEmpty())
+            .collect(Collectors.toSet());
+
+        if (senderIds.isEmpty()) {
+            return;
+        }
+
+        Map<String, String> senderNameMap = userService.listByIds(senderIds).stream()
+            .collect(Collectors.toMap(
+                User::getUserId,
+                user -> {
+                    if (user.getNickname() != null && !user.getNickname().trim().isEmpty()) {
+                        return user.getNickname();
+                    }
+                    if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
+                        return user.getPhone();
+                    }
+                    return user.getUserId();
+                },
+                (existing, replacement) -> existing
+            ));
+
+        messages.forEach(message -> {
+            String senderName = senderNameMap.get(message.getFromId());
+            if (senderName != null && !senderName.isEmpty()) {
+                message.setSenderName(senderName);
+                message.setFromName(senderName);
+            }
+        });
     }
 
     /**
@@ -635,4 +704,3 @@ public class ChatController {
         }
     }
 }
-

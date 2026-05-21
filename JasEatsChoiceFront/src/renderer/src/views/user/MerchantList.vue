@@ -97,7 +97,10 @@ const orderNow = (merchant) => {
   // 跳转到商家详情页面的立即下单流程
   router.push({
     path: '/user/home/merchant-detail',
-    query: { viewMode: 'order' }
+    query: {
+      viewMode: 'order',
+      merchantId: merchant.merchantId || merchant.id
+    }
   })
 }
 
@@ -184,7 +187,10 @@ const goToMerchantDetail = (merchant) => {
   sessionStorage.setItem('selectedMerchant', JSON.stringify(merchant))
   router.push({
     path: '/user/home/merchant-detail',
-    query: { viewMode: 'detail' }
+    query: {
+      viewMode: 'detail',
+      merchantId: merchant.merchantId || merchant.id
+    }
   })
 }
 </script>

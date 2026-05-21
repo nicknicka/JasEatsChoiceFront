@@ -1045,7 +1045,10 @@ const goBack = () => {
 
 .message-wrapper {
   display: flex;
+  width: 100%;
   gap: 15rpx;
+  align-items: flex-end;
+  box-sizing: border-box;
 }
 
 .message-avatar {
@@ -1063,8 +1066,10 @@ const goBack = () => {
 }
 
 .message-content {
-  max-width: 500rpx;
+  max-width: calc(100% - 75rpx);
   position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .self .message-wrapper {
@@ -1087,6 +1092,7 @@ const goBack = () => {
   font-size: 28rpx;
   line-height: 1.6;
   word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .image-message {

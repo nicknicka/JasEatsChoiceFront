@@ -59,7 +59,7 @@
     <!-- 审核对话框 -->
     <el-dialog
       v-model="auditDialogVisible"
-      :title="auditForm.status === 'APPROVED' ? '通过审核' : '拒绝审核'"
+      :title="auditForm.status === 'APPROVED' ? '确认通过商家审核' : '确认拒绝商家审核'"
       width="500px"
       :close-on-click-modal="false"
     >
@@ -70,9 +70,9 @@
       </el-descriptions>
 
       <el-form :model="auditForm" label-width="80px" style="margin-top: 20px">
-        <el-form-item label="审核结果">
+        <el-form-item label="本次操作">
           <el-tag :type="auditForm.status === 'APPROVED' ? 'success' : 'danger'">
-            {{ auditForm.status === 'APPROVED' ? '通过' : '拒绝' }}
+            {{ auditForm.status === 'APPROVED' ? '确认通过' : '确认拒绝' }}
           </el-tag>
         </el-form-item>
         <el-form-item label="审核意见" v-if="auditForm.status === 'REJECTED'">
@@ -87,7 +87,9 @@
 
       <template #footer>
         <el-button @click="auditDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitAudit">确定</el-button>
+        <el-button type="primary" @click="submitAudit">
+          {{ auditForm.status === 'APPROVED' ? '确认通过' : '确认拒绝' }}
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -122,6 +124,14 @@ const auditForm = reactive({
   reason: ''
 })
 
+const resetPendingStats = () => {
+  pendingList.value = []
+  pagination.total = 0
+  stats.pending = 0
+  stats.todayApproved = 0
+  stats.approvalRate = 0
+}
+
 // 获取待审核列表
 const fetchPendingList = async () => {
   loading.value = true
@@ -132,30 +142,26 @@ const fetchPendingList = async () => {
       pageSize: pagination.pageSize
     })
 
-    if (response.code === '200') {
-      pendingList.value = response.data?.list || response.data || []
-      pagination.total = response.data?.total || 0
-
-      // 更新统计数据
+    if (response?.records) {
+      pendingList.value = response.records
+      pagination.total = response.total || 0
+      stats.pending = pagination.total
+      stats.todayApproved = response.todayApproved || 0
+      stats.approvalRate = response.approvalRate || 0
+    } else if (response?.code === '200' || response?.code === 200) {
+      pendingList.value = response.data?.records || response.data?.list || response.data || []
+      pagination.total = response.data?.total || pendingList.value.length || 0
       stats.pending = pagination.total
       stats.todayApproved = response.data?.todayApproved || 0
       stats.approvalRate = response.data?.approvalRate || 0
     } else {
       console.warn('获取待审核商家失败，接口返回异常:', response)
-      pendingList.value = []
-      pagination.total = 0
-      stats.pending = 0
-      stats.todayApproved = 0
-      stats.approvalRate = 0
+      resetPendingStats()
       ElMessage.warning(response?.message || '获取待审核商家失败，请稍后重试')
     }
   } catch (error) {
     console.error('获取待审核列表失败:', error)
-    pendingList.value = []
-    pagination.total = 0
-    stats.pending = 0
-    stats.todayApproved = 0
-    stats.approvalRate = 0
+    resetPendingStats()
     ElMessage.error('获取待审核列表失败，请稍后重试')
   } finally {
     loading.value = false

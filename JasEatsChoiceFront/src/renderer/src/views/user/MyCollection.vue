@@ -471,7 +471,10 @@ const viewDetails = (item) => {
   switch (item.type) {
     case 'merchant':
       // 跳转到商家详情页
-      router.push({ path: '/user/home/merchant-detail', query: { id: item.collectableId } })
+      router.push({
+        path: '/user/home/merchant-detail',
+        query: { merchantId: item.collectableId, viewMode: 'detail' }
+      })
       break
     case 'dish':
       // 显示菜品详情弹窗

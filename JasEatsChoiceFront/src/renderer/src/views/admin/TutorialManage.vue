@@ -3,7 +3,6 @@ import { ref, onMounted, computed } from "vue";
 import {
 	Edit,
 	Delete,
-	View,
 	VideoCamera,
 	Document,
 	Plus,
@@ -19,6 +18,18 @@ const loading = ref(false);
 const showEditDialog = ref(false);
 const dialogMode = ref("create");
 const activeTab = ref("all"); // 当前激活的标签页
+
+const normalizeTutorial = (tutorial = {}) => ({
+	...tutorial,
+	sourceType: tutorial.sourceType || tutorial.source_type || "",
+	reviewStatus: tutorial.reviewStatus || tutorial.review_status || "",
+	viewCount: tutorial.viewCount ?? tutorial.view_count ?? tutorial.views ?? 0,
+	coverImage: tutorial.coverImage || tutorial.cover_image || "",
+	prepTime: tutorial.prepTime || tutorial.prep_time || "",
+	servings: tutorial.servings ?? null,
+	isOfficial:
+		tutorial.isOfficial ?? tutorial.is_official ?? tutorial.official ?? false,
+});
 
 // 表单数据
 const tutorialForm = ref({
@@ -43,13 +54,13 @@ const stats = computed(() => {
 	return {
 		total: all.length,
 		published: all.filter((t) => t.status === "PUBLISHED").length,
-		pending: all.filter((t) => t.review_status === "PENDING").length,
+		pending: all.filter((t) => t.reviewStatus === "PENDING").length,
 		featured: all.filter((t) => t.featured).length,
 		draft: all.filter((t) => t.status === "DRAFT").length,
-		official: all.filter((t) => t.source_type === "ADMIN").length,
-		merchant: all.filter((t) => t.source_type === "MERCHANT").length,
-		user: all.filter((t) => t.source_type === "USER").length,
-		ai: all.filter((t) => t.source_type === "AI_GENERATED").length,
+		official: all.filter((t) => t.sourceType === "ADMIN").length,
+		merchant: all.filter((t) => t.sourceType === "MERCHANT").length,
+		user: all.filter((t) => t.sourceType === "USER").length,
+		ai: all.filter((t) => t.sourceType === "AI_GENERATED").length,
 	};
 });
 
@@ -61,7 +72,7 @@ const filteredTutorials = computed(() => {
 		case "published":
 			return tutorials.value.filter((t) => t.status === "PUBLISHED");
 		case "pending":
-			return tutorials.value.filter((t) => t.review_status === "PENDING");
+			return tutorials.value.filter((t) => t.reviewStatus === "PENDING");
 		case "draft":
 			return tutorials.value.filter((t) => t.status === "DRAFT");
 		default:
@@ -96,7 +107,7 @@ const fetchAllTutorials = async () => {
 
 		// api拦截器已经返回了 response.data，所以 response 直接就是数据
 		if (Array.isArray(response)) {
-			tutorials.value = response;
+			tutorials.value = response.map(normalizeTutorial);
 			console.log(
 				"✅ 数据已赋值给 tutorials.value，数组长度:",
 				tutorials.value.length
@@ -104,7 +115,9 @@ const fetchAllTutorials = async () => {
 			console.log("✅ tutorials.value 前3条数据:", tutorials.value.slice(0, 3));
 		} else if (response && response.data) {
 			// 如果返回的是包装对象，取 data 字段
-			tutorials.value = response.data;
+			tutorials.value = Array.isArray(response.data)
+				? response.data.map(normalizeTutorial)
+				: [];
 			console.log(
 				"✅ 数据已从 response.data 赋值，数组长度:",
 				tutorials.value.length
@@ -154,11 +167,11 @@ const openEditDialog = (tutorial) => {
 		difficulty: tutorial.difficulty || "BEGINNER",
 		duration: tutorial.duration || "",
 		calories: tutorial.calories,
-		prep_time: tutorial.prep_time,
+		prep_time: tutorial.prepTime || tutorial.prep_time || "",
 		servings: tutorial.servings,
-		cover_image: tutorial.cover_image || "",
+		cover_image: tutorial.coverImage || tutorial.cover_image || "",
 		featured: tutorial.featured,
-		is_official: tutorial.is_official,
+		is_official: tutorial.isOfficial ?? tutorial.is_official,
 	};
 	showEditDialog.value = true;
 };
@@ -353,10 +366,10 @@ onMounted(() => {
 						<el-table-column label="来源" width="120">
 							<template #default="{ row }">
 								<el-tag
-									:type="getSourceTypeTag(row.source_type).type"
+									:type="getSourceTypeTag(row.sourceType).type"
 									size="small"
 								>
-									{{ getSourceTypeTag(row.source_type).text }}
+									{{ getSourceTypeTag(row.sourceType).text }}
 								</el-tag>
 							</template>
 						</el-table-column>
@@ -389,10 +402,10 @@ onMounted(() => {
 						<el-table-column label="审核状态" width="100">
 							<template #default="{ row }">
 								<el-tag
-									:type="getReviewStatusTag(row.review_status).type"
+									:type="getReviewStatusTag(row.reviewStatus).type"
 									size="small"
 								>
-									{{ getReviewStatusTag(row.review_status).text }}
+									{{ getReviewStatusTag(row.reviewStatus).text }}
 								</el-tag>
 							</template>
 						</el-table-column>
@@ -415,7 +428,7 @@ onMounted(() => {
 
 						<el-table-column label="浏览量" width="120">
 							<template #default="{ row }">
-								<span>{{ row.view_count?.toLocaleString() || 0 }}</span>
+								<span>{{ row.viewCount?.toLocaleString() || 0 }}</span>
 							</template>
 						</el-table-column>
 
@@ -487,10 +500,10 @@ onMounted(() => {
 						<el-table-column label="来源" width="120">
 							<template #default="{ row }">
 								<el-tag
-									:type="getSourceTypeTag(row.source_type).type"
+									:type="getSourceTypeTag(row.sourceType).type"
 									size="small"
 								>
-									{{ getSourceTypeTag(row.source_type).text }}
+									{{ getSourceTypeTag(row.sourceType).text }}
 								</el-tag>
 							</template>
 						</el-table-column>
@@ -515,7 +528,7 @@ onMounted(() => {
 						</el-table-column>
 						<el-table-column label="浏览量" width="120">
 							<template #default="{ row }">
-								<span>{{ row.view_count?.toLocaleString() || 0 }}</span>
+								<span>{{ row.viewCount?.toLocaleString() || 0 }}</span>
 							</template>
 						</el-table-column>
 						<el-table-column label="精选" width="80">
@@ -586,10 +599,10 @@ onMounted(() => {
 						<el-table-column label="来源" width="120">
 							<template #default="{ row }">
 								<el-tag
-									:type="getSourceTypeTag(row.source_type).type"
+									:type="getSourceTypeTag(row.sourceType).type"
 									size="small"
 								>
-									{{ getSourceTypeTag(row.source_type).text }}
+									{{ getSourceTypeTag(row.sourceType).text }}
 								</el-tag>
 							</template>
 						</el-table-column>
@@ -609,10 +622,10 @@ onMounted(() => {
 						<el-table-column label="审核状态" width="100">
 							<template #default="{ row }">
 								<el-tag
-									:type="getReviewStatusTag(row.review_status).type"
+									:type="getReviewStatusTag(row.reviewStatus).type"
 									size="small"
 								>
-									{{ getReviewStatusTag(row.review_status).text }}
+									{{ getReviewStatusTag(row.reviewStatus).text }}
 								</el-tag>
 							</template>
 						</el-table-column>
@@ -670,10 +683,10 @@ onMounted(() => {
 						<el-table-column label="来源" width="120">
 							<template #default="{ row }">
 								<el-tag
-									:type="getSourceTypeTag(row.source_type).type"
+									:type="getSourceTypeTag(row.sourceType).type"
 									size="small"
 								>
-									{{ getSourceTypeTag(row.source_type).text }}
+									{{ getSourceTypeTag(row.sourceType).text }}
 								</el-tag>
 							</template>
 						</el-table-column>

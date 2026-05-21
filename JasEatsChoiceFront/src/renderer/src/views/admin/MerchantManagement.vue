@@ -54,8 +54,8 @@
         <el-table-column prop="name" label="商家名称" min-width="180" />
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">
-              {{ getStatusText(row.status) }}
+            <el-tag :type="getStatusType(row)">
+              {{ getStatusText(row) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -65,7 +65,15 @@
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" link @click="handleView(row)">查看</el-button>
-            <el-button type="warning" size="small" link @click="handleAudit(row)" v-if="row.status === 'PENDING'">审核</el-button>
+            <el-button
+              v-if="getMerchantDisplayStatus(row) === 'PENDING'"
+              type="warning"
+              size="small"
+              link
+              @click="handleAudit(row)"
+            >
+              审核
+            </el-button>
             <el-button type="info" size="small" link @click="handleEditStatus(row)" v-else>状态</el-button>
           </template>
         </el-table-column>
@@ -96,8 +104,8 @@
         <el-descriptions-item label="商家ID">{{ currentMerchant.merchantId }}</el-descriptions-item>
         <el-descriptions-item label="商家名称">{{ currentMerchant.name }}</el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag :type="getStatusType(currentMerchant.status)">
-            {{ getStatusText(currentMerchant.status) }}
+          <el-tag :type="getStatusType(currentMerchant)">
+            {{ getStatusText(currentMerchant) }}
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="联系电话">{{ currentMerchant.phone }}</el-descriptions-item>
@@ -109,7 +117,13 @@
 
       <template #footer>
         <el-button @click="detailDialogVisible = false">关闭</el-button>
-        <el-button type="primary" @click="handleAudit(currentMerchant)" v-if="currentMerchant.status === 'PENDING'">去审核</el-button>
+        <el-button
+          v-if="getMerchantDisplayStatus(currentMerchant) === 'PENDING'"
+          type="primary"
+          @click="handleAudit(currentMerchant)"
+        >
+          去审核
+        </el-button>
       </template>
     </el-dialog>
 
@@ -181,6 +195,30 @@ const auditForm = reactive({
   reason: ''
 })
 
+const getMerchantDisplayStatus = (merchant) => {
+  if (!merchant) {
+    return ''
+  }
+
+  if (merchant.auditStatus === 'PENDING' || merchant.auditStatus === 'REJECTED') {
+    return merchant.auditStatus
+  }
+
+  if (merchant.auditStatus === 'APPROVED') {
+    return merchant.status ? 'ACTIVE' : 'INACTIVE'
+  }
+
+  if (merchant.status === true) {
+    return 'ACTIVE'
+  }
+
+  if (merchant.status === false) {
+    return 'INACTIVE'
+  }
+
+  return merchant.status || ''
+}
+
 // 获取商家列表
 const fetchMerchantList = async () => {
   loading.value = true
@@ -199,9 +237,9 @@ const fetchMerchantList = async () => {
 
       // 更新统计数据
       stats.total = response.total || 0
-      stats.active = merchantList.value.filter(m => m.status === 'ACTIVE').length
-      stats.pending = merchantList.value.filter(m => m.status === 'PENDING').length
-      stats.inactive = merchantList.value.filter(m => m.status === 'INACTIVE').length
+      stats.active = merchantList.value.filter(m => getMerchantDisplayStatus(m) === 'ACTIVE').length
+      stats.pending = merchantList.value.filter(m => getMerchantDisplayStatus(m) === 'PENDING').length
+      stats.inactive = merchantList.value.filter(m => getMerchantDisplayStatus(m) === 'INACTIVE').length
       console.log('[商家管理] 获取商家列表成功, 总数:', pagination.total)
     }
   } catch (error) {
@@ -213,7 +251,8 @@ const fetchMerchantList = async () => {
 }
 
 // 获取状态类型
-const getStatusType = (status) => {
+const getStatusType = (merchant) => {
+  const status = getMerchantDisplayStatus(merchant)
   const types = {
     'ACTIVE': 'success',
     'PENDING': 'warning',
@@ -224,7 +263,8 @@ const getStatusType = (status) => {
 }
 
 // 获取状态文本
-const getStatusText = (status) => {
+const getStatusText = (merchant) => {
+  const status = getMerchantDisplayStatus(merchant)
   const texts = {
     'ACTIVE': '营业中',
     'PENDING': '待审核',

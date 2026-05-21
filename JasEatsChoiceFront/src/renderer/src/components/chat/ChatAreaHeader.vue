@@ -3,8 +3,8 @@
     <div class="conversation-info">
       <!-- 头像 -->
       <div class="conversation-avatar">
-        <img v-if="isImageAvatar(conversation.avatar)" :src="conversation.avatar" alt="" />
-        <span v-else>{{ conversation.avatar || (conversation.type === 'group' ? '👥' : '💬') }}</span>
+        <img v-if="imageAvatar" :src="imageAvatar" alt="" />
+        <span v-else>{{ conversation.type === 'group' ? '👥' : '💬' }}</span>
       </div>
 
       <!-- 名称和信息 -->
@@ -102,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Download, Delete, MoreFilled, ShoppingCart, InfoFilled } from '@element-plus/icons-vue'
 
@@ -122,11 +122,33 @@ const emit = defineEmits(['search', 'export', 'clear', 'create-group-order', 'jo
 const searchKeyword = ref('')
 const showSearch = ref(false)
 
-// 判断头像是否为图片
-const isImageAvatar = (avatar) => {
-  if (!avatar) return false
-  return avatar.match(/^https?:/) || avatar.match(/^data:image/)
+const normalizeImageAvatar = (avatar) => {
+  if (!avatar) return ''
+
+  const normalizedAvatar = String(avatar).replace(/\\/g, '/').trim()
+  if (/^https?:/.test(normalizedAvatar) || /^data:image/.test(normalizedAvatar)) {
+    return normalizedAvatar
+  }
+
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7777/api'
+  const serverOrigin = apiBase.replace(/\/api\/?$/, '')
+
+  if (normalizedAvatar.startsWith('/')) {
+    return `${serverOrigin}${normalizedAvatar}`
+  }
+
+  if (normalizedAvatar.startsWith('api/uploads/')) {
+    return `${serverOrigin}/${normalizedAvatar}`
+  }
+
+  if (normalizedAvatar.startsWith('uploads/')) {
+    return `${serverOrigin}/api/${normalizedAvatar}`
+  }
+
+  return ''
 }
+
+const imageAvatar = computed(() => normalizeImageAvatar(props.conversation.avatar))
 
 // 切换搜索面板
 const toggleSearch = () => {

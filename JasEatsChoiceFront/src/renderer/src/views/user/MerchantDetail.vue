@@ -213,6 +213,27 @@ const isFavorite = ref(false)
 // 当前视图模式: details(查看详情) / order(立即下单)
 const viewMode = ref(route.query.viewMode || 'order') // 默认值改为order以显示立即下单按钮
 
+const createDefaultMerchant = () => ({
+  id: 0,
+  merchantId: '',
+  name: '',
+  type: '',
+  rating: 4.5,
+  distance: '',
+  status: '',
+  tags: [],
+  image: ''
+})
+
+const getMerchantId = (merchantInfo) => merchantInfo?.merchantId || merchantInfo?.id || ''
+
+const buildMerchantQuery = (extraQuery = {}) => ({
+  ...route.query,
+  merchantId: merchant.value.merchantId || merchant.value.id || route.query.merchantId || route.query.id,
+  viewMode: viewMode.value,
+  ...extraQuery
+})
+
 // 提交订单并导航到订单确认页
 const submitOrder = () => {
   if (cartItems.value.length === 0) {
@@ -314,67 +335,34 @@ const comments = ref([])
 // 菜单数据
 const menuItems = ref([])
 
-// 组件挂载时加载商家信息和恢复购物车
-onMounted(() => {
-  const savedMerchant = sessionStorage.getItem('selectedMerchant')
-  console.log('🔍 onMounted - 从 sessionStorage 读取的原始数据:', savedMerchant)
-
-  if (savedMerchant) {
-    // 从会话存储获取商家基本信息
-    const baseMerchantInfo = JSON.parse(savedMerchant)
-    console.log('🔍 onMounted - 解析后的商家对象:', baseMerchantInfo)
-    console.log('🔍 onMounted - 商家对象的所有字段:', Object.keys(baseMerchantInfo))
-    console.log('🔍 onMounted - 商家ID:', baseMerchantInfo.id, '| userId:', baseMerchantInfo.userId, '| merchantId:', baseMerchantInfo.merchantId)
-
-    merchant.value = { ...baseMerchantInfo }
-
-    // 从后端获取完整的商家详情和菜品信息
-    // 注意：商家对象使用 merchantId 字段，不是 id
-    loadMerchantDetails(baseMerchantInfo.merchantId)
-
-    // 加载当前商家的独立购物车
-    if (!cartItemsByMerchant.value[merchant.value.merchantId]) {
-      cartItemsByMerchant.value[merchant.value.merchantId] = []
-    }
-    cartItems.value = cartItemsByMerchant.value[merchant.value.merchantId]
-
-    // 检查商家是否已被收藏
-    checkFavoriteStatus()
-  } else {
-    // 如果没有商家信息，返回商家列表
-    router.push('/user/home/merchants')
+const restorePendingOrder = () => {
+  const pendingOrder = sessionStorage.getItem('pendingOrder')
+  if (!pendingOrder) {
     return
   }
 
-  // 恢复购物车数据（当从订单确认页返回且未完成支付时）
-  const pendingOrder = sessionStorage.getItem('pendingOrder')
-  if (pendingOrder) {
-    const parsedOrder = JSON.parse(pendingOrder)
-    if (
-      parsedOrder.cartItems &&
-      parsedOrder.cartItems.length > 0 &&
-      parsedOrder.merchant.merchantId === merchant.value.merchantId
-    ) {
-      // 清空当前购物车
-      cartItemsByMerchant.value[merchant.value.merchantId] = []
-      // 恢复购物车项目
-      parsedOrder.cartItems.forEach((item) => {
-        // 确保购物车项目有必要的属性
-        const cartItem = {
-          ...item,
-          note: item.note || '',
-          tempNote: item.tempNote || '',
-          isEditingNote: item.isEditingNote || false
-        }
-        cartItemsByMerchant.value[merchant.value.merchantId].push(cartItem)
-      })
-      // 更新当前购物车引用
-      cartItems.value = cartItemsByMerchant.value[merchant.value.merchantId]
-      // 更新购物车统计信息
-      updateCartStats()
-    }
+  const parsedOrder = JSON.parse(pendingOrder)
+  if (
+    parsedOrder.cartItems &&
+    parsedOrder.cartItems.length > 0 &&
+    parsedOrder.merchant.merchantId === merchant.value.merchantId
+  ) {
+    cartItemsByMerchant.value[merchant.value.merchantId] = []
+    parsedOrder.cartItems.forEach((item) => {
+      const cartItem = {
+        ...item,
+        note: item.note || '',
+        tempNote: item.tempNote || '',
+        isEditingNote: item.isEditingNote || false
+      }
+      cartItemsByMerchant.value[merchant.value.merchantId].push(cartItem)
+    })
+    cartItems.value = cartItemsByMerchant.value[merchant.value.merchantId]
+    updateCartStats()
   }
+}
 
+const handleRouteCartActions = () => {
   // 处理"再来一单"功能
   // 处理单个商品添加（替换推荐菜品）
   const addToCart = route.query.addToCart
@@ -394,7 +382,11 @@ onMounted(() => {
       ElMessage.success(`已添加"${itemToAdd.dishName}"到购物车`)
 
       // 清除query参数，避免重复添加
-      router.replace({ query: {} })
+      router.replace({
+        query: buildMerchantQuery({
+          addToCart: undefined
+        })
+      })
     } catch (error) {
       console.error('解析addToCart参数失败:', error)
     }
@@ -425,11 +417,64 @@ onMounted(() => {
       ElMessage.success(`已添加${itemsToAdd.length}个菜品到购物车`)
 
       // 清除query参数
-      router.replace({ query: {} })
+      router.replace({
+        query: buildMerchantQuery({
+          reorderItems: undefined,
+          originalRemark: undefined,
+          originalAddressId: undefined
+        })
+      })
     } catch (error) {
       console.error('解析reorderItems参数失败:', error)
     }
   }
+}
+
+const initializeMerchantPage = async () => {
+  viewMode.value = route.query.viewMode || 'order'
+
+  const routeMerchantId = route.query.merchantId || route.query.id
+  const savedMerchant = sessionStorage.getItem('selectedMerchant')
+  let baseMerchantInfo = null
+
+  if (savedMerchant) {
+    try {
+      baseMerchantInfo = JSON.parse(savedMerchant)
+    } catch (error) {
+      console.error('解析 selectedMerchant 失败:', error)
+    }
+  }
+
+  const effectiveMerchantId = routeMerchantId || getMerchantId(baseMerchantInfo)
+  if (!effectiveMerchantId) {
+    router.push('/user/home/merchants')
+    return
+  }
+
+  merchant.value = {
+    ...createDefaultMerchant(),
+    ...baseMerchantInfo,
+    merchantId: effectiveMerchantId,
+    id: baseMerchantInfo?.id || effectiveMerchantId
+  }
+
+  sessionStorage.setItem('selectedMerchant', JSON.stringify(merchant.value))
+
+  if (!cartItemsByMerchant.value[effectiveMerchantId]) {
+    cartItemsByMerchant.value[effectiveMerchantId] = []
+  }
+  cartItems.value = cartItemsByMerchant.value[effectiveMerchantId]
+  updateCartStats()
+
+  await loadMerchantDetails(effectiveMerchantId)
+  await checkFavoriteStatus()
+  restorePendingOrder()
+  handleRouteCartActions()
+}
+
+// 组件挂载时加载商家信息和恢复购物车
+onMounted(() => {
+  initializeMerchantPage()
 })
 
 // 滚动监听
@@ -473,6 +518,7 @@ const loadMerchantDetails = async (merchantId) => {
         ...merchant.value,
         ...merchantResponse.data.data
       }
+      sessionStorage.setItem('selectedMerchant', JSON.stringify(merchant.value))
       console.log('更新后的 merchant.value 有 merchantId:', merchant.value.merchantId)
     }
 
@@ -624,6 +670,21 @@ const loadMerchantDetails = async (merchantId) => {
     isLoading.value = false
   }
 }
+
+watch(
+  () => [route.query.merchantId, route.query.id, route.query.viewMode],
+  ([newMerchantId, newId, newViewMode], [oldMerchantId, oldId, oldViewMode]) => {
+    if (
+      newMerchantId === oldMerchantId &&
+      newId === oldId &&
+      newViewMode === oldViewMode
+    ) {
+      return
+    }
+
+    initializeMerchantPage()
+  }
+)
 
 // 检查商家是否已被收藏
 const checkFavoriteStatus = async () => {

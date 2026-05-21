@@ -68,12 +68,12 @@
     <!-- 充值记录列表 -->
     <el-card class="table-card" shadow="never">
       <el-table :data="rechargeList" v-loading="loading" stripe>
-        <el-table-column label="记录ID" width="160">
+        <el-table-column label="记录ID" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getRechargeRecordId(row) }}
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="用户名" width="150" />
+        <el-table-column prop="username" label="用户名" width="150" show-overflow-tooltip />
         <el-table-column prop="amount" label="充值金额" width="120">
           <template #default="{ row }">
             <span style="color: #67c23a; font-weight: bold">¥{{ row.amount }}</span>
@@ -91,7 +91,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="transactionId" label="交易单号" min-width="200" />
+        <el-table-column prop="transactionId" label="交易单号" min-width="220" show-overflow-tooltip />
         <el-table-column prop="createTime" label="充值时间" width="180" />
         <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
@@ -208,7 +208,7 @@ const fetchRechargeList = async () => {
     })
 
     if (response) {
-      rechargeList.value = response.records || []
+      rechargeList.value = (response.records || []).map(normalizeRechargeRecord)
       pagination.total = response.total || 0
     }
   } catch (error) {
@@ -222,7 +222,15 @@ const fetchRechargeList = async () => {
 const normalizeRechargeMethod = (method) => String(method || '').trim().toLowerCase()
 const normalizeRechargeStatus = (status) => String(status || '').trim().toLowerCase()
 
-const getRechargeRecordId = (record) => record?.rechargeId || record?.id || '-'
+const normalizeRechargeRecord = (record) => ({
+  ...record,
+  rechargeId: record?.rechargeId || record?.id || record?.rechargeNo || '-',
+  username: record?.username || record?.userName || record?.nickname || record?.userId || '-',
+  status: record?.status || record?.rechargeStatus || '',
+  transactionId: record?.transactionId || record?.rechargeNo || '-'
+})
+
+const getRechargeRecordId = (record) => record?.rechargeId || record?.id || record?.rechargeNo || '-'
 
 // 获取支付方式文本
 const getPaymentMethodText = (method) => {
@@ -280,7 +288,7 @@ const handleView = async (row) => {
     const rechargeId = getRechargeRecordId(row)
     const response = await getRechargeDetail(rechargeId)
     if (response) {
-      currentRecord.value = response.data || response
+      currentRecord.value = normalizeRechargeRecord(response.data || response)
       detailDialogVisible.value = true
     }
   } catch (error) {

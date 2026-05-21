@@ -63,7 +63,7 @@
     <!-- 订单列表 -->
     <el-card class="table-card" shadow="never">
       <el-table :data="orderList" v-loading="loading" stripe>
-        <el-table-column prop="orderId" label="订单ID" width="100" />
+        <el-table-column prop="orderId" label="订单ID" min-width="180" show-overflow-tooltip />
         <el-table-column prop="userId" label="用户ID" width="150" />
         <el-table-column prop="merchantName" label="商家名称" min-width="150" />
         <el-table-column label="订单状态" width="100">
@@ -228,7 +228,10 @@ const fetchOrderList = async () => {
     console.log(response)
 
     if (response) {
-      orderList.value = response.records || []
+      orderList.value = (response.records || []).map(order => ({
+        ...order,
+        orderId: order.orderId || order.id
+      }))
       pagination.total = response.total || 0
 
       // 更新统计数据（5状态系统：0-待支付、1-待接单、2-制作中、3-已完成、4-已取消）
@@ -287,8 +290,9 @@ const handleReset = () => {
 // 查看订单详情
 const handleView = async (row) => {
   try {
-    console.log('[订单管理] 查看订单详情, 订单ID:', row.orderId)
-    const response = await getOrderDetail(row.orderId)
+    const orderId = row.orderId || row.id
+    console.log('[订单管理] 查看订单详情, 订单ID:', orderId)
+    const response = await getOrderDetail(orderId)
 
     if (response.success || response.data) {
       currentOrder.value = response.data || response
@@ -305,7 +309,7 @@ const handleView = async (row) => {
 
 // 修改状态
 const handleUpdateStatus = (row) => {
-  statusForm.orderId = row.orderId
+  statusForm.orderId = row.orderId || row.id
   statusForm.status = row.status
   statusDialogVisible.value = true
 }

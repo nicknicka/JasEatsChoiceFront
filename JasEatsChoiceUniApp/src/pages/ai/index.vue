@@ -21,20 +21,23 @@
 			<!-- AI聊天 -->
 			<view v-if="activeTab === 'chat'" class="tab-pane chat-pane">
 				<view class="chat-container">
-					<scroll-view v-if="showWelcomeGuide" class="welcome-scroll" scroll-y>
-						<ChatWelcomeGuide
-							@start="handleStartChat"
-							@showQuestions="showQuestionsDrawer = true"
-						/>
-					</scroll-view>
+					<view class="chat-content">
+						<scroll-view v-if="showWelcomeGuide" class="welcome-scroll" scroll-y>
+							<ChatWelcomeGuide
+								@start="handleStartChat"
+								@showQuestions="showQuestionsDrawer = true"
+							/>
+						</scroll-view>
 
-					<ChatMessageList
-						v-else
-						:messages="displayMessages"
-						:scrollIntoView="scrollIntoView"
-					/>
+						<ChatMessageList
+							v-else
+							:messages="displayMessages"
+							:scrollIntoView="scrollIntoView"
+						/>
+					</view>
 
 					<ChatInputArea
+						class="chat-input-fixed"
 						:inputText="inputText"
 						:isStreaming="isStreaming"
 						:uploadedImages="uploadedImages"
@@ -367,12 +370,14 @@ onMounted(async () => {
 @import '@/styles/mixins.scss';
 
 .ai-page {
-	height: 100%;
+	height: 100vh;
+	min-height: 100vh;
 	width: 100%;
 	background: $bg-color-light;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	box-sizing: border-box;
 }
 
 /* 统一顶部导航栏 */
@@ -465,14 +470,29 @@ onMounted(async () => {
 	min-height: 0;
 	overflow: hidden;
 	background: $bg-color-white;
+	position: relative;
+}
+
+.chat-content {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+	box-sizing: border-box;
 }
 
 .welcome-scroll {
 	flex: 1;
 	min-height: 0;
+	height: 100%;
 }
 
 .welcome-scroll :deep(.welcome-guide) {
 	min-height: 100%;
+}
+
+.chat-input-fixed {
+	flex-shrink: 0;
+	position: relative;
+	z-index: 1;
 }
 </style>

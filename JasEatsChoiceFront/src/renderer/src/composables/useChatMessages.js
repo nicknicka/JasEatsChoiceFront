@@ -105,15 +105,15 @@ export function useChatMessages({ userId, selectedConversation }) {
         if (fromId === userId.value.toString()) {
           // 自己的消息，不需要显示名称（在UI中会显示"我"）
           senderName = null
-        } else if (msg.senderName) {
+        } else if (msg.senderName || msg.fromName) {
           // 后端返回的发送者名称
-          senderName = msg.senderName
+          senderName = msg.senderName || msg.fromName
         } else if (selectedConversation.value?.type === 'single') {
           // 单聊：使用会话名称
           senderName = selectedConversation.value.name
         } else if (selectedConversation.value?.type === 'group') {
           // 群聊：尝试使用后端返回的名称，如果没有则显示ID
-          senderName = msg.username || msg.nickname || fromId
+          senderName = msg.username || msg.nickname || msg.fromName || fromId
         }
 
         // ⭐ 修复：先确保 fileUrl 和 fullUrl 字段存在，再创建 processedMsg
@@ -314,10 +314,12 @@ export function useChatMessages({ userId, selectedConversation }) {
       // 确定发送者显示名称（如果消息中没有）
       let senderName = message.senderName
       if (!senderName && fromId !== userId.value.toString()) {
-        if (selectedConversation.value?.type === 'single') {
+        if (message.senderName || message.fromName) {
+          senderName = message.senderName || message.fromName
+        } else if (selectedConversation.value?.type === 'single') {
           senderName = selectedConversation.value.name
         } else if (selectedConversation.value?.type === 'group') {
-          senderName = message.username || message.nickname || fromId
+          senderName = message.username || message.nickname || message.fromName || fromId
         }
       }
 

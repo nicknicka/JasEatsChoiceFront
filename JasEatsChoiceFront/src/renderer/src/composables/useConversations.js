@@ -5,6 +5,30 @@ import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/utils/api'
 
+const normalizeAvatar = (avatar) => {
+  if (!avatar || /^https?:/.test(avatar) || /^data:image/.test(avatar)) {
+    return avatar
+  }
+
+  const normalizedAvatar = String(avatar).replace(/\\/g, '/').trim()
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7777/api'
+  const serverOrigin = apiBase.replace(/\/api\/?$/, '')
+
+  if (normalizedAvatar.startsWith('/')) {
+    return `${serverOrigin}${normalizedAvatar}`
+  }
+
+  if (normalizedAvatar.startsWith('api/uploads/')) {
+    return `${serverOrigin}/${normalizedAvatar}`
+  }
+
+  if (normalizedAvatar.startsWith('uploads/')) {
+    return `${serverOrigin}/api/${normalizedAvatar}`
+  }
+
+  return normalizedAvatar
+}
+
 export function useConversations(userId = ref(null)) {
   const conversations = ref([])
   const selectedConversation = ref(null)
@@ -26,7 +50,10 @@ export function useConversations(userId = ref(null)) {
       const response = await api.get(`/v1/chat/users/${userId.value}/chat-sessions`)
 
       if (response.data && response.data.success) {
-        conversations.value = response.data.data
+        conversations.value = response.data.data.map((conversation) => ({
+          ...conversation,
+          avatar: normalizeAvatar(conversation.avatar)
+        }))
         console.log(
           '✅ [loadConversations] 会话列表加载成功，共',
           conversations.value.length,

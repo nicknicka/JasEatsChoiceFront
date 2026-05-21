@@ -100,6 +100,10 @@ public class ChatMsg {
     private String fromName; // 发送者名称
 
     @TableField(exist = false)
+    @ApiModelProperty(value = "发送者昵称（用于前端展示）")
+    private String senderName; // 发送者昵称
+
+    @TableField(exist = false)
     @ApiModelProperty(value = "发送者头像（关联查询获得）")
     private String fromAvatar; // 发送者头像
 }

@@ -918,7 +918,10 @@ const addToBlacklist = () => {
 
 .message-wrapper {
   display: flex;
+  width: 100%;
   gap: 20rpx;
+  align-items: flex-end;
+  box-sizing: border-box;
 }
 
 .message-avatar {
@@ -929,14 +932,17 @@ const addToBlacklist = () => {
 }
 
 .message-content {
-  max-width: 500rpx;
+  max-width: calc(100% - 90rpx);
   position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
   background: #fff;
   border-radius: 0 20rpx 20rpx 20rpx;
 }
 
 .self .message-wrapper {
   flex-direction: row-reverse;
+  justify-content: flex-start;
 }
 
 .self .message-content {
@@ -950,6 +956,7 @@ const addToBlacklist = () => {
   font-size: 28rpx;
   line-height: 1.6;
   word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .image-message {
