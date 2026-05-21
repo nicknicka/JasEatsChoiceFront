@@ -31,6 +31,18 @@ const goBackToList = () => {
 const currentTutorial = ref(null)
 const loading = ref(true)
 
+const normalizeTutorial = (tutorial = {}) => {
+  return {
+    ...tutorial,
+    sourceType: tutorial.sourceType || tutorial.source_type || '',
+    reviewStatus: tutorial.reviewStatus || tutorial.review_status || '',
+    coverImage: tutorial.coverImage || tutorial.cover_image || '',
+    viewCount: tutorial.viewCount ?? tutorial.view_count ?? tutorial.views ?? 0,
+    ratingCount: tutorial.ratingCount ?? tutorial.rating_count ?? 0,
+    isOfficial: tutorial.isOfficial ?? tutorial.is_official ?? tutorial.official ?? false
+  }
+}
+
 // 从后端获取教程详情
 const fetchTutorialDetail = async () => {
   loading.value = true
@@ -61,7 +73,7 @@ const fetchTutorialDetail = async () => {
     }
 
     if (tutorial) {
-      currentTutorial.value = tutorial
+      currentTutorial.value = normalizeTutorial(tutorial)
       console.log('✅ 成功加载教程详情:', tutorial.title)
     } else {
       console.warn('⚠️ 教程不存在或响应格式异常')
@@ -111,7 +123,7 @@ const renderMarkdown = (content) => {
     // 链接
     .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>')
     // 无序列表
-    .replace(/^\- (.*$)/gim, '<li>$1</li>')
+    .replace(/^- (.*$)/gim, '<li>$1</li>')
     // 有序列表
     .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
     // 将连续的列表项包装在 ul 中
@@ -171,16 +183,16 @@ onMounted(() => {
     <!-- 教程详情 -->
     <el-card v-else-if="currentTutorial" class="tutorial-detail-card scale-in" shadow="hover">
       <!-- 封面图 -->
-      <div class="tutorial-cover" :class="{ 'has-no-cover': !currentTutorial.cover_image && !currentTutorial.coverImage }">
+      <div class="tutorial-cover" :class="{ 'has-no-cover': !currentTutorial.coverImage }">
         <img
-          v-if="currentTutorial.cover_image || currentTutorial.coverImage"
-          :src="currentTutorial.cover_image || currentTutorial.coverImage"
+          v-if="currentTutorial.coverImage"
+          :src="currentTutorial.coverImage"
           :alt="currentTutorial.title"
           @error="handleImageError"
         />
 
         <!-- 没有封面图时的默认内容 -->
-        <div v-if="!currentTutorial.cover_image && !currentTutorial.coverImage" class="default-cover-content">
+        <div v-if="!currentTutorial.coverImage" class="default-cover-content">
           <el-icon :size="64" color="white">
             <component :is="currentTutorial.type === 'video' ? VideoCamera : Document" />
           </el-icon>
@@ -190,7 +202,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="tutorial-type-overlay" v-if="currentTutorial.cover_image || currentTutorial.coverImage">
+        <div class="tutorial-type-overlay" v-if="currentTutorial.coverImage">
           <el-icon :class="currentTutorial.type === 'video' ? 'video-icon' : 'article-icon'">
             <component :is="currentTutorial.type === 'video' ? VideoCamera : Document" />
           </el-icon>
@@ -202,26 +214,26 @@ onMounted(() => {
         <!-- 来源标签 -->
         <div class="tutorial-source-badges">
           <!-- 官方认证标签 -->
-          <el-tag v-if="currentTutorial.source_type === 'ADMIN' && currentTutorial.is_official"
+          <el-tag v-if="currentTutorial.sourceType === 'ADMIN' && currentTutorial.isOfficial"
                   type="danger"
                   effect="dark">
             <el-icon><Check /></el-icon> 官方认证
           </el-tag>
 
           <!-- 商家标签 -->
-          <el-tag v-if="currentTutorial.source_type === 'MERCHANT'"
+          <el-tag v-if="currentTutorial.sourceType === 'MERCHANT'"
                   type="warning"
                   effect="plain">
             <el-icon><Shop /></el-icon> {{ currentTutorial.merchantName || '商家贡献' }}
           </el-tag>
 
           <!-- AI生成标签 -->
-          <el-tag v-if="currentTutorial.source_type === 'AI_GENERATED'"
-                  :type="currentTutorial.review_status === 'APPROVED' ? 'success' : 'info'"
+          <el-tag v-if="currentTutorial.sourceType === 'AI_GENERATED'"
+                  :type="currentTutorial.reviewStatus === 'APPROVED' ? 'success' : 'info'"
                   effect="plain">
             <el-icon><MagicStick /></el-icon>
             AI生成
-            <span v-if="currentTutorial.review_status === 'APPROVED'" class="reviewed-badge">
+            <span v-if="currentTutorial.reviewStatus === 'APPROVED'" class="reviewed-badge">
               ✓ 人工审核通过
             </span>
           </el-tag>
@@ -243,12 +255,12 @@ onMounted(() => {
           </span>
           <span class="views">
             <el-icon><View /></el-icon>
-            {{ currentTutorial.view_count || currentTutorial.views }} 浏览
+            {{ currentTutorial.viewCount || 0 }} 浏览
           </span>
           <span v-if="currentTutorial.rating" class="rating">
             <el-icon><Star /></el-icon>
             {{ currentTutorial.rating }}
-            <span class="rating-count">({{ currentTutorial.rating_count }}人评分)</span>
+            <span class="rating-count">({{ currentTutorial.ratingCount || 0 }}人评分)</span>
           </span>
           <span v-if="currentTutorial.author" class="author">
             作者: {{ currentTutorial.author }}

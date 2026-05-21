@@ -135,7 +135,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 
-const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV
+const isDev = process.env.NODE_ENV !== 'production'
 
 // 地图中心点坐标
 const longitude = ref(113.264385)

@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 消息记录Service实现
@@ -77,6 +80,29 @@ public class MessageRecordServiceImpl extends ServiceImpl<MessageRecordMapper, M
         // 更新所有接收者为当前用户的消息为已读
         return lambdaUpdate()
                 .eq(MessageRecord::getReceiverId, userId)
+                .eq(MessageRecord::getReadStatus, 0)
+                .set(MessageRecord::getReadStatus, 1)
+                .update();
+    }
+
+    @Override
+    public Boolean batchMarkMessagesAsRead(List<String> messageIds) {
+        List<String> validMessageIds = messageIds == null
+                ? Collections.emptyList()
+                : messageIds.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(id -> !id.isEmpty())
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (validMessageIds.isEmpty()) {
+            return false;
+        }
+
+        return lambdaUpdate()
+                .in(MessageRecord::getId, validMessageIds)
+                .eq(MessageRecord::getReadStatus, 0)
                 .set(MessageRecord::getReadStatus, 1)
                 .update();
     }

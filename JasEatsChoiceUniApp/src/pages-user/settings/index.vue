@@ -4,13 +4,13 @@
       <!-- 用户信息卡片 -->
       <view class="user-profile-card" @click="editProfile">
         <view class="profile-left">
-          <image class="avatar-image" :src="userInfo.avatar" mode="aspectFill" />
+          <image class="avatar-image" :src="userInfo.avatar || DEFAULT_AVATAR" mode="aspectFill" />
           <view class="user-info">
             <text class="user-name">{{ userInfo.name }}</text>
-            <text class="user-id">ID: {{ userInfo.id }}</text>
+            <text class="user-id">{{ userInfo.id ? `ID: ${userInfo.id}` : '完善资料与偏好设置' }}</text>
           </view>
         </view>
-        <text class="profile-arrow">→</text>
+        <uni-icons type="right" size="16" color="rgba(255,255,255,0.72)"></uni-icons>
       </view>
 
       <!-- 账号设置 -->
@@ -19,36 +19,36 @@
 
         <view class="setting-item" @click="handlePageNavigation('personal-info')">
           <view class="item-icon-wrapper">
-            <text class="item-icon">👤</text>
+            <uni-icons type="person-filled" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">个人信息</text>
             <text class="item-value" v-if="userInfo.profileCompleted">已完善</text>
             <text class="item-tips" v-else>未完善</text>
           </view>
-          <text class="item-arrow">→</text>
+          <uni-icons type="right" size="16" color="#B7B7B7"></uni-icons>
         </view>
 
-        <view class="setting-item is-disabled">
+        <view class="setting-item" @click="handlePageNavigation('address')">
           <view class="item-icon-wrapper">
-            <text class="item-icon">🔒</text>
+            <uni-icons type="location" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
-            <text class="item-label">账号安全</text>
-            <text class="item-value">即将上线</text>
+            <text class="item-label">收货地址</text>
+            <text class="item-value">管理常用收货地址</text>
           </view>
-          <text class="item-arrow">敬请期待</text>
+          <uni-icons type="right" size="16" color="#B7B7B7"></uni-icons>
         </view>
 
-        <view class="setting-item is-disabled">
+        <view class="setting-item" @click="handlePageNavigation('help')">
           <view class="item-icon-wrapper">
-            <text class="item-icon">🔗</text>
+            <uni-icons type="help" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
-            <text class="item-label">账号绑定</text>
-            <text class="item-value">即将上线</text>
+            <text class="item-label">帮助中心</text>
+            <text class="item-value">资料、账号与使用问题统一查看</text>
           </view>
-          <text class="item-arrow">敬请期待</text>
+          <uni-icons type="right" size="16" color="#B7B7B7"></uni-icons>
         </view>
       </view>
 
@@ -58,7 +58,7 @@
 
         <view class="setting-item">
           <view class="item-icon-wrapper">
-            <text class="item-icon">🔔</text>
+            <uni-icons type="notification-filled" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">消息通知</text>
@@ -73,7 +73,7 @@
 
         <view class="setting-item">
           <view class="item-icon-wrapper">
-            <text class="item-icon">📧</text>
+            <uni-icons type="email" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">营销通知</text>
@@ -86,15 +86,15 @@
           />
         </view>
 
-        <view class="setting-item is-disabled">
+        <view class="setting-item" @click="handlePageNavigation('message')">
           <view class="item-icon-wrapper">
-            <text class="item-icon">⏰</text>
+            <uni-icons type="chatbubble-filled" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
-            <text class="item-label">免打扰时段</text>
-            <text class="item-value">即将上线</text>
+            <text class="item-label">消息中心</text>
+            <text class="item-value">查看订单、活动和聊天消息</text>
           </view>
-          <text class="item-arrow">敬请期待</text>
+          <uni-icons type="right" size="16" color="#B7B7B7"></uni-icons>
         </view>
       </view>
 
@@ -104,7 +104,7 @@
 
         <view class="setting-item">
           <view class="item-icon-wrapper">
-            <text class="item-icon">📱</text>
+            <uni-icons type="person" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">个人信息可见</text>
@@ -119,7 +119,7 @@
 
         <view class="setting-item">
           <view class="item-icon-wrapper">
-            <text class="item-icon">📍</text>
+            <uni-icons type="location" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">位置信息</text>
@@ -132,15 +132,15 @@
           />
         </view>
 
-        <view class="setting-item is-disabled">
+        <view class="setting-item" @click="handlePageNavigation('about')">
           <view class="item-icon-wrapper">
-            <text class="item-icon">🚫</text>
+            <uni-icons type="locked" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
-            <text class="item-label">黑名单</text>
-            <text class="item-value">即将上线</text>
+            <text class="item-label">隐私与说明</text>
+            <text class="item-value">查看平台说明、协议与隐私相关内容</text>
           </view>
-          <text class="item-arrow">敬请期待</text>
+          <uni-icons type="right" size="16" color="#B7B7B7"></uni-icons>
         </view>
       </view>
 
@@ -150,7 +150,7 @@
 
         <view class="setting-item">
           <view class="item-icon-wrapper">
-            <text class="item-icon">🌙</text>
+            <uni-icons type="gear-filled" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">深色模式</text>
@@ -165,7 +165,7 @@
 
         <view class="setting-item is-disabled">
           <view class="item-icon-wrapper">
-            <text class="item-icon">🌐</text>
+            <uni-icons type="world" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">语言</text>
@@ -176,7 +176,7 @@
 
         <view class="setting-item" @click="clearCache">
           <view class="item-icon-wrapper">
-            <text class="item-icon">🗑️</text>
+            <uni-icons type="trash" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">清除缓存</text>
@@ -192,34 +192,34 @@
 
         <view class="setting-item" @click="handlePageNavigation('feedback')">
           <view class="item-icon-wrapper">
-            <text class="item-icon">✉️</text>
+            <uni-icons type="compose" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">意见反馈</text>
           </view>
-          <text class="item-arrow">→</text>
+          <uni-icons type="right" size="16" color="#B7B7B7"></uni-icons>
         </view>
 
         <view class="setting-item" @click="handlePageNavigation('about')">
           <view class="item-icon-wrapper">
-            <text class="item-icon">ℹ️</text>
+            <uni-icons type="info" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">关于我们</text>
             <text class="item-value">v1.0.0</text>
           </view>
-          <text class="item-arrow">→</text>
+          <uni-icons type="right" size="16" color="#B7B7B7"></uni-icons>
         </view>
 
         <view class="setting-item" @click="checkUpdate">
           <view class="item-icon-wrapper">
-            <text class="item-icon">🔄</text>
+            <uni-icons type="refresh" size="22" color="#FF6B35"></uni-icons>
           </view>
           <view class="item-content">
             <text class="item-label">检查更新</text>
             <text class="item-value">已是最新版本</text>
           </view>
-          <text class="item-arrow">→</text>
+          <uni-icons type="right" size="16" color="#B7B7B7"></uni-icons>
         </view>
       </view>
 
@@ -245,15 +245,25 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/store'
 import { userApi, notificationApi } from '@/api'
+import {
+  LOGIN,
+  USER_ADDRESS,
+  USER_FEEDBACK,
+  USER_HELP,
+  USER_MESSAGE,
+  USER_PROFILE_ABOUT,
+  USER_PROFILE_EDIT
+} from '@/constants/routes'
 
 // 用户信息store
 const userStore = useUserStore()
+const DEFAULT_AVATAR = '/static/images/default-avatar.png'
 
 // 用户信息
 const userInfo = ref({
-  id: '12345678',
+  id: '',
   name: '佳食宜选用户',
-  avatar: 'https://via.placeholder.com/200x200/FF6B35/FFFFFF?text=用户',
+  avatar: DEFAULT_AVATAR,
   profileCompleted: false
 })
 
@@ -266,20 +276,17 @@ const settings = ref({
   darkMode: false
 })
 
-// 黑名单数量
-const blacklistCount = ref(0)
-
 // 缓存大小
-const cacheSize = ref('23.5MB')
+const cacheSize = ref('0KB')
 
-const implementedPages = new Set(['personal-info', 'feedback', 'about'])
+const implementedPages = new Set(['personal-info', 'address', 'help', 'message', 'feedback', 'about'])
 
 /**
  * 编辑个人资料
  */
 const editProfile = () => {
   uni.navigateTo({
-    url: '/pages-user/profile/user-center/edit/index'
+    url: USER_PROFILE_EDIT
   })
 }
 
@@ -297,16 +304,19 @@ const handlePageNavigation = (page) => {
  */
 const navigateTo = (page) => {
   const pageMap = {
-    'personal-info': '/pages-user/profile/user-center/edit/index',
-    'feedback': '/pages-user/feedback/index',
-    'about': '/pages-user/profile/about'
+    'personal-info': USER_PROFILE_EDIT,
+    'address': USER_ADDRESS,
+    'help': USER_HELP,
+    'message': USER_MESSAGE,
+    'feedback': USER_FEEDBACK,
+    'about': USER_PROFILE_ABOUT
   }
 
   const path = pageMap[page]
 
   if (!path) {
     uni.showToast({
-      title: '页面开发中...',
+      title: '当前入口暂不可用',
       icon: 'none'
     })
     return
@@ -316,11 +326,25 @@ const navigateTo = (page) => {
     url: path,
     fail: () => {
       uni.showToast({
-        title: '页面开发中...',
+        title: '当前入口暂不可用',
         icon: 'none'
       })
     }
   })
+}
+
+const parseUserInfo = (value) => {
+  if (!value) return null
+
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value)
+    } catch (error) {
+      return null
+    }
+  }
+
+  return value
 }
 
 /**
@@ -471,7 +495,7 @@ const logout = () => {
 
         // 跳转到登录页
         uni.reLaunch({
-          url: '/pages/login/index'
+          url: LOGIN
         })
       }
     }
@@ -484,24 +508,22 @@ const logout = () => {
 const loadUserInfo = async () => {
   try {
     if (userStore.isLogin && userStore.userInfo) {
-      // 从store获取用户信息
       const info = userStore.userInfo
       userInfo.value = {
         id: info.userId || info.id || '',
         name: info.nickname || info.name || '佳食宜选用户',
-        avatar: info.avatar || 'https://via.placeholder.com/200x200/FF6B35/FFFFFF?text=用户',
-        profileCompleted: !!(info.realName || info.phone) // 是否完善了个人信息
+        avatar: info.avatar || DEFAULT_AVATAR,
+        profileCompleted: !!(info.realName || info.phone || info.nickname || info.goal)
       }
     } else {
-      // 从本地存储读取
-      const localInfo = uni.getStorageSync('userInfo')
+      const localInfo = parseUserInfo(uni.getStorageSync('userInfo'))
       if (localInfo) {
-        const info = JSON.parse(localInfo)
+        const info = localInfo
         userInfo.value = {
           id: info.userId || info.id || '',
           name: info.nickname || info.name || '佳食宜选用户',
-          avatar: info.avatar || 'https://via.placeholder.com/200x200/FF6B35/FFFFFF?text=用户',
-          profileCompleted: !!(info.realName || info.phone)
+          avatar: info.avatar || DEFAULT_AVATAR,
+          profileCompleted: !!(info.realName || info.phone || info.nickname || info.goal)
         }
       }
     }
@@ -634,11 +656,6 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.8);
 }
 
-.profile-arrow {
-  font-size: $font-size-xl;
-  color: rgba(255, 255, 255, 0.6);
-}
-
 /* 设置区块 */
 .settings-section {
   background-color: $bg-color-white;
@@ -695,10 +712,6 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.item-icon {
-  font-size: $font-size-xl;
-}
-
 .item-content {
   flex: 1;
   @include flex-center-column;
@@ -733,10 +746,6 @@ onMounted(() => {
   margin-left: $spacing-sm;
   flex-shrink: 0;
   text-align: right;
-}
-
-.setting-item.is-disabled .item-arrow {
-  font-size: $font-size-xs;
 }
 
 .item-action {

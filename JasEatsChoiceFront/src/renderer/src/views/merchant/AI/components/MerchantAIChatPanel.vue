@@ -12,8 +12,11 @@
           <span class="avatar-emoji">{{ msg.avatar }}</span>
         </div>
         <div class="bubble">
-          <div v-if="msg.isThinking" class="typing-indicator">
-            <span></span><span></span><span></span>
+          <div v-if="msg.isThinking || msg.progress" class="thinking-state">
+            <div class="typing-indicator">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="thinking-text">{{ msg.thinkingText || '正在思考中...' }}</div>
           </div>
           <div v-else class="text" v-html="formatMarkdown(msg.content)"></div>
           <div class="time">{{ msg.time }}</div>
@@ -372,7 +375,7 @@ onMounted(() => {
 .typing-indicator {
   display: flex;
   gap: 5px;
-  padding: 10px 4px;
+  padding: 2px 4px 0;
 
   span {
     width: 7px;
@@ -385,6 +388,19 @@ onMounted(() => {
     &:nth-child(2) { animation-delay: 0.15s; }
     &:nth-child(3) { animation-delay: 0.3s; }
   }
+}
+
+.thinking-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+}
+
+.thinking-text {
+  font-size: 14px;
+  color: @merchant-text-sec;
+  line-height: 1.5;
 }
 
 // --- 快捷提问 ---

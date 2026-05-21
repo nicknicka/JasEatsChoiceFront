@@ -127,7 +127,8 @@ export function useMerchantAIChat() {
       time: formatTime(),
       avatar: '🤖',
       isThinking: true,
-      progress: false
+      progress: false,
+      thinkingText: '正在为您分析需求...'
     })
     scrollToBottom(false)
 
@@ -161,12 +162,9 @@ export function useMerchantAIChat() {
         reader,
         (chunk) => {
           const message = messages.value[aiMessageIndex]
-          const shouldResetProgressContent = message.progress === true
           message.isThinking = false
           message.progress = false
-          if (shouldResetProgressContent) {
-            message.content = ''
-          }
+          message.thinkingText = ''
           message.content += chunk
           scrollToBottom(false)
         },
@@ -174,11 +172,13 @@ export function useMerchantAIChat() {
           const message = messages.value[aiMessageIndex]
           message.isThinking = false
           message.progress = false
+          message.thinkingText = ''
         },
         (error) => {
           const message = messages.value[aiMessageIndex]
           message.isThinking = false
           message.progress = false
+          message.thinkingText = ''
           message.isError = true
           if (!message.content) {
             message.content = handleApiError(error)
@@ -188,7 +188,7 @@ export function useMerchantAIChat() {
           const message = messages.value[aiMessageIndex]
           message.isThinking = false
           message.progress = true
-          message.content = progressText
+          message.thinkingText = progressText || '正在思考中...'
           scrollToBottom(false)
         }
       )
@@ -202,6 +202,7 @@ export function useMerchantAIChat() {
       const message = messages.value[aiMessageIndex]
       message.isThinking = false
       message.progress = false
+      message.thinkingText = ''
       message.isError = true
       message.content = message.content || handleApiError(error) || MERCHANT_ERROR_MESSAGES.SERVER_ERROR
     } finally {

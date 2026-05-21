@@ -555,7 +555,7 @@ const logout = () => {
 
           setTimeout(() => {
             uni.reLaunch({
-              url: '/login/index'
+              url: '/pages/login/index'
             })
           }, 1000)
         }

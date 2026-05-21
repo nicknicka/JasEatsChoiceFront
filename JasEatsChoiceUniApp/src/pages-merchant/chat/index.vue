@@ -416,8 +416,9 @@ const onSearch = async (e) => {
  * 打开系统通知
  */
 const openSystemNotifications = () => {
-  uni.navigateTo({
-    url: '/notification/index'
+  uni.showToast({
+    title: '系统通知功能整理中',
+    icon: 'none'
   })
 }
 

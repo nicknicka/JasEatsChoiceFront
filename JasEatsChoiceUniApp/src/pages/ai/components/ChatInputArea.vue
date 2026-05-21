@@ -44,16 +44,16 @@
 		<!-- 工具栏 -->
 		<view class="toolbar-row">
 			<view class="toolbar-btn" @click="$emit('toggleEmoji')">
-				<text class="toolbar-icon">😊</text>
+				<text class="toolbar-icon">表</text>
 			</view>
 			<view class="toolbar-btn" @click="$emit('chooseImage')">
-				<text class="toolbar-icon">🖼️</text>
+				<text class="toolbar-icon">图</text>
 			</view>
 			<view class="toolbar-btn" @click="$emit('clearHistory')">
-				<text class="toolbar-icon">🗑️</text>
+				<text class="toolbar-icon">清</text>
 			</view>
 			<view class="toolbar-btn" @click="$emit('toggleQuickQuestions')">
-				<text class="toolbar-icon">💬</text>
+				<text class="toolbar-icon">问</text>
 			</view>
 
 			<!-- AI回复状态 -->
@@ -80,8 +80,10 @@
 
 			<!-- 发送按钮 -->
 			<view class="send-btn" :class="{ disabled: !canSend }" @click="handleSend">
-				<text v-if="isStreaming" class="stop-icon" @click.stop="$emit('stop')">⏹️</text>
-				<text v-else class="send-icon">➤</text>
+				<view v-if="isStreaming" class="stop-icon" @click.stop="$emit('stop')">
+					<text class="send-icon">停</text>
+				</view>
+				<text v-else class="send-icon">发</text>
 			</view>
 		</view>
 	</view>
@@ -156,21 +158,20 @@ const handleSend = () => {
 	display: flex;
 	flex-direction: column;
 	background-color: $bg-color-white;
-	padding: $spacing-md $spacing-lg;
-	padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+	padding: $spacing-sm $spacing-md;
+	padding-bottom: calc(#{$spacing-sm} + env(safe-area-inset-bottom));
 	border-top: 1rpx solid $border-color-light;
-	box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.04);
 	flex-shrink: 0;
 	width: 100%;
-	min-height: 144rpx;
 	height: auto;
+	box-sizing: border-box;
 }
 
 .uploaded-images-preview {
 	display: flex;
 	flex-wrap: wrap;
-	gap: $spacing-md;
-	padding: $spacing-md $spacing-lg;
+	gap: $spacing-sm;
+	padding: $spacing-sm 0;
 	background: $bg-color-white;
 }
 
@@ -207,15 +208,13 @@ const handleSend = () => {
 
 .remove-icon {
 	color: $bg-color-white;
-	font-size: 32rpx;
-	font-weight: bold;
+	font-size: 28rpx;
 	line-height: 1;
 }
 
 .emoji-panel {
-	padding: $spacing-md $spacing-lg;
+	padding: $spacing-sm 0 $spacing-md;
 	background: $bg-color-white;
-	border-top: 1rpx solid $border-color-light;
 	max-height: 300rpx;
 	overflow-y: auto;
 }
@@ -240,17 +239,16 @@ const handleSend = () => {
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: $spacing-md;
-	padding: $spacing-sm $spacing-lg;
-	border-bottom: 1rpx solid $border-color-light;
+	gap: $spacing-sm;
+	padding-bottom: $spacing-sm;
 }
 
 .toolbar-btn {
-	width: 48rpx;
-	height: 48rpx;
+	width: 56rpx;
+	height: 56rpx;
 	@include flex-center;
-	background: $bg-color-base;
-	border-radius: $border-radius-base;
+	background: transparent;
+	border-radius: 50%;
 	transition: $transition-base;
 
 	&:active {
@@ -260,7 +258,10 @@ const handleSend = () => {
 }
 
 .toolbar-icon {
-	font-size: 32rpx;
+	font-size: $font-size-sm;
+	color: $text-color-regular;
+	font-weight: $font-weight-medium;
+	line-height: 1;
 }
 
 .action-row {
@@ -298,17 +299,16 @@ const handleSend = () => {
 
 .input-row {
 	display: flex;
-	align-items: center;
-	gap: $spacing-md;
+	align-items: flex-end;
+	gap: $spacing-sm;
 }
 
 .chat-input {
 	flex: 1;
 	height: $input-height-current;
-	padding: 0 $spacing-md;
-	margin: $spacing-sm 0;
+	padding: 0 $spacing-lg;
 	background-color: $bg-color-input;
-	border-radius: 40rpx;
+	border-radius: $border-radius-round;
 	font-size: $font-size-base;
 	color: $text-color-primary;
 	border: 2rpx solid transparent;
@@ -321,37 +321,39 @@ const handleSend = () => {
 }
 
 .send-btn {
-	width: 64rpx;
-	height: 64rpx;
+	width: 72rpx;
+	height: 72rpx;
 	@include flex-center;
-	background: linear-gradient(135deg, $primary-500, $primary-800);
+	background: $primary-500;
 	color: $bg-color-white;
 	border-radius: 50%;
 	transition: $transition-base;
-	box-shadow: $box-shadow-md;
 
 	&:active {
 		transform: scale(0.95);
-		box-shadow: $box-shadow-sm;
 	}
 
 	&.disabled {
 		background: $bg-color-base;
-		box-shadow: none;
 		color: $text-color-disabled;
 	}
 }
 
+.stop-icon {
+	@include flex-center;
+	width: 100%;
+	height: 100%;
+}
+
 .send-icon {
-	font-size: 28rpx;
+	font-size: $font-size-sm;
+	color: $bg-color-white;
 	font-weight: $font-weight-bold;
+	line-height: 1;
+	opacity: 1;
 }
 
 .send-btn.disabled .send-icon {
-	color: $text-color-disabled;
-}
-
-.stop-icon {
-	font-size: 32rpx;
+	opacity: 0.5;
 }
 </style>

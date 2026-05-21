@@ -1,14 +1,30 @@
 <template>
   <view class="message-container">
-    <!-- 顶部操作栏 -->
-    <view class="top-bar">
-      <text class="mark-read-btn" @click="markAllRead" v-if="hasUnread">全部已读</text>
-      <text class="delete-read-btn" @click="deleteRead">删除已读</text>
+    <view class="overview-card">
+      <view class="overview-main">
+        <text class="overview-kicker">消息总览</text>
+        <view class="overview-title-row">
+          <text class="overview-number">{{ unreadCount }}</text>
+          <text class="overview-unit">条未读</text>
+        </view>
+        <text class="overview-desc">共 {{ totalCount }} 条消息，当前查看{{ activeFilterLabel }}</text>
+      </view>
+
+      <view class="overview-actions">
+        <button
+          class="overview-action primary"
+          :class="{ disabled: !hasUnread }"
+          :disabled="!hasUnread"
+          @click="markAllRead"
+        >
+          全部已读
+        </button>
+        <button class="overview-action ghost" @click="deleteRead">删除已读</button>
+      </view>
     </view>
 
-    <!-- 消息分类Tab -->
     <view class="filter-bar">
-      <scroll-view class="filter-scroll" scroll-x>
+      <scroll-view class="filter-scroll" scroll-x show-scrollbar="false">
         <view
           class="filter-item"
           :class="{ active: selectedFilter === filter.value }"
@@ -17,14 +33,11 @@
           @click="changeFilter(filter.value)"
         >
           <text class="filter-text">{{ filter.label }}</text>
-          <view class="filter-badge" v-if="filter.count > 0">
-            {{ filter.count > 99 ? '99+' : filter.count }}
-          </view>
+          <text class="filter-count">{{ filter.count > 99 ? '99+' : filter.count }}</text>
         </view>
       </scroll-view>
     </view>
 
-    <!-- 消息列表 -->
     <scroll-view
       class="scroll-container"
       scroll-y
@@ -33,14 +46,16 @@
       @refresherrefresh="onRefresh"
       @scrolltolower="onLoadMore"
     >
-      <!-- 空状态 -->
       <view class="empty-state" v-if="messages.length === 0 && !loading">
-        <text class="empty-icon">💬</text>
+        <view class="empty-illustration">
+          <view class="empty-bubble large"></view>
+          <view class="empty-bubble small"></view>
+          <text class="empty-icon">💬</text>
+        </view>
         <text class="empty-text">还没有消息</text>
-        <text class="empty-tips">有新消息时会在这里显示哦</text>
+        <text class="empty-tips">订单、聊天和系统提醒会在这里汇总</text>
       </view>
 
-      <!-- 消息列表 -->
       <view class="message-list" v-else>
         <view
           class="message-item"
@@ -49,7 +64,6 @@
           :key="msg.id"
           @click="viewMessage(msg)"
         >
-          <!-- 左侧图标/头像 -->
           <view class="message-left">
             <view class="avatar-wrapper" :class="msg.type">
               <image
@@ -58,15 +72,16 @@
                 :src="msg.avatar"
                 mode="aspectFill"
               />
-              <text class="avatar-icon" v-else>{{ getIcon(msg.type) }}</text>
-              <view class="unread-dot" v-if="msg.unread"></view>
+              <text v-else class="avatar-icon">{{ getIconGlyph(msg.type) }}</text>
             </view>
           </view>
 
-          <!-- 中间内容 -->
           <view class="message-content">
             <view class="message-header">
-              <text class="message-title">{{ msg.title }}</text>
+              <view class="message-title-wrap">
+                <view v-if="msg.unread" class="unread-dot"></view>
+                <text class="message-title">{{ msg.title }}</text>
+              </view>
               <text class="message-time">{{ msg.time }}</text>
             </view>
 
@@ -80,8 +95,8 @@
               </view>
             </view>
 
-            <!-- 底部标签 -->
-            <view class="message-footer" v-if="msg.tag || msg.type === 'chat'">
+            <view class="message-footer">
+              <view class="type-chip" :class="msg.type">{{ getTypeLabel(msg.type) }}</view>
               <view class="tag-item" v-if="msg.tag">
                 {{ msg.tag }}
               </view>
@@ -91,14 +106,12 @@
             </view>
           </view>
 
-          <!-- 右侧操作 -->
           <view class="message-right" @click.stop>
-            <text class="delete-btn" @click="deleteMessage(msg)">×</text>
+            <view class="delete-btn" @click="deleteMessage(msg)">×</view>
           </view>
         </view>
       </view>
 
-      <!-- 加载状态 -->
       <view class="load-more" v-if="messages.length > 0">
         <view class="load-text" v-if="loading">加载中...</view>
         <view class="load-text" v-else-if="!hasMore">没有更多了</view>
@@ -111,7 +124,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/modules/user'
-import { notificationApi, chatApi } from '@/api'
+import { notificationApi } from '@/api'
+import { conversationApi } from '@/api/modules/conversation'
 import { navigate, paths, toOrderDetail } from '@/utils/router'
 
 // 用户store
@@ -129,6 +143,9 @@ const filters = ref([
 // 当前筛选
 const selectedFilter = ref('all')
 
+// 全量消息列表
+const allMessages = ref([])
+
 // 消息列表
 const messages = ref([])
 
@@ -143,13 +160,162 @@ const pageSize = ref(20)
 
 // 是否有未读消息
 const hasUnread = computed(() => {
-  return messages.value.some(msg => msg.unread)
+  return allMessages.value.some(msg => msg.unread)
 })
 
-/**
- * 获取消息图标
- */
-const getIcon = (type) => {
+const unreadCount = computed(() => {
+  return allMessages.value.filter(msg => msg.unread).length
+})
+
+const totalCount = computed(() => allMessages.value.length)
+
+const activeFilterLabel = computed(() => {
+  const current = filters.value.find(item => item.value === selectedFilter.value)
+  return current?.label || '全部'
+})
+
+const resolveUserId = () => {
+  const cachedUserInfo = uni.getStorageSync('userInfo') || {}
+  return userStore.userInfo?.userId || userStore.userId || cachedUserInfo.userId || uni.getStorageSync('userId') || ''
+}
+
+const normalizeMessageType = (type) => {
+  if (type === 'promotion') {
+    return 'activity'
+  }
+
+  return type || 'system'
+}
+
+const isDisplayableAvatar = (avatar) => {
+  return typeof avatar === 'string' && /^(https?:\/\/|\/|data:)/.test(avatar)
+}
+
+const resolveUnread = (item = {}) => {
+  if (typeof item.readStatus === 'boolean') {
+    return !item.readStatus
+  }
+
+  if (typeof item.isRead === 'boolean') {
+    return !item.isRead
+  }
+
+  return item.status === 'unread'
+}
+
+const resolveSortTime = (value, fallback = 0) => {
+  if (!value) return fallback
+
+  const timestamp = new Date(value).getTime()
+  return Number.isNaN(timestamp) ? fallback : timestamp
+}
+
+const resolveConversationSortTime = (conversation, index) => {
+  const directTimestamp = resolveSortTime(
+    conversation.lastMessageTime || conversation.updateTime || conversation.createTime,
+    0
+  )
+  if (directTimestamp > 0) {
+    return directTimestamp
+  }
+
+  if (typeof conversation.time === 'string' && /^\d{2}:\d{2}$/.test(conversation.time)) {
+    const [hours, minutes] = conversation.time.split(':').map(Number)
+    const now = new Date()
+    const target = new Date(now)
+    target.setHours(hours, minutes, 0, 0)
+    if (target.getTime() > now.getTime() + 5 * 60 * 1000) {
+      target.setDate(target.getDate() - 1)
+    }
+    return target.getTime()
+  }
+
+  return Date.now() - index
+}
+
+const extractNotificationList = (data) => {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  if (Array.isArray(data?.records)) {
+    return data.records
+  }
+
+  if (Array.isArray(data?.list)) {
+    return data.list
+  }
+
+  return []
+}
+
+const mapNotificationMessage = (notif, index) => {
+  const rawId = notif.notificationId || notif.id
+  const sortTime = resolveSortTime(
+    notif.sendTime || notif.createTime || notif.createdAt,
+    Date.now() - 100000 - index
+  )
+  const type = normalizeMessageType(notif.type)
+
+  return {
+    id: `notification-${rawId}`,
+    rawId,
+    source: 'notification',
+    type,
+    unread: resolveUnread(notif),
+    title: notif.title || '通知消息',
+    content: notif.content || '',
+    avatar: isDisplayableAvatar(notif.avatar) ? notif.avatar : '',
+    time: formatTime(sortTime),
+    tag: notif.tag || '',
+    orderStatus: notif.orderStatus || '',
+    orderId: notif.targetId || notif.orderId || '',
+    merchantId: notif.merchantId || notif.senderId || '',
+    lastMessage: notif.lastMessage || '',
+    targetType: notif.targetType || '',
+    sortTime
+  }
+}
+
+const mapConversationMessage = (conversation, index) => {
+  const conversationId = conversation.conversationId || conversation.sessionId || conversation.id
+  const lastMessage = typeof conversation.lastMessage === 'string'
+    ? conversation.lastMessage
+    : (conversation.lastMessage?.content || '')
+
+  return {
+    id: `conversation-${conversationId}`,
+    rawId: conversationId,
+    source: 'conversation',
+    type: 'chat',
+    unread: Number(conversation.unreadCount || 0) > 0,
+    title: conversation.name || conversation.sessionName || '聊天消息',
+    content: lastMessage || '暂无消息',
+    avatar: isDisplayableAvatar(conversation.avatar) ? conversation.avatar : '',
+    time: conversation.time || formatTime(resolveConversationSortTime(conversation, index)),
+    tag: '',
+    orderStatus: '',
+    orderId: '',
+    merchantId: conversation.targetId || conversation.targetUserId || '',
+    targetId: conversation.targetId || conversation.targetUserId || '',
+    lastMessage,
+    targetType: 'chat',
+    conversationId,
+    sortTime: resolveConversationSortTime(conversation, index)
+  }
+}
+
+const applyCurrentFilter = () => {
+  const filteredMessages = selectedFilter.value === 'all'
+    ? allMessages.value
+    : allMessages.value.filter(item => item.type === selectedFilter.value)
+
+  const endIndex = page.value * pageSize.value
+  messages.value = filteredMessages.slice(0, endIndex)
+  hasMore.value = filteredMessages.length > endIndex
+}
+
+const getIconGlyph = (type) => {
   const icons = {
     system: '📢',
     order: '📦',
@@ -159,78 +325,67 @@ const getIcon = (type) => {
   return icons[type] || '📄'
 }
 
+const getTypeLabel = (type) => {
+  const labels = {
+    system: '系统',
+    order: '订单',
+    chat: '聊天',
+    activity: '活动'
+  }
+  return labels[type] || '消息'
+}
+
 /**
  * 切换筛选
  */
 const changeFilter = (value) => {
   selectedFilter.value = value
   page.value = 1
-  messages.value = []
-  loadMessages()
+  applyCurrentFilter()
 }
 
 /**
  * 加载消息列表
  */
 const loadMessages = async (showLoading = true) => {
-  // 登录检查
-  if (!userStore.checkLogin()) {
-    return
-  }
-
   if (showLoading) {
     loading.value = true
   }
 
   try {
-    const params = {
-      userId: userStore.userInfo?.userId,
-      page: page.value,
-      size: pageSize.value
+    const userId = resolveUserId()
+    if (!userId) {
+      allMessages.value = []
+      page.value = 1
+      applyCurrentFilter()
+      updateCounts()
+      return
     }
 
-    // 根据筛选条件添加类型参数
-    if (selectedFilter.value !== 'all') {
-      params.type = selectedFilter.value
+    const [notificationResult, conversationResult] = await Promise.allSettled([
+      notificationApi.getList({ userId, page: 1, size: 200 }),
+      conversationApi.getList(userId)
+    ])
+
+    const notifications = notificationResult.status === 'fulfilled'
+      ? extractNotificationList(notificationResult.value?.data)
+      : []
+    const conversations = conversationResult.status === 'fulfilled'
+      ? (conversationResult.value?.data || [])
+      : []
+
+    if (notificationResult.status === 'rejected' && conversationResult.status === 'rejected') {
+      throw notificationResult.reason || conversationResult.reason
     }
 
-    const res = await notificationApi.getList(params)
+    const mergedMessages = [
+      ...conversations.map((conversation, index) => mapConversationMessage(conversation, index)),
+      ...notifications.map((notif, index) => mapNotificationMessage(notif, index))
+    ].sort((a, b) => b.sortTime - a.sortTime)
 
-    if (res.code === 200 && res.data) {
-      const notificationList = res.data.records || res.data.list || []
-
-      // 映射数据格式
-      const mappedMessages = notificationList.map(notif => ({
-        id: notif.notificationId || notif.id,
-        type: notif.type || 'system',
-        unread: notif.status === 'unread',
-        title: notif.title,
-        content: notif.content,
-        avatar: notif.avatar || '',
-        time: formatTime(notif.createTime || notif.createdAt),
-        tag: notif.tag || '',
-        // 订单相关字段
-        orderStatus: notif.orderStatus || '',
-        orderId: notif.targetId || notif.orderId,
-        // 聊天相关字段
-        merchantId: notif.merchantId || notif.senderId,
-        lastMessage: notif.lastMessage || '',
-        // 目标类型
-        targetType: notif.targetType
-      }))
-
-      if (page.value === 1) {
-        messages.value = mappedMessages
-      } else {
-        messages.value.push(...mappedMessages)
-      }
-
-      // 判断是否还有更多数据
-      hasMore.value = notificationList.length >= pageSize.value
-
-      // 更新筛选数量
-      await updateCounts()
-    }
+    allMessages.value = mergedMessages
+    applyCurrentFilter()
+    updateCounts()
   } catch (error) {
     console.error('加载消息列表失败:', error)
     uni.showToast({
@@ -275,55 +430,26 @@ const formatTime = (time) => {
   return `${month}月${date}日`
 }
 
-/**
- * 获取通知图标
- */
-const getNotificationIcon = (type) => {
-  const icons = {
-    system: '📢',
-    order: '📦',
-    chat: '💬',
-    activity: '🎉'
+const updateCounts = () => {
+  const unreadMessages = allMessages.value.filter(item => item.unread)
+  const typeCounts = {
+    system: 0,
+    order: 0,
+    chat: 0,
+    activity: 0
   }
-  return icons[type] || '📄'
-}
 
-/**
- * 更新各类型消息数量
- */
-const updateCounts = async () => {
-  try {
-    // 获取未读总数
-    const unreadRes = await notificationApi.getUnreadCount({
-      userId: userStore.userInfo?.userId
-    })
-
-    if (unreadRes.code === 200) {
-      const totalUnread = unreadRes.data || 0
-      filters.value[0].count = totalUnread
+  unreadMessages.forEach((msg) => {
+    if (typeCounts[msg.type] !== undefined) {
+      typeCounts[msg.type]++
     }
+  })
 
-    // 统计当前列表中各类型的未读数
-    const typeCounts = {
-      system: 0,
-      order: 0,
-      chat: 0,
-      activity: 0
-    }
-
-    messages.value.forEach(msg => {
-      if (msg.unread && typeCounts[msg.type] !== undefined) {
-        typeCounts[msg.type]++
-      }
-    })
-
-    filters.value[1].count = typeCounts.system
-    filters.value[2].count = typeCounts.order
-    filters.value[3].count = typeCounts.chat
-    filters.value[4].count = typeCounts.activity
-  } catch (error) {
-    console.error('更新消息数量失败:', error)
-  }
+  filters.value[0].count = unreadMessages.length
+  filters.value[1].count = typeCounts.system
+  filters.value[2].count = typeCounts.order
+  filters.value[3].count = typeCounts.chat
+  filters.value[4].count = typeCounts.activity
 }
 
 /**
@@ -342,7 +468,7 @@ const onRefresh = async () => {
 const onLoadMore = () => {
   if (loading.value || !hasMore.value) return
   page.value++
-  loadMessages()
+  applyCurrentFilter()
 }
 
 /**
@@ -352,7 +478,7 @@ const viewMessage = async (msg) => {
   const openMessageTarget = () => {
     if (msg.type === 'chat') {
       navigate(paths.COMMON.CHAT_ROOM, {
-        merchantId: msg.merchantId || '',
+        merchantId: msg.targetId || msg.merchantId || '',
         userName: msg.title || '',
         userAvatar: msg.avatar || ''
       })
@@ -374,11 +500,13 @@ const viewMessage = async (msg) => {
   try {
     // 标记为已读
     if (msg.unread) {
-      await notificationApi.markAsRead(msg.id, {
-        userId: userStore.userInfo?.userId
-      })
+      if (msg.source === 'conversation') {
+        await conversationApi.markRead(msg.conversationId)
+      } else {
+        await notificationApi.markAsRead(msg.rawId)
+      }
       msg.unread = false
-      await updateCounts()
+      updateCounts()
     }
 
     // 跳转到详情页
@@ -394,15 +522,29 @@ const viewMessage = async (msg) => {
  */
 const markAllRead = async () => {
   try {
-    await notificationApi.markAllAsRead({
-      userId: userStore.userInfo?.userId
-    })
+    const userId = resolveUserId()
+    const unreadNotificationIds = allMessages.value
+      .filter(msg => msg.source === 'notification' && msg.unread)
+      .map(msg => msg.rawId)
+    const unreadConversationIds = allMessages.value
+      .filter(msg => msg.source === 'conversation' && msg.unread)
+      .map(msg => msg.conversationId)
+
+    await Promise.all([
+      unreadNotificationIds.length > 0
+        ? notificationApi.markAllAsRead({ userId })
+        : Promise.resolve(),
+      ...unreadConversationIds.map(id => conversationApi.markRead(id))
+    ])
 
     // 更新本地状态
     messages.value.forEach(msg => {
       msg.unread = false
     })
-    await updateCounts()
+    allMessages.value.forEach(msg => {
+      msg.unread = false
+    })
+    updateCounts()
 
     uni.showToast({
       title: '已全部标记为已读',
@@ -422,16 +564,16 @@ const markAllRead = async () => {
  */
 const deleteMessage = async (msg) => {
   try {
-    await notificationApi.delete(msg.id, {
-      userId: userStore.userInfo?.userId
-    })
+    if (msg.source === 'conversation') {
+      await conversationApi.delete(msg.conversationId)
+    } else {
+      await notificationApi.delete(msg.rawId)
+    }
 
     // 从列表中移除
-    const index = messages.value.findIndex(item => item.id === msg.id)
-    if (index > -1) {
-      messages.value.splice(index, 1)
-      await updateCounts()
-    }
+    allMessages.value = allMessages.value.filter(item => item.id !== msg.id)
+    applyCurrentFilter()
+    updateCounts()
 
     uni.showToast({
       title: '删除成功',
@@ -450,7 +592,7 @@ const deleteMessage = async (msg) => {
  * 删除已读
  */
 const deleteRead = async () => {
-  const readMessages = messages.value.filter(msg => !msg.unread)
+  const readMessages = allMessages.value.filter(msg => !msg.unread)
 
   if (readMessages.length === 0) {
     uni.showToast({
@@ -467,17 +609,28 @@ const deleteRead = async () => {
     success: async (res) => {
       if (res.confirm) {
         try {
-          // 获取已读消息的ID列表
-          const readIds = readMessages.map(msg => msg.id)
+          const readNotificationIds = readMessages
+            .filter(msg => msg.source === 'notification')
+            .map(msg => msg.rawId)
+          const readConversationIds = readMessages
+            .filter(msg => msg.source === 'conversation')
+            .map(msg => msg.conversationId)
 
-          await notificationApi.batchDelete({
-            userId: userStore.userInfo?.userId,
-            ids: readIds
-          })
+          await Promise.all([
+            readNotificationIds.length > 0
+              ? notificationApi.batchDelete({
+                  userId: resolveUserId(),
+                  ids: readNotificationIds
+                })
+              : Promise.resolve(),
+            ...readConversationIds.map(id => conversationApi.delete(id))
+          ])
 
           // 更新本地状态
-          messages.value = messages.value.filter(msg => msg.unread)
-          await updateCounts()
+          allMessages.value = allMessages.value.filter(msg => msg.unread)
+          page.value = 1
+          applyCurrentFilter()
+          updateCounts()
 
           uni.showToast({
             title: '删除成功',
@@ -507,133 +660,236 @@ onMounted(() => {
 
 .message-container {
   min-height: 100vh;
-  background-color: $bg-color-base;
+  background: linear-gradient(180deg, #fff7f2 0%, #f6f7fb 34%, #f6f7fb 100%);
   display: flex;
   flex-direction: column;
+  padding: 24rpx 24rpx 0;
+  box-sizing: border-box;
 }
 
-/* 顶部操作栏 */
-.top-bar {
-  @include flex-between;
-  padding: $spacing-md;
-  background-color: $bg-color-white;
-  box-shadow: $box-shadow-sm;
+.overview-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 30rpx;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8b5d 100%);
+  border-radius: 28rpx;
+  box-shadow: 0 18rpx 38rpx rgba(255, 107, 53, 0.2);
+  color: #fff;
 }
 
-.mark-read-btn {
-  color: $primary-color;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+.overview-main {
+  flex: 1;
+  min-width: 0;
+}
 
-  &:active {
-    opacity: 0.6;
+.overview-kicker {
+  display: block;
+  font-size: 24rpx;
+  opacity: 0.86;
+}
+
+.overview-title-row {
+  display: flex;
+  align-items: baseline;
+  margin-top: 10rpx;
+}
+
+.overview-number {
+  font-size: 64rpx;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.overview-unit {
+  margin-left: 10rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.overview-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  opacity: 0.86;
+  @include text-ellipsis;
+}
+
+.overview-actions {
+  width: 148rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  flex-shrink: 0;
+}
+
+.overview-action {
+  height: 58rpx;
+  line-height: 58rpx;
+  padding: 0;
+  margin: 0;
+  border-radius: 999rpx;
+  font-size: 23rpx;
+  font-weight: 600;
+  border: 0;
+
+  &::after {
+    border: 0;
+  }
+
+  &.primary {
+    color: $primary-color;
+    background: #fff;
+  }
+
+  &.ghost {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1rpx solid rgba(255, 255, 255, 0.4);
+  }
+
+  &.disabled {
+    color: rgba(255, 107, 53, 0.45);
   }
 }
 
-.delete-read-btn {
-  color: $text-color-secondary;
-  font-size: $font-size-sm;
-
-  &:active {
-    opacity: 0.6;
-  }
-}
-
-/* 筛选栏 */
 .filter-bar {
-  background-color: $bg-color-white;
-  border-bottom: 1rpx solid $border-color-lighter;
+  margin: 22rpx -24rpx 0;
+  padding: 0 0 20rpx;
 }
 
 .filter-scroll {
-  @include flex-center;
   white-space: nowrap;
-  padding: $spacing-md;
+  padding: 0 24rpx;
+  box-sizing: border-box;
 }
 
 .filter-item {
-  position: relative;
-  padding: $spacing-sm $spacing-md;
-  margin-right: $spacing-sm;
-  @include flex-center;
-  gap: $spacing-xs;
-  flex-shrink: 0;
-  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  height: 62rpx;
+  padding: 0 24rpx;
+  margin-right: 14rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  border: 1rpx solid #eeeeee;
+  box-shadow: 0 8rpx 18rpx rgba(31, 35, 41, 0.04);
+  transition: all 0.2s ease;
 
   &.active {
-    .filter-text {
-      color: $primary-color;
-      font-weight: $font-weight-bold;
+    background: #2f2f32;
+    border-color: #2f2f32;
+    box-shadow: 0 12rpx 24rpx rgba(47, 47, 50, 0.16);
+
+    .filter-text,
+    .filter-count {
+      color: #fff;
     }
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
   }
 }
 
 .filter-text {
-  font-size: $font-size-base;
-  color: $text-color-regular;
+  font-size: 26rpx;
+  color: $text-color-primary;
+  font-weight: 600;
 }
 
-.filter-badge {
-  min-width: 32rpx;
-  height: 32rpx;
-  @include flex-center;
-  padding: 0 8rpx;
-  background-color: $danger-color;
-  border-radius: $border-radius-round;
-  font-size: $font-size-xs;
-  color: #fff;
-  font-weight: $font-weight-bold;
+.filter-count {
+  margin-left: 10rpx;
+  font-size: 22rpx;
+  color: $text-color-secondary;
 }
 
-/* 滚动容器 */
 .scroll-container {
   flex: 1;
-  height: calc(100vh - 200rpx);
+  height: 0;
+  min-height: 0;
+  margin: 0 -24rpx;
 }
 
-/* 空状态 */
 .empty-state {
-  @include flex-center-column;
-  padding: 200rpx $spacing-lg;
+  @include flex-center;
+  flex-direction: column;
+  min-height: 650rpx;
+  padding: 72rpx 48rpx 140rpx;
+  text-align: center;
+  box-sizing: border-box;
+}
 
-  .empty-icon {
-    font-size: 120rpx;
-    margin-bottom: $spacing-lg;
-    opacity: 0.5;
+.empty-illustration {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 28rpx;
+  border-radius: 48rpx;
+  background: #fff;
+  @include flex-center;
+  box-shadow: 0 18rpx 42rpx rgba(37, 42, 49, 0.08);
+}
+
+.empty-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 72rpx;
+}
+
+.empty-bubble {
+  position: absolute;
+  border-radius: 999rpx;
+  background: rgba(255, 107, 53, 0.12);
+
+  &.large {
+    width: 58rpx;
+    height: 58rpx;
+    top: 20rpx;
+    right: 22rpx;
   }
 
-  .empty-text {
-    font-size: $font-size-lg;
-    color: $text-color-primary;
-    margin-bottom: $spacing-sm;
-  }
-
-  .empty-tips {
-    font-size: $font-size-sm;
-    color: $text-color-secondary;
+  &.small {
+    width: 28rpx;
+    height: 28rpx;
+    left: 28rpx;
+    bottom: 26rpx;
   }
 }
 
-/* 消息列表 */
+.empty-text {
+  font-size: 34rpx;
+  line-height: 1.4;
+  color: $text-color-primary;
+  font-weight: 700;
+  margin-bottom: 10rpx;
+}
+
+.empty-tips {
+  font-size: 25rpx;
+  line-height: 1.6;
+  color: $text-color-secondary;
+}
+
 .message-list {
-  padding: $spacing-md;
+  padding: 4rpx 24rpx 28rpx;
 }
 
 .message-item {
-  @include flex-center;
-  background-color: $bg-color-white;
-  border-radius: $border-radius-lg;
-  padding: $spacing-md;
-  margin-bottom: $spacing-md;
-  box-shadow: $box-shadow-sm;
-  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  padding: 24rpx 20rpx;
+  margin-bottom: 18rpx;
+  background: #fff;
+  border-radius: 22rpx;
+  border: 1rpx solid rgba(232, 232, 232, 0.9);
+  box-shadow: 0 10rpx 26rpx rgba(31, 35, 41, 0.05);
+  transition: all 0.2s ease;
 
   &.unread {
-    background-color: rgba(255, 107, 53, 0.03);
+    border-color: rgba(255, 107, 53, 0.25);
+    box-shadow: 0 12rpx 30rpx rgba(255, 107, 53, 0.09);
   }
 
   &:active {
@@ -643,15 +899,15 @@ onMounted(() => {
 
 .message-left {
   flex-shrink: 0;
-  margin-right: $spacing-md;
+  margin-right: 20rpx;
 }
 
 .avatar-wrapper {
   position: relative;
-  width: 96rpx;
-  height: 96rpx;
+  width: 82rpx;
+  height: 82rpx;
   @include flex-center;
-  border-radius: $border-radius-lg;
+  border-radius: 24rpx;
   background-color: $bg-color-base;
 
   &.system {
@@ -674,87 +930,132 @@ onMounted(() => {
 .avatar-image {
   width: 100%;
   height: 100%;
-  border-radius: $border-radius-lg;
+  border-radius: 24rpx;
 }
 
 .avatar-icon {
-  font-size: 48rpx;
-}
-
-.unread-dot {
-  position: absolute;
-  top: -4rpx;
-  right: -4rpx;
-  width: 16rpx;
-  height: 16rpx;
-  background-color: $danger-color;
-  border-radius: 50%;
-  border: 2rpx solid $bg-color-white;
+  font-size: 34rpx;
+  line-height: 1;
 }
 
 .message-content {
   flex: 1;
   min-width: 0;
-  margin-right: $spacing-sm;
+  margin-right: 12rpx;
 }
 
 .message-header {
-  @include flex-between;
+  display: flex;
   align-items: flex-start;
-  margin-bottom: $spacing-xs;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+  gap: 12rpx;
+}
+
+.message-title-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.unread-dot {
+  width: 12rpx;
+  height: 12rpx;
+  margin-right: 10rpx;
+  background-color: $danger-color;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .message-title {
   flex: 1;
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  min-width: 0;
+  font-size: 29rpx;
+  line-height: 1.35;
+  font-weight: 700;
   color: $text-color-primary;
-  margin-right: $spacing-sm;
   @include text-ellipsis;
 }
 
 .message-time {
   flex-shrink: 0;
-  font-size: $font-size-xs;
+  padding-top: 2rpx;
+  font-size: 22rpx;
   color: $text-color-secondary;
 }
 
 .message-body {
-  margin-bottom: $spacing-xs;
+  margin-bottom: 12rpx;
 }
 
 .message-preview {
-  font-size: $font-size-sm;
+  font-size: 25rpx;
   color: $text-color-regular;
-  line-height: $line-height-base;
+  line-height: 1.55;
   @include text-ellipsis-multiline(2);
 }
 
 .order-info {
-  @include flex-center;
-  gap: $spacing-xs;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 10rpx;
 }
 
 .order-status {
   flex-shrink: 0;
-  padding: 4rpx 12rpx;
+  padding: 5rpx 12rpx;
   background-color: rgba(255, 107, 53, 0.1);
   color: $primary-color;
-  font-size: $font-size-xs;
-  border-radius: $border-radius-sm;
+  font-size: 21rpx;
+  border-radius: 8rpx;
   font-weight: $font-weight-medium;
 }
 
 .order-text {
   flex: 1;
-  font-size: $font-size-sm;
+  min-width: 0;
+  font-size: 25rpx;
   color: $text-color-regular;
   @include text-ellipsis;
 }
 
 .message-footer {
-  @include flex-center;
-  gap: $spacing-xs;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 10rpx;
+}
+
+.type-chip {
+  flex-shrink: 0;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 21rpx;
+  font-weight: 600;
+  color: $text-color-secondary;
+  background: #f2f3f5;
+
+  &.system {
+    color: #d46b08;
+    background: #fff4e6;
+  }
+
+  &.order {
+    color: #1677c8;
+    background: #eaf5ff;
+  }
+
+  &.chat {
+    color: #288a42;
+    background: #ecf8ef;
+  }
+
+  &.activity {
+    color: #d64c1f;
+    background: #fff0e8;
+  }
 }
 
 .tag-item {
@@ -762,13 +1063,14 @@ onMounted(() => {
   padding: 4rpx 12rpx;
   background-color: rgba(255, 107, 53, 0.1);
   color: $primary-color;
-  font-size: $font-size-xs;
-  border-radius: $border-radius-sm;
+  font-size: 21rpx;
+  border-radius: 999rpx;
 }
 
 .chat-preview {
   flex: 1;
-  font-size: $font-size-xs;
+  min-width: 0;
+  font-size: 22rpx;
   color: $text-color-secondary;
   @include text-ellipsis;
 }
@@ -778,25 +1080,27 @@ onMounted(() => {
 }
 
 .delete-btn {
-  width: 48rpx;
-  height: 48rpx;
+  width: 56rpx;
+  height: 56rpx;
   @include flex-center;
-  font-size: 48rpx;
-  color: $text-color-placeholder;
+  border-radius: 50%;
+  background: #f7f8fa;
+  font-size: 34rpx;
+  line-height: 1;
+  color: #b8b8b8;
 
   &:active {
-    color: $danger-color;
+    background: #fff1f0;
   }
 }
 
-/* 加载状态 */
 .load-more {
   @include flex-center;
-  padding: $spacing-lg 0;
+  padding: 28rpx 0 42rpx;
 }
 
 .load-text {
-  font-size: $font-size-sm;
+  font-size: 24rpx;
   color: $text-color-secondary;
 }
 </style>

@@ -45,6 +45,14 @@ const normalizeListResponse = (response) => {
   }
 }
 
+const createEmptyListResponse = () => ({
+  success: true,
+  code: 200,
+  message: '成功',
+  data: [],
+  list: []
+})
+
 export const conversationApi = {
   /**
    * 获取会话列表
@@ -52,9 +60,15 @@ export const conversationApi = {
    * @param {string} userId - 用户ID
    * @returns {Promise} 返回会话列表
    */
-  getList: (userId) => get(
-    buildUrl(CHAT_API.GET_CONVERSATIONS, { userId })
-  ).then(normalizeListResponse),
+  getList: (userId) => {
+    if (!userId) {
+      return Promise.resolve(createEmptyListResponse())
+    }
+
+    return get(
+      buildUrl(CHAT_API.GET_CONVERSATIONS, { userId })
+    ).then(normalizeListResponse)
+  },
 
   /**
    * 搜索会话

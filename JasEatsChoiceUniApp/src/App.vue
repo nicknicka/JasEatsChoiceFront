@@ -2,7 +2,7 @@
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 import { useUserStore, useLocationStore, useCartStore } from '@/store'
 
-const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV
+const isDev = process.env.NODE_ENV !== 'production'
 
 const logInfo = (...args) => {
   if (isDev) {

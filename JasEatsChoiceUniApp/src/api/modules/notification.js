@@ -47,6 +47,9 @@ export const notificationApi = {
    */
   getNotifications: (params = {}) => {
     const resolved = ensureUserId(params)
+    if (!resolved.userId) {
+      return Promise.resolve(successResponse([]))
+    }
     return get(buildUrl(NOTIFICATION_API.GET_NOTIFICATIONS, { userId: resolved.userId }))
   },
 
@@ -57,6 +60,9 @@ export const notificationApi = {
    */
   getList: (params = {}) => {
     const resolved = ensureUserId(params)
+    if (!resolved.userId) {
+      return Promise.resolve(successResponse([]))
+    }
     return get(buildUrl(NOTIFICATION_API.GET_LIST, { userId: resolved.userId }))
   },
 
@@ -67,7 +73,13 @@ export const notificationApi = {
    * @param {string} params.userId - 用户ID
    * @returns {Promise} 返回未读数量
    */
-  getUnreadCount: (params = {}) => get('/notifications/unread-count', ensureUserId(params)),
+  getUnreadCount: (params = {}) => {
+    const resolved = ensureUserId(params)
+    if (!resolved.userId) {
+      return Promise.resolve(successResponse(0))
+    }
+    return get('/notifications/unread-count', resolved)
+  },
 
   /**
    * 获取通知详情

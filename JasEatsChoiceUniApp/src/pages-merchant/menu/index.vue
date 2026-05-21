@@ -588,7 +588,7 @@ const showMenuActions = () => {
       if (res.tapIndex === 0) {
         // 添加菜单
         uni.navigateTo({
-          url: '/menu/edit'
+          url: '/pages-merchant/menu/edit'
         })
       } else if (res.tapIndex === 1) {
         // 批量上线菜单

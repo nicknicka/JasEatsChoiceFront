@@ -3,7 +3,7 @@
     <!-- 搜索框 -->
     <view class="search-section">
       <view class="search-box">
-        <text class="search-icon">🔍</text>
+        <uni-icons type="search" size="18" color="#999999"></uni-icons>
         <input
           class="search-input"
           type="text"
@@ -64,7 +64,7 @@
           <!-- 空状态 -->
           <view class="empty-state" v-if="searchResults.length === 0">
             <Empty
-              icon="🔍"
+              icon="search"
               text="未找到相关问题"
               description="换个关键词试试"
             />
@@ -80,7 +80,9 @@
             @click="viewFaqDetail(item)"
           >
             <view class="faq-question">
-              <text class="question-icon">❓</text>
+              <view class="question-icon-wrapper">
+                <uni-icons type="help" size="16" color="#FF6B35"></uni-icons>
+              </view>
               <text class="question-text">{{ item.question }}</text>
               <text class="question-arrow">›</text>
             </view>
@@ -102,7 +104,9 @@
           :key="link.id"
           @click="handleQuickLink(link)"
         >
-          <text class="link-icon">{{ link.icon }}</text>
+          <view class="link-icon-wrapper">
+            <uni-icons :type="link.icon" size="22" color="#FF6B35"></uni-icons>
+          </view>
           <text class="link-text">{{ link.name }}</text>
         </view>
       </view>
@@ -111,33 +115,39 @@
     <!-- 联系我们 -->
     <view class="contact-section">
       <view class="section-header">
-        <text class="section-title">联系我们</text>
+        <text class="section-title">更多帮助</text>
       </view>
 
       <view class="contact-list">
-        <view class="contact-item" @click="makePhoneCall">
-          <text class="contact-icon">📞</text>
+        <view class="contact-item" @click="goToFeedback">
+          <view class="contact-icon-wrapper">
+            <uni-icons type="compose" size="20" color="#FF6B35"></uni-icons>
+          </view>
           <view class="contact-info">
-            <text class="contact-title">客服热线</text>
-            <text class="contact-desc">400-123-4567</text>
+            <text class="contact-title">提交问题反馈</text>
+            <text class="contact-desc">通过反馈页提交问题、建议或截图说明</text>
           </view>
           <text class="contact-arrow">›</text>
         </view>
 
         <view class="contact-item" @click="openChat">
-          <text class="contact-icon">💬</text>
+          <view class="contact-icon-wrapper">
+            <uni-icons type="chatbubble-filled" size="20" color="#FF6B35"></uni-icons>
+          </view>
           <view class="contact-info">
-            <text class="contact-title">在线客服</text>
-            <text class="contact-desc">7x24小时在线</text>
+            <text class="contact-title">查看消息中心</text>
+            <text class="contact-desc">订单通知、系统提醒和聊天消息统一查看</text>
           </view>
           <text class="contact-arrow">›</text>
         </view>
 
-        <view class="contact-item" @click="sendEmail">
-          <text class="contact-icon">📧</text>
+        <view class="contact-item" @click="goToAbout">
+          <view class="contact-icon-wrapper">
+            <uni-icons type="info" size="20" color="#FF6B35"></uni-icons>
+          </view>
           <view class="contact-info">
-            <text class="contact-title">邮箱反馈</text>
-            <text class="contact-desc">support@example.com</text>
+            <text class="contact-title">平台与协议说明</text>
+            <text class="contact-desc">查看关于我们、用户协议和隐私说明</text>
           </view>
           <text class="contact-arrow">›</text>
         </view>
@@ -175,6 +185,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store'
 import Empty from '@/components/common/Empty.vue'
 import { feedbackApi } from '@/api'
+import { USER_FEEDBACK, USER_MESSAGE, USER_PROFILE_ABOUT } from '@/constants/routes'
 
 // 用户信息store
 const userStore = useUserStore()
@@ -202,10 +213,10 @@ const categories = [
 
 // 快捷入口
 const quickLinks = [
-  { id: 1, name: '意见反馈', icon: '📝', action: 'feedback' },
-  { id: 2, name: '用户协议', icon: '📄', action: 'agreement' },
-  { id: 3, name: '隐私政策', icon: '🔒', action: 'privacy' },
-  { id: 4, name: '关于我们', icon: 'ℹ️', action: 'about' }
+  { id: 1, name: '意见反馈', icon: 'compose', action: 'feedback' },
+  { id: 2, name: '用户协议', icon: 'document', action: 'agreement' },
+  { id: 3, name: '隐私政策', icon: 'locked', action: 'privacy' },
+  { id: 4, name: '关于我们', icon: 'info', action: 'about' }
 ]
 
 // 搜索结果
@@ -274,7 +285,7 @@ const loadFaqList = async () => {
           id: 6,
           category: 'other',
           question: '如何联系客服？',
-          answer: '您可以通过以下方式联系我们：1. 客服热线：400-123-4567；2. 在线客服：在"我的"页面点击"联系客服"；3. 邮箱：support@example.com'
+          answer: '您可以通过帮助中心进入意见反馈页提交问题，也可以在消息中心查看订单通知和系统提醒。涉及账号或资料问题时，可先前往个人中心编辑资料或查看关于说明。'
         }
       ]
     }
@@ -317,7 +328,7 @@ const loadFaqList = async () => {
         id: 6,
         category: 'other',
         question: '如何联系客服？',
-        answer: '您可以通过以下方式联系我们：1. 客服热线：400-123-4567；2. 在线客服：在"我的"页面点击"联系客服"；3. 邮箱：support@example.com'
+        answer: '您可以通过帮助中心进入意见反馈页提交问题，也可以在消息中心查看订单通知和系统提醒。涉及账号或资料问题时，可先前往个人中心编辑资料或查看关于说明。'
       }
     ]
   }
@@ -388,34 +399,23 @@ const faqNotHelpful = () => {
 const handleQuickLink = (link) => {
   switch (link.action) {
     case 'feedback':
-      uni.navigateTo({
-        url: '/pages-user/feedback/index'
-      })
+      uni.navigateTo({ url: USER_FEEDBACK })
       break
     case 'agreement':
-      uni.navigateTo({
-        url: '/pages-user/profile/about'
-      })
+      uni.navigateTo({ url: USER_PROFILE_ABOUT })
       break
     case 'privacy':
-      uni.navigateTo({
-        url: '/pages-user/profile/about'
-      })
+      uni.navigateTo({ url: USER_PROFILE_ABOUT })
       break
     case 'about':
-      uni.navigateTo({
-        url: '/pages-user/profile/about'
-      })
+      uni.navigateTo({ url: USER_PROFILE_ABOUT })
       break
   }
 }
 
-/**
- * 拨打电话
- */
-const makePhoneCall = () => {
-  uni.makePhoneCall({
-    phoneNumber: '400-123-4567'
+const goToFeedback = () => {
+  uni.navigateTo({
+    url: USER_FEEDBACK
   })
 }
 
@@ -423,24 +423,14 @@ const makePhoneCall = () => {
  * 打开聊天
  */
 const openChat = () => {
-  uni.showToast({
-    title: '在线客服整理中，请先拨打热线',
-    icon: 'none'
+  uni.navigateTo({
+    url: USER_MESSAGE
   })
 }
 
-/**
- * 发送邮件
- */
-const sendEmail = () => {
-  uni.setClipboardData({
-    data: 'support@example.com',
-    success: () => {
-      uni.showToast({
-        title: '邮箱已复制',
-        icon: 'success'
-      })
-    }
+const goToAbout = () => {
+  uni.navigateTo({
+    url: USER_PROFILE_ABOUT
   })
 }
 
@@ -474,15 +464,11 @@ onMounted(() => {
   border-radius: $border-radius-round;
 }
 
-.search-icon {
-  font-size: $font-size-xl;
-  margin-right: $spacing-sm;
-}
-
 .search-input {
   flex: 1;
   font-size: $font-size-base;
   color: $text-color-primary;
+  margin-left: $spacing-sm;
 }
 
 /* 常见问题 */
@@ -563,9 +549,14 @@ onMounted(() => {
   @include flex-center;
 }
 
-.question-icon {
-  font-size: $font-size-xl;
+.question-icon-wrapper {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 16rpx;
+  background-color: #FFF3ED;
+  @include flex-center;
   margin-right: $spacing-sm;
+  flex-shrink: 0;
 }
 
 .question-text {
@@ -621,8 +612,12 @@ onMounted(() => {
   }
 }
 
-.link-icon {
-  font-size: 48rpx;
+.link-icon-wrapper {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 24rpx;
+  background-color: #FFF3ED;
+  @include flex-center;
 }
 
 .link-text {
@@ -656,9 +651,14 @@ onMounted(() => {
   }
 }
 
-.contact-icon {
-  font-size: $font-size-xl;
+.contact-icon-wrapper {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  background-color: #FFF3ED;
+  @include flex-center;
   margin-right: $spacing-md;
+  flex-shrink: 0;
 }
 
 .contact-info {

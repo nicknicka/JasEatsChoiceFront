@@ -4,6 +4,7 @@
  */
 import { get, post, put, del } from '@/utils/request'
 import { CHAT_API, buildUrl } from '../urlEnum'
+import { notificationApi } from './notification'
 
 const getCurrentUserId = () => {
   const userInfo = uni.getStorageSync('userInfo') || {}
@@ -52,6 +53,43 @@ const sumUnreadCount = (sessions = []) => sessions.reduce(
   (total, item) => total + Number(item.unreadCount || 0),
   0
 )
+
+const extractNotificationList = (response) => {
+  if (Array.isArray(response?.data)) {
+    return response.data
+  }
+
+  if (Array.isArray(response?.data?.records)) {
+    return response.data.records
+  }
+
+  if (Array.isArray(response?.data?.list)) {
+    return response.data.list
+  }
+
+  return []
+}
+
+const isUnreadNotification = (item = {}) => {
+  if (typeof item.readStatus === 'boolean') {
+    return !item.readStatus
+  }
+
+  if (typeof item.isRead === 'boolean') {
+    return !item.isRead
+  }
+
+  return item.status === 'unread'
+}
+
+const createUnreadCountResponse = (count = 0) => ({
+  success: true,
+  code: 200,
+  message: '成功',
+  count,
+  total: count,
+  data: count
+})
 
 export const chatApi = {
   /**
@@ -234,19 +272,28 @@ export const chatApi = {
 
   /**
    * 获取未读消息数
-   * 当前后端未提供单独计数接口，改为汇总会话未读数
+   * 当前后端未提供稳定的单独计数接口，改为汇总会话和通知未读数
    * @param {string} userId - 用户ID
    * @returns {Promise}
    */
   getUnreadCount: async (userId = getCurrentUserId()) => {
-    const response = await chatApi.getConversations(userId)
-    const count = sumUnreadCount(response.data)
-    return {
-      ...response,
-      count,
-      total: count,
-      data: count
+    if (!userId) {
+      return createUnreadCountResponse(0)
     }
+
+    const [conversationResult, notificationResult] = await Promise.allSettled([
+      chatApi.getConversations(userId),
+      notificationApi.getList({ userId })
+    ])
+
+    const conversationCount = conversationResult.status === 'fulfilled'
+      ? sumUnreadCount(conversationResult.value?.data || [])
+      : 0
+    const notificationCount = notificationResult.status === 'fulfilled'
+      ? extractNotificationList(notificationResult.value).filter(isUnreadNotification).length
+      : 0
+
+    return createUnreadCountResponse(conversationCount + notificationCount)
   },
 
   /**

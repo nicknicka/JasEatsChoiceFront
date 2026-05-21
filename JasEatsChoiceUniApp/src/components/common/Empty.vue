@@ -1,17 +1,17 @@
 <template>
   <view class="empty-container">
-    <!-- 空状态图标 -->
     <view class="empty-icon-wrapper">
-      <text class="empty-icon">{{ icon }}</text>
+      <uni-icons
+        :type="resolvedIcon.type"
+        :size="40"
+        :color="resolvedIcon.color"
+      ></uni-icons>
     </view>
 
-    <!-- 空状态文字 -->
     <text class="empty-text">{{ text }}</text>
 
-    <!-- 空状态描述 -->
     <text class="empty-desc" v-if="description">{{ description }}</text>
 
-    <!-- 操作按钮 -->
     <button class="empty-btn" v-if="buttonText" @click="handleButtonClick">
       {{ buttonText }}
     </button>
@@ -19,24 +19,50 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
-  // 图标（emoji）
   icon: {
     type: String,
-    default: '📦'
+    default: 'info-filled'
   },
-  // 主标题
   text: {
     type: String,
-    required: true
+    default: '暂无数据'
   },
-  // 描述文字
   description: String,
-  // 按钮文字
   buttonText: String
 })
 
 const emit = defineEmits(['button-click'])
+
+const iconMap = {
+  '📦': { type: 'list', color: '#FF6B35' },
+  '🍽️': { type: 'shop', color: '#FF6B35' },
+  '💭': { type: 'chatbubble', color: '#FF6B35' },
+  '🍜': { type: 'shop', color: '#FF6B35' },
+  '👥': { type: 'staff', color: '#FF6B35' },
+  '🔍': { type: 'search', color: '#FF6B35' },
+  '📬': { type: 'email', color: '#FF6B35' },
+  '💰': { type: 'wallet-filled', color: '#FF6B35' },
+  '💝': { type: 'gift-filled', color: '#FF6B35' },
+  '📋': { type: 'list', color: '#FF6B35' },
+  '💬': { type: 'chatbubble-filled', color: '#FF6B35' },
+  '📝': { type: 'compose', color: '#FF6B35' },
+  '🍳': { type: 'compose', color: '#FF6B35' },
+  '⭐': { type: 'star-filled', color: '#FF6B35' },
+  '🏪': { type: 'shop', color: '#FF6B35' },
+  '📖': { type: 'list', color: '#FF6B35' },
+  '📢': { type: 'notification-filled', color: '#FF6B35' },
+  '💳': { type: 'wallet-filled', color: '#FF6B35' }
+}
+
+const resolvedIcon = computed(() => {
+  return iconMap[props.icon] || {
+    type: props.icon || 'info-filled',
+    color: '#FF6B35'
+  }
+})
 
 /**
  * 按钮点击
@@ -57,12 +83,12 @@ const handleButtonClick = () => {
 }
 
 .empty-icon-wrapper {
-  margin-bottom: $spacing-xl;
-}
-
-.empty-icon {
-  font-size: 140rpx;
-  opacity: 0.6;
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 28rpx;
+  background-color: #FFF3ED;
+  @include flex-center;
+  margin-bottom: $spacing-lg;
 }
 
 .empty-text {

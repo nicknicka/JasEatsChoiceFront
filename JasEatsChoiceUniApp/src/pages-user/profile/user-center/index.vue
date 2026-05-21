@@ -259,7 +259,7 @@ const wallet = ref({
 })
 
 // 未读消息数
-const unreadCount = ref(5)
+const unreadCount = ref(0)
 
 /**
  * 编辑个人资料
@@ -499,6 +499,7 @@ const loadUnreadCount = async () => {
     const userId = userStore.userInfo?.userId || userStore.userInfo?.id
     if (!userId) {
       console.warn('用户ID不存在，跳过加载未读消息数')
+      unreadCount.value = 0
       return
     }
 

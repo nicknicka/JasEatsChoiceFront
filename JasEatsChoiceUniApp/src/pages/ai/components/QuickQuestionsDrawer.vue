@@ -36,9 +36,12 @@
 
 			<!-- 标题栏 -->
 			<view class="drawer-header">
-				<text class="header-title">💬 快捷提问</text>
+				<view class="header-title">
+					<text class="header-mark">问</text>
+					<text>快捷提问</text>
+				</view>
 				<view class="close-btn" @click="handleClose">
-					<text class="close-icon">✕</text>
+					<text class="close-icon">×</text>
 				</view>
 			</view>
 
@@ -51,7 +54,7 @@
 					@click="handleQuestionClick(question)"
 				>
 					<text class="question-text">{{ question }}</text>
-					<text class="question-arrow">→</text>
+					<text class="question-arrow">></text>
 				</view>
 			</scroll-view>
 
@@ -64,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
 /**
  * QuickQuestionsDrawer 组件
@@ -172,7 +175,7 @@ const handleTouchEnd = () => {
 	bottom: 0;
 	left: 0;
 	right: 0;
-	max-height: 60vh;
+	max-height: 55vh;
 	background: $bg-color-white;
 	border-radius: 24rpx 24rpx 0 0;
 	box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.15);
@@ -218,9 +221,19 @@ const handleTouchEnd = () => {
 }
 
 .header-title {
+	display: flex;
+	align-items: center;
+	gap: 10rpx;
 	font-size: $font-size-lg;
 	font-weight: $font-weight-bold;
 	color: $text-color-primary;
+}
+
+.header-mark {
+	font-size: $font-size-sm;
+	color: $primary-500;
+	font-weight: $font-weight-bold;
+	line-height: 1;
 }
 
 .close-btn {
@@ -238,9 +251,9 @@ const handleTouchEnd = () => {
 }
 
 .close-icon {
-	font-size: 32rpx;
+	font-size: 30rpx;
 	color: $text-color-secondary;
-	font-weight: bold;
+	line-height: 1;
 }
 
 /* 问题列表 */
@@ -281,9 +294,10 @@ const handleTouchEnd = () => {
 }
 
 .question-arrow {
-	font-size: $font-size-xl;
+	font-size: $font-size-sm;
 	color: $primary-500;
-	margin-left: $spacing-md;
+	font-weight: $font-weight-bold;
+	line-height: 1;
 }
 
 /* 底部提示 */

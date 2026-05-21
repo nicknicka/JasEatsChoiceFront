@@ -24,6 +24,18 @@ const goBack = () => {
 const tutorials = ref([])
 const loading = ref(false)
 
+const normalizeTutorial = (tutorial = {}) => {
+  return {
+    ...tutorial,
+    sourceType: tutorial.sourceType || tutorial.source_type || '',
+    reviewStatus: tutorial.reviewStatus || tutorial.review_status || '',
+    coverImage: tutorial.coverImage || tutorial.cover_image || '',
+    viewCount: tutorial.viewCount ?? tutorial.view_count ?? tutorial.views ?? 0,
+    ratingCount: tutorial.ratingCount ?? tutorial.rating_count ?? 0,
+    isOfficial: tutorial.isOfficial ?? tutorial.is_official ?? tutorial.official ?? false
+  }
+}
+
 // 筛选条件
 const searchKeyword = ref('')
 const selectedType = ref('all') // all, video, article
@@ -37,10 +49,10 @@ const stats = computed(() => {
     total: all.length,
     video: all.filter(t => t.type === 'video').length,
     article: all.filter(t => t.type === 'article').length,
-    admin: all.filter(t => t.source_type === 'ADMIN').length,
-    merchant: all.filter(t => t.source_type === 'MERCHANT').length,
-    user: all.filter(t => t.source_type === 'USER').length,
-    ai: all.filter(t => t.source_type === 'AI_GENERATED').length
+    admin: all.filter(t => t.sourceType === 'ADMIN').length,
+    merchant: all.filter(t => t.sourceType === 'MERCHANT').length,
+    user: all.filter(t => t.sourceType === 'USER').length,
+    ai: all.filter(t => t.sourceType === 'AI_GENERATED').length
   }
 })
 
@@ -64,7 +76,7 @@ const filteredTutorials = computed(() => {
 
   // 来源过滤
   if (selectedSource.value !== 'all') {
-    result = result.filter(t => t.source_type === selectedSource.value)
+    result = result.filter(t => t.sourceType === selectedSource.value)
   }
 
   // 难度过滤
@@ -79,11 +91,11 @@ const filteredTutorials = computed(() => {
 const fetchTutorials = async () => {
   loading.value = true
   try {
-    const response = await api.get(API_CONFIG.tutorial.list)
+  const response = await api.get(API_CONFIG.tutorial.list)
     if (Array.isArray(response)) {
-      tutorials.value = response
+      tutorials.value = response.map(normalizeTutorial)
     } else if (Array.isArray(response?.data)) {
-      tutorials.value = response.data
+      tutorials.value = response.data.map(normalizeTutorial)
     }
   } catch (error) {
     console.error('加载教程列表失败:', error)
@@ -101,7 +113,7 @@ const getSourceTag = (tutorial) => {
       type: 'danger',
       effect: 'dark',
       icon: '✓',
-      text: tutorial.is_official ? '官方认证' : '管理员'
+      text: tutorial.isOfficial ? '官方认证' : '管理员'
     },
     MERCHANT: {
       type: 'warning',
@@ -116,13 +128,13 @@ const getSourceTag = (tutorial) => {
       text: '用户贡献'
     },
     AI_GENERATED: {
-      type: tutorial.review_status === 'APPROVED' ? 'success' : 'info',
+      type: tutorial.reviewStatus === 'APPROVED' ? 'success' : 'info',
       effect: 'plain',
       icon: '✨',
-      text: `AI生成${tutorial.review_status === 'APPROVED' ? ' ✓ 人工审核' : ''}`
+      text: `AI生成${tutorial.reviewStatus === 'APPROVED' ? ' ✓ 人工审核' : ''}`
     }
   }
-  return sourceMap[tutorial.source_type] || { type: 'info', text: tutorial.source_type }
+  return sourceMap[tutorial.sourceType] || { type: 'info', text: tutorial.sourceType }
 }
 
 // 获取难度名称
@@ -424,7 +436,7 @@ onMounted(() => {
               </span>
               <span class="views">
                 <el-icon><View /></el-icon>
-                {{ tutorial.view_count?.toLocaleString() || 0 }}
+                {{ tutorial.viewCount?.toLocaleString() || 0 }}
               </span>
             </div>
           </div>

@@ -1,7 +1,6 @@
 package com.xx.jaseatschoicejava.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xx.jaseatschoicejava.common.ResponseResult;
 import com.xx.jaseatschoicejava.entity.Dish;
 import com.xx.jaseatschoicejava.entity.Order;
@@ -630,6 +629,9 @@ public class ReviewController {
 
             for (Review review : reviews) {
                 Integer rating = review.getRating();
+                if (rating == null) {
+                    continue;
+                }
                 ratingCounts.put(rating, ratingCounts.getOrDefault(rating, 0L) + 1);
             }
 
@@ -651,20 +653,15 @@ public class ReviewController {
             long unrepliedCount = reviews.size();
 
             if (!reviewIds.isEmpty()) {
-                // 使用原生SQL统计商家回复数（is_additional = 0 或 null）
-                String reviewIdsStr = reviewIds.stream()
-                        .map(id -> "'" + id + "'")
-                        .collect(Collectors.joining(","));
+                LambdaQueryWrapper<ReviewReply> replyWrapper = new LambdaQueryWrapper<>();
+                replyWrapper.in(ReviewReply::getReviewId, reviewIds);
 
-                String sql = "SELECT DISTINCT review_id FROM t_review_reply " +
-                            "WHERE review_id IN (" + reviewIdsStr + ") " +
-                            "AND (is_additional = 0 OR is_additional IS NULL)";
-
-                List<Map<String, Object>> merchantReplies = reviewReplyService.listMaps(
-                        new QueryWrapper<ReviewReply>().apply(sql)
-                );
-
-                repliedCount = merchantReplies.size();
+                List<ReviewReply> replies = reviewReplyService.list(replyWrapper);
+                repliedCount = replies.stream()
+                        .filter(reply -> reply.getIsAdditional() == null || reply.getIsAdditional() == 0)
+                        .map(ReviewReply::getReviewId)
+                        .distinct()
+                        .count();
                 unrepliedCount = reviews.size() - repliedCount;
             }
 

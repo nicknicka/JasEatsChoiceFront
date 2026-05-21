@@ -48,6 +48,11 @@ export function getAvatarUrl(avatar) {
     return 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
   }
 
+  // base64 内联图片可直接使用
+  if (avatar.startsWith('data:image')) {
+    return avatar
+  }
+
   // 已经是完整URL，标准化后返回（修正错误端口等）
   if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
     return normalizeImageUrl(avatar)

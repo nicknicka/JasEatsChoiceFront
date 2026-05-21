@@ -77,6 +77,13 @@
       <div class="atlas-map-wrap">
         <div id="mapContainer" class="atlas-map-el"></div>
 
+        <div v-if="mapErrorMessage" class="atlas-map-error">
+          <span class="atlas-map-error-icon">🛰️</span>
+          <p class="atlas-map-error-title">地图暂时不可用</p>
+          <p class="atlas-map-error-text">{{ mapErrorMessage }}</p>
+          <p class="atlas-map-error-hint">你仍可以稍后联网后重新打开，或通过搜索框输入地址再确认。</p>
+        </div>
+
         <div v-if="mapLoading" class="atlas-map-loading">
           <el-icon class="is-loading" :size="28"><Loading /></el-icon>
           <span>地图载入中…</span>
@@ -153,6 +160,7 @@ const dialogVisible = ref(false)
 const map = ref(null)
 const marker = ref(null)
 const mapLoading = ref(false)
+const mapErrorMessage = ref('')
 const locating = ref(false)
 const searchKeyword = ref('')
 const searchResults = ref([])
@@ -203,6 +211,7 @@ watch(dialogVisible, (val) => {
 // 初始化地图
 const initMap = async () => {
   mapLoading.value = true
+  mapErrorMessage.value = ''
 
   try {
     // 动态加载地图 SDK（Electron 兼容）
@@ -259,7 +268,10 @@ const initMap = async () => {
   } catch (error) {
     console.error('地图初始化失败:', error)
     mapLoading.value = false
-    ElMessage.error('地图 SDK 加载失败，请刷新页面重试')
+    mapErrorMessage.value = navigator.onLine
+      ? '在线地图脚本加载失败，请检查是否被网络策略、代理或防火墙拦截。'
+      : '当前设备处于离线状态，高德地图脚本无法加载。'
+    ElMessage.error(mapErrorMessage.value)
   }
 }
 
@@ -948,6 +960,48 @@ onBeforeUnmount(() => {
       font-size: 13px;
       color: @ink-sec;
     }
+  }
+
+  .atlas-map-error {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    text-align: center;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(198, 123, 92, 0.16), transparent 28%),
+      linear-gradient(135deg, rgba(255, 253, 249, 0.96), rgba(246, 243, 237, 0.96));
+  }
+
+  .atlas-map-error-icon {
+    font-size: 34px;
+    margin-bottom: 8px;
+  }
+
+  .atlas-map-error-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: @ink;
+  }
+
+  .atlas-map-error-text {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: @ink-sec;
+  }
+
+  .atlas-map-error-hint {
+    max-width: 360px;
+    margin: 6px 0 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: @ink-muted;
   }
 }
 

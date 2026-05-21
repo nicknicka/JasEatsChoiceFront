@@ -210,8 +210,8 @@ const toggleBusinessStatus = () => {
  * 跳转到订单列表
  */
 const toOrderList = () => {
-  uni.switchTab({
-    url: '/order/index'
+  uni.navigateTo({
+    url: '/pages-merchant/order/index'
   })
 }
 
@@ -219,8 +219,8 @@ const toOrderList = () => {
  * 跳转到菜品管理
  */
 const toDishManage = () => {
-  uni.switchTab({
-    url: '/dish/index'
+  uni.navigateTo({
+    url: '/pages-merchant/dish/index'
   })
 }
 
@@ -229,7 +229,7 @@ const toDishManage = () => {
  */
 const toStatistics = () => {
   uni.navigateTo({
-    url: '/home/statistics'
+    url: '/pages-merchant/home/statistics'
   })
 }
 
@@ -238,7 +238,7 @@ const toStatistics = () => {
  */
 const toComment = () => {
   uni.navigateTo({
-    url: '/comment/index'
+    url: '/pages-merchant/comment/index'
   })
 }
 </script>

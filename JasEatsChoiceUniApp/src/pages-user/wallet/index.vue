@@ -1,10 +1,14 @@
 <template>
   <view class="wallet-container">
-    <!-- 钱包卡片 -->
     <view class="wallet-card">
       <view class="card-header">
-        <text class="header-title">我的钱包</text>
-        <text class="header-icon">💰</text>
+        <view>
+          <text class="header-title">我的钱包</text>
+          <text class="header-subtitle">余额可用于下单支付，充值与提现记录统一查看</text>
+        </view>
+        <view class="header-icon-wrapper">
+          <uni-icons type="wallet-filled" size="26" color="#FFFFFF"></uni-icons>
+        </view>
       </view>
 
       <view class="balance-section">
@@ -17,24 +21,28 @@
 
       <view class="action-buttons">
         <button class="action-btn primary" @click="recharge">
-          <text class="btn-icon">💵</text>
+          <uni-icons type="plus-filled" size="18" color="#FF6B35"></uni-icons>
           <text>充值</text>
         </button>
         <button class="action-btn outline" @click="withdraw">
-          <text class="btn-icon">🏦</text>
+          <uni-icons type="redo-filled" size="18" color="#FFFFFF"></uni-icons>
           <text>提现</text>
         </button>
       </view>
     </view>
 
-    <!-- 交易记录 -->
     <view class="transactions-section">
       <view class="section-header">
-        <text class="section-title">交易记录</text>
-        <text class="section-more" @click="viewAllTransactions">查看全部 →</text>
+        <view>
+          <text class="section-title">交易记录</text>
+          <text class="section-subtitle">按日期归类查看收入与支出明细</text>
+        </view>
+        <view class="section-more" @click="viewAllTransactions">
+          <text>查看全部</text>
+          <uni-icons type="right" size="14" color="#FF6B35"></uni-icons>
+        </view>
       </view>
 
-      <!-- 筛选Tab -->
       <view class="filter-tabs">
         <view
           class="tab-item"
@@ -68,33 +76,27 @@
         @refresherrefresh="onRefresh"
         @scrolltolower="onLoadMore"
       >
-        <!-- 空状态 -->
         <view class="empty-state" v-if="transactions.length === 0 && !loading">
-          <Empty
-            icon="💳"
-            text="还没有交易记录"
-            description="充值或消费后会显示在这里"
-          />
+          <view class="empty-icon-wrapper">
+            <uni-icons type="wallet-filled" size="42" color="#FF6B35"></uni-icons>
+          </view>
+          <text class="empty-title">还没有交易记录</text>
+          <text class="empty-desc">充值、消费或退款后会在这里生成明细</text>
         </view>
 
-        <!-- 交易列表 -->
         <view class="transaction-list" v-else>
-          <!-- 日期分组 -->
           <view
             class="date-group"
             v-for="group in groupedTransactions"
             :key="group.date"
           >
-            <!-- 日期标题 -->
             <view class="date-title">
               <text class="date-text">{{ group.dateText }}</text>
               <text class="date-amount">
-                {{ group.income > 0 ? '+' : '' }}{{ group.income }}
-                {{ group.expense > 0 ? '-' : '' }}{{ group.expense }}
+                收入 +{{ formatAmount(group.income) }} / 支出 -{{ formatAmount(group.expense) }}
               </text>
             </view>
 
-            <!-- 交易项 -->
             <view class="transaction-items">
               <view
                 class="transaction-item"
@@ -102,18 +104,15 @@
                 :key="item.id"
                 @click="viewTransactionDetail(item)"
               >
-                <!-- 交易图标 -->
                 <view class="transaction-icon" :class="item.type">
-                  <text class="icon-text">{{ item.icon }}</text>
+                  <uni-icons :type="item.icon" size="22" :color="item.iconColor"></uni-icons>
                 </view>
 
-                <!-- 交易信息 -->
                 <view class="transaction-info">
                   <text class="transaction-name">{{ item.name }}</text>
                   <text class="transaction-time">{{ item.time }}</text>
                 </view>
 
-                <!-- 交易金额 -->
                 <view class="transaction-amount" :class="item.type">
                   <text class="amount-text">{{ item.type === 'income' ? '+' : '-' }}{{ item.amount }}</text>
                   <text class="amount-status" v-if="item.status">{{ item.statusText }}</text>
@@ -171,7 +170,7 @@
               :class="{ active: paymentMethod === 'wechat' }"
               @click="selectPaymentMethod('wechat')"
             >
-              <text class="method-icon">💚</text>
+              <uni-icons type="weixin" size="20" color="#07C160"></uni-icons>
               <text class="method-name">微信支付</text>
               <view class="method-check" v-if="paymentMethod === 'wechat'">✓</view>
             </view>
@@ -180,7 +179,7 @@
               :class="{ active: paymentMethod === 'alipay' }"
               @click="selectPaymentMethod('alipay')"
             >
-              <text class="method-icon">💙</text>
+              <text class="method-badge alipay">支</text>
               <text class="method-name">支付宝</text>
               <view class="method-check" v-if="paymentMethod === 'alipay'">✓</view>
             </view>
@@ -232,7 +231,7 @@
               :class="{ active: withdrawMethod === 'wechat' }"
               @click="selectWithdrawMethod('wechat')"
             >
-              <text class="method-icon">💚</text>
+              <uni-icons type="weixin" size="20" color="#07C160"></uni-icons>
               <text class="method-name">微信零钱</text>
               <view class="method-check" v-if="withdrawMethod === 'wechat'">✓</view>
             </view>
@@ -241,7 +240,7 @@
               :class="{ active: withdrawMethod === 'alipay' }"
               @click="selectWithdrawMethod('alipay')"
             >
-              <text class="method-icon">💙</text>
+              <text class="method-badge alipay">支</text>
               <text class="method-name">支付宝</text>
               <view class="method-check" v-if="withdrawMethod === 'alipay'">✓</view>
             </view>
@@ -259,7 +258,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store'
-import Empty from '@/components/common/Empty.vue'
 import { walletApi } from '@/api'
 
 // 用户信息store
@@ -328,11 +326,11 @@ const resolveTransactionType = (type) => {
 
 const resolveTransactionMeta = (type) => {
   const map = {
-    recharge: { icon: '💰', name: '账户充值' },
-    consume: { icon: '🛒', name: '订单消费' },
-    withdraw: { icon: '🏦', name: '余额提现' },
-    refund: { icon: '↩️', name: '订单退款' },
-    other: { icon: '💳', name: '交易' }
+    recharge: { icon: 'wallet-filled', iconColor: '#67C23A', name: '账户充值' },
+    consume: { icon: 'cart-filled', iconColor: '#FF6B35', name: '订单消费' },
+    withdraw: { icon: 'redo-filled', iconColor: '#E6A23C', name: '余额提现' },
+    refund: { icon: 'undo-filled', iconColor: '#409EFF', name: '订单退款' },
+    other: { icon: 'list', iconColor: '#909399', name: '交易' }
   }
 
   return map[type] || map.other
@@ -349,18 +347,20 @@ const resolveTransactionStatusText = (status) => {
 const normalizeWalletTransaction = (record) => {
   const meta = resolveTransactionMeta(record?.type)
   const amount = Number(record?.amount || 0)
-  const isIncome = record?.type === 'recharge'
+  const rawTime = record?.createTime || record?.time
+  const timestamp = new Date(rawTime).getTime()
 
   return {
     id: record?.id || `${record?.type}-${Date.now()}-${Math.random()}`,
     type: resolveTransactionType(record?.type || 'other'),
     icon: meta.icon,
+    iconColor: meta.iconColor,
     name: meta.name,
     amount: Number.isFinite(amount) ? amount : 0,
     status: record?.status,
     statusText: resolveTransactionStatusText(record?.status),
-    time: formatTransactionTime(record?.createTime || record?.time),
-    isIncome
+    time: formatTransactionTime(rawTime),
+    timestamp: Number.isNaN(timestamp) ? Date.now() : timestamp
   }
 }
 
@@ -397,14 +397,10 @@ const balanceParts = computed(() => {
  * 按日期分组交易记录
  */
 const groupedTransactions = computed(() => {
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-
   const groups = {}
 
   transactions.value.forEach(item => {
-    const date = new Date(item.time)
+    const date = new Date(item.timestamp)
     const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 
     if (!groups[dateKey]) {
@@ -823,7 +819,7 @@ const viewAllTransactions = () => {
 const viewTransactionDetail = (item) => {
   uni.showModal({
     title: '交易详情',
-    content: `${getTransactionTypeText(item.type)}\n金额：¥${formatAmount(item.amount)}\n时间：${formatTime(item.createTime)}`,
+    content: `${item.name}\n金额：¥${formatAmount(item.amount)}\n时间：${item.time || '暂无时间'}`,
     showCancel: false
   })
 }
@@ -866,8 +862,19 @@ onMounted(() => {
   color: #fff;
 }
 
-.header-icon {
-  font-size: 48rpx;
+.header-subtitle {
+  display: block;
+  margin-top: $spacing-xs;
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.header-icon-wrapper {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  background-color: rgba(255, 255, 255, 0.16);
+  @include flex-center;
 }
 
 .balance-section {
@@ -927,12 +934,6 @@ onMounted(() => {
     transform: scale(0.98);
   }
 }
-
-.btn-icon {
-  font-size: $font-size-xl;
-}
-
-/* 交易记录 */
 .transactions-section {
   background-color: $bg-color-white;
   margin: 0 $spacing-md;
@@ -953,7 +954,17 @@ onMounted(() => {
   color: $text-color-primary;
 }
 
+.section-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: $font-size-sm;
+  color: $text-color-secondary;
+}
+
 .section-more {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
   font-size: $font-size-sm;
   color: $primary-color;
 
@@ -1001,7 +1012,30 @@ onMounted(() => {
 
 /* 空状态 */
 .empty-state {
-  padding: 80rpx 0;
+  @include flex-center-column;
+  padding: 100rpx 0;
+  text-align: center;
+}
+
+.empty-icon-wrapper {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 28rpx;
+  background-color: #FFF3ED;
+  @include flex-center;
+  margin-bottom: $spacing-lg;
+}
+
+.empty-title {
+  font-size: $font-size-lg;
+  color: $text-color-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-sm;
+}
+
+.empty-desc {
+  font-size: $font-size-sm;
+  color: $text-color-secondary;
 }
 
 /* 交易列表 */
@@ -1066,10 +1100,6 @@ onMounted(() => {
   &.expense {
     background-color: rgba(255, 107, 53, 0.1);
   }
-}
-
-.icon-text {
-  font-size: $font-size-xl;
 }
 
 .transaction-info {
@@ -1254,9 +1284,19 @@ onMounted(() => {
   }
 }
 
-.method-icon {
-  font-size: $font-size-xl;
+.method-badge {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 12rpx;
+  @include flex-center;
   margin-right: $spacing-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+
+  &.alipay {
+    background-color: #1677FF;
+  }
 }
 
 .method-name {

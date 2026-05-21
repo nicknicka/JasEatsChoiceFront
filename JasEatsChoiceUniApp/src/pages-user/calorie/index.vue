@@ -1,13 +1,15 @@
 <template>
   <view class="calorie-container">
-    <!-- 顶部日期选择 -->
     <view class="date-header">
-      <text class="date-arrow" @click="changeDate(-1)">‹</text>
+      <view class="date-arrow" @click="changeDate(-1)">
+        <uni-icons type="left" size="20" color="#666666"></uni-icons>
+      </view>
       <text class="date-text">{{ selectedDateText }}</text>
-      <text class="date-arrow" @click="changeDate(1)">›</text>
+      <view class="date-arrow" @click="changeDate(1)">
+        <uni-icons type="right" size="20" color="#666666"></uni-icons>
+      </view>
     </view>
 
-    <!-- 今日摄入概览 -->
     <view class="overview-card">
       <view class="overview-title">今日摄入概览</view>
       <view class="calorie-circle">
@@ -23,14 +25,15 @@
       <text class="goal-text">目标：{{ calorieGoal }}kcal</text>
     </view>
 
-    <!-- 营养成分卡片 -->
     <view class="nutrition-cards">
       <view
         class="nutrition-item"
         v-for="item in nutritionList"
         :key="item.name"
       >
-        <text class="nutrition-icon">{{ item.icon }}</text>
+        <view class="nutrition-icon-badge" :style="{ backgroundColor: item.bgColor, color: item.color }">
+          <text class="nutrition-icon-text">{{ item.shortLabel }}</text>
+        </view>
         <view class="nutrition-info">
           <text class="nutrition-name">{{ item.name }}</text>
           <text class="nutrition-value">{{ item.current }}/{{ item.target }}{{ item.unit }}</text>
@@ -41,47 +44,45 @@
       </view>
     </view>
 
-    <!-- 快速操作 -->
     <view class="quick-actions">
       <button class="action-btn primary" @click="recordDiet">
-        <text class="btn-icon">📝</text>
+        <uni-icons type="compose" size="18" color="#FFFFFF"></uni-icons>
         <text>记录饮食</text>
       </button>
       <button class="action-btn outline" @click="viewStatistics">
-        <text class="btn-icon">📊</text>
+        <uni-icons type="chartbar" size="18" color="#FF6B35"></uni-icons>
         <text>统计分析</text>
       </button>
     </view>
 
-    <!-- 饮食记录列表 -->
     <view class="records-section">
       <view class="section-header">
         <text class="section-title">今日饮食记录</text>
-        <text class="section-more" @click="viewAllRecords">查看全部 →</text>
+        <view class="section-more" @click="viewAllRecords">
+          <text>查看全部</text>
+          <uni-icons type="right" size="14" color="#999999"></uni-icons>
+        </view>
       </view>
 
-      <!-- 记录列表 -->
       <view class="record-list">
-        <!-- 空状态 -->
         <view class="empty-records" v-if="records.length === 0">
-          <text class="empty-icon">🍽️</text>
+          <view class="empty-icon-wrapper">
+            <uni-icons type="compose" size="34" color="#FF6B35"></uni-icons>
+          </view>
           <text class="empty-text">今天还没有记录</text>
-          <text class="empty-tips">记录每一餐，了解您的饮食习惯</text>
+          <text class="empty-tips">记录每一餐，系统会按日期汇总您的摄入情况</text>
         </view>
 
-        <!-- 记录项 -->
         <view
           class="record-item"
           v-for="record in records"
           :key="record.id"
           @click="viewRecordDetail(record)"
         >
-          <!-- 餐型图标 -->
           <view class="meal-icon" :class="record.mealType">
-            <text class="icon-text">{{ record.mealIcon }}</text>
+            <text class="meal-icon-text">{{ record.mealLabel }}</text>
           </view>
 
-          <!-- 记录内容 -->
           <view class="record-content">
             <text class="record-name">{{ record.name }}</text>
             <view class="record-meta">
@@ -104,10 +105,9 @@
       </view>
     </view>
 
-    <!-- 底部添加按钮 -->
     <view class="bottom-bar">
       <button class="add-btn" @click="recordDiet">
-        <text class="add-icon">➕</text>
+        <uni-icons type="plus-filled" size="18" color="#FFFFFF"></uni-icons>
         <text>记录饮食</text>
       </button>
     </view>
@@ -129,50 +129,39 @@ const selectedDate = ref(new Date())
 const todayCalorie = ref(0)
 const calorieGoal = ref(2000)
 
+const createNutritionItem = (name, shortLabel, current, target, unit, color, percent) => {
+  const safeCurrent = Number(current || 0)
+  const safeTarget = Number(target || 0)
+  const safePercent = typeof percent === 'number'
+    ? percent
+    : (safeTarget > 0 ? Math.round((safeCurrent / safeTarget) * 100) : 0)
+
+  return {
+    name,
+    shortLabel,
+    current: safeCurrent,
+    target: safeTarget,
+    unit,
+    percent: Math.min(Math.max(safePercent, 0), 100),
+    color,
+    bgColor: `${color}1A`
+  }
+}
+
+const createNutritionList = (nutrition = {}) => ([
+  createNutritionItem('蛋白质', '蛋', nutrition.protein, nutrition.proteinTarget || 80, 'g', '#FF6B35', nutrition.proteinPercent),
+  createNutritionItem('碳水化合物', '碳', nutrition.carbs, nutrition.carbsTarget || 300, 'g', '#FFB74D', nutrition.carbsPercent),
+  createNutritionItem('脂肪', '脂', nutrition.fat, nutrition.fatTarget || 60, 'g', '#81C784', nutrition.fatPercent),
+  createNutritionItem('膳食纤维', '纤', nutrition.fiber, nutrition.fiberTarget || 25, 'g', '#64B5F6', nutrition.fiberPercent)
+])
+
 // 卡路里百分比
 const caloriePercent = computed(() => {
   return Math.min((todayCalorie.value / calorieGoal.value) * 100, 100)
 })
 
 // 营养成分列表
-const nutritionList = ref([
-  {
-    name: '蛋白质',
-    icon: '🥩',
-    current: 65,
-    target: 80,
-    unit: 'g',
-    percent: 81,
-    color: '#FF6B35'
-  },
-  {
-    name: '碳水化合物',
-    icon: '🍚',
-    current: 250,
-    target: 300,
-    unit: 'g',
-    percent: 83,
-    color: '#FFB74D'
-  },
-  {
-    name: '脂肪',
-    icon: '🥑',
-    current: 45,
-    target: 60,
-    unit: 'g',
-    percent: 75,
-    color: '#81C784'
-  },
-  {
-    name: '膳食纤维',
-    icon: '🥦',
-    current: 18,
-    target: 25,
-    unit: 'g',
-    percent: 72,
-    color: '#64B5F6'
-  }
-])
+const nutritionList = ref(createNutritionList())
 
 // 饮食记录
 const records = ref([])
@@ -234,8 +223,9 @@ const changeDate = (days) => {
  */
 const loadData = async () => {
   if (!userStore.isLogin) {
-    // 未登录时使用默认数据
     todayCalorie.value = 0
+    calorieGoal.value = 2000
+    nutritionList.value = createNutritionList()
     records.value = []
     return
   }
@@ -244,66 +234,27 @@ const loadData = async () => {
     const userId = userStore.userInfo?.userId || userStore.userInfo?.id
     const dateStr = formatApiDate(selectedDate.value)
 
-    // 调用AI营养分析API
     const res = await aiApi.analyzeNutrition({
       userId,
       date: dateStr
     })
 
     if (res && res.data) {
-      // 更新今日卡路里
       todayCalorie.value = res.data.calories || 0
+      calorieGoal.value = res.data.targetCalories || res.data.calorieGoal || 2000
 
-      // 更新营养成分
       if (res.data.nutrition) {
-        const nutrition = res.data.nutrition
-        nutritionList.value = [
-          {
-            name: '蛋白质',
-            icon: '🥩',
-            current: nutrition.protein || 0,
-            target: nutrition.proteinTarget || 80,
-            unit: 'g',
-            percent: nutrition.proteinPercent || 0,
-            color: '#FF6B35'
-          },
-          {
-            name: '碳水化合物',
-            icon: '🍚',
-            current: nutrition.carbs || 0,
-            target: nutrition.carbsTarget || 300,
-            unit: 'g',
-            percent: nutrition.carbsPercent || 0,
-            color: '#FFB74D'
-          },
-          {
-            name: '脂肪',
-            icon: '🥑',
-            current: nutrition.fat || 0,
-            target: nutrition.fatTarget || 60,
-            unit: 'g',
-            percent: nutrition.fatPercent || 0,
-            color: '#81C784'
-          },
-          {
-            name: '膳食纤维',
-            icon: '🥦',
-            current: nutrition.fiber || 0,
-            target: nutrition.fiberTarget || 25,
-            unit: 'g',
-            percent: nutrition.fiberPercent || 0,
-            color: '#64B5F6'
-          }
-        ]
+        nutritionList.value = createNutritionList(res.data.nutrition)
+      } else {
+        nutritionList.value = createNutritionList()
       }
 
-      // 更新饮食记录
       if (res.data.records && res.data.records.length > 0) {
         records.value = res.data.records.map(record => ({
           id: record.id,
           name: record.name,
           mealType: record.mealType,
-          mealIcon: getMealIcon(record.mealType),
+          mealLabel: getMealLabel(record.mealType),
           calorie: record.calories,
           time: formatRecordTime(record.time),
           foods: record.foods || []
@@ -312,14 +263,16 @@ const loadData = async () => {
         records.value = []
       }
     } else {
-      // API返回空数据时使用默认值
       todayCalorie.value = 0
+      calorieGoal.value = 2000
+      nutritionList.value = createNutritionList()
       records.value = []
     }
   } catch (error) {
     console.error('加载营养数据失败:', error)
-    // 使用默认数据
     todayCalorie.value = 0
+    calorieGoal.value = 2000
+    nutritionList.value = createNutritionList()
     records.value = []
   }
 }
@@ -335,16 +288,16 @@ const formatApiDate = (date) => {
 }
 
 /**
- * 获取餐型图标
+ * 获取餐型标签
  */
-const getMealIcon = (mealType) => {
-  const icons = {
-    'breakfast': '🌅',
-    'lunch': '☀️',
-    'dinner': '🌙',
-    'snack': '🍎'
+const getMealLabel = (mealType) => {
+  const labels = {
+    breakfast: '早',
+    lunch: '午',
+    dinner: '晚',
+    snack: '加'
   }
-  return icons[mealType] || '🍽️'
+  return labels[mealType] || '餐'
 }
 
 /**
@@ -390,7 +343,7 @@ const viewAllRecords = () => {
  */
 const viewRecordDetail = (record) => {
   uni.navigateTo({
-    url: `/pages/calorie/record/detail/index?id=${record.id}`
+    url: '/pages-user/calorie/record'
   })
 }
 
@@ -422,8 +375,6 @@ onMounted(() => {
   width: 60rpx;
   height: 60rpx;
   @include flex-center;
-  font-size: 48rpx;
-  color: $text-color-regular;
   margin: 0 $spacing-xl;
 
   &:active {
@@ -529,8 +480,17 @@ onMounted(() => {
   gap: $spacing-sm;
 }
 
-.nutrition-icon {
-  font-size: $font-size-xl;
+.nutrition-icon-badge {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 20rpx;
+  @include flex-center;
+  flex-shrink: 0;
+}
+
+.nutrition-icon-text {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
 }
 
 .nutrition-info {
@@ -591,10 +551,6 @@ onMounted(() => {
   }
 }
 
-.btn-icon {
-  font-size: $font-size-xl;
-}
-
 /* 记录部分 */
 .records-section {
   background-color: $bg-color-white;
@@ -617,8 +573,11 @@ onMounted(() => {
 }
 
 .section-more {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
   font-size: $font-size-sm;
-  color: $primary-color;
+  color: $text-color-secondary;
 
   &:active {
     opacity: 0.6;
@@ -636,10 +595,13 @@ onMounted(() => {
   text-align: center;
 }
 
-.empty-icon {
-  font-size: 120rpx;
-  margin-bottom: $spacing-md;
-  opacity: 0.5;
+.empty-icon-wrapper {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 28rpx;
+  background-color: #FFF3ED;
+  @include flex-center;
+  margin-bottom: $spacing-lg;
 }
 
 .empty-text {
@@ -688,8 +650,10 @@ onMounted(() => {
   }
 }
 
-.icon-text {
-  font-size: 48rpx;
+.meal-icon-text {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
 }
 
 .record-content {
@@ -762,10 +726,6 @@ onMounted(() => {
 
   &:active {
     transform: scale(0.98);
-  }
-
-  .add-icon {
-    font-size: $font-size-xl;
   }
 }
 </style>

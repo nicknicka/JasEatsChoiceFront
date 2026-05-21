@@ -1,7 +1,9 @@
 <template>
 	<view class="chat-message-list">
 		<view v-if="isEmpty" class="empty-state">
-			<text class="empty-icon">💬</text>
+			<view class="empty-icon">
+				<text>聊</text>
+			</view>
 			<text class="empty-text">暂无消息，开始对话吧</text>
 		</view>
 
@@ -93,10 +95,17 @@ const isEmpty = computed(() => {
 }
 
 .empty-icon {
-	font-size: 120rpx;
+	width: 96rpx;
+	height: 96rpx;
 	margin-bottom: $spacing-lg;
-	opacity: 0.3;
-	display: block;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: $bg-color-base;
+	color: #d6d6d6;
+	font-size: 48rpx;
+	font-weight: $font-weight-bold;
 }
 
 .empty-text {

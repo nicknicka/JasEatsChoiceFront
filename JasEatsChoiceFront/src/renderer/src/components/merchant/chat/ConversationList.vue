@@ -1,8 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ChatDotRound } from '@element-plus/icons-vue'
-import { getAvatarUrl } from '../../../utils/avatar'
+import { getAvatarText, getAvatarUrl } from '../../../utils/avatar'
 
 const props = defineProps({
   conversations: {
@@ -24,6 +24,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['select', 'search', 'filter'])
+const failedAvatarIds = ref(new Set())
 
 // 过滤后的会话列表
 const filteredConversations = computed(() => {
@@ -60,6 +61,25 @@ const selectConversation = (conversation) => {
     conversation.unreadCount = 0
     ElMessage.success('消息已标记为已读')
   }
+}
+
+const shouldShowImageAvatar = (conversation) => {
+  return (
+    getAvatarContent(conversation.avatar).type === 'image' &&
+    !failedAvatarIds.value.has(conversation.id)
+  )
+}
+
+const handleAvatarError = (conversationId) => {
+  failedAvatarIds.value = new Set([...failedAvatarIds.value, conversationId])
+}
+
+const getFallbackAvatarContent = (conversation) => {
+  if (conversation.type === 'group') {
+    return '👥'
+  }
+
+  return getAvatarText(conversation.name, conversation.username)
 }
 
 // 获取头像显示内容
@@ -171,13 +191,16 @@ const formatTime = (timeStr) => {
       >
         <div class="conversation-avatar">
           <img
-            v-if="getAvatarContent(conversation.avatar).type === 'image'"
+            v-if="shouldShowImageAvatar(conversation)"
             :src="getAvatarUrl(conversation.avatar)"
             :alt="conversation.name"
             class="avatar-image"
+            @error="handleAvatarError(conversation.id)"
           />
           <div v-else class="emoji-avatar">
-            {{ getAvatarContent(conversation.avatar).content }}
+            {{ getAvatarContent(conversation.avatar).type === 'image'
+              ? getFallbackAvatarContent(conversation)
+              : getAvatarContent(conversation.avatar).content }}
           </div>
 
           <!-- 未读消息徽章 -->

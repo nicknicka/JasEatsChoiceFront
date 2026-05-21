@@ -204,7 +204,7 @@ import WeatherLocation from '@/components/common/WeatherLocation.vue'
 const locationStore = useLocationStore()
 const userStore = useUserStore()
 const pageDebug = createPageDebug('首页')
-const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV
+const isDev = process.env.NODE_ENV !== 'production'
 
 // 组件引用
 const weatherRef = ref(null)

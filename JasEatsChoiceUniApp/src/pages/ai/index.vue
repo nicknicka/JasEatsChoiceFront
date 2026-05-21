@@ -20,21 +20,19 @@
 		<view class="tabs-content">
 			<!-- AI聊天 -->
 			<view v-if="activeTab === 'chat'" class="tab-pane chat-pane">
-				<ChatWelcomeGuide
-					v-if="showWelcomeGuide"
-					@start="handleStartChat"
-					@showQuestions="showQuestionsDrawer = true"
-				/>
+				<view class="chat-container">
+					<scroll-view v-if="showWelcomeGuide" class="welcome-scroll" scroll-y>
+						<ChatWelcomeGuide
+							@start="handleStartChat"
+							@showQuestions="showQuestionsDrawer = true"
+						/>
+					</scroll-view>
 
-				<view v-else class="chat-container">
 					<ChatMessageList
+						v-else
 						:messages="displayMessages"
 						:scrollIntoView="scrollIntoView"
 					/>
-
-					<view v-if="isLoading" class="loading-status">
-						<ChatLoadingIndicator :state="loadingState" />
-					</view>
 
 					<ChatInputArea
 						:inputText="inputText"
@@ -85,13 +83,12 @@ import { useUserStore } from '@/store'
 import { useChatMessages } from '@/composables/ai'
 import { useChatInput } from '@/composables/ai'
 import { useChatStreaming } from '@/composables/ai'
-import { useErrorHandler } from '@/composables'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 import { createPageDebug } from '@/utils/page-debug'
 
 // 组件导入
 import ChatMessageList from './components/ChatMessageList.vue'
 import ChatWelcomeGuide from './components/ChatWelcomeGuide.vue'
-import ChatLoadingIndicator from '@/components/ChatLoadingIndicator.vue'
 import QuickQuestionsDrawer from './components/QuickQuestionsDrawer.vue'
 import ChatInputArea from './components/ChatInputArea.vue'
 import DishRecognition from './components/DishRecognition.vue'
@@ -108,10 +105,10 @@ const { handleError, confirm } = useErrorHandler()
 // ==================== 标签页 ====================
 const activeTab = ref('chat')
 const tabs = ref([
-	{ key: 'chat', label: 'AI聊天', icon: '💬' },
-	{ key: 'recognition', label: '菜品识别', icon: '📷' },
-	{ key: 'recipe', label: '食谱优化', icon: '🍳' },
-	{ key: 'extraction', label: '内容提取', icon: '📝' }
+	{ key: 'chat', label: 'AI聊天', icon: '聊' },
+	{ key: 'recognition', label: '识别', icon: '识' },
+	{ key: 'recipe', label: '食谱', icon: '谱' },
+	{ key: 'extraction', label: '提取', icon: '提' }
 ])
 
 // ==================== 使用 Composables ====================
@@ -158,7 +155,6 @@ const {
 // ==================== 计算属性 ====================
 const displayMessages = computed(() => messages.value)
 
-const loadingState = computed(() => streamingState.value.toLowerCase())
 const WELCOME_MESSAGE = '您好！我是AI饮食助手，有什么可以帮您的吗？'
 const hasUserContext = computed(() => {
 	return Boolean(uni.getStorageSync('userId') || userStore.userInfo?.userId)
@@ -373,7 +369,7 @@ onMounted(async () => {
 .ai-page {
 	height: 100%;
 	width: 100%;
-	background: $bg-color-white;
+	background: $bg-color-light;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -381,59 +377,59 @@ onMounted(async () => {
 
 /* 统一顶部导航栏 */
 .unified-nav {
-	height: $nav-height;
 	background: $bg-color-white;
-	border-bottom: 1rpx solid $border-color-light;
-	box-shadow: $box-shadow-sm;
-	@include flex-between;
-	padding: 0 $spacing-md;
+	padding: $spacing-sm $spacing-md;
 	flex-shrink: 0;
 	position: relative;
 	z-index: $z-index-sticky;
 }
 
 .nav-tabs {
-	flex: 1;
-	@include flex-center;
-	gap: $spacing-md;
+	display: inline-flex;
+	align-items: center;
+	gap: $spacing-xs;
+	padding: $spacing-xs;
+	background: $bg-color-base;
+	border-radius: $border-radius-round;
+	margin: 0 auto;
 }
 
 .tab-item {
-	@include flex-center-column;
-	gap: $spacing-xs;
-	padding: $spacing-sm;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10rpx;
+	padding: 14rpx 22rpx;
+	border-radius: $border-radius-round;
 	transition: $transition-base;
 	position: relative;
 
 	&.active {
+		background: $bg-color-white;
+		box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.06);
+
 		.tab-label {
 			color: $primary-500;
 			font-weight: $font-weight-bold;
-		}
-
-		&::after {
-			content: '';
-			position: absolute;
-			bottom: 0;
-			left: 50%;
-			transform: translateX(-50%);
-			width: 32rpx;
-			height: 4rpx;
-			background: linear-gradient(135deg, $primary-500, $primary-800);
-			border-radius: 2rpx;
 		}
 	}
 }
 
 .tab-icon {
-	font-size: 40rpx;
-	display: block;
+	font-size: 22rpx;
+	color: $text-color-secondary;
+	line-height: 1;
+}
+
+.tab-item.active .tab-icon {
+	color: $primary-500;
 }
 
 .tab-label {
-	font-size: 26rpx;
+	font-size: 24rpx;
 	color: $text-color-regular;
 	transition: $transition-base;
+	line-height: 1;
 }
 
 /* 标签页内容 */
@@ -468,12 +464,15 @@ onMounted(async () => {
 	flex-direction: column;
 	min-height: 0;
 	overflow: hidden;
+	background: $bg-color-white;
 }
 
-/* 加载状态 */
-.loading-status {
-	@include flex-center;
-	padding: $spacing-lg;
-	background: $bg-color-light;
+.welcome-scroll {
+	flex: 1;
+	min-height: 0;
+}
+
+.welcome-scroll :deep(.welcome-guide) {
+	min-height: 100%;
 }
 </style>

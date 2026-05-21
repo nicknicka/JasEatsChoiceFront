@@ -222,7 +222,7 @@ const onDeadlineChange = (e) => {
  */
 const selectAddress = () => {
   uni.navigateTo({
-    url: '/address/select?mode=select'
+    url: '/pages-user/address/index?from=order'
   })
 }
 

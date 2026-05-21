@@ -67,6 +67,88 @@ const handleImageError = (event) => {
   event.target.src = defaultDishImage
 }
 
+const handleTutorialImageError = (event) => {
+  if (event.target.dataset.fallbackApplied === 'true') {
+    return
+  }
+  event.target.dataset.fallbackApplied = 'true'
+  event.target.src = defaultTutorialThumbnail
+}
+
+const getApiOrigin = () => {
+  try {
+    return new URL(API_CONFIG.baseURL).origin
+  } catch (error) {
+    return 'http://localhost:7777'
+  }
+}
+
+const normalizeImageUrl = (url, fallback) => {
+  const rawUrl = String(url || '').trim()
+  if (!rawUrl) {
+    return fallback
+  }
+
+  if (/^(data:|blob:|file:|https?:\/\/)/i.test(rawUrl)) {
+    return rawUrl
+  }
+
+  if (rawUrl.startsWith('//')) {
+    return `${window.location.protocol}${rawUrl}`
+  }
+
+  const apiOrigin = getApiOrigin()
+  if (rawUrl.startsWith('/api/')) {
+    return `${apiOrigin}${rawUrl}`
+  }
+  if (rawUrl.startsWith('/uploads/')) {
+    return `${apiOrigin}/api${rawUrl}`
+  }
+  if (rawUrl.startsWith('uploads/')) {
+    return `${apiOrigin}/api/${rawUrl}`
+  }
+  if (rawUrl.startsWith('/')) {
+    return `${apiOrigin}${rawUrl}`
+  }
+
+  return `${apiOrigin}/api/uploads/${rawUrl}`
+}
+
+const isExternalPlaceholderImage = (url) => {
+  return /(?:dummyimage\.com|via\.placeholder\.com|placehold\.co)/i.test(url)
+}
+
+const resolveDishImage = (image) => {
+  const rawImage = String(image || '').trim()
+  if (!rawImage || isExternalPlaceholderImage(rawImage)) {
+    return defaultDishImage
+  }
+
+  if (!/[/:.]/.test(rawImage)) {
+    return defaultDishImage
+  }
+
+  return normalizeImageUrl(rawImage, defaultDishImage)
+}
+
+const getTutorialImageValue = (tutorial = {}) => {
+  return (
+    tutorial.thumbnail ||
+    tutorial.coverImage ||
+    tutorial.cover_image ||
+    tutorial.imageUrl ||
+    tutorial.image_url ||
+    tutorial.coverUrl ||
+    tutorial.cover_url ||
+    tutorial.image ||
+    ''
+  )
+}
+
+const resolveTutorialThumbnail = (tutorial) => {
+  return normalizeImageUrl(getTutorialImageValue(tutorial), defaultTutorialThumbnail)
+}
+
 // 加载状态
 const nearbyLoading = ref(false)
 const recommendedDishesLoading = ref(true)
@@ -119,7 +201,7 @@ const fetchRecommendedDishes = async () => {
         return {
           id: rec.id,
           name: rec.name,
-          image: rec.image || '🍱', // 智能推荐使用emoji作为图片
+          image: resolveDishImage(rec.image),
           category: rec.recommendSource || rec.type || '推荐',
           kcal: rec.calories || 0, // 使用kcal字段以兼容模板
           calories: rec.calories || 0, // 同时保留calories字段
@@ -665,7 +747,7 @@ const fetchFeaturedTutorials = async () => {
     featuredTutorials.value = tutorials.map((tutorial) => ({
       ...tutorial,
       title: tutorial.title || tutorial.name || '教程',
-      thumbnail: tutorial.thumbnail || tutorial.coverImage || tutorial.cover_image || '',
+      thumbnail: resolveTutorialThumbnail(tutorial),
       type: tutorial.type || 'article'
     }))
   } catch (error) {
@@ -1022,9 +1104,10 @@ onMounted(async () => {
           >
             <div class="tut-image">
               <img
-                :src="tutorial.thumbnail || tutorial.coverImage || defaultTutorialThumbnail"
+                :src="tutorial.thumbnail || defaultTutorialThumbnail"
                 :alt="tutorial.name || tutorial.title"
                 loading="lazy"
+                @error="handleTutorialImageError"
               />
               <div class="tut-type-badge">
                 <el-icon v-if="tutorial.type === 'video'"><VideoCamera /></el-icon>
@@ -1453,10 +1536,12 @@ onMounted(async () => {
 
 // ===== 搜索栏 =====
 .search-section {
+  width: 100%;
   margin-bottom: @nordic-space-lg;
 
   .savour-search {
-    max-width: 600px;
+    width: clamp(360px, 62vw, 760px);
+    max-width: 100%;
 
     :deep(.el-input__wrapper) {
       border-radius: @savour-pill;
@@ -1546,12 +1631,20 @@ onMounted(async () => {
   border-radius: @savour-radius;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(232, 226, 216, 0.95);
+  background: @savour-surface;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 8px 24px rgba(45, 42, 38, 0.06);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   animation: savour-scale-in 0.4s ease both;
 
   &:hover {
     transform: translateY(-6px);
-    box-shadow: 0 12px 36px rgba(45, 42, 38, 0.15);
+    border-color: rgba(198, 123, 92, 0.45);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.9) inset,
+      0 14px 36px rgba(45, 42, 38, 0.14);
 
     .rec-card-image img { transform: scale(1.06); }
     .rec-action-btn { opacity: 1; transform: translateY(0); }
@@ -2027,6 +2120,10 @@ onMounted(async () => {
 
   .hero-greeting .greeting-title {
     font-size: 28px;
+  }
+
+  .search-section .savour-search {
+    width: 100%;
   }
 
   .rec-card {

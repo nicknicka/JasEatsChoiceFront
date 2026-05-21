@@ -115,6 +115,22 @@ public class MessageRecordController {
     }
 
     /**
+     * 批量标记消息为已读
+     *
+     * @param messageIds 消息ID列表
+     * @return 标记结果
+     */
+    @PutMapping("/records/read/batch")
+    public ResponseResult<?> batchMarkMessagesAsRead(@RequestBody List<String> messageIds) {
+        Boolean success = messageRecordService.batchMarkMessagesAsRead(messageIds);
+        if (success) {
+            return ResponseResult.success("成功标记 " + messageIds.size() + " 条消息为已读");
+        } else {
+            return ResponseResult.fail("500", "批量标记失败");
+        }
+    }
+
+    /**
      * 删除单条消息
      *
      * @param messageId 消息ID

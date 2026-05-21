@@ -5,7 +5,7 @@
       <view class="avatar-wrapper" @click="chooseAvatar">
         <image class="avatar-image" :src="userInfo.avatar || '/static/default-avatar.png'" mode="aspectFill" />
         <view class="avatar-edit">
-          <text class="edit-icon">📷</text>
+          <uni-icons type="camera" size="14" color="#FFFFFF"></uni-icons>
           <text class="edit-text">更换头像</text>
         </view>
       </view>
@@ -87,7 +87,7 @@
       <view class="section-title">饮食偏好</view>
 
       <!-- 口味偏好 -->
-      <view class="form-item" @click="showTastePicker = true">
+      <view class="form-item" @click="onTasteChange">
         <text class="form-label">口味偏好</text>
         <view class="form-value">
           <text class="value-text">{{ tasteText || '请选择' }}</text>
@@ -96,7 +96,7 @@
       </view>
 
       <!-- 过敏原 -->
-      <view class="form-item" @click="showAllergyPicker = true">
+      <view class="form-item" @click="onAllergyChange">
         <text class="form-label">过敏原</text>
         <view class="form-value">
           <text class="value-text">{{ allergyText || '无' }}</text>
@@ -105,7 +105,7 @@
       </view>
 
       <!-- 饮食目标 -->
-      <view class="form-item" @click="showGoalPicker = true">
+      <view class="form-item" @click="openGoalSelector">
         <text class="form-label">饮食目标</text>
         <view class="form-value">
           <text class="value-text">{{ goalText || '请选择' }}</text>
@@ -149,6 +149,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store'
 import { userApi } from '@/api'
+import { USER_HELP } from '@/constants/routes'
 
 // Pinia store
 const userStore = useUserStore()
@@ -170,9 +171,6 @@ const userInfo = ref({
 // 选择器显示状态
 const showGenderPicker = ref(false)
 const showBirthdayPicker = ref(false)
-const showTastePicker = ref(false)
-const showAllergyPicker = ref(false)
-const showGoalPicker = ref(false)
 
 // 性别选项
 const genderOptions = ['保密', '男', '女']
@@ -186,7 +184,6 @@ const tasteOptions = [
   { value: 'salty', label: '咸鲜' },
   { value: 'light', label: '清淡' }
 ]
-const selectedTastes = ref([])
 
 // 过敏原选项
 const allergyOptions = [
@@ -197,7 +194,6 @@ const allergyOptions = [
   { value: 'gluten', label: '麸质' },
   { value: 'soy', label: '大豆' }
 ]
-const selectedAllergies = ref([])
 
 // 饮食目标选项
 const goalOptions = [
@@ -206,6 +202,42 @@ const goalOptions = [
   { value: 'keep_fit', label: '保持健康' },
   { value: 'no_goal', label: '无特殊目标' }
 ]
+
+const normalizeGender = (value) => {
+  if (value === 1 || value === '1' || value === 'male' || value === '男') return 1
+  if (value === 2 || value === '2' || value === 'female' || value === '女') return 2
+  return 0
+}
+
+const normalizeArrayField = (value) => {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean)
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    return value.split(',').map(item => item.trim()).filter(Boolean)
+  }
+
+  return []
+}
+
+const applyUserInfo = (source = {}) => {
+  userInfo.value = {
+    ...userInfo.value,
+    avatar: source.avatar || userInfo.value.avatar || '',
+    nickname: source.nickname || source.name || userInfo.value.nickname || '',
+    gender: normalizeGender(source.gender ?? userInfo.value.gender),
+    birthday: source.birthday || userInfo.value.birthday || '',
+    bio: source.bio || userInfo.value.bio || '',
+    phone: source.phone || userInfo.value.phone || '',
+    email: source.email || userInfo.value.email || '',
+    taste: normalizeArrayField(source.taste ?? source.tastes ?? userInfo.value.taste),
+    allergies: normalizeArrayField(source.allergies ?? source.allergyList ?? userInfo.value.allergies),
+    goal: source.goal || userInfo.value.goal || ''
+  }
+
+  genderIndex.value = userInfo.value.gender
+}
 
 // 当前日期
 const currentDate = computed(() => {
@@ -248,55 +280,16 @@ const goalText = computed(() => {
  */
 const loadUserInfo = async () => {
   try {
-    // 从store获取用户信息
     if (userStore.userInfo) {
-      userInfo.value = {
-        ...userInfo.value,
-        avatar: userStore.userInfo.avatar || '',
-        nickname: userStore.userInfo.nickname || userStore.userInfo.name || '',
-        gender: userStore.userInfo.gender || 0,
-        birthday: userStore.userInfo.birthday || '',
-        bio: userStore.userInfo.bio || '',
-        phone: userStore.userInfo.phone || '',
-        email: userStore.userInfo.email || '',
-        taste: userStore.userInfo.taste || [],
-        allergies: userStore.userInfo.allergies || [],
-        goal: userStore.userInfo.goal || ''
-      }
-
-      // 设置性别索引
-      genderIndex.value = userInfo.value.gender || 0
-
-      // 设置选择的口味和过敏原
-      selectedTastes.value = userInfo.value.taste || []
-      selectedAllergies.value = userInfo.value.allergies || []
+      applyUserInfo(userStore.userInfo)
     }
 
-    // 调用后端API获取最新用户信息
     const userId = userStore.userInfo?.userId || userStore.userInfo?.id
     if (userId) {
       const res = await userApi.getUserInfo(userId)
-      if (res) {
-        userInfo.value = {
-          ...userInfo.value,
-          avatar: res.avatar || '',
-          nickname: res.nickname || res.name || '',
-          gender: res.gender || 0,
-          birthday: res.birthday || '',
-          bio: res.bio || '',
-          phone: res.phone || '',
-          email: res.email || '',
-          taste: res.taste || [],
-          allergies: res.allergies || [],
-          goal: res.goal || ''
-        }
-
-        // 设置性别索引
-        genderIndex.value = userInfo.value.gender || 0
-
-        // 设置选择的口味和过敏原
-        selectedTastes.value = userInfo.value.taste || []
-        selectedAllergies.value = userInfo.value.allergies || []
+      const data = res?.data || res
+      if (data) {
+        applyUserInfo(data)
       }
     }
   } catch (error) {
@@ -322,13 +315,12 @@ const chooseAvatar = () => {
       try {
         uni.showLoading({ title: '上传中...' })
 
-        // 上传头像到服务器
         const uploadRes = await userApi.uploadAvatar({
           file: tempFilePath
         })
 
-        // 更新头像URL
-        userInfo.value.avatar = uploadRes.url || uploadRes.avatarUrl || tempFilePath
+        const uploadData = uploadRes?.data || uploadRes || {}
+        userInfo.value.avatar = uploadData.url || uploadData.avatarUrl || tempFilePath
 
         uni.hideLoading()
         uni.showToast({
@@ -365,92 +357,83 @@ const onBirthdayChange = (e) => {
 }
 
 /**
- * U-001: 口味偏好选择（多选）
+ * 通用多选面板
  */
-const onTasteChange = () => {
-  // 显示多选对话框
-  const items = tasteOptions.map(opt => opt.label)
-  const selected = userInfo.value.taste || []
+const openMultiSelectSheet = (options, field) => {
+  const currentValues = [...(userInfo.value[field] || [])]
+  const itemList = [
+    ...options.map(option => `${currentValues.includes(option.value) ? '已选 ' : ''}${option.label}`),
+    '清空已选',
+    '完成选择'
+  ]
 
   uni.showActionSheet({
-    itemList: [...items, '确认选择'],
+    itemList,
     success: (res) => {
-      const index = res.tapIndex
-
-      // 如果点击的是"确认选择"
-      if (index === items.length) {
-        showTastePicker.value = false
-        // 更新用户信息
-        userInfo.value.taste = selected
+      if (res.tapIndex === options.length) {
+        userInfo.value[field] = []
+        openMultiSelectSheet(options, field)
         return
       }
 
-      // 切换选中状态
-      const value = tasteOptions[index].value
-      const idx = selected.indexOf(value)
-      if (idx > -1) {
-        selected.splice(idx, 1)
-      } else {
-        selected.push(value)
+      if (res.tapIndex === options.length + 1) {
+        return
       }
 
-      // 更新显示
-      userInfo.value.taste = selected
+      const value = options[res.tapIndex].value
+      const idx = currentValues.indexOf(value)
+      if (idx > -1) {
+        currentValues.splice(idx, 1)
+      } else {
+        currentValues.push(value)
+      }
+
+      userInfo.value[field] = currentValues
+      openMultiSelectSheet(options, field)
     }
   })
+}
+
+/**
+ * U-001: 口味偏好选择（多选）
+ */
+const onTasteChange = () => {
+  openMultiSelectSheet(tasteOptions, 'taste')
 }
 
 /**
  * U-002: 过敏原选择（多选）
  */
 const onAllergyChange = () => {
-  // 显示多选对话框
-  const items = allergyOptions.map(opt => opt.label)
-  const selected = userInfo.value.allergies || []
-
-  uni.showActionSheet({
-    itemList: [...items, '确认选择'],
-    success: (res) => {
-      const index = res.tapIndex
-
-      // 如果点击的是"确认选择"
-      if (index === items.length) {
-        showAllergyPicker.value = false
-        // 更新用户信息
-        userInfo.value.allergies = selected
-        return
-      }
-
-      // 切换选中状态
-      const value = allergyOptions[index].value
-      const idx = selected.indexOf(value)
-      if (idx > -1) {
-        selected.splice(idx, 1)
-      } else {
-        selected.push(value)
-      }
-
-      // 更新显示
-      userInfo.value.allergies = selected
-    }
-  })
+  openMultiSelectSheet(allergyOptions, 'allergies')
 }
 
 /**
  * 饮食目标选择
  */
-const onGoalChange = (e) => {
-  userInfo.value.goal = goalOptions[e.detail.value].value
-  showGoalPicker.value = false
+const openGoalSelector = () => {
+  uni.showActionSheet({
+    itemList: goalOptions.map(option => option.label),
+    success: (res) => {
+      userInfo.value.goal = goalOptions[res.tapIndex].value
+    }
+  })
 }
 
 /**
  * 绑定手机号
  */
 const bindPhone = () => {
-  uni.showToast({
-    title: '绑定手机号功能开发中',
-    icon: 'none'
+  uni.showModal({
+    title: '手机号处理',
+    content: '当前版本的手机号绑定与更换由客服协助处理，是否前往帮助中心？',
+    success: (res) => {
+      if (res.confirm) {
+        uni.navigateTo({
+          url: USER_HELP
+        })
+      }
+    }
   })
 }
 
@@ -583,10 +566,6 @@ onMounted(() => {
   border-radius: 0 0 100rpx 100rpx;
   @include flex-center-column;
   gap: 4rpx;
-}
-
-.edit-icon {
-  font-size: $font-size-base;
 }
 
 .edit-text {

@@ -1,7 +1,13 @@
 <template>
   <view class="input-field-wrapper">
     <view class="input-item" :class="{ 'captcha-item': !!captcha, 'autocomplete-item': showHistory }">
-      <text class="input-icon">{{ iconMap[icon] || '📝' }}</text>
+      <view class="input-icon">
+        <uni-icons
+          :type="resolvedIcon.type"
+          :size="resolvedIcon.size"
+          :color="resolvedIcon.color"
+        ></uni-icons>
+      </view>
       <input
         class="input-field"
         :type="type"
@@ -15,24 +21,26 @@
       />
 
       <!-- 清除按钮 -->
-      <text
+      <view
         v-if="clearable && modelValue"
         class="clear-icon"
         @click.stop="handleClear"
-      >✕</text>
+      >
+        <uni-icons type="closeempty" size="16" color="#8D8177"></uni-icons>
+      </view>
 
       <!-- 历史记录下拉按钮 -->
-      <text
+      <view
         v-if="showHistory"
         class="dropdown-icon"
         @click.stop="toggleHistory"
-      >▼</text>
+      >
+        <uni-icons type="bottom" size="14" color="#8D8177"></uni-icons>
+      </view>
 
       <!-- 密码切换按钮 -->
       <view v-if="toggle" class="password-toggle" @click.stop="toggle.onClick">
-        <text class="eye-icon" :style="{ color: toggle.color }">
-          {{ toggle.icon === 'eye-filled' ? '👁️' : '👁️‍🗨️' }}
-        </text>
+        <uni-icons :type="toggle.icon" size="18" :color="toggle.color"></uni-icons>
       </view>
 
       <!-- 验证码按钮 -->
@@ -53,10 +61,12 @@
           mode="aspectFit"
           @click="captcha.onRefresh"
         />
-        <text
+        <view
           class="refresh-icon"
           @click="captcha.onRefresh"
-        >🔄</text>
+        >
+          <uni-icons type="refresh" size="18" color="#8D8177"></uni-icons>
+        </view>
       </view>
     </view>
 
@@ -86,19 +96,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-
-// Emoji 图标映射表
-const iconMap = {
-  phone: '📱',
-  locked: '🔒',
-  checkmarkempty: '✓',
-  clear: '✕',
-  down: '▼',
-  eye: '👁️',
-  'eye-filled': '👁️',
-  refreshempty: '🔄'
-}
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -175,6 +173,16 @@ const emit = defineEmits(['update:modelValue', 'blur', 'focus', 'selectHistory',
 
 const showHistoryList = ref(false)
 
+const resolvedIcon = computed(() => {
+  const iconConfigMap = {
+    phone: { type: 'phone', size: 18, color: '#C46739' },
+    locked: { type: 'locked', size: 18, color: '#C46739' },
+    checkmarkempty: { type: 'checkmarkempty', size: 18, color: '#C46739' }
+  }
+
+  return iconConfigMap[props.icon] || { type: 'compose', size: 18, color: '#C46739' }
+})
+
 const handleInput = (e) => {
   const newValue = e.detail.value
   emit('update:modelValue', newValue)
@@ -231,16 +239,16 @@ watch(() => props.modelValue, (newVal) => {
 .input-item {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: rgba(255, 250, 243, 0.9);
   border-radius: 50rpx;
   padding: 0 40rpx;
   height: 90rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  border: 1rpx solid rgba(111, 141, 113, 0.14);
+  box-shadow: 0 18rpx 34rpx rgba(92, 76, 58, 0.08);
   position: relative;
 }
 
 .input-icon {
-  font-size: 20px;
   margin-right: 10rpx;
   display: flex;
   align-items: center;
@@ -250,13 +258,14 @@ watch(() => props.modelValue, (newVal) => {
   flex: 1;
   font-size: 28rpx;
   height: 100%;
+  color: #3b332d;
 }
 
 .clear-icon {
   cursor: pointer;
   padding: 8rpx;
   font-size: 18px;
-  color: #999;
+  color: #8d8177;
   transition: all 0.2s;
 }
 
@@ -268,7 +277,7 @@ watch(() => props.modelValue, (newVal) => {
   cursor: pointer;
   padding: 10rpx;
   font-size: 16px;
-  color: #999;
+  color: #8d8177;
 }
 
 .password-toggle {
@@ -283,16 +292,22 @@ watch(() => props.modelValue, (newVal) => {
 }
 
 .code-btn {
-  padding: 0 30rpx;
+  min-width: 180rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 28rpx;
   font-size: 24rpx;
-  color: #FF6B35;
-  background: transparent;
+  color: #c46739;
+  background: rgba(214, 119, 71, 0.1);
   border: none;
-  border-left: 1rpx solid #eee;
+  border-left: 1rpx solid rgba(111, 141, 113, 0.12);
+  border-radius: 999rpx;
+  font-weight: 600;
 }
 
 .code-btn:disabled {
-  color: #999;
+  color: #a69a8f;
+  background: rgba(183, 169, 153, 0.16);
 }
 
 .captcha-item {
@@ -314,7 +329,8 @@ watch(() => props.modelValue, (newVal) => {
   width: 200rpx;
   height: 70rpx;
   border-radius: 10rpx;
-  background-color: #f5f7fa;
+  background-color: #f6efe5;
+  border: 1rpx solid rgba(111, 141, 113, 0.12);
 }
 
 .refresh-icon {
@@ -334,13 +350,14 @@ watch(() => props.modelValue, (newVal) => {
   right: 0;
   padding: 12rpx 20rpx;
   font-size: 22rpx;
-  color: #FF6B35;
-  background: rgba(255, 255, 255, 0.95);
+  color: #b55e34;
+  background: rgba(255, 249, 244, 0.96);
   border-radius: 20rpx;
   margin-top: 12rpx;
   z-index: 10;
   animation: slideDown 0.2s ease-out;
-  box-shadow: 0 2rpx 10rpx rgba(255, 107, 53, 0.1);
+  border: 1rpx solid rgba(214, 119, 71, 0.16);
+  box-shadow: 0 12rpx 22rpx rgba(181, 94, 52, 0.1);
 }
 
 /* 淡出动画 */
@@ -372,9 +389,10 @@ watch(() => props.modelValue, (newVal) => {
   top: 100rpx;
   left: 0;
   right: 0;
-  background: #fff;
+  background: rgba(255, 250, 244, 0.98);
   border-radius: 20rpx;
-  box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.15);
+  border: 1rpx solid rgba(111, 141, 113, 0.12);
+  box-shadow: 0 20rpx 36rpx rgba(92, 76, 58, 0.12);
   z-index: 100;
   max-height: 400rpx;
   overflow-y: auto;
@@ -385,7 +403,7 @@ watch(() => props.modelValue, (newVal) => {
   justify-content: space-between;
   align-items: center;
   padding: 25rpx 30rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid rgba(111, 141, 113, 0.08);
 }
 
 .history-item:last-child {
@@ -394,13 +412,13 @@ watch(() => props.modelValue, (newVal) => {
 
 .history-phone {
   font-size: 28rpx;
-  color: #333;
+  color: #3b332d;
 }
 
 .delete-icon {
   cursor: pointer;
   padding: 10rpx;
   font-size: 16px;
-  color: #999;
+  color: #8d8177;
 }
 </style>

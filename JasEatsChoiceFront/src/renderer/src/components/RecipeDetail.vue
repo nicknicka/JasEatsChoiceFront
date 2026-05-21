@@ -570,6 +570,11 @@ const updateCustomNutrition = (field, value) => {
   padding: @nordic-space-md;
   border-radius: @nordic-radius-lg;
   box-shadow: 0 4px 20px @nordic-shadow;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .recipe-header-section {
@@ -629,9 +634,13 @@ const updateCustomNutrition = (field, value) => {
 }
 
 .recipe-content-section {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: @nordic-space-md;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 .section-title {
@@ -809,7 +818,6 @@ const updateCustomNutrition = (field, value) => {
   padding: @nordic-space-md;
   border-radius: @nordic-radius-lg;
   border: 1px solid @nordic-border;
-  margin-top: @nordic-space-md;
 }
 
 .details-content {
@@ -889,10 +897,12 @@ const updateCustomNutrition = (field, value) => {
     max-height: 700px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
   :deep(.el-dialog__body) {
     flex: 1;
-    overflow-y: auto;
+    min-height: 0;
+    overflow: hidden;
     padding: 16px;
   }
 }

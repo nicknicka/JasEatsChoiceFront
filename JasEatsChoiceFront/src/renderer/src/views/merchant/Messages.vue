@@ -63,6 +63,26 @@ const selectMode = ref(false)
 // 用户ID
 const userId = ref('')
 
+const ensureApiSuccess = (response, defaultMessage) => {
+  if (response?.success === false) {
+    throw new Error(response.message || defaultMessage)
+  }
+}
+
+const normalizeMessage = (message) => {
+  const content = typeof message?.content === 'string' ? message.content : ''
+
+  return {
+    id: message?.id,
+    title: content || '未命名消息',
+    content,
+    sender: message?.senderName || message?.senderId || '系统',
+    time: message?.createTime || message?.sendTime || '',
+    isRead: message?.readStatus === 1 || message?.readStatus === true,
+    type: determineMessageType(message)
+  }
+}
+
 // 数字动画
 const animatedValues = ref({
   total: 0,
@@ -191,33 +211,21 @@ const loadMessages = async () => {
       }
     })
 
+    ensureApiSuccess(response, '加载消息失败')
+
     const messageList = Array.isArray(response?.data?.records)
       ? response.data.records
       : Array.isArray(response?.data)
         ? response.data
-        : Array.isArray(response)
-          ? response
-          : []
+        : []
 
-    if (messageList.length > 0) {
-      // 转换后端返回的数据格式
-      const formattedMessages = messageList.map((message) => ({
-        id: message.id,
-        title: message.content,
-        content: message.content,
-        sender: message.senderName,
-        time: message.createTime,
-        isRead: message.readStatus,
-        // ⭐ 根据后端返回的类型或内容判断消息类型
-        type: determineMessageType(message)
-      }))
-
-      messages.value = formattedMessages
-      updateFilter()
-    }
+    messages.value = messageList.map(normalizeMessage)
+    updateFilter()
+    return true
   } catch (error) {
     console.error('加载消息失败:', error)
     ElMessage.error('加载消息失败，请稍后重试')
+    return false
   } finally {
     loading.value = false
   }
@@ -263,7 +271,8 @@ const searchMessages = computed(() => {
 const markAsRead = async (message) => {
   try {
     // ⭐ 调用后端 API 标记已读
-    await api.put(`/v1/message/records/${message.id}/read`)
+    const response = await api.put(`/v1/message/records/${message.id}/read`)
+    ensureApiSuccess(response, '标记已读失败')
 
     // 更新本地状态
     message.isRead = true
@@ -285,23 +294,19 @@ const markAllAsRead = async () => {
       return
     }
 
-    // 批量标记已读
-    const promises = unreadMessages.map((msg) =>
-      api.put(`/v1/message/records/${msg.id}/read`)
-    )
+    const response = await api.put('/v1/message/records/all-read', null, {
+      params: { userId: userId.value }
+    })
+    ensureApiSuccess(response, '全部标记已读失败')
 
-    await Promise.all(promises)
-
-    // 更新本地状态
     filteredMessages.value.forEach((message) => {
       message.isRead = true
     })
-
+    await loadMessages()
     ElMessage.success('所有消息已标记为已读')
-    updateFilter()
   } catch (error) {
-    console.error('批量标记已读失败:', error)
-    ElMessage.error('批量标记已读失败，请稍后重试')
+    console.error('全部标记已读失败:', error)
+    ElMessage.error('全部标记已读失败，请稍后重试')
   }
 }
 
@@ -315,7 +320,8 @@ const deleteMessage = async (message) => {
     })
 
     // ⭐ 调用后端 API 删除消息
-    await api.delete(`/v1/message/records/${message.id}`)
+    const response = await api.delete(`/v1/message/records/${message.id}`)
+    ensureApiSuccess(response, '删除消息失败')
 
     // 从本地列表中移除
     const index = messages.value.findIndex((m) => m.id === message.id)
@@ -351,16 +357,14 @@ const batchDeleteMessages = async () => {
       }
     )
 
-    // 批量删除
-    const promises = selectedMessages.value.map((msg) =>
-      api.delete(`/v1/message/records/${msg.id}`)
-    )
-
-    await Promise.all(promises)
+    const messageIds = selectedMessages.value.map((msg) => msg.id)
+    const response = await api.delete('/v1/message/records/batch', {
+      data: messageIds
+    })
+    ensureApiSuccess(response, '批量删除失败')
 
     // 从本地列表中移除
-    const deletedIds = selectedMessages.value.map((msg) => msg.id)
-    messages.value = messages.value.filter((msg) => !deletedIds.includes(msg.id))
+    messages.value = messages.value.filter((msg) => !messageIds.includes(msg.id))
 
     ElMessage.success(`成功删除 ${selectedMessages.value.length} 条消息`)
 
@@ -392,17 +396,16 @@ const batchMarkAsRead = async () => {
       return
     }
 
-    // 批量标记已读
-    const promises = unreadSelected.map((msg) =>
-      api.put(`/v1/message/records/${msg.id}/read`)
+    const response = await api.put(
+      '/v1/message/records/read/batch',
+      unreadSelected.map((msg) => msg.id)
     )
+    ensureApiSuccess(response, '批量标记已读失败')
 
-    await Promise.all(promises)
-
-    // 更新本地状态
-    selectedMessages.value.forEach((msg) => {
+    unreadSelected.forEach((msg) => {
       msg.isRead = true
     })
+    await loadMessages()
 
     ElMessage.success(`成功标记 ${unreadSelected.length} 条消息为已读`)
 
@@ -509,6 +512,28 @@ watch(
   { deep: true }
 )
 
+const calculateUnreadCounts = () => {
+  const nextCounts = {
+    system: 0,
+    order: 0,
+    comment: 0,
+    total: 0
+  }
+
+  messages.value.forEach((message) => {
+    if (message.isRead) {
+      return
+    }
+
+    nextCounts.total++
+    if (Object.prototype.hasOwnProperty.call(nextCounts, message.type)) {
+      nextCounts[message.type]++
+    }
+  })
+
+  unreadCounts.value = nextCounts
+}
+
 // 更新筛选
 const updateFilter = () => {
   filteredMessages.value = messages.value.filter((message) => {
@@ -522,8 +547,8 @@ onMounted(async () => {
   // 从后端API加载实际消息数据
   // 优先使用商家ID，降级时再使用JWT中的用户ID
   const authStore = useAuthStore()
-  if (authStore.merchantId) {
-    userId.value = authStore.merchantId
+  if (authStore.merchantId || localStorage.getItem('auth_merchantId')) {
+    userId.value = authStore.merchantId || localStorage.getItem('auth_merchantId') || ''
   } else if (authStore.token) {
     const token = authStore.token
     const decodedToken = decodeJwt(token)
@@ -596,8 +621,10 @@ const backToList = () => {
 
 // 刷新消息列表（真实刷新）
 const refreshMessages = async () => {
-  await loadMessages()
-  ElMessage.success('刷新成功')
+  const success = await loadMessages()
+  if (success) {
+    ElMessage.success('刷新成功')
+  }
 }
 </script>
 

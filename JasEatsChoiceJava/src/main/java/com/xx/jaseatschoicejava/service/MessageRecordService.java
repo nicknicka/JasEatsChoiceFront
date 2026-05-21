@@ -59,6 +59,14 @@ public interface MessageRecordService extends IService<MessageRecord> {
     Boolean markAllMessagesAsRead(String userId);
 
     /**
+     * 批量标记消息为已读
+     *
+     * @param messageIds 消息ID列表
+     * @return 标记结果
+     */
+    Boolean batchMarkMessagesAsRead(List<String> messageIds);
+
+    /**
      * 删除单条消息
      *
      * @param messageId 消息ID

@@ -3,7 +3,7 @@
     <!-- Logo区域 -->
     <view class="logo-section">
       <view class="logo">
-        <uni-icons type="shop" size="60" color="#fff"></uni-icons>
+        <uni-icons type="shop" size="60" color="#5f7d62"></uni-icons>
       </view>
       <view class="app-name">佳食宜选</view>
       <view class="slogan">智能饮食，健康生活</view>
@@ -30,7 +30,7 @@
         @getuserinfo="handleWechatLogin"
         @click="handleWechatClick"
       >
-        <uni-icons type="weixin" size="20" color="#667eea"></uni-icons>
+        <uni-icons type="weixin" size="20" color="#5f7d62"></uni-icons>
         <view class="btn-text">微信一键登录</view>
       </button>
     </view>
@@ -71,7 +71,7 @@
         <label class="remember-password">
           <checkbox-group @change="handlePhoneRememberChange">
             <label class="checkbox-label">
-              <checkbox value="1" :checked="phoneForm.rememberPassword" color="#FF6B35" />
+              <checkbox value="1" :checked="phoneForm.rememberPassword" color="#D67747" />
               <text>记住密码</text>
             </label>
           </checkbox-group>
@@ -146,7 +146,7 @@
         <label class="remember-password">
           <checkbox-group @change="handlePasswordRememberChange">
             <label class="checkbox-label">
-              <checkbox value="1" :checked="passwordForm.rememberPassword" color="#FF6B35" />
+              <checkbox value="1" :checked="passwordForm.rememberPassword" color="#D67747" />
               <text>记住密码</text>
             </label>
           </checkbox-group>
@@ -170,7 +170,7 @@
     <view class="agreement">
       <checkbox-group @change="handleAgreementChange">
         <label class="agreement-label">
-          <checkbox value="1" :checked="agreedToTerms" color="#FF6B35" />
+          <checkbox value="1" :checked="agreedToTerms" color="#D67747" />
           <text>我已阅读并同意</text>
           <text class="link" @click.stop="toTerms">《用户协议》</text>
           <text>和</text>
@@ -643,8 +643,25 @@ const toForgotPassword = () => {
 
 <style scoped>
 .login-container {
+  --page-bg: #f6efe5;
+  --page-bg-top: #f2dfc8;
+  --page-bg-glow: rgba(214, 119, 71, 0.16);
+  --surface: rgba(255, 250, 243, 0.8);
+  --surface-strong: #fffaf4;
+  --surface-soft: rgba(255, 248, 240, 0.72);
+  --brand-primary: #6f8d71;
+  --brand-primary-deep: #58715a;
+  --brand-accent: #d67747;
+  --brand-accent-deep: #b95f33;
+  --text-primary: #3b332d;
+  --text-secondary: #786b61;
+  --text-muted: #9a8d82;
+  --line-soft: rgba(111, 141, 113, 0.14);
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:
+    radial-gradient(circle at top right, var(--page-bg-glow) 0, rgba(214, 119, 71, 0) 28%),
+    radial-gradient(circle at top left, rgba(111, 141, 113, 0.14) 0, rgba(111, 141, 113, 0) 24%),
+    linear-gradient(180deg, var(--page-bg-top) 0%, var(--page-bg) 34%, #f4ede3 100%);
   padding: 40rpx;
   display: flex;
   flex-direction: column;
@@ -666,27 +683,35 @@ const toForgotPassword = () => {
   align-items: center;
   justify-content: center;
   margin-bottom: 20rpx;
+  background: rgba(255, 250, 244, 0.56);
+  border: 1rpx solid rgba(255, 250, 244, 0.65);
+  border-radius: 36rpx;
+  box-shadow: 0 18rpx 42rpx rgba(110, 94, 76, 0.08);
 }
 
 .app-name {
   font-size: 48rpx;
   font-weight: bold;
-  color: #fff;
+  color: var(--text-primary);
   margin-bottom: 10rpx;
+  letter-spacing: 2rpx;
 }
 
 .slogan {
   font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
 }
 
 /* Tab切换 */
 .login-tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 248, 240, 0.58);
+  border: 1rpx solid rgba(255, 255, 255, 0.68);
   border-radius: 50rpx;
   padding: 6rpx;
   margin-bottom: 60rpx;
+  box-shadow: 0 16rpx 34rpx rgba(97, 82, 66, 0.08);
+  backdrop-filter: blur(12rpx);
 }
 
 .tab-item {
@@ -694,15 +719,16 @@ const toForgotPassword = () => {
   text-align: center;
   padding: 20rpx;
   font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-muted);
   border-radius: 50rpx;
   transition: all 0.3s;
 }
 
 .tab-item.active {
-  background: #fff;
-  color: #667eea;
-  font-weight: 500;
+  background: var(--surface-strong);
+  color: var(--brand-primary-deep);
+  font-weight: 600;
+  box-shadow: 0 10rpx 22rpx rgba(95, 125, 98, 0.12);
 }
 
 /* 微信登录 */
@@ -719,12 +745,17 @@ const toForgotPassword = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: linear-gradient(180deg, #fbf8f2 0%, #f4ecdf 100%);
   border-radius: 45rpx;
   font-size: 28rpx;
-  color: #667eea;
-  border: none;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  color: var(--brand-primary-deep);
+  border: 1rpx solid rgba(111, 141, 113, 0.16);
+  box-shadow: 0 18rpx 36rpx rgba(93, 77, 58, 0.1);
+}
+
+.btn-text {
+  margin-left: 14rpx;
+  font-weight: 600;
 }
 
 .agreement {
@@ -737,7 +768,7 @@ const toForgotPassword = () => {
   display: flex;
   align-items: center;
   font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
 }
 
 .agreement-label text {
@@ -745,7 +776,7 @@ const toForgotPassword = () => {
 }
 
 .link {
-  color: #FFD700;
+  color: var(--brand-accent);
   text-decoration: underline;
 }
 
@@ -780,7 +811,7 @@ const toForgotPassword = () => {
   display: flex;
   align-items: center;
   font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
 }
 
 .checkbox-label text {
@@ -796,24 +827,27 @@ const toForgotPassword = () => {
 
 .extra-links .link {
   font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--brand-primary-deep);
+  text-decoration: none;
 }
 
 .login-btn {
   height: 90rpx;
   line-height: 90rpx;
   text-align: center;
-  background: #fff;
-  color: #667eea;
+  background: linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-accent-deep) 100%);
+  color: #fffaf4;
   font-size: 32rpx;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: 50rpx;
   border: none;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20rpx 34rpx rgba(185, 95, 51, 0.22);
 }
 
 .login-btn:disabled {
-  opacity: 0.6;
+  background: rgba(183, 169, 153, 0.66);
+  color: rgba(255, 250, 244, 0.82);
+  box-shadow: none;
 }
 
 /* 底部链接 */
@@ -825,7 +859,8 @@ const toForgotPassword = () => {
 
 .footer-links .link {
   font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--brand-primary-deep);
+  text-decoration: none;
 }
 
 /* 加载遮罩 */
@@ -835,7 +870,7 @@ const toForgotPassword = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(59, 51, 45, 0.24);
   display: flex;
   align-items: center;
   justify-content: center;

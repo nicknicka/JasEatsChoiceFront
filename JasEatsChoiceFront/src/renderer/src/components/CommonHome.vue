@@ -59,6 +59,15 @@ watch(
 
 // 导航到指定路径
 const navigateTo = (path, fromSidebar = false) => {
+  if (!path) {
+    return
+  }
+
+  if (typeof path === 'object') {
+    router.push(path)
+    return
+  }
+
   // 如果是从侧边栏跳转，添加查询参数
   if (fromSidebar) {
     // 检查路径是否已经有查询参数
@@ -236,9 +245,9 @@ const smartMatchParentMenu = (path, role) => {
 
   // 商家端路径映射
   const merchantPathMappings = [
-    { pattern: /\/merchant\/home\/order-detail/, menuIndex: '2-2' }, // 订单详情 → 全部订单
-    { pattern: /\/merchant\/home\/menu-edit/, menuIndex: '3-1' }, // 菜单编辑 → 菜单管理
-    { pattern: /\/merchant\/home\/dish-edit/, menuIndex: '3-2' } // 菜品编辑 → 菜品管理
+    { pattern: /\/merchant\/home\/order-detail/, menuIndex: '3-2' }, // 订单详情 → 全部订单
+    { pattern: /\/merchant\/home\/menu-edit/, menuIndex: '4-1' }, // 菜单编辑 → 菜单管理
+    { pattern: /\/merchant\/home\/dish-edit/, menuIndex: '4-2' } // 菜品编辑 → 菜品管理
   ]
 
   // 根据角色选择对应的映射表
@@ -395,6 +404,14 @@ const handleMenuSelect = (index) => {
   if (targetMenuItem) {
     navigateTo(targetMenuItem.path, true)
   }
+}
+
+const handleMenuItemClick = (menuItem) => {
+  if (!menuItem?.path) {
+    return
+  }
+
+  navigateTo(menuItem.path, true)
 }
 
 // 头像放大弹窗
@@ -824,6 +841,7 @@ const handleSearch = (value) => {
                     v-for="childItem in menuItem.children"
                     :key="childItem.index"
                     :index="childItem.index"
+                    @click="handleMenuItemClick(childItem)"
                   >
                     <el-icon>
                       <component :is="childItem.icon" />
@@ -851,7 +869,7 @@ const handleSearch = (value) => {
                 </el-sub-menu>
 
                 <!-- 普通菜单项 -->
-                <el-menu-item v-else :index="menuItem.index">
+                <el-menu-item v-else :index="menuItem.index" @click="handleMenuItemClick(menuItem)">
                   <el-icon>
                     <component :is="menuItem.icon" />
                   </el-icon>
@@ -875,6 +893,7 @@ const handleSearch = (value) => {
                 v-if="menuItem.isSetting"
                 :index="menuItem.index"
                 class="setting-menu-item"
+                @click="handleMenuItemClick(menuItem)"
               >
                 <el-icon>
                   <component :is="menuItem.icon" />

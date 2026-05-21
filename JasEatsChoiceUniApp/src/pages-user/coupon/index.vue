@@ -1,6 +1,5 @@
 <template>
   <view class="coupon-container">
-    <!-- 优惠券Tab -->
     <view class="filter-tabs">
       <view
         class="tab-item"
@@ -36,18 +35,15 @@
       :refresher-triggered="refreshing"
       @refresherrefresh="onRefresh"
     >
-      <!-- 空状态 -->
       <view class="empty-state" v-if="couponList.length === 0 && !loading">
-        <Empty
-          icon="🎫"
-          :text="emptyText"
-          :description="emptyDesc"
-          buttonText="去领券"
-          @button-click="goToCoupons"
-        />
+        <view class="empty-icon-wrapper">
+          <uni-icons type="gift-filled" size="40" color="#FF6B35"></uni-icons>
+        </view>
+        <text class="empty-title">{{ emptyText }}</text>
+        <text class="empty-desc">{{ emptyDesc }}</text>
+        <button class="empty-btn" @click="goToCoupons">去首页逛逛</button>
       </view>
 
-      <!-- 优惠券列表 -->
       <view class="coupon-list" v-else>
         <view
           class="coupon-item"
@@ -55,34 +51,29 @@
           :key="coupon.id"
           :class="{ disabled: coupon.status !== 'available' }"
         >
-          <!-- 左侧金额区 -->
           <view class="coupon-left" :class="`coupon-${coupon.type}`">
             <text class="coupon-amount">¥{{ coupon.amount }}</text>
             <text class="coupon-condition">{{ coupon.condition }}</text>
           </view>
 
-          <!-- 分割线 -->
           <view class="coupon-divider">
             <view class="divider-circle top"></view>
             <view class="divider-dots"></view>
             <view class="divider-circle bottom"></view>
           </view>
 
-          <!-- 右侧信息区 -->
           <view class="coupon-right">
             <text class="coupon-name">{{ coupon.name }}</text>
             <text class="coupon-desc">{{ coupon.description }}</text>
             <view class="coupon-time">
-              <text class="time-icon">⏰</text>
+              <uni-icons type="calendar-filled" size="14" color="#B7B7B7"></uni-icons>
               <text class="time-text">{{ coupon.validPeriod }}</text>
             </view>
 
-            <!-- 状态标签 -->
             <view class="coupon-status" v-if="coupon.status !== 'available'">
               <text class="status-text">{{ coupon.statusText }}</text>
             </view>
 
-            <!-- 操作按钮 -->
             <view class="coupon-actions" v-else>
               <button
                 class="action-btn"
@@ -103,11 +94,10 @@
       </view>
     </scroll-view>
 
-    <!-- 底部领取中心按钮 -->
     <view class="bottom-bar" v-if="activeTab === 'available'">
       <button class="receive-center-btn" @click="goToCoupons">
-        <text class="btn-icon">🎫</text>
-        <text>领券中心</text>
+        <uni-icons type="gift-filled" size="18" color="#FFFFFF"></uni-icons>
+        <text>去首页逛逛</text>
       </button>
     </view>
   </view>
@@ -117,7 +107,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store'
 import { couponApi } from '@/api'
-import Empty from '@/components/common/Empty.vue'
+import { HOME } from '@/constants/routes'
 
 // Store
 const userStore = useUserStore()
@@ -149,12 +139,43 @@ const emptyText = computed(() => {
 
 const emptyDesc = computed(() => {
   const descs = {
-    available: '快去领券中心看看吧',
+    available: '可先到首页或商家页查看可领取活动',
     used: '使用过的优惠券会显示在这里',
     expired: '过期的优惠券会显示在这里'
   }
   return descs[activeTab.value]
 })
+
+const formatCouponCondition = (coupon) => {
+  if (coupon.condition) {
+    return coupon.condition
+  }
+
+  if (coupon.minAmount || coupon.minimumAmount) {
+    return `满${coupon.minAmount || coupon.minimumAmount}元可用`
+  }
+
+  return '无门槛可用'
+}
+
+const formatCouponPeriod = (coupon) => {
+  if (coupon.validPeriod) {
+    return coupon.validPeriod
+  }
+
+  const startTime = coupon.startTime || coupon.validFrom || ''
+  const endTime = coupon.endTime || coupon.validTo || ''
+
+  if (startTime && endTime) {
+    return `${startTime} - ${endTime}`
+  }
+
+  if (endTime) {
+    return `有效期至 ${endTime}`
+  }
+
+  return '有效期以活动说明为准'
+}
 
 /**
  * 切换Tab
@@ -198,11 +219,11 @@ const loadCoupons = async () => {
       couponList.value = res.map(coupon => ({
         id: coupon.userCouponId || coupon.id,
         name: coupon.name,
-        description: coupon.description || '',
+        description: coupon.description || coupon.remark || '下单时自动匹配可用场景',
         amount: coupon.amount,
-        condition: coupon.condition || coupon.minAmount ? `满${coupon.minAmount}元可用` : '',
+        condition: formatCouponCondition(coupon),
         type: coupon.type || 'discount',
-        validPeriod: `${coupon.startTime} - ${coupon.endTime}`,
+        validPeriod: formatCouponPeriod(coupon),
         status: activeTab.value,
         statusText: getStatusText(activeTab.value),
         canUse: coupon.status === 'available' || coupon.status === 'unused'
@@ -293,15 +314,15 @@ const onRefresh = async () => {
 const useCoupon = (coupon) => {
   // U-028: 跳转到可以使用优惠券的页面（首页或购物车）
   // 优先跳转到购物车，如果有可用商品的话
-  uni.switchTab({
-    url: '/cart/index',
+  uni.navigateTo({
+    url: '/pages-user/cart/index',
     success: () => {
       console.log('跳转到购物车成功')
     },
     fail: () => {
       // 如果购物车跳转失败，跳转到首页
       uni.switchTab({
-        url: '/home/index/index',
+        url: '/pages/home/index/index',
         success: () => {
           console.log('跳转到首页成功')
         },
@@ -334,9 +355,8 @@ const shareCoupon = (coupon) => {
  * 去领券中心
  */
 const goToCoupons = () => {
-  uni.showToast({
-    title: '领券中心开发中',
-    icon: 'none'
+  uni.switchTab({
+    url: HOME
   })
 }
 
@@ -410,7 +430,48 @@ onMounted(() => {
 
 /* 空状态 */
 .empty-state {
+  @include flex-center-column;
   padding: 120rpx $spacing-lg;
+  text-align: center;
+}
+
+.empty-icon-wrapper {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 28rpx;
+  background-color: #FFF3ED;
+  @include flex-center;
+  margin-bottom: $spacing-lg;
+}
+
+.empty-title {
+  font-size: $font-size-lg;
+  color: $text-color-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-sm;
+}
+
+.empty-desc {
+  font-size: $font-size-sm;
+  color: $text-color-secondary;
+  margin-bottom: $spacing-xl;
+  line-height: $line-height-lg;
+}
+
+.empty-btn {
+  min-width: 240rpx;
+  height: 72rpx;
+  @include flex-center;
+  background: linear-gradient(135deg, $primary-color, #FF8F61);
+  color: #fff;
+  font-size: $font-size-base;
+  border-radius: $border-radius-round;
+  border: none;
+  padding: 0 $spacing-xl;
+
+  &:active {
+    opacity: 0.8;
+  }
 }
 
 /* 优惠券列表 */
@@ -540,10 +601,6 @@ onMounted(() => {
   width: 100%;
 }
 
-.time-icon {
-  font-size: $font-size-sm;
-}
-
 .time-text {
   flex: 1;
   font-size: $font-size-xs;
@@ -625,10 +682,6 @@ onMounted(() => {
 
   &:active {
     transform: scale(0.98);
-  }
-
-  .btn-icon {
-    font-size: $font-size-xl;
   }
 }
 </style>
